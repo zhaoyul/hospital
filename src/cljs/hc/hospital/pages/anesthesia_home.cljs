@@ -184,30 +184,52 @@
 
 (defn lab-tests []
   [antd/form {:layout "vertical" :style {:padding-bottom "24px"}}
-   [antd/title {:level 5} "血常规"]
-   [antd/row {:gutter 16}
-    [antd/col {:span 8} [antd/form-item {:label "RBC"} [antd/input {:addonAfter "x10¹²/L"}]]]
-    [antd/col {:span 8} [antd/form-item {:label "Hct"} [antd/input {:addonAfter "%"}]]]
-    [antd/col {:span 8} [antd/form-item {:label "PLT"} [antd/input {:addonAfter "x10⁹/L"}]]]
-    [antd/col {:span 8} [antd/form-item {:label "WBC"} [antd/input {:addonAfter "x10⁹/L"}]]]
-    [antd/col {:span 8}
-     [antd/form-item {:label "血型"}
-      [antd/radio-group {}
-       [antd/radio {:value "A"} "A"]
-       [antd/radio {:value "B"} "B"]
-       [antd/radio {:value "AB"} "AB"]
-       [antd/radio {:value "O"} "O"]]]]
-    [antd/col {:span 8}
-     [antd/form-item {:label "Rh"}
-      [antd/radio-group {}
-       [antd/radio {:value "negative"} "阴性"]
-       [antd/radio {:value "positive"} "阳性"]]]]]
-   [antd/form-item {:label "凝血检查"}
-    [antd/radio-group {}
+   ;; 血常规标题
+   [:div.section-title {:style {:fontWeight "bold" :fontSize "16px" :marginBottom "16px"}}
+    "血常规："]
+   
+   ;; RBC 和 Hct 行
+   [:div.form-item-inline {:style {:display "flex" :alignItems "center" :marginBottom "16px"}}
+    [:label {:style {:minWidth "80px" :fontWeight "500" :marginRight "10px"}} "RBC:"]
+    [antd/input {:style {:width "150px"}}]
+    [:span {:style {:margin "0 10px"}} "×10¹²/L"]
+    [:label {:style {:minWidth "80px" :fontWeight "500" :marginRight "10px" :marginLeft "30px"}} "Hct:"]
+    [antd/input {:style {:width "150px"}}]
+    [:span {:style {:margin "0 10px"}} "%"]]
+   
+   ;; PLT 和 WBC 行
+   [:div.form-item-inline {:style {:display "flex" :alignItems "center" :marginBottom "16px"}}
+    [:label {:style {:minWidth "80px" :fontWeight "500" :marginRight "10px"}} "PLT:"]
+    [antd/input {:style {:width "150px"}}]
+    [:span {:style {:margin "0 10px"}} "×10⁹/L"]
+    [:label {:style {:minWidth "80px" :fontWeight "500" :marginRight "10px" :marginLeft "30px"}} "WBC:"]
+    [antd/input {:style {:width "150px"}}]
+    [:span {:style {:margin "0 10px"}} "×10⁹/L"]]
+   
+   ;; 血型和 Rh 行
+   [:div.form-item-inline {:style {:display "flex" :alignItems "center" :marginBottom "16px"}}
+    [:label {:style {:minWidth "80px" :fontWeight "500" :marginRight "10px"}} "血型:"]
+    [antd/radio-group {:buttonStyle "solid" :optionType "button"}
+     [antd/radio {:value "A"} "A"]
+     [antd/radio {:value "B"} "B"]
+     [antd/radio {:value "AB"} "AB"]
+     [antd/radio {:value "O"} "O"]]
+    [:label {:style {:minWidth "80px" :fontWeight "500" :marginRight "10px" :marginLeft "30px"}} "Rh:"]
+    [antd/radio-group {:buttonStyle "solid" :optionType "button"}
+     [antd/radio {:value "negative"} "阴性"]
+     [antd/radio {:value "positive"} "阳性"]]]
+   
+   ;; 凝血检查和血糖值行
+   [:div.form-item-inline {:style {:display "flex" :alignItems "center" :marginBottom "16px"}}
+    [:label {:style {:minWidth "80px" :fontWeight "500" :marginRight "10px"}} "凝血检查:"]
+    [antd/radio-group {:buttonStyle "solid" :optionType "button"}
      [antd/radio {:value "normal"} "正常"]
-     [antd/radio {:value "abnormal"} "异常"]]]
-   [antd/form-item {:label "血糖值"} [antd/input {:addonAfter "mmol/L"}]]
-   ;; ... Add more lab test fields as needed
+     [antd/radio {:value "abnormal"} "异常"]]
+    [:label {:style {:minWidth "80px" :fontWeight "500" :marginRight "10px" :marginLeft "30px"}} "血糖值:"]
+    [antd/input {:style {:width "150px"}}]
+    [:span {:style {:margin "0 10px"}} "mmol/L"]]
+   
+   ;; 可以根据需要添加更多实验室检查项目
    ])
 
 (defn assessment-result []
