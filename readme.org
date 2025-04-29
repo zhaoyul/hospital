@@ -1,0 +1,14 @@
+#+begin_src elisp :results silent
+  (let* ((prompt-file "code-prompt.md")
+         (buffer "*gemini-app-and-server*"))
+    (delete-file prompt-file)
+    (shell-command "code2prompt . --no-clipboard --output-file code-prompt.md")
+    (ignore-errors (gptel-context-remove-all))
+    (gptel-add-file prompt-file)
+    (when (> (length (window-list)) 1)
+      (delete-window (next-window)))
+    (gptel buffer)
+    (split-window-right)
+    (other-window 1)
+    (switch-to-buffer buffer ))
+#+end_src

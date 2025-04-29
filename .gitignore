@@ -19,3 +19,4 @@ modules/
 .clj-kondo/.cache/
 .calva/output-window/
 .lsp/.cache/
+/code-prompt.md

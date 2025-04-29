@@ -2,14 +2,15 @@
   (:require
    [clojure.tools.logging :as log]
    [integrant.core :as ig]
+   [hc.hospital.web.routes.pages]
    [hc.hospital.config :as config]
    [hc.hospital.env :refer [defaults]]
 
-    ;; Edges
+   ;; Edges
    [kit.edge.server.undertow]
    [hc.hospital.web.handler]
 
-    ;; Routes
+   ;; Routes
    [hc.hospital.web.routes.api]
    #_[ohc.hospital.web.routes.pages]
    [kit.edge.db.sql.conman]
