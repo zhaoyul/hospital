@@ -1,14 +1,14 @@
 (ns hc.hospital.web.routes.api
   (:require
-    [hc.hospital.web.controllers.health :as health]
-    [hc.hospital.web.middleware.exception :as exception]
-    [hc.hospital.web.middleware.formats :as formats]
-    [integrant.core :as ig]
-    [reitit.coercion.malli :as malli]
-    [reitit.ring.coercion :as coercion]
-    [reitit.ring.middleware.muuntaja :as muuntaja]
-    [reitit.ring.middleware.parameters :as parameters]
-    [reitit.swagger :as swagger]))
+   [hc.hospital.web.controllers.health :as health]
+   [hc.hospital.web.middleware.exception :as exception]
+   [hc.hospital.web.middleware.formats :as formats]
+   [integrant.core :as ig]
+   [reitit.coercion.malli :as malli]
+   [reitit.ring.coercion :as coercion]
+   [reitit.ring.middleware.muuntaja :as muuntaja]
+   [reitit.ring.middleware.parameters :as parameters]
+   [reitit.swagger :as swagger]))
 
 (def route-data
   {:coercion   malli/coercion

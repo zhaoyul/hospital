@@ -10,7 +10,10 @@
    [hc.hospital.web.handler]
 
     ;; Routes
-   [hc.hospital.web.routes.api])
+   [hc.hospital.web.routes.api]
+   #_[ohc.hospital.web.routes.pages]
+   [kit.edge.db.sql.conman]
+   [kit.edge.db.sql.migratus])
   (:gen-class))
 
 ;; log uncaught exceptions in threads
