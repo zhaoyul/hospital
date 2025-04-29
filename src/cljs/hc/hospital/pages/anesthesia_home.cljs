@@ -37,7 +37,7 @@
 
 (defn brief-medical-history []
   (let [medical-history @(rf/subscribe [::subs/brief-medical-history])
-        [form] (Form/useForm)] ; Get form instance
+        form ((.-useForm Form))] ; Get form instance
     (r/create-class
      {:component-did-update
       (fn [this [_ old-medical-history]]
@@ -156,11 +156,11 @@
          [antd/form-item {:name :other-description
                           :label "其他"}
           [antd/input {:placeholder "请输入"
-                       :style {:flex "1"}}]]])}))
+                       :style {:flex "1"}}]]])})))
 
 (defn physical-examination []
   (let [exam-data @(rf/subscribe [::subs/physical-examination])
-        [form] (Form/useForm)]
+        form (.-useForm Form)]
     (r/create-class
      {:component-did-update
       (fn [this [_ old-exam-data]]
@@ -273,11 +273,11 @@
           [antd/radio-group {:buttonStyle "solid" :optionType "button"}
            [antd/radio {:value "normal"} "正常"]
            [antd/radio {:value "barrel"} "桶状胸"]
-           [antd/radio {:value "pectus_excavatum"} "佝偻胸"]]]])}))
+           [antd/radio {:value "pectus_excavatum"} "佝偻胸"]]]])})))
 
 (defn lab-tests []
   (let [lab-data @(rf/subscribe [::subs/lab-tests])
-        [form] (Form/useForm)]
+        form ((.-useForm Form))]
     (r/create-class
      {:component-did-update
       (fn [this [_ old-lab-data]]
@@ -370,30 +370,17 @@
           [antd/input {:style {:width "100%"}}]]])})))
 
 (defn assessment-result []
-  (let [active-tab @(rf/subscribe [::subs/active-assessment-tab])]
-    [antd/card {:variant "borderless" :style {:height "calc(100vh - 180px)"}}
-     [antd/tabs
-      {:activeKey active-tab
-       :onChange #(rf/dispatch [::events/set-active-assessment-tab %])
-       :type "card"
-       :size "large"
-       :tabPosition "left"
-       :style {:height "100%"}
-       :items [{:key "brief-history"
-                :label "简要病史"
-                :children (r/as-element
-                           [:div {:style {:padding "0 16px" :height "100%" :overflowY "auto"}}
-                            [brief-medical-history]])}
-               {:key "physical-exam"
-                :label "体格检查"
-                :children (r/as-element
-                           [:div {:style {:padding "0 16px" :height "100%" :overflowY "auto"}}
-                            [physical-examination]])}
-               {:key "lab-tests"
-                :label "实验室检查"
-                :children (r/as-element
-                           [:div {:style {:padding "0 16px" :height "100%" :overflowY "auto"}}
-                            [lab-tests]])}]}]]))
+  ;; Remove active-tab subscription as tabs are removed
+  [antd/card {:variant "borderless" :style {:height "calc(100vh - 180px)" :overflowY "auto"}} ; Add overflowY auto to the card
+   ;; Remove antd/tabs component
+   [:div {:style {:padding "0 16px"}} ; Add a container div with padding
+    ;; Render the three sections vertically
+    [:div.section-title {:style {:fontWeight "bold" :fontSize "18px" :marginBottom "16px" :marginTop "16px"}} "简要病史"]
+    [brief-medical-history]
+    [:div.section-title {:style {:fontWeight "bold" :fontSize "18px" :marginBottom "16px" :marginTop "24px"}} "体格检查"]
+    [physical-examination]
+    [:div.section-title {:style {:fontWeight "bold" :fontSize "18px" :marginBottom "16px" :marginTop "24px"}} "实验室检查"]
+    [lab-tests]]])
 
 (def menu-items
   [{:key "1" :icon (r/as-element [antd/laptop-outlined]) :label "麻醉管理"} ; Use wrapped icons
