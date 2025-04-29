@@ -1,8 +1,11 @@
 (ns hc.hospital.core
   (:require
    [reagent.core :as r]
-   [hc.hospital.pages.anesthesia-home :refer [anesthesia-home-page]]
    [reagent.dom :as d]
+   [re-frame.core :as rf]
+   [hc.hospital.events :as events]
+   [hc.hospital.subs :as subs]
+   [hc.hospital.pages.anesthesia-home :refer [anesthesia-home-page]]
    ["antd" :as antd :refer [Button]])) ; Import Button component from antd
 
 ;; Import Ant Design CSS
@@ -12,10 +15,7 @@
 ;; Views
 
 (defn home-page []
-  [anesthesia-home-page]
-  #_[:div
-     [:h2 "Welcome to Reagent!"]
-     [:> Button {:type "primary"} "Hello Ant Design!"]]) ; Use the Button component
+  [anesthesia-home-page])
 
 ;; -------------------------
 ;; Initialize app
@@ -24,4 +24,6 @@
   (d/render [home-page] (.getElementById js/document "app")))
 
 (defn ^:export ^:dev/once init! []
+  ;; 初始化 re-frame 应用状态
+  (rf/dispatch-sync [::events/initialize-db])
   (mount-root))
