@@ -3,6 +3,7 @@
     "shadow-cljs": "^2.18.0"
   },
   "dependencies": {
+    "antd": "^5.24.9",
     "react": "^17.0.2",
     "react-dom": "^17.0.2"
   }
