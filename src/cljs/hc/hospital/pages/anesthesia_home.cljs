@@ -1,20 +1,6 @@
 (ns hc.hospital.pages.anesthesia-home
   (:require [reagent.core :as r]
-            ;; Remove unused reagent.dom
-            ["antd" :as antd :refer [Layout  Menu  DatePicker Input Button Tabs Row Col Card Form Radio Checkbox InputNumber Typography]]
-            ;; Remove unused SearchOutlined
-            ["@ant-design/icons" :refer [UserOutlined LaptopOutlined NotificationOutlined FilterOutlined]]))
-
-(def Content (.-Content Layout))
-(def Sider (.-Sider Layout))
-(def Header (.-Header Layout))
-(def Footer (.-Footer Layout))
-(def RangePicker (.-RangePicker DatePicker))
-(def Item (.-Item Form))
-(def Title (.-Title Typography))
-(def Text (.-Text Typography))
-(def RadioGroup (.-Group Radio))
-(def CheckboxGroup (.-Group Checkbox))
+            [hc.hospital.components.antd :as antd]))
 
 ;; Placeholder data for the patient list
 (def patient-data
@@ -40,14 +26,14 @@
      ^{:key (:key item)}
      [:div {:style {:padding "10px" :borderBottom "1px solid #f0f0f0" :display "flex" :justifyContent "space-between" :alignItems "center"}}
       [:div {:style {:display "flex" :alignItems "center"}}
-       [:> UserOutlined {:style {:marginRight "8px"}}] ; Placeholder icon
+       [antd/user-outlined {:style {:marginRight "8px"}}] ; Use wrapped icon
        [:div
         [:div {:style {:fontWeight "bold"}} (:name item)]
         [:div {:style {:fontSize "12px" :color "gray"}}
          (str (:sex item) " " (:age item) "岁 " (:type item))]]]
       [:div {:style {:textAlign "right"}}
        [:div {:style {:fontSize "12px" :color "gray"}} (:date item)]
-       [:> antd/Tag {:color (case (:status item)
+       [antd/tag {:color (case (:status item) ; Use wrapped tag
                               "待评估" "orange"
                               "已批准" "green"
                               "已暂缓" "blue"
@@ -55,180 +41,180 @@
                               "default")} (:status item)]]])])
 
 (defn brief-medical-history []
-  [:> Card {:title (r/as-element [:> Title {:level 5} "简要病史"]) :variant "borderless"} ; Use variant instead of bordered
-   [:> Form {:layout "vertical"}
-    [:> Row {:gutter 16}
-     [:> Col {:span 12}
-      [:> Item {:label "既往史"}
-       [:> RadioGroup {}
-        [:> Radio {:value "none"} "无"]
-        [:> Radio {:value "yes"} "有"]]
-       [:> Input {:placeholder "请输入"}]]]
-     [:> Col {:span 12}
-      [:> Item {:label "过敏史"}
-       [:> RadioGroup {}
-        [:> Radio {:value "none"} "无"]
-        [:> Radio {:value "yes"} "有"]]
-       [:> Input {:placeholder "请输入"}]]]
-     [:> Col {:span 12}
-      [:> Item {:label "手术麻醉史"}
-       [:> RadioGroup {}
-        [:> Radio {:value "none"} "无"]
-        [:> Radio {:value "yes"} "有"]]
-       [:> Input {:placeholder "请输入"}]]]
-     [:> Col {:span 12}
-      [:> Item {:label "怀孕"}
-       [:> RadioGroup {}
-        [:> Radio {:value "none"} "无"]
-        [:> Radio {:value "yes"} "有"]]
-       [:> Input {:placeholder "请输入"}]]]
-     [:> Col {:span 12}
-      [:> Item {:label "输血史"}
-       [:> RadioGroup {}
-        [:> Radio {:value "none"} "无"]
-        [:> Radio {:value "yes"} "有"]]
-       [:> Input {:placeholder "请输入"}]]]
-     [:> Col {:span 12}
-      [:> Item {:label "月经期"}
-       [:> RadioGroup {}
-        [:> Radio {:value "none"} "无"]
-        [:> Radio {:value "yes"} "有"]]
-       [:> Input {:placeholder "请输入"}]]]
-     [:> Col {:span 24}
-      [:> Item {:label "个人史"}
-       [:> CheckboxGroup {}
-        [:> Checkbox {:value "smoke"} "烟"]
-        [:> Checkbox {:value "drink"} "酒"]]]]
-     [:> Col {:span 24}
-      [:> Item {:label "其他"}
-       [:> Input {:placeholder "请输入"}]]]]]])
+  [antd/card {:title (r/as-element [antd/title {:level 5} "简要病史"]) :variant "borderless"} ; Use wrapped components
+   [antd/form {:layout "vertical"}
+    [antd/row {:gutter 16}
+     [antd/col {:span 12}
+      [antd/form-item {:label "既往史"}
+       [antd/radio-group {}
+        [antd/radio {:value "none"} "无"]
+        [antd/radio {:value "yes"} "有"]]
+       [antd/input {:placeholder "请输入"}]]]
+     [antd/col {:span 12}
+      [antd/form-item {:label "过敏史"}
+       [antd/radio-group {}
+        [antd/radio {:value "none"} "无"]
+        [antd/radio {:value "yes"} "有"]]
+       [antd/input {:placeholder "请输入"}]]]
+     [antd/col {:span 12}
+      [antd/form-item {:label "手术麻醉史"}
+       [antd/radio-group {}
+        [antd/radio {:value "none"} "无"]
+        [antd/radio {:value "yes"} "有"]]
+       [antd/input {:placeholder "请输入"}]]]
+     [antd/col {:span 12}
+      [antd/form-item {:label "怀孕"}
+       [antd/radio-group {}
+        [antd/radio {:value "none"} "无"]
+        [antd/radio {:value "yes"} "有"]]
+       [antd/input {:placeholder "请输入"}]]]
+     [antd/col {:span 12}
+      [antd/form-item {:label "输血史"}
+       [antd/radio-group {}
+        [antd/radio {:value "none"} "无"]
+        [antd/radio {:value "yes"} "有"]]
+       [antd/input {:placeholder "请输入"}]]]
+     [antd/col {:span 12}
+      [antd/form-item {:label "月经期"}
+       [antd/radio-group {}
+        [antd/radio {:value "none"} "无"]
+        [antd/radio {:value "yes"} "有"]]
+       [antd/input {:placeholder "请输入"}]]]
+     [antd/col {:span 24}
+      [antd/form-item {:label "个人史"}
+       [antd/checkbox-group {}
+        [antd/checkbox {:value "smoke"} "烟"]
+        [antd/checkbox {:value "drink"} "酒"]]]]
+     [antd/col {:span 24}
+      [antd/form-item {:label "其他"}
+       [antd/input {:placeholder "请输入"}]]]]]])
 
 (defn physical-examination []
-  [:> Card {:title (r/as-element [:> Title {:level 5} "体格检查"]) :variant "borderless"} ; Use variant instead of bordered
-   [:> Form {:layout "vertical"}
-    [:> Item {:label "一般状况"}
-     [:> RadioGroup {}
-      [:> Radio {:value "bad"} "差"]
-      [:> Radio {:value "fair"} "尚可"]
-      [:> Radio {:value "average"} "一般"]
-      [:> Radio {:value "good"} "好"]]]
-    [:> Row {:gutter 16}
-     [:> Col {:span 8} [:> Item {:label "身高"} [:> InputNumber {:addonAfter "cm"}]]]
-     [:> Col {:span 8} [:> Item {:label "体重"} [:> InputNumber {:addonAfter "kg"}]]]
-     [:> Col {:span 8} [:> Item {:label "BP"} [:> Input {:addonAfter "mmHg"}]]]
-     [:> Col {:span 8} [:> Item {:label "PR"} [:> Input {:addonAfter "次/分"}]]]
-     [:> Col {:span 8} [:> Item {:label "RR"} [:> Input {:addonAfter "次/分"}]]]
-     [:> Col {:span 8} [:> Item {:label "T"} [:> Input {:addonAfter "°C"}]]]]
-    [:> Item {:label "精神行为"}
-     [:> RadioGroup {}
-      [:> Radio {:value "normal"} "正常"]
-      [:> Radio {:value "drowsy"} "嗜睡"]
-      [:> Radio {:value "coma"} "昏迷"]
-      [:> Radio {:value "irritable"} "烦躁"]
-      [:> Radio {:value "delirium"} "谵妄"]
-      [:> Radio {:value "cognitive"} "认知障碍"]]]
-    [:> Item {:label "头颈部"}
-     [:> CheckboxGroup {}
-      [:> Checkbox {:value "normal"} "无异常"]
-      [:> Checkbox {:value "scar"} "疤痕"]
-      [:> Checkbox {:value "short_neck"} "颈短"]
-      [:> Checkbox {:value "neck_mass"} "颈部肿块"]
-      [:> Checkbox {:value "limited_mobility"} "后仰困难"]]]
-    [:> Item {:label "口腔"} [:> Input {:addonAfter "cm" :placeholder "张口"}]]
-    [:> Item {:label "Mallampati"}
-     [:> RadioGroup {}
-      [:> Radio {:value "I"} "I"]
-      [:> Radio {:value "II"} "II"]
-      [:> Radio {:value "III"} "III"]
-      [:> Radio {:value "IV"} "IV"]]]
-    [:> Item {:label "颏颌距离"} [:> InputNumber {:addonAfter "cm"}]]
-    [:> Item {:label "相关病史"}
-     [:> CheckboxGroup {:style {:width "100%"}}
-      [:> Row
-       [:> Col {:span 8} [:> Checkbox {:value "facial_injury"} "颌面部损伤"]]
-       [:> Col {:span 8} [:> Checkbox {:value "tracheal_deviation"} "气管压迫移位"]]
-       [:> Col {:span 8} [:> Checkbox {:value "sleep_apnea"} "睡眠呼吸暂停综合征"]]
-       [:> Col {:span 8} [:> Checkbox {:value "acromegaly"} "肢端肥大"]]
-       [:> Col {:span 8} [:> Checkbox {:value "congenital_malformation"} "先天畸形"]]
-       [:> Col {:span 8} [:> Checkbox {:value "rheumatoid_arthritis"} "风湿性关节炎"]]
-       [:> Col {:span 24} [:> Checkbox {:value "other"} "其他"] [:> Input {:placeholder "请输入"}]]]]]
-    [:> Item {:label "胸"}
-     [:> RadioGroup {}
-      [:> Radio {:value "normal"} "正常"]
-      [:> Radio {:value "barrel"} "桶状胸"]
-      [:> Radio {:value "pectus_excavatum"} "佝偻胸"]]]
+  [antd/card {:title (r/as-element [antd/title {:level 5} "体格检查"]) :variant "borderless"} ; Use wrapped components
+   [antd/form {:layout "vertical"}
+    [antd/form-item {:label "一般状况"}
+     [antd/radio-group {}
+      [antd/radio {:value "bad"} "差"]
+      [antd/radio {:value "fair"} "尚可"]
+      [antd/radio {:value "average"} "一般"]
+      [antd/radio {:value "good"} "好"]]]
+    [antd/row {:gutter 16}
+     [antd/col {:span 8} [antd/form-item {:label "身高"} [antd/input-number {:addonAfter "cm"}]]]
+     [antd/col {:span 8} [antd/form-item {:label "体重"} [antd/input-number {:addonAfter "kg"}]]]
+     [antd/col {:span 8} [antd/form-item {:label "BP"} [antd/input {:addonAfter "mmHg"}]]]
+     [antd/col {:span 8} [antd/form-item {:label "PR"} [antd/input {:addonAfter "次/分"}]]]
+     [antd/col {:span 8} [antd/form-item {:label "RR"} [antd/input {:addonAfter "次/分"}]]]
+     [antd/col {:span 8} [antd/form-item {:label "T"} [antd/input {:addonAfter "°C"}]]]]
+    [antd/form-item {:label "精神行为"}
+     [antd/radio-group {}
+      [antd/radio {:value "normal"} "正常"]
+      [antd/radio {:value "drowsy"} "嗜睡"]
+      [antd/radio {:value "coma"} "昏迷"]
+      [antd/radio {:value "irritable"} "烦躁"]
+      [antd/radio {:value "delirium"} "谵妄"]
+      [antd/radio {:value "cognitive"} "认知障碍"]]]
+    [antd/form-item {:label "头颈部"}
+     [antd/checkbox-group {}
+      [antd/checkbox {:value "normal"} "无异常"]
+      [antd/checkbox {:value "scar"} "疤痕"]
+      [antd/checkbox {:value "short_neck"} "颈短"]
+      [antd/checkbox {:value "neck_mass"} "颈部肿块"]
+      [antd/checkbox {:value "limited_mobility"} "后仰困难"]]]
+    [antd/form-item {:label "口腔"} [antd/input {:addonAfter "cm" :placeholder "张口"}]]
+    [antd/form-item {:label "Mallampati"}
+     [antd/radio-group {}
+      [antd/radio {:value "I"} "I"]
+      [antd/radio {:value "II"} "II"]
+      [antd/radio {:value "III"} "III"]
+      [antd/radio {:value "IV"} "IV"]]]
+    [antd/form-item {:label "颏颌距离"} [antd/input-number {:addonAfter "cm"}]]
+    [antd/form-item {:label "相关病史"}
+     [antd/checkbox-group {:style {:width "100%"}}
+      [antd/row
+       [antd/col {:span 8} [antd/checkbox {:value "facial_injury"} "颌面部损伤"]]
+       [antd/col {:span 8} [antd/checkbox {:value "tracheal_deviation"} "气管压迫移位"]]
+       [antd/col {:span 8} [antd/checkbox {:value "sleep_apnea"} "睡眠呼吸暂停综合征"]]
+       [antd/col {:span 8} [antd/checkbox {:value "acromegaly"} "肢端肥大"]]
+       [antd/col {:span 8} [antd/checkbox {:value "congenital_malformation"} "先天畸形"]]
+       [antd/col {:span 8} [antd/checkbox {:value "rheumatoid_arthritis"} "风湿性关节炎"]]
+       [antd/col {:span 24} [antd/checkbox {:value "other"} "其他"] [antd/input {:placeholder "请输入"}]]]]]
+    [antd/form-item {:label "胸"}
+     [antd/radio-group {}
+      [antd/radio {:value "normal"} "正常"]
+      [antd/radio {:value "barrel"} "桶状胸"]
+      [antd/radio {:value "pectus_excavatum"} "佝偻胸"]]]
     ;; ... Add more physical examination fields as needed
     ]])
 
 (defn lab-tests []
-  [:> Card {:title (r/as-element [:> Title {:level 5} "实验室检查"]) :variant "borderless"} ; Use variant instead of bordered
-   [:> Form {:layout "vertical"}
-    [:> Title {:level 5} "血常规"]
-    [:> Row {:gutter 16}
-     [:> Col {:span 8} [:> Item {:label "RBC"} [:> Input {:addonAfter "x10¹²/L"}]]]
-     [:> Col {:span 8} [:> Item {:label "Hct"} [:> Input {:addonAfter "%"}]]]
-     [:> Col {:span 8} [:> Item {:label "PLT"} [:> Input {:addonAfter "x10⁹/L"}]]]
-     [:> Col {:span 8} [:> Item {:label "WBC"} [:> Input {:addonAfter "x10⁹/L"}]]]
-     [:> Col {:span 8}
-      [:> Item {:label "血型"}
-       [:> RadioGroup {}
-        [:> Radio {:value "A"} "A"]
-        [:> Radio {:value "B"} "B"]
-        [:> Radio {:value "AB"} "AB"]
-        [:> Radio {:value "O"} "O"]]]]
-     [:> Col {:span 8}
-      [:> Item {:label "Rh"}
-       [:> RadioGroup {}
-        [:> Radio {:value "negative"} "阴性"]
-        [:> Radio {:value "positive"} "阳性"]]]]]
-    [:> Item {:label "凝血检查"}
-     [:> RadioGroup {}
-      [:> Radio {:value "normal"} "正常"]
-      [:> Radio {:value "abnormal"} "异常"]]]
-    [:> Item {:label "血糖值"} [:> Input {:addonAfter "mmol/L"}]]
+  [antd/card {:title (r/as-element [antd/title {:level 5} "实验室检查"]) :variant "borderless"} ; Use wrapped components
+   [antd/form {:layout "vertical"}
+    [antd/title {:level 5} "血常规"]
+    [antd/row {:gutter 16}
+     [antd/col {:span 8} [antd/form-item {:label "RBC"} [antd/input {:addonAfter "x10¹²/L"}]]]
+     [antd/col {:span 8} [antd/form-item {:label "Hct"} [antd/input {:addonAfter "%"}]]]
+     [antd/col {:span 8} [antd/form-item {:label "PLT"} [antd/input {:addonAfter "x10⁹/L"}]]]
+     [antd/col {:span 8} [antd/form-item {:label "WBC"} [antd/input {:addonAfter "x10⁹/L"}]]]
+     [antd/col {:span 8}
+      [antd/form-item {:label "血型"}
+       [antd/radio-group {}
+        [antd/radio {:value "A"} "A"]
+        [antd/radio {:value "B"} "B"]
+        [antd/radio {:value "AB"} "AB"]
+        [antd/radio {:value "O"} "O"]]]]
+     [antd/col {:span 8}
+      [antd/form-item {:label "Rh"}
+       [antd/radio-group {}
+        [antd/radio {:value "negative"} "阴性"]
+        [antd/radio {:value "positive"} "阳性"]]]]]
+    [antd/form-item {:label "凝血检查"}
+     [antd/radio-group {}
+      [antd/radio {:value "normal"} "正常"]
+      [antd/radio {:value "abnormal"} "异常"]]]
+    [antd/form-item {:label "血糖值"} [antd/input {:addonAfter "mmol/L"}]]
     ;; ... Add more lab test fields as needed
     ]])
 
 (def menu-items
-  [{:key "1" :icon (r/as-element [:> LaptopOutlined]) :label "麻醉管理"}
-   {:key "2" :icon (r/as-element [:> UserOutlined]) :label "患者文书"}
-   {:key "3" :icon (r/as-element [:> NotificationOutlined]) :label "患者签到"}])
+  [{:key "1" :icon (r/as-element [antd/laptop-outlined]) :label "麻醉管理"} ; Use wrapped icons
+   {:key "2" :icon (r/as-element [antd/user-outlined]) :label "患者文书"}
+   {:key "3" :icon (r/as-element [antd/notification-outlined]) :label "患者签到"}])
 
 (defn anesthesia-home-page []
-  [:> Layout {:style {:minHeight "100vh"}}
-   [:> Sider {:width 200 :style {:background "#fff"}}
+  [antd/layout {:style {:minHeight "100vh"}} ; Use wrapped components
+   [antd/sider {:width 200 :style {:background "#fff"}}
     [:div {:style {:height "32px" :margin "16px" :background "rgba(0, 0, 0, 0.2)"}}] ; Logo placeholder
-    [:> Menu {:mode "inline"
-              :defaultSelectedKeys ["1"]
-              :style {:height "100%" :borderRight 0}
-              :items menu-items}]]
-   [:> Layout {:style {:padding "0 24px 24px"}}
-    [:> Header {:style {:background "#fff" :padding "0 16px" :display "flex" :alignItems "center" :justifyContent "space-between" :borderBottom "1px solid #f0f0f0"}}
+    [antd/menu {:mode "inline"
+                :defaultSelectedKeys ["1"]
+                :style {:height "100%" :borderRight 0}
+                :items menu-items}]]
+   [antd/layout {:style {:padding "0 24px 24px"}}
+    [antd/header {:style {:background "#fff" :padding "0 16px" :display "flex" :alignItems "center" :justifyContent "space-between" :borderBottom "1px solid #f0f0f0"}}
      [:div {:style {:display "flex" :alignItems "center"}}
-      [:> Text {:style {:marginRight 8}} "申请日期:"]
-      [:> RangePicker {:style {:marginRight 16}}]
-      [:> Input.Search {:placeholder "请输入搜索内容" :allowClear true :style {:width 300 :marginRight 8}}]
-      [:> Button {:icon (r/as-element [:> FilterOutlined])}]]
+      [antd/text {:style {:marginRight 8}} "申请日期:"]
+      [antd/range-picker {:style {:marginRight 16}}]
+      [antd/input-search {:placeholder "请输入搜索内容" :allowClear true :style {:width 300 :marginRight 8}}]
+      [antd/button {:icon (r/as-element [antd/filter-outlined])}]] ; Use wrapped icon
      [:div {:style {:display "flex" :alignItems "center"}}
-      [:> Text {:style {:marginRight 8}} "患者登记:"]
-      [:> Input {:placeholder "请输入患者住院号/门诊号或扫描登记患者" :style {:width 300 :marginRight 16}}]
-      [:> Button {:type "primary" :style {:marginRight 8}} "批准"]
-      [:> Button {:style {:marginRight 8}} "暂缓"]
-      [:> Button {:danger true} "驳回"]]]
-    [:> Content {:style {:padding "16px 0" :margin 0 :minHeight 280}}
-     [:> Tabs {:defaultActiveKey "1"
-               :items [{:key "1"
-                        :label "门诊麻醉评估"
-                        :children (r/as-element ; Wrap children in r/as-element
-                                   [:> Row {:gutter 16}
-                                    [:> Col {:span 8} ; Adjust span as needed for desired width
-                                     [patient-list]]
-                                    [:> Col {:span 16} ; Adjust span as needed
-                                     [:div {:style {:background "#fff" :padding 24 :height "calc(100vh - 150px)" :overflowY "auto"}} ; Adjust height
-                                      [:> Title {:level 4} "评估结果"]
-                                      [brief-medical-history]
-                                      [physical-examination]
-                                      [lab-tests]]]])}
-                       {:key "2"
-                        :label "门诊麻醉同意"
-                        :children "门诊麻醉同意内容"}]}]]]])
+      [antd/text {:style {:marginRight 8}} "患者登记:"]
+      [antd/input {:placeholder "请输入患者住院号/门诊号或扫描登记患者" :style {:width 300 :marginRight 16}}]
+      [antd/button {:type "primary" :style {:marginRight 8}} "批准"]
+      [antd/button {:style {:marginRight 8}} "暂缓"]
+      [antd/button {:danger true} "驳回"]]]
+    [antd/content {:style {:padding "16px 0" :margin 0 :minHeight 280}}
+     [antd/tabs {:defaultActiveKey "1"
+                 :items [{:key "1"
+                          :label "门诊麻醉评估"
+                          :children (r/as-element
+                                     [antd/row {:gutter 16}
+                                      [antd/col {:span 8}
+                                       [patient-list]]
+                                      [antd/col {:span 16}
+                                       [:div {:style {:background "#fff" :padding 24 :height "calc(100vh - 150px)" :overflowY "auto"}}
+                                        [antd/title {:level 4} "评估结果"]
+                                        [brief-medical-history]
+                                        [physical-examination]
+                                        [lab-tests]]]])}
+                         {:key "2"
+                          :label "门诊麻醉同意"
+                          :children "门诊麻醉同意内容"}]}]]]])
