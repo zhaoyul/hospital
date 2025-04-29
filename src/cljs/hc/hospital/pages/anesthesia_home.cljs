@@ -73,59 +73,114 @@
 
 (defn physical-examination []
   [antd/form {:layout "vertical" :style {:padding-bottom "24px"}}
-   [antd/form-item {:label "一般状况"}
-    [antd/radio-group {}
+   ;; 一般状况 - 使用 button 风格的单选组
+   [:div.form-item-inline {:style {:display "flex" :alignItems "center" :marginBottom "16px"}}
+    [:label {:style {:minWidth "100px" :fontWeight "500" :marginRight "10px"}} "一般状况:"]
+    [antd/radio-group {:buttonStyle "solid" :optionType "button"}
      [antd/radio {:value "bad"} "差"]
      [antd/radio {:value "fair"} "尚可"]
      [antd/radio {:value "average"} "一般"]
      [antd/radio {:value "good"} "好"]]]
-   [antd/row {:gutter 16}
-    [antd/col {:span 8} [antd/form-item {:label "身高"} [antd/input-number {:addonAfter "cm"}]]]
-    [antd/col {:span 8} [antd/form-item {:label "体重"} [antd/input-number {:addonAfter "kg"}]]]
-    [antd/col {:span 8} [antd/form-item {:label "BP"} [antd/input {:addonAfter "mmHg"}]]]
-    [antd/col {:span 8} [antd/form-item {:label "PR"} [antd/input {:addonAfter "次/分"}]]]
-    [antd/col {:span 8} [antd/form-item {:label "RR"} [antd/input {:addonAfter "次/分"}]]]
-    [antd/col {:span 8} [antd/form-item {:label "T"} [antd/input {:addonAfter "°C"}]]]]
-   [antd/form-item {:label "精神行为"}
-    [antd/radio-group {}
+   
+   ;; 身高体重行
+   [:div.form-item-inline {:style {:display "flex" :alignItems "center" :marginBottom "16px"}}
+    [:label {:style {:minWidth "100px" :fontWeight "500" :marginRight "10px"}} "身高:"]
+    [antd/input-number {:style {:width "120px"}}]
+    [:span {:style {:margin "0 10px"}} "cm"]
+    [:label {:style {:minWidth "100px" :fontWeight "500" :marginRight "10px" :marginLeft "30px"}} "体重:"]
+    [antd/input-number {:style {:width "120px"}}]
+    [:span {:style {:margin "0 10px"}} "kg"]]
+   
+   ;; 血压行
+   [:div.form-item-inline {:style {:display "flex" :alignItems "center" :marginBottom "16px"}}
+    [:label {:style {:minWidth "100px" :fontWeight "500" :marginRight "10px"}} "BP:"]
+    [antd/input {:style {:width "120px"}}]
+    [:span {:style {:margin "0 10px"}} "/"]
+    [antd/input {:style {:width "120px"}}]
+    [:span {:style {:margin "0 10px"}} "mmHg"]]
+   
+   ;; PR和RR行
+   [:div.form-item-inline {:style {:display "flex" :alignItems "center" :marginBottom "16px"}}
+    [:label {:style {:minWidth "100px" :fontWeight "500" :marginRight "10px"}} "PR:"]
+    [antd/input {:style {:width "120px"}}]
+    [:span {:style {:margin "0 10px"}} "次/分"]
+    [:label {:style {:minWidth "100px" :fontWeight "500" :marginRight "10px" :marginLeft "30px"}} "RR:"]
+    [antd/input {:style {:width "120px"}}]
+    [:span {:style {:margin "0 10px"}} "次/分"]]
+   
+   ;; 体温行
+   [:div.form-item-inline {:style {:display "flex" :alignItems "center" :marginBottom "16px"}}
+    [:label {:style {:minWidth "100px" :fontWeight "500" :marginRight "10px"}} "T:"]
+    [antd/input {:style {:width "120px"}}]
+    [:span {:style {:margin "0 10px"}} "°C"]]
+   
+   ;; 精神行为 - 使用 button 风格的单选组
+   [:div.form-item-inline {:style {:display "flex" :alignItems "center" :marginBottom "16px"}}
+    [:label {:style {:minWidth "100px" :fontWeight "500" :marginRight "10px"}} "精神行为:"]
+    [antd/radio-group {:buttonStyle "solid" :optionType "button"}
      [antd/radio {:value "normal"} "正常"]
      [antd/radio {:value "drowsy"} "嗜睡"]
      [antd/radio {:value "coma"} "昏迷"]
      [antd/radio {:value "irritable"} "烦躁"]
      [antd/radio {:value "delirium"} "谵妄"]
      [antd/radio {:value "cognitive"} "认知障碍"]]]
-   [antd/form-item {:label "头颈部"}
-    [antd/checkbox-group {}
-     [antd/checkbox {:value "normal"} "无异常"]
-     [antd/checkbox {:value "scar"} "疤痕"]
-     [antd/checkbox {:value "short_neck"} "颈短"]
-     [antd/checkbox {:value "neck_mass"} "颈部肿块"]
-     [antd/checkbox {:value "limited_mobility"} "后仰困难"]]]
-   [antd/form-item {:label "口腔"} [antd/input {:addonAfter "cm" :placeholder "张口"}]]
-   [antd/form-item {:label "Mallampati"}
-    [antd/radio-group {}
+   
+   ;; 头颈部 - 使用 button 风格的单选组
+   [:div.form-item-inline {:style {:display "flex" :alignItems "center" :marginBottom "16px"}}
+    [:label {:style {:minWidth "100px" :fontWeight "500" :marginRight "10px"}} "头颈部:"]
+    [antd/radio-group {:buttonStyle "solid" :optionType "button"}
+     [antd/radio {:value "normal"} "无异常"]
+     [antd/radio {:value "scar"} "疤痕"]
+     [antd/radio {:value "short_neck"} "颈短"]
+     [antd/radio {:value "neck_mass"} "颈部肿块"]
+     [antd/radio {:value "limited_mobility"} "后仰困难"]]]
+   
+   ;; 口腔行
+   [:div.form-item-inline {:style {:display "flex" :alignItems "center" :marginBottom "16px"}}
+    [:label {:style {:minWidth "100px" :fontWeight "500" :marginRight "10px"}} "口腔:"]
+    [:span {:style {:margin "0 10px"}} "张口"]
+    [antd/input {:style {:width "120px"}}]
+    [:span {:style {:margin "0 10px"}} "cm"]]
+   
+   ;; Mallampati - 使用 button 风格的单选组
+   [:div.form-item-inline {:style {:display "flex" :alignItems "center" :marginBottom "16px"}}
+    [:label {:style {:minWidth "100px" :fontWeight "500" :marginRight "10px"}} "Mallampati:"]
+    [antd/radio-group {:buttonStyle "solid" :optionType "button"}
      [antd/radio {:value "I"} "I"]
      [antd/radio {:value "II"} "II"]
      [antd/radio {:value "III"} "III"]
-     [antd/radio {:value "IV"} "IV"]]]
-   [antd/form-item {:label "颏颌距离"} [antd/input-number {:addonAfter "cm"}]]
-   [antd/form-item {:label "相关病史"}
-    [antd/checkbox-group {:style {:width "100%"}}
-     [antd/row
-      [antd/col {:span 8} [antd/checkbox {:value "facial_injury"} "颌面部损伤"]]
-      [antd/col {:span 8} [antd/checkbox {:value "tracheal_deviation"} "气管压迫移位"]]
-      [antd/col {:span 8} [antd/checkbox {:value "sleep_apnea"} "睡眠呼吸暂停综合征"]]
-      [antd/col {:span 8} [antd/checkbox {:value "acromegaly"} "肢端肥大"]]
-      [antd/col {:span 8} [antd/checkbox {:value "congenital_malformation"} "先天畸形"]]
-      [antd/col {:span 8} [antd/checkbox {:value "rheumatoid_arthritis"} "风湿性关节炎"]]
-      [antd/col {:span 24} [antd/checkbox {:value "other"} "其他"] [antd/input {:placeholder "请输入"}]]]]]
-   [antd/form-item {:label "胸"}
-    [antd/radio-group {}
+     [antd/radio {:value "IV"} "IV"]]
+    [:label {:style {:minWidth "100px" :fontWeight "500" :marginRight "10px" :marginLeft "30px"}} "颏颌距离:"]
+    [antd/input {:style {:width "120px"}}]
+    [:span {:style {:margin "0 10px"}} "cm"]]
+   
+   ;; 相关病史 - 使用 checkbox 组
+   [:div.form-item-inline {:style {:marginBottom "16px"}}
+    [:label {:style {:minWidth "100px" :fontWeight "500" :marginRight "10px" :display "block" :marginBottom "10px"}} "相关病史:"]
+    [:div {:style {:display "flex" :flexWrap "wrap"}}
+     [:div {:style {:width "33%" :marginBottom "10px"}}
+      [antd/checkbox {:value "facial_injury"} "颌面部损伤"]]
+     [:div {:style {:width "33%" :marginBottom "10px"}}
+      [antd/checkbox {:value "tracheal_deviation"} "气管压迫移位"]]
+     [:div {:style {:width "33%" :marginBottom "10px"}}
+      [antd/checkbox {:value "sleep_apnea"} "睡眠呼吸暂停综合征"]]
+     [:div {:style {:width "33%" :marginBottom "10px"}}
+      [antd/checkbox {:value "acromegaly"} "肢端肥大"]]
+     [:div {:style {:width "33%" :marginBottom "10px"}}
+      [antd/checkbox {:value "congenital_malformation"} "先天畸形"]]
+     [:div {:style {:width "33%" :marginBottom "10px"}}
+      [antd/checkbox {:value "rheumatoid_arthritis"} "风湿性关节炎"]]
+     [:div {:style {:width "100%" :display "flex" :alignItems "center"}}
+      [antd/checkbox {:value "other"} "其他"]
+      [antd/input {:placeholder "请输入" :style {:width "300px" :marginLeft "10px"}}]]]]
+   
+   ;; 胸 - 使用 button 风格的单选组
+   [:div.form-item-inline {:style {:display "flex" :alignItems "center" :marginBottom "16px"}}
+    [:label {:style {:minWidth "100px" :fontWeight "500" :marginRight "10px"}} "胸:"]
+    [antd/radio-group {:buttonStyle "solid" :optionType "button"}
      [antd/radio {:value "normal"} "正常"]
      [antd/radio {:value "barrel"} "桶状胸"]
-     [antd/radio {:value "pectus_excavatum"} "佝偻胸"]]]
-   ;; ... Add more physical examination fields as needed
-   ])
+     [antd/radio {:value "pectus_excavatum"} "佝偻胸"]]]])
 
 (defn lab-tests []
   [antd/form {:layout "vertical" :style {:padding-bottom "24px"}}
