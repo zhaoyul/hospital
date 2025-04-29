@@ -1,15 +1,15 @@
 (ns hc.hospital.pages.anesthesia-home
   (:require [reagent.core :as r]
-            [reagent.dom :as d]
+            ;; Remove unused reagent.dom
             ["antd" :as antd :refer [Layout  Menu  DatePicker Input Button Tabs Row Col Card Form Radio Checkbox InputNumber Typography]]
-            ["@ant-design/icons" :refer [UserOutlined LaptopOutlined NotificationOutlined SearchOutlined FilterOutlined]]))
+            ;; Remove unused SearchOutlined
+            ["@ant-design/icons" :refer [UserOutlined LaptopOutlined NotificationOutlined FilterOutlined]]))
 
 (def Content (.-Content Layout))
 (def Sider (.-Sider Layout))
 (def Header (.-Header Layout))
 (def Footer (.-Footer Layout))
 (def RangePicker (.-RangePicker DatePicker))
-(def TabPane (.-TabPane Tabs))
 (def Item (.-Item Form))
 (def Title (.-Title Typography))
 (def Text (.-Text Typography))
@@ -55,7 +55,7 @@
                               "default")} (:status item)]]])])
 
 (defn brief-medical-history []
-  [:> Card {:title (r/as-element [:> Title {:level 5} "简要病史"]) :bordered false}
+  [:> Card {:title (r/as-element [:> Title {:level 5} "简要病史"]) :variant "borderless"} ; Use variant instead of bordered
    [:> Form {:layout "vertical"}
     [:> Row {:gutter 16}
      [:> Col {:span 12}
@@ -104,7 +104,7 @@
        [:> Input {:placeholder "请输入"}]]]]]])
 
 (defn physical-examination []
-  [:> Card {:title (r/as-element [:> Title {:level 5} "体格检查"]) :bordered false}
+  [:> Card {:title (r/as-element [:> Title {:level 5} "体格检查"]) :variant "borderless"} ; Use variant instead of bordered
    [:> Form {:layout "vertical"}
     [:> Item {:label "一般状况"}
      [:> RadioGroup {}
@@ -161,7 +161,7 @@
     ]])
 
 (defn lab-tests []
-  [:> Card {:title (r/as-element [:> Title {:level 5} "实验室检查"]) :bordered false}
+  [:> Card {:title (r/as-element [:> Title {:level 5} "实验室检查"]) :variant "borderless"} ; Use variant instead of bordered
    [:> Form {:layout "vertical"}
     [:> Title {:level 5} "血常规"]
     [:> Row {:gutter 16}
@@ -189,14 +189,19 @@
     ;; ... Add more lab test fields as needed
     ]])
 
+(def menu-items
+  [{:key "1" :icon (r/as-element [:> LaptopOutlined]) :label "麻醉管理"}
+   {:key "2" :icon (r/as-element [:> UserOutlined]) :label "患者文书"}
+   {:key "3" :icon (r/as-element [:> NotificationOutlined]) :label "患者签到"}])
+
 (defn anesthesia-home-page []
   [:> Layout {:style {:minHeight "100vh"}}
    [:> Sider {:width 200 :style {:background "#fff"}}
     [:div {:style {:height "32px" :margin "16px" :background "rgba(0, 0, 0, 0.2)"}}] ; Logo placeholder
-    [:> Menu {:mode "inline" :defaultSelectedKeys ["1"] :style {:height "100%" :borderRight 0}}
-     [:> Item {:key "1" :icon [:> LaptopOutlined]} "麻醉管理"]
-     [:> Item {:key "2" :icon [:> UserOutlined]} "患者文书"]
-     [:> Item {:key "3" :icon [:> NotificationOutlined]} "患者签到"]]]
+    [:> Menu {:mode "inline"
+              :defaultSelectedKeys ["1"]
+              :style {:height "100%" :borderRight 0}
+              :items menu-items}]]
    [:> Layout {:style {:padding "0 24px 24px"}}
     [:> Header {:style {:background "#fff" :padding "0 16px" :display "flex" :alignItems "center" :justifyContent "space-between" :borderBottom "1px solid #f0f0f0"}}
      [:div {:style {:display "flex" :alignItems "center"}}
@@ -211,16 +216,19 @@
       [:> Button {:style {:marginRight 8}} "暂缓"]
       [:> Button {:danger true} "驳回"]]]
     [:> Content {:style {:padding "16px 0" :margin 0 :minHeight 280}}
-     [:> Tabs {:defaultActiveKey "1"}
-      [:> TabPane {:tab "门诊麻醉评估" :key "1"}
-       [:> Row {:gutter 16}
-        [:> Col {:span 8} ; Adjust span as needed for desired width
-         [patient-list]]
-        [:> Col {:span 16} ; Adjust span as needed
-         [:div {:style {:background "#fff" :padding 24 :height "calc(100vh - 150px)" :overflowY "auto"}} ; Adjust height
-          [:> Title {:level 4} "评估结果"]
-          [brief-medical-history]
-          [physical-examination]
-          [lab-tests]]]]]
-      [:> TabPane {:tab "门诊麻醉同意" :key "2"}
-       "门诊麻醉同意内容"]]]]])
+     [:> Tabs {:defaultActiveKey "1"
+               :items [{:key "1"
+                        :label "门诊麻醉评估"
+                        :children (r/as-element ; Wrap children in r/as-element
+                                   [:> Row {:gutter 16}
+                                    [:> Col {:span 8} ; Adjust span as needed for desired width
+                                     [patient-list]]
+                                    [:> Col {:span 16} ; Adjust span as needed
+                                     [:div {:style {:background "#fff" :padding 24 :height "calc(100vh - 150px)" :overflowY "auto"}} ; Adjust height
+                                      [:> Title {:level 4} "评估结果"]
+                                      [brief-medical-history]
+                                      [physical-examination]
+                                      [lab-tests]]]])}
+                       {:key "2"
+                        :label "门诊麻醉同意"
+                        :children "门诊麻醉同意内容"}]}]]]])
