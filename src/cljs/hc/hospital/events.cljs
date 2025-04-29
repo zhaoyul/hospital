@@ -28,10 +28,25 @@
    (assoc-in db [:anesthesia :ui :active-assessment-tab] tab-key)))
 
 ;; 选择患者
-(rf/reg-event-db
+(rf/reg-event-fx
  ::select-patient
- (fn [db [_ patient-id]]
-   (assoc-in db [:anesthesia :current-patient-id] patient-id)))
+ (fn [{:keys [db]} [_ patient-id]]
+   (let [current-patient-id (get-in db [:anesthesia :current-patient-id])
+         ;; Get default assessment values from db/default-db
+         default-assessment (get-in db/default-db [:anesthesia :assessment])
+         ;; Only update if the patient ID actually changed
+         patient-changed? (not= current-patient-id patient-id)]
+     (if patient-changed?
+       ;; If patient changed, update ID and reset assessment data
+       {:db (-> db
+                (assoc-in [:anesthesia :current-patient-id] patient-id)
+                ;; Reset assessment data to defaults
+                (assoc-in [:anesthesia :assessment] default-assessment))
+        ;; You might want to load patient-specific data here in a real application
+        :dispatch [:show-message {:type "info"
+                                 :content (str "已选择患者 " patient-id ", 数据已更新")}]}
+       ;; If same patient clicked again, just return the db unchanged
+       {:db db}))))
 
 ;; 搜索患者
 (rf/reg-event-db
@@ -107,42 +122,42 @@
 
 ;; 批准患者
 (rf/reg-event-fx
- ::approve-patient
- (fn [{:keys [db]} _]
-   (let [current-id (get-in db [:anesthesia :current-patient-id])]
-     (if current-id
-       {:db (assoc-in db [:anesthesia :patients] 
-                    (map #(if (= (:key %) current-id) 
-                            (assoc % :status "已批准") 
-                            %) 
-                         (get-in db [:anesthesia :patients])))
-        :dispatch [:show-message {:type "success" :content "患者已批准"}]}
-       {:dispatch [:show-message {:type "warning" :content "请先选择一名患者"}]}))))
+  ::approve-patient
+  (fn [{:keys [db]} _]
+    (let [current-id (get-in db [:anesthesia :current-patient-id])]
+      (if current-id
+        {:db (assoc-in db [:anesthesia :patients]
+                       (map #(if (= (:key %) current-id)
+                               (assoc % :status "已批准")
+                               %)
+                            (get-in db [:anesthesia :patients])))
+         :dispatch [:show-message {:type "success" :content "患者已批准"}]}
+        {:dispatch [:show-message {:type "warning" :content "请先选择一名患者"}]}))))
 
 ;; 暂缓患者
 (rf/reg-event-fx
- ::postpone-patient
- (fn [{:keys [db]} _]
-   (let [current-id (get-in db [:anesthesia :current-patient-id])]
-     (if current-id
-       {:db (assoc-in db [:anesthesia :patients] 
-                    (map #(if (= (:key %) current-id) 
-                            (assoc % :status "已暂缓") 
-                            %) 
-                         (get-in db [:anesthesia :patients])))
-        :dispatch [:show-message {:type "info" :content "患者已暂缓"}]}
-       {:dispatch [:show-message {:type "warning" :content "请先选择一名患者"}]}))))
+  ::postpone-patient
+  (fn [{:keys [db]} _]
+    (let [current-id (get-in db [:anesthesia :current-patient-id])]
+      (if current-id
+        {:db (assoc-in db [:anesthesia :patients]
+                       (map #(if (= (:key %) current-id)
+                               (assoc % :status "已暂缓")
+                               %)
+                            (get-in db [:anesthesia :patients])))
+         :dispatch [:show-message {:type "info" :content "患者已暂缓"}]}
+        {:dispatch [:show-message {:type "warning" :content "请先选择一名患者"}]}))))
 
 ;; 驳回患者
 (rf/reg-event-fx
- ::reject-patient
- (fn [{:keys [db]} _]
-   (let [current-id (get-in db [:anesthesia :current-patient-id])]
-     (if current-id
-       {:db (assoc-in db [:anesthesia :patients] 
-                    (map #(if (= (:key %) current-id) 
-                            (assoc % :status "已驳回") 
-                            %) 
-                         (get-in db [:anesthesia :patients])))
-        :dispatch [:show-message {:type "error" :content "患者已驳回"}]}
-       {:dispatch [:show-message {:type "warning" :content "请先选择一名患者"}]}))))
+  ::reject-patient
+  (fn [{:keys [db]} _]
+    (let [current-id (get-in db [:anesthesia :current-patient-id])]
+      (if current-id
+        {:db (assoc-in db [:anesthesia :patients]
+                       (map #(if (= (:key %) current-id)
+                               (assoc % :status "已驳回")
+                               %)
+                            (get-in db [:anesthesia :patients])))
+         :dispatch [:show-message {:type "error" :content "患者已驳回"}]}
+        {:dispatch [:show-message {:type "warning" :content "请先选择一名患者"}]}))))
