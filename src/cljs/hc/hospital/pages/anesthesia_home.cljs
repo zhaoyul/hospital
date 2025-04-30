@@ -79,7 +79,7 @@
                                   (rf/dispatch [::events/update-physical-examination all-values]))
                 :style {:padding-bottom "24px"}}
 
-           ;; 使用通用组件
+     ;; 使用通用组件
      [form-comp/radio-button-group
       {:label "一般状况"
        :name :general-condition
@@ -88,36 +88,36 @@
                  {:value "average" :label "一般"}
                  {:value "good" :label "好"}]}]
 
-           ;; 身高体重
+     ;; 身高体重
      [antd/row {:gutter 16}
       [antd/col {:span 12}
        [antd/form-item {:name :height :label "身高:" :labelCol {:span 8} :wrapperCol {:span 16}}
-        [antd/input-number {:style {:width "100%"} :addonAfter "cm"}]]]
+        [form-comp/number-input-with-unit {:style {:width "100%"} :unit "cm"}]]]
       [antd/col {:span 12}
        [antd/form-item {:name :weight :label "体重:" :labelCol {:span 8} :wrapperCol {:span 16}}
-        [antd/input-number {:style {:width "100%"} :addonAfter "kg"}]]]]
+        [form-comp/number-input-with-unit {:style {:width "100%"} :unit "kg"}]]]]
 
-           ;; 血压
+     ;; 血压
      [antd/form-item {:label "BP:"}
       [antd/space-compact {:style {:width "100%"}}
        [antd/form-item {:name [:bp :systolic] :noStyle true}
         [antd/input {:style {:width "calc(50% - 15px)"} :type "number"}]]
        [:span {:style {:display "inline-block" :width "30px" :lineHeight "32px" :textAlign "center"}} "/"]
        [antd/form-item {:name [:bp :diastolic] :noStyle true}
-        [antd/input {:style {:width "calc(50% - 15px)"} :type "number" :addonAfter "mmHg"}]]]]
+        [antd/input {:style {:width "calc(50% - 15px)"} :type "number" :unit "mmHg"}]]]]
 
-           ;; 心率和呼吸
+     ;; 心率和呼吸
      [antd/row {:gutter 16}
       [antd/col {:span 12}
        [antd/form-item {:name :heart-rate :label "PR" :labelCol {:span 8} :wrapperCol {:span 16}}
-        [antd/input-number {:style {:width "100%"} :addonAfter "次/分"}]]]
+        [form-comp/number-input-with-unit {:style {:width "100%"} :unit "次/分"}]]]
       [antd/col {:span 12}
        [antd/form-item {:name :respiratory-rate :label "RR" :labelCol {:span 8} :wrapperCol {:span 16}}
-        [antd/input-number {:style {:width "100%"} :addonAfter "次/分"}]]]]
+        [form-comp/number-input-with-unit {:style {:width "100%"} :unit "次/分"}]]]]
 
      ;; 体温
      [antd/form-item {:name :temperature :label "T"}
-      [antd/input-number {:style {:width "100%"} :step "0.1" :addonAfter "°C"}]]
+      [form-comp/number-input-with-unit {:style {:width "100%"} :step "0.1" :unit "°C"}]]
 
      ;; 精神状态
      [form-comp/radio-button-group
@@ -142,7 +142,7 @@
 
      ;; 张口
      [antd/form-item {:name :mouth-opening :label "口腔: 张口"}
-      [antd/input-number {:style {:width "100%"} :step "0.1" :addonAfter "cm"}]]
+      [form-comp/number-input-with-unit {:style {:width "100%"} :step "0.1" :unit "cm"}]]
 
            ;; Mallampati 和 甲颌间距
      [antd/row {:gutter 16}
@@ -157,7 +157,7 @@
                     {:value "IV" :label "IV"}]}]]]
       [antd/col {:span 12}
        [antd/form-item {:name :thyromental-distance :label "颏颌距离" :labelCol {:span 8} :wrapperCol {:span 16}}
-        [antd/input-number {:style {:width "100%"} :step "0.1" :addonAfter "cm"}]]]]
+        [form-comp/number-input-with-unit {:style {:width "100%"} :step "0.1" :unit "cm"}]]]]
 
      ;; 相关病史
      [antd/form-item {:label "相关病史:"}
@@ -176,7 +176,9 @@
            (let [other-checked (.getFieldValue form-instance [:related-history :other-checkbox])]
              [antd/input {:placeholder "请输入"
                           :style {:width "300px" :marginLeft "10px"}
-                          :disabled (not other-checked)}]))]]]]
+                          :disabled (not other-checked)
+                          :maxLength 100
+                          :showCount true}]))]]]]
 
      ;; 胸部
      [form-comp/radio-button-group
@@ -271,12 +273,10 @@
      [form-comp/section-title {:title "医学影像："}]
 
      ;; 心电图
-     [antd/form-item {:name :ecg :label "心电图:"}
-      [antd/input {:style {:width "100%"}}]]
+     [form-comp/limited-text-input {:name :ecg :label "心电图" :placeholder "请输入心电图检查结果"}]
 
      ;; 胸片
-     [antd/form-item {:name :chest-xray :label "胸片:"}
-      [antd/input {:style {:width "100%"}}]]]))
+     [form-comp/limited-text-input {:name :chest-xray :label "胸片" :placeholder "请输入胸片检查结果"}]]))
 
 (defn assessment-result []
   [antd/card {:variant "borderless" :style {:height "calc(100vh - 180px)" :overflowY "auto"}}

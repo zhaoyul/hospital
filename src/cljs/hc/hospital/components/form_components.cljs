@@ -11,7 +11,7 @@
   (let [switch-value* (r/atom false)]
     (fn []
       [antd/row {:gutter 8 :wrap false :align "middle"}
-       [antd/col {:style {:whiteSpace "nowrap" 
+       [antd/col {:style {:whiteSpace "nowrap"
                           :width (or label-width "100px")
                           :textAlign "left"
                           :paddingRight "8px"}}
@@ -63,7 +63,10 @@
 (defn number-input-with-unit
   [{:keys [label name step unit]}]
   [antd/form-item {:name name :label (str label ":")}
-   [antd/input {:type "number" :step (or step "1") :addonAfter unit}]])
+   [antd/input {:type "number"
+                :step (or step "1")
+                :addonAfter unit
+                :style {:width "200px"}}]])
 
 ;; 创建一个带标题的部分组件
 (defn section-title [{:keys [title margin-top]}]
@@ -90,3 +93,12 @@
                                   (rf/dispatch [update-event all-values]))
                 :style {:paddingBottom "24px"}}
      form-content]))
+
+;; 创建一个限制长度的文本输入组件
+(defn limited-text-input
+  [{:keys [label name max-length placeholder style addonAfter]}]
+  [antd/form-item {:name name :label (when label (str label ":"))}
+   [antd/input {:placeholder (or placeholder "请输入")
+                :maxLength (or max-length 100)
+                :addonAfter addonAfter
+                :style (merge {:width "100%"} style)}]])
