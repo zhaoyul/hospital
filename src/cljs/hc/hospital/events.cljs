@@ -1,6 +1,7 @@
 ;; filepath: /Users/a123/sandbox/rc/hospital/src/cljs/hc/hospital/events.cljs
 (ns hc.hospital.events
   (:require [re-frame.core :as rf]
+            [taoensso.timbre :as timbre]
             [hc.hospital.db :as db]
             [cljs.spec.alpha :as s]
             [clojure.string :as string]
@@ -75,7 +76,8 @@
 (defn- parse-form-values [values]
   ;; Helper to potentially parse/clean form values if needed
   ;; For now, just handles the checkbox group structure
-  (cond-> values
+
+  (cond-> (timbre/spy :info values)
     (get-in values [:personal-history :smoking-drinking])
     (assoc-in [:personal-history :smoking] (boolean (some #{"smoke"} (get-in values [:personal-history :smoking-drinking]))))
     (get-in values [:personal-history :smoking-drinking])
@@ -131,19 +133,18 @@
                                (if (:other-checkbox rh)
                                  (dissoc rh :other-checkbox) ; Keep :other if checked
                                  (assoc (dissoc rh :other-checkbox) :other false)))) ; Set :other to false if unchecked
-
     ))
 
 (rf/reg-event-db
  ::update-brief-medical-history
  (fn [db [_ form-values]]
-   (let [parsed-values (parse-form-values form-values)]
+   (let [parsed-values (parse-form-values (js->clj form-values))]
      (update-in db [:assessment-data :brief-medical-history] merge parsed-values))))
 
 (rf/reg-event-db
  ::update-physical-examination
  (fn [db [_ form-values]]
-   (let [parsed-values (parse-form-values form-values)]
+   (let [parsed-values (parse-form-values (js->clj form-values))]
      (update-in db [:assessment-data :physical-examination] merge parsed-values))))
 
 (rf/reg-event-db
