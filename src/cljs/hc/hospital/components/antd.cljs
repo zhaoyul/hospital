@@ -1,6 +1,8 @@
 (ns hc.hospital.components.antd
   (:require [reagent.core :as r]
-            ["antd" :refer [Layout Menu DatePicker Input InputGroup Button Tabs Row Col Card Form Radio Checkbox InputNumber Typography Tag]]
+            ["antd" :refer [Layout Menu DatePicker Input InputGroup Button
+                            Switch
+                            Tabs Row Col Card Form Radio Checkbox InputNumber Typography Tag]]
             ["@ant-design/icons" :as icons]))
 
 ;; Layout Components
@@ -32,6 +34,8 @@
 ;; Data Display Components
 (def card (r/adapt-react-class Card))
 (def tag (r/adapt-react-class Tag))
+
+(def switch (r/adapt-react-class Switch))
 
 ;; Typography
 (def typography (r/adapt-react-class Typography))

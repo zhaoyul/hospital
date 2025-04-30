@@ -77,7 +77,7 @@
   ;; Helper to potentially parse/clean form values if needed
   ;; For now, just handles the checkbox group structure
 
-  (cond-> (timbre/spy :info values)
+  (cond-> values
     (get-in values [:personal-history :smoking-drinking])
     (assoc-in [:personal-history :smoking] (boolean (some #{"smoke"} (get-in values [:personal-history :smoking-drinking]))))
     (get-in values [:personal-history :smoking-drinking])
