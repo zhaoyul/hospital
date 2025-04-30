@@ -36,119 +36,153 @@
                              "default")} (:status item)]]])]))
 
 (defn brief-medical-history []
-  (let [medical-history @(rf/subscribe [::subs/brief-medical-history])
-        [form] ((.-useForm Form))] ; Get form instance
+  (let [medical-history @(rf/subscribe [::subs/brief-medical-history]) ; Assuming subscription returns the new structure
+        [form] ((.-useForm Form))]
     [antd/form {:form form
                 :layout "vertical"
                 :initialValues medical-history ; Set initial values from subscription
-                :onValuesChange (fn [changed-values all-values]
+                :onValuesChange (fn [_changed-values all-values] ; Use _ for unused param
                                   ;; Dispatch one event with all form values
                                   (rf/dispatch [::events/update-brief-medical-history all-values]))
-                :style {:padding-bottom "24px"}}
-     ;; Use Form.Item for each field
-     [antd/form-item {:name :past-history-radio ; Use a temporary name for the radio
-                      :label "既往史"
-                      :style {:marginBottom "0px"}} ; Adjust style as needed
-      [antd/radio-group {}
-       [antd/radio {:value "none"} "无"]
-       [antd/radio {:value "yes"} "有"]]]
-     [antd/form-item {:name :past-history-desc ; Use a separate name for description
-                      :noStyle true ; Hide label/styling for this item
-                      :dependencies [:past-history-radio]} ; Make dependent on radio value
-      (fn [form-instance] ; Function as child to access form state
-        (let [radio-value (.getFieldValue form-instance :past-history-radio)]
-          [antd/input {:placeholder "请输入描述内容"
-                       :disabled (= radio-value "none")
-                       :style {:marginTop "8px" :marginBottom "16px"}}]))]
+                :style {:paddingBottom "24px"}}
 
-     ;; Repeat similar pattern for other radio-with-input fields
-     [antd/form-item {:name :allergic-history-radio
-                      :label "过敏史"
+     ;; 既往史 (Past History)
+     [antd/form-item {:label "既往史:"
                       :style {:marginBottom "0px"}}
-      [antd/radio-group {}
-       [antd/radio {:value "none"} "无"]
-       [antd/radio {:value "yes"} "有"]]]
-     [antd/form-item {:name :allergic-history-desc
-                      :noStyle true
-                      :dependencies [:allergic-history-radio]}
-      (fn [form-instance]
-        (let [radio-value (.getFieldValue form-instance :allergic-history-radio)]
-          [antd/input {:placeholder "请输入描述内容"
-                       :disabled (= radio-value "none")
-                       :style {:marginTop "8px" :marginBottom "16px"}}]))]
+      [antd/row {:gutter 8 :wrap false}
+       [antd/col
+        [antd/form-item {:name :past-history-radio :noStyle true} ; Radio group for selection
+         [antd/radio-group {}
+          [antd/radio {:value "none"} "无"]
+          [antd/radio {:value "yes"} "有"]]]]
+       [antd/col {:flex "auto"}
+        [antd/form-item {:name :past-history-desc ; Input for description
+                         :noStyle true
+                         :dependencies [:past-history-radio]} ; Depends on radio value
+         (fn [form-instance]
+           (let [radio-value (.getFieldValue form-instance :past-history-radio)]
+             [antd/input {:placeholder "请输入"
+                          :disabled (not= radio-value "yes") ; Disable if not "yes"
+                          :style {:width "100%"}}]))]]]]
 
-     [antd/form-item {:name :surgery-anesthesia-history-radio
-                      :label "手术麻醉史"
+     ;; 过敏史 (Allergic History) - Repeat pattern
+     [antd/form-item {:label "过敏史:"
                       :style {:marginBottom "0px"}}
-      [antd/radio-group {}
-       [antd/radio {:value "none"} "无"]
-       [antd/radio {:value "yes"} "有"]]]
-     [antd/form-item {:name :surgery-anesthesia-history-desc
-                      :noStyle true
-                      :dependencies [:surgery-anesthesia-history-radio]}
-      (fn [form-instance]
-        (let [radio-value (.getFieldValue form-instance :surgery-anesthesia-history-radio)]
-          [antd/input {:placeholder "请输入描述内容"
-                       :disabled (= radio-value "none")
-                       :style {:marginTop "8px" :marginBottom "16px"}}]))]
+      [antd/row {:gutter 8 :wrap false}
+       [antd/col
+        [antd/form-item {:name :allergic-history-radio :noStyle true}
+         [antd/radio-group {}
+          [antd/radio {:value "none"} "无"]
+          [antd/radio {:value "yes"} "有"]]]]
+       [antd/col {:flex "auto"}
+        [antd/form-item {:name :allergic-history-desc
+                         :noStyle true
+                         :dependencies [:allergic-history-radio]}
+         (fn [form-instance]
+           (let [radio-value (.getFieldValue form-instance :allergic-history-radio)]
+             [antd/input {:placeholder "请输入"
+                          :disabled (not= radio-value "yes")
+                          :style {:width "100%"}}]))]]]]
 
-     [antd/form-item {:name :pregnancy-radio
-                      :label "怀孕"
+     ;; 手术麻醉史 (Surgery/Anesthesia History) - Repeat pattern
+     [antd/form-item {:label "手术麻醉史:"
                       :style {:marginBottom "0px"}}
-      [antd/radio-group {}
-       [antd/radio {:value "none"} "无"]
-       [antd/radio {:value "yes"} "有"]]]
-     [antd/form-item {:name :pregnancy-desc
-                      :noStyle true
-                      :dependencies [:pregnancy-radio]}
-      (fn [form-instance]
-        (let [radio-value (.getFieldValue form-instance :pregnancy-radio)]
-          [antd/input {:placeholder "请输入描述内容"
-                       :disabled (= radio-value "none")
-                       :style {:marginTop "8px" :marginBottom "16px"}}]))]
+      [antd/row {:gutter 8 :wrap false}
+       [antd/col
+        [antd/form-item {:name :surgery-anesthesia-history-radio :noStyle true}
+         [antd/radio-group {}
+          [antd/radio {:value "none"} "无"]
+          [antd/radio {:value "yes"} "有"]]]]
+       [antd/col {:flex "auto"}
+        [antd/form-item {:name :surgery-anesthesia-history-desc
+                         :noStyle true
+                         :dependencies [:surgery-anesthesia-history-radio]}
+         (fn [form-instance]
+           (let [radio-value (.getFieldValue form-instance :surgery-anesthesia-history-radio)]
+             [antd/input {:placeholder "请输入"
+                          :disabled (not= radio-value "yes")
+                          :style {:width "100%"}}]))]]]]
 
-     [antd/form-item {:name :blood-transfusion-history-radio
-                      :label "输血史"
+     ;; 怀孕 (Pregnancy) - Repeat pattern
+     [antd/form-item {:label "怀孕:"
                       :style {:marginBottom "0px"}}
-      [antd/radio-group {}
-       [antd/radio {:value "none"} "无"]
-       [antd/radio {:value "yes"} "有"]]]
-     [antd/form-item {:name :blood-transfusion-history-desc
-                      :noStyle true
-                      :dependencies [:blood-transfusion-history-radio]}
-      (fn [form-instance]
-        (let [radio-value (.getFieldValue form-instance :blood-transfusion-history-radio)]
-          [antd/input {:placeholder "请输入描述内容"
-                       :disabled (= radio-value "none")
-                       :style {:marginTop "8px" :marginBottom "16px"}}]))]
+      [antd/row {:gutter 8 :wrap false}
+       [antd/col
+        [antd/form-item {:name :pregnancy-radio :noStyle true}
+         [antd/radio-group {}
+          [antd/radio {:value "none"} "无"]
+          [antd/radio {:value "yes"} "有"]]]]
+       [antd/col {:flex "auto"}
+        [antd/form-item {:name :pregnancy-desc
+                         :noStyle true
+                         :dependencies [:pregnancy-radio]}
+         (fn [form-instance]
+           (let [radio-value (.getFieldValue form-instance :pregnancy-radio)]
+             [antd/input {:placeholder "请输入"
+                          :disabled (not= radio-value "yes")
+                          :style {:width "100%"}}]))]]]]
 
-     [antd/form-item {:name :menstrual-period-radio
-                      :label "月经期"
+     ;; 输血史 (Blood Transfusion History) - Repeat pattern
+     [antd/form-item {:label "输血史:"
                       :style {:marginBottom "0px"}}
-      [antd/radio-group {}
-       [antd/radio {:value "none"} "无"]
-       [antd/radio {:value "yes"} "有"]]]
-     [antd/form-item {:name :menstrual-period-desc
-                      :noStyle true
-                      :dependencies [:menstrual-period-radio]}
-      (fn [form-instance]
-        (let [radio-value (.getFieldValue form-instance :menstrual-period-radio)]
-          [antd/input {:placeholder "请输入描述内容"
-                       :disabled (= radio-value "none")
-                       :style {:marginTop "8px" :marginBottom "16px"}}]))]
+      [antd/row {:gutter 8 :wrap false}
+       [antd/col
+        [antd/form-item {:name :blood-transfusion-history-radio :noStyle true}
+         [antd/radio-group {}
+          [antd/radio {:value "none"} "无"]
+          [antd/radio {:value "yes"} "有"]]]]
+       [antd/col {:flex "auto"}
+        [antd/form-item {:name :blood-transfusion-history-desc
+                         :noStyle true
+                         :dependencies [:blood-transfusion-history-radio]}
+         (fn [form-instance]
+           (let [radio-value (.getFieldValue form-instance :blood-transfusion-history-radio)]
+             [antd/input {:placeholder "请输入"
+                          :disabled (not= radio-value "yes")
+                          :style {:width "100%"}}]))]]]]
 
-     ;; Personal History Checkbox
-     [antd/form-item {:name [:personal-history :smoking-drinking] ; Use path for name
-                      :label "个人史"}
+     ;; 月经期 (Menstrual Period) - Repeat pattern
+     [antd/form-item {:label "月经期:"
+                      :style {:marginBottom "0px"}}
+      [antd/row {:gutter 8 :wrap false}
+       [antd/col
+        [antd/form-item {:name :menstrual-period-radio :noStyle true}
+         [antd/radio-group {}
+          [antd/radio {:value "none"} "无"]
+          [antd/radio {:value "yes"} "有"]]]]
+       [antd/col {:flex "auto"}
+        [antd/form-item {:name :menstrual-period-desc
+                         :noStyle true
+                         :dependencies [:menstrual-period-radio]}
+         (fn [form-instance]
+           (let [radio-value (.getFieldValue form-instance :menstrual-period-radio)]
+             [antd/input {:placeholder "请输入"
+                          :disabled (not= radio-value "yes")
+                          :style {:width "100%"}}]))]]]]
+
+     ;; 个人史 (Personal History) - Checkbox Group
+     [antd/form-item {:name :personal-history ; Use a single name for the checkbox group value (will be an array)
+                      :label "个人史:"}
       [antd/checkbox-group {}
        [antd/checkbox {:value "smoke"} "烟"]
        [antd/checkbox {:value "drink"} "酒"]]]
 
-     ;; Other Description Input
-     [antd/form-item {:name :other-description
-                      :label "其他"}
-      [antd/input {:placeholder "请输入"
-                   :style {:flex "1"}}]]]))
+     ;; 其他 (Other) - Checkbox and Input
+     [antd/form-item {:label "其他:"
+                      :style {:marginBottom "0px"}}
+      [antd/row {:gutter 8 :wrap false}
+       [antd/col
+        [antd/form-item {:name :other-checkbox :valuePropName "checked" :noStyle true} ; Checkbox to control input
+         [antd/checkbox "其他"]]]
+       [antd/col {:flex "auto"}
+        [antd/form-item {:name :other-desc ; Input for description
+                         :noStyle true
+                         :dependencies [:other-checkbox]} ; Depends on checkbox state
+         (fn [form-instance]
+           (let [checked? (.getFieldValue form-instance :other-checkbox)]
+             [antd/input {:placeholder "请输入"
+                          :disabled (not checked?) ; Disable if checkbox is not checked
+                          :style {:width "100%"}}]))]]]]]))
 
 (defn physical-examination []
   (let [exam-data @(rf/subscribe [::subs/physical-examination])
