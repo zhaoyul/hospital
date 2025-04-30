@@ -1,7 +1,7 @@
 (ns hc.hospital.components.antd
   (:require [reagent.core :as r]
             ["antd" :refer [Layout Menu DatePicker Input InputGroup Button
-                            Switch
+                            Switch Space
                             Tabs Row Col Card Form Radio Checkbox InputNumber Typography Tag]]
             ["@ant-design/icons" :as icons]))
 
@@ -21,6 +21,8 @@
 (def input (r/adapt-react-class Input))
 (def input-group (r/adapt-react-class (.-Group Input)))
 (def input-search (r/adapt-react-class (.-Search Input)))
+(def space (r/adapt-react-class Space))
+(def space-compact (r/adapt-react-class (.-Compact Space)))
 (def button (r/adapt-react-class Button))
 (def tabs (r/adapt-react-class Tabs))
 (def form (r/adapt-react-class Form))

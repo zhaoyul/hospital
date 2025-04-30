@@ -71,13 +71,15 @@
   (let [exam-data @(rf/subscribe [::subs/physical-examination])
         [form] ((.-useForm Form))]
     [antd/form {:form form
-                :layout "vertical"
+                :layout "horizontal" ;; Changed from vertical to horizontal
+                :labelCol {:span 6}  ;; Controls width of label
+                :wrapperCol {:span 18} ;; Controls width of form controls
                 :initialValues exam-data
                 :onValuesChange (fn [_changed-values all-values]
                                   (rf/dispatch [::events/update-physical-examination all-values]))
                 :style {:padding-bottom "24px"}}
 
-     ;; 使用通用组件
+           ;; 使用通用组件
      [form-comp/radio-button-group
       {:label "一般状况"
        :name :general-condition
@@ -86,31 +88,36 @@
                  {:value "average" :label "一般"}
                  {:value "good" :label "好"}]}]
 
-     ;; 身高体重 - 使用通用组件
-     [form-comp/two-column-row
-      {:left-item
-       [antd/form-item {:name :height :label "身高:"}
-        [antd/input-number {:style {:width "100%"} :addonAfter "cm"}]]
-       :right-item
-       [antd/form-item {:name :weight :label "体重:"}
-        [antd/input-number {:style {:width "100%"} :addonAfter "kg"}]]}]
+           ;; 身高体重
+     [antd/row {:gutter 16}
+      [antd/col {:span 12}
+       [antd/form-item {:name :height :label "身高:" :labelCol {:span 8} :wrapperCol {:span 16}}
+        [antd/input-number {:style {:width "100%"} :addonAfter "cm"}]]]
+      [antd/col {:span 12}
+       [antd/form-item {:name :weight :label "体重:" :labelCol {:span 8} :wrapperCol {:span 16}}
+        [antd/input-number {:style {:width "100%"} :addonAfter "kg"}]]]]
 
-     ;; 血压
+           ;; 血压
      [antd/form-item {:label "BP:"}
-      [antd/input-group {:compact true}
+      [antd/space-compact {:style {:width "100%"}}
        [antd/form-item {:name [:bp :systolic] :noStyle true}
         [antd/input {:style {:width "calc(50% - 15px)"} :type "number"}]]
        [:span {:style {:display "inline-block" :width "30px" :lineHeight "32px" :textAlign "center"}} "/"]
        [antd/form-item {:name [:bp :diastolic] :noStyle true}
         [antd/input {:style {:width "calc(50% - 15px)"} :type "number" :addonAfter "mmHg"}]]]]
 
-     ;; 心率和呼吸
-     [form-comp/two-column-row
-      {:left-item [form-comp/number-input-with-unit {:label "PR" :name :heart-rate :unit "次/分"}]
-       :right-item [form-comp/number-input-with-unit {:label "RR" :name :respiratory-rate :unit "次/分"}]}]
+           ;; 心率和呼吸
+     [antd/row {:gutter 16}
+      [antd/col {:span 12}
+       [antd/form-item {:name :heart-rate :label "PR" :labelCol {:span 8} :wrapperCol {:span 16}}
+        [antd/input-number {:style {:width "100%"} :addonAfter "次/分"}]]]
+      [antd/col {:span 12}
+       [antd/form-item {:name :respiratory-rate :label "RR" :labelCol {:span 8} :wrapperCol {:span 16}}
+        [antd/input-number {:style {:width "100%"} :addonAfter "次/分"}]]]]
 
      ;; 体温
-     [form-comp/number-input-with-unit {:label "T" :name :temperature :step "0.1" :unit "°C"}]
+     [antd/form-item {:name :temperature :label "T"}
+      [antd/input-number {:style {:width "100%"} :step "0.1" :addonAfter "°C"}]]
 
      ;; 精神状态
      [form-comp/radio-button-group
@@ -134,37 +141,42 @@
                  {:value "limited_mobility" :label "后仰困难"}]}]
 
      ;; 张口
-     [form-comp/number-input-with-unit {:label "口腔: 张口" :name :mouth-opening :step "0.1" :unit "cm"}]
+     [antd/form-item {:name :mouth-opening :label "口腔: 张口"}
+      [antd/input-number {:style {:width "100%"} :step "0.1" :addonAfter "cm"}]]
 
-     ;; Mallampati 和 甲颌间距
-     [form-comp/two-column-row
-      {:left-item
-       [form-comp/radio-button-group
-        {:label "Mallampati"
-         :name :mallampati-score
-         :options [{:value "I" :label "I"}
-                   {:value "II" :label "II"}
-                   {:value "III" :label "III"}
-                   {:value "IV" :label "IV"}]}]
-       :right-item
-       [form-comp/number-input-with-unit {:label "颏颌距离" :name :thyromental-distance :step "0.1" :unit "cm"}]}]
+           ;; Mallampati 和 甲颌间距
+     [antd/row {:gutter 16}
+      [antd/col {:span 12}
+       [antd/form-item {:name :mallampati-score :label "Mallampati" :labelCol {:span 8} :wrapperCol {:span 16}}
+        [form-comp/radio-button-group
+         {:label "Mallampati"
+          :name :mallampati-score
+          :options [{:value "I" :label "I"}
+                    {:value "II" :label "II"}
+                    {:value "III" :label "III"}
+                    {:value "IV" :label "IV"}]}]]]
+      [antd/col {:span 12}
+       [antd/form-item {:name :thyromental-distance :label "颏颌距离" :labelCol {:span 8} :wrapperCol {:span 16}}
+        [antd/input-number {:style {:width "100%"} :step "0.1" :addonAfter "cm"}]]]]
 
      ;; 相关病史
      [antd/form-item {:label "相关病史:"}
-      [antd/form-item {:name [:related-history :difficult-airway] :valuePropName "checked" :noStyle true}
-       [antd/checkbox "困难气道史"]]
-      [antd/form-item {:name [:related-history :postoperative-nausea] :valuePropName "checked" :noStyle true}
-       [antd/checkbox "术后恶心呕吐史"]]
-      [antd/form-item {:name [:related-history :malignant-hyperthermia] :valuePropName "checked" :noStyle true}
-       [antd/checkbox "恶性高热史"]]
-      [antd/form-item {:name [:related-history :other-checkbox] :valuePropName "checked" :noStyle true}
-       [antd/checkbox "其他"]]
-      [antd/form-item {:name [:related-history :other] :noStyle true :dependencies [[:related-history :other-checkbox]]}
-       (fn [form-instance]
-         (let [other-checked (.getFieldValue form-instance [:related-history :other-checkbox])]
-           [antd/input {:placeholder "请输入"
-                        :style {:width "300px" :marginLeft "10px"}
-                        :disabled (not other-checked)}]))]]
+      [antd/space {:direction "vertical"}
+       [antd/form-item {:name [:related-history :difficult-airway] :valuePropName "checked" :noStyle true}
+        [antd/checkbox "困难气道史"]]
+       [antd/form-item {:name [:related-history :postoperative-nausea] :valuePropName "checked" :noStyle true}
+        [antd/checkbox "术后恶心呕吐史"]]
+       [antd/form-item {:name [:related-history :malignant-hyperthermia] :valuePropName "checked" :noStyle true}
+        [antd/checkbox "恶性高热史"]]
+       [antd/row
+        [antd/form-item {:name [:related-history :other-checkbox] :valuePropName "checked" :noStyle true}
+         [antd/checkbox "其他"]]
+        [antd/form-item {:name [:related-history :other] :noStyle true :dependencies [[:related-history :other-checkbox]]}
+         (fn [form-instance]
+           (let [other-checked (.getFieldValue form-instance [:related-history :other-checkbox])]
+             [antd/input {:placeholder "请输入"
+                          :style {:width "300px" :marginLeft "10px"}
+                          :disabled (not other-checked)}]))]]]]
 
      ;; 胸部
      [form-comp/radio-button-group
