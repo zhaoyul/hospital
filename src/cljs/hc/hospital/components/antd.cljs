@@ -17,7 +17,7 @@
 (def date-picker (r/adapt-react-class DatePicker))
 (def range-picker (r/adapt-react-class (.-RangePicker DatePicker)))
 (def input (r/adapt-react-class Input))
-(def input-group (r/adapt-react-class InputGroup))
+(def input-group (r/adapt-react-class (.-Group Input)))
 (def input-search (r/adapt-react-class (.-Search Input)))
 (def button (r/adapt-react-class Button))
 (def tabs (r/adapt-react-class Tabs))
