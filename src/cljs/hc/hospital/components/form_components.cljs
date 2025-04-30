@@ -7,25 +7,29 @@
 
 ;; 创建一个"有无"选择组件，包含"无"和"有"的单选按钮，以及一个可选的描述输入框
 (defn yes-no-with-description
-  [{:keys [label field-name-prefix]}]
+  [{:keys [label field-name-prefix label-width]}]
   (let [switch-value* (r/atom false)]
     (fn []
-      [antd/form-item {:label (str label ":")
-                       :style {:marginBottom "0px"}}
-       [antd/row {:gutter 8 :wrap false :align "middle"}
-        [antd/col
-         [antd/form-item {:name (keyword (str field-name-prefix "-switch"))
-                          :valuePropName "checked"
-                          :noStyle true}
-          [antd/switch {:onChange #(reset! switch-value* %)
-                        :checkedChildren "有"
-                        :unCheckedChildren "无"}]]]
-        [antd/col {:flex "auto" :style {:marginLeft "8px"}}
-         [antd/form-item {:name (keyword (str field-name-prefix "-desc"))
-                          :noStyle true}
-          [antd/input {:placeholder "请输入"
-                       :disabled (not @switch-value*)
-                       :style {:width "100%"}}]]]]])))
+      [antd/row {:gutter 8 :wrap false :align "middle"}
+       [antd/col {:style {:whiteSpace "nowrap" 
+                          :width (or label-width "100px")
+                          :textAlign "left"
+                          :paddingRight "8px"}}
+        [:span (str label ":")]]
+       [antd/col
+        [antd/form-item {:name (keyword (str field-name-prefix "-switch"))
+                         :valuePropName "checked"
+                         :noStyle true
+                         :style {:marginBottom 0}}
+         [antd/switch {:onChange #(reset! switch-value* %)
+                       :checkedChildren "有"
+                       :unCheckedChildren "无"}]]]
+       [antd/col {:flex "auto" :style {:marginLeft "8px"}}
+        [antd/form-item {:name (keyword (str field-name-prefix "-desc"))
+                         :noStyle true}
+         [antd/input {:placeholder "请输入"
+                      :disabled (not @switch-value*)
+                      :style {:width "100%"}}]]]])))
 
 ;; 创建一个复选框组件，带有可选的输入框
 (defn checkbox-with-conditional-input
