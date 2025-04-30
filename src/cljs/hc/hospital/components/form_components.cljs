@@ -62,7 +62,7 @@
 ;; 创建一个带单位的数字输入组件
 (defn number-input-with-unit
   [{:keys [label name step unit]}]
-  [antd/form-item {:name name :label (str label ":")}
+  [antd/form-item {:name name :label label}
    [antd/input {:type "number"
                 :step (or step "1")
                 :addonAfter unit

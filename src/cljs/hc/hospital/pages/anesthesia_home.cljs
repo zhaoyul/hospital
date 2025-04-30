@@ -71,9 +71,7 @@
   (let [exam-data @(rf/subscribe [::subs/physical-examination])
         [form] ((.-useForm Form))]
     [antd/form {:form form
-                :layout "horizontal" ;; Changed from vertical to horizontal
-                :labelCol {:span 6}  ;; Controls width of label
-                :wrapperCol {:span 18} ;; Controls width of form controls
+                :layout "vertical" ;; 改为vertical布局实现左对齐
                 :initialValues exam-data
                 :onValuesChange (fn [_changed-values all-values]
                                   (rf/dispatch [::events/update-physical-examination all-values]))
@@ -91,10 +89,10 @@
      ;; 身高体重
      [antd/row {:gutter 16}
       [antd/col {:span 12}
-       [antd/form-item {:name :height :label "身高:" :labelCol {:span 8} :wrapperCol {:span 16}}
+       [antd/form-item {:name :height :label "身高"}
         [form-comp/number-input-with-unit {:style {:width "100%"} :unit "cm"}]]]
       [antd/col {:span 12}
-       [antd/form-item {:name :weight :label "体重:" :labelCol {:span 8} :wrapperCol {:span 16}}
+       [antd/form-item {:name :weight :label "体重"}
         [form-comp/number-input-with-unit {:style {:width "100%"} :unit "kg"}]]]]
 
      ;; 血压
@@ -109,10 +107,10 @@
      ;; 心率和呼吸
      [antd/row {:gutter 16}
       [antd/col {:span 12}
-       [antd/form-item {:name :heart-rate :label "PR" :labelCol {:span 8} :wrapperCol {:span 16}}
+       [antd/form-item {:name :heart-rate :label "PR"}
         [form-comp/number-input-with-unit {:style {:width "100%"} :unit "次/分"}]]]
       [antd/col {:span 12}
-       [antd/form-item {:name :respiratory-rate :label "RR" :labelCol {:span 8} :wrapperCol {:span 16}}
+       [antd/form-item {:name :respiratory-rate :label "RR"}
         [form-comp/number-input-with-unit {:style {:width "100%"} :unit "次/分"}]]]]
 
      ;; 体温
@@ -147,7 +145,7 @@
            ;; Mallampati 和 甲颌间距
      [antd/row {:gutter 16}
       [antd/col {:span 12}
-       [antd/form-item {:name :mallampati-score :label "Mallampati" :labelCol {:span 8} :wrapperCol {:span 16}}
+       [antd/form-item {:name :mallampati-score :label "Mallampati"}
         [form-comp/radio-button-group
          {:label "Mallampati"
           :name :mallampati-score
@@ -156,7 +154,7 @@
                     {:value "III" :label "III"}
                     {:value "IV" :label "IV"}]}]]]
       [antd/col {:span 12}
-       [antd/form-item {:name :thyromental-distance :label "颏颌距离" :labelCol {:span 8} :wrapperCol {:span 16}}
+       [antd/form-item {:name :thyromental-distance :label "颏颌距离"}
         [form-comp/number-input-with-unit {:style {:width "100%"} :step "0.1" :unit "cm"}]]]]
 
      ;; 相关病史
