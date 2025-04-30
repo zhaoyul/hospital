@@ -269,13 +269,21 @@
 (defn assessment-result []
   [antd/card {:variant "borderless" :style {:height "calc(100vh - 180px)" :overflowY "auto"}}
    [:div {:style {:padding "0 16px"}}
-    ;; 使用通用的section-title组件
-    [form-comp/section-title {:title "简要病史" :margin-top "16px"}]
-    [:f> brief-medical-history]
-    [form-comp/section-title {:title "体格检查"}]
-    [:f> physical-examination]
-    [form-comp/section-title {:title "实验室检查"}]
-    [:f> lab-tests]]])
+    [antd/row {:gutter 16}
+     ;; Left column (divided into top and bottom)
+     [antd/col {:span 12}
+      ;; Top section - Brief Medical History in its own Card
+      [antd/card {:title "简要病史" :style {:marginBottom "16px"}}
+       [:f> brief-medical-history]]
+
+      ;; Bottom section - Lab Tests in its own Card
+      [antd/card {:title "实验室检查"}
+       [:f> lab-tests]]]
+
+     ;; Right column - Physical Examination in its own Card
+     [antd/col {:span 12}
+      [antd/card {:title "体格检查"}
+       [:f> physical-examination]]]]]])
 
 (def menu-items
   [{:key "1" :icon (r/as-element [antd/laptop-outlined]) :label "麻醉管理"} ; Use wrapped icons
