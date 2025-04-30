@@ -4,6 +4,7 @@
             [hc.hospital.events :as events]
             [hc.hospital.subs :as subs]
             [hc.hospital.components.antd :as antd]
+            [hc.hospital.components.form-components :as form-comp]
             ["antd" :refer [Form]])) ; Import Form
 
 (defn patient-list []
@@ -36,153 +37,35 @@
                              "default")} (:status item)]]])]))
 
 (defn brief-medical-history []
-  (let [medical-history @(rf/subscribe [::subs/brief-medical-history]) ; Assuming subscription returns the new structure
+  (let [medical-history @(rf/subscribe [::subs/brief-medical-history])
         [form] ((.-useForm Form))]
     [antd/form {:form form
                 :layout "vertical"
-                :initialValues medical-history ; Set initial values from subscription
-                :onValuesChange (fn [_changed-values all-values] ; Use _ for unused param
-                                  ;; Dispatch one event with all form values
+                :initialValues medical-history
+                :onValuesChange (fn [_changed-values all-values]
                                   (rf/dispatch [::events/update-brief-medical-history all-values]))
                 :style {:paddingBottom "24px"}}
 
-     ;; 既往史 (Past History)
-     [antd/form-item {:label "既往史:"
-                      :style {:marginBottom "0px"}}
-      [antd/row {:gutter 8 :wrap false}
-       [antd/col
-        [antd/form-item {:name :past-history-radio :noStyle true} ; Radio group for selection
-         [antd/radio-group {}
-          [antd/radio {:value "none"} "无"]
-          [antd/radio {:value "yes"} "有"]]]]
-       [antd/col {:flex "auto"}
-        [antd/form-item {:name :past-history-desc ; Input for description
-                         :noStyle true
-                         :dependencies [:past-history-radio]} ; Depends on radio value
-         (fn [form-instance]
-           (let [radio-value (.getFieldValue form-instance :past-history-radio)]
-             [antd/input {:placeholder "请输入"
-                          :disabled (not= radio-value "yes") ; Disable if not "yes"
-                          :style {:width "100%"}}]))]]]]
-
-     ;; 过敏史 (Allergic History) - Repeat pattern
-     [antd/form-item {:label "过敏史:"
-                      :style {:marginBottom "0px"}}
-      [antd/row {:gutter 8 :wrap false}
-       [antd/col
-        [antd/form-item {:name :allergic-history-radio :noStyle true}
-         [antd/radio-group {}
-          [antd/radio {:value "none"} "无"]
-          [antd/radio {:value "yes"} "有"]]]]
-       [antd/col {:flex "auto"}
-        [antd/form-item {:name :allergic-history-desc
-                         :noStyle true
-                         :dependencies [:allergic-history-radio]}
-         (fn [form-instance]
-           (let [radio-value (.getFieldValue form-instance :allergic-history-radio)]
-             [antd/input {:placeholder "请输入"
-                          :disabled (not= radio-value "yes")
-                          :style {:width "100%"}}]))]]]]
-
-     ;; 手术麻醉史 (Surgery/Anesthesia History) - Repeat pattern
-     [antd/form-item {:label "手术麻醉史:"
-                      :style {:marginBottom "0px"}}
-      [antd/row {:gutter 8 :wrap false}
-       [antd/col
-        [antd/form-item {:name :surgery-anesthesia-history-radio :noStyle true}
-         [antd/radio-group {}
-          [antd/radio {:value "none"} "无"]
-          [antd/radio {:value "yes"} "有"]]]]
-       [antd/col {:flex "auto"}
-        [antd/form-item {:name :surgery-anesthesia-history-desc
-                         :noStyle true
-                         :dependencies [:surgery-anesthesia-history-radio]}
-         (fn [form-instance]
-           (let [radio-value (.getFieldValue form-instance :surgery-anesthesia-history-radio)]
-             [antd/input {:placeholder "请输入"
-                          :disabled (not= radio-value "yes")
-                          :style {:width "100%"}}]))]]]]
-
-     ;; 怀孕 (Pregnancy) - Repeat pattern
-     [antd/form-item {:label "怀孕:"
-                      :style {:marginBottom "0px"}}
-      [antd/row {:gutter 8 :wrap false}
-       [antd/col
-        [antd/form-item {:name :pregnancy-radio :noStyle true}
-         [antd/radio-group {}
-          [antd/radio {:value "none"} "无"]
-          [antd/radio {:value "yes"} "有"]]]]
-       [antd/col {:flex "auto"}
-        [antd/form-item {:name :pregnancy-desc
-                         :noStyle true
-                         :dependencies [:pregnancy-radio]}
-         (fn [form-instance]
-           (let [radio-value (.getFieldValue form-instance :pregnancy-radio)]
-             [antd/input {:placeholder "请输入"
-                          :disabled (not= radio-value "yes")
-                          :style {:width "100%"}}]))]]]]
-
-     ;; 输血史 (Blood Transfusion History) - Repeat pattern
-     [antd/form-item {:label "输血史:"
-                      :style {:marginBottom "0px"}}
-      [antd/row {:gutter 8 :wrap false}
-       [antd/col
-        [antd/form-item {:name :blood-transfusion-history-radio :noStyle true}
-         [antd/radio-group {}
-          [antd/radio {:value "none"} "无"]
-          [antd/radio {:value "yes"} "有"]]]]
-       [antd/col {:flex "auto"}
-        [antd/form-item {:name :blood-transfusion-history-desc
-                         :noStyle true
-                         :dependencies [:blood-transfusion-history-radio]}
-         (fn [form-instance]
-           (let [radio-value (.getFieldValue form-instance :blood-transfusion-history-radio)]
-             [antd/input {:placeholder "请输入"
-                          :disabled (not= radio-value "yes")
-                          :style {:width "100%"}}]))]]]]
-
-     ;; 月经期 (Menstrual Period) - Repeat pattern
-     [antd/form-item {:label "月经期:"
-                      :style {:marginBottom "0px"}}
-      [antd/row {:gutter 8 :wrap false}
-       [antd/col
-        [antd/form-item {:name :menstrual-period-radio :noStyle true}
-         [antd/radio-group {}
-          [antd/radio {:value "none"} "无"]
-          [antd/radio {:value "yes"} "有"]]]]
-       [antd/col {:flex "auto"}
-        [antd/form-item {:name :menstrual-period-desc
-                         :noStyle true
-                         :dependencies [:menstrual-period-radio]}
-         (fn [form-instance]
-           (let [radio-value (.getFieldValue form-instance :menstrual-period-radio)]
-             [antd/input {:placeholder "请输入"
-                          :disabled (not= radio-value "yes")
-                          :style {:width "100%"}}]))]]]]
+     ;; 使用通用组件替换重复的模式
+     [form-comp/yes-no-with-description {:label "既往史" :field-name-prefix "past-history"}]
+     [form-comp/yes-no-with-description {:label "过敏史" :field-name-prefix "allergic-history"}]
+     [form-comp/yes-no-with-description {:label "手术麻醉史" :field-name-prefix "surgery-anesthesia-history"}]
+     [form-comp/yes-no-with-description {:label "怀孕" :field-name-prefix "pregnancy"}]
+     [form-comp/yes-no-with-description {:label "输血史" :field-name-prefix "blood-transfusion-history"}]
+     [form-comp/yes-no-with-description {:label "月经期" :field-name-prefix "menstrual-period"}]
 
      ;; 个人史 (Personal History) - Checkbox Group
-     [antd/form-item {:name :personal-history ; Use a single name for the checkbox group value (will be an array)
+     [antd/form-item {:name :personal-history
                       :label "个人史:"}
       [antd/checkbox-group {}
        [antd/checkbox {:value "smoke"} "烟"]
        [antd/checkbox {:value "drink"} "酒"]]]
 
-     ;; 其他 (Other) - Checkbox and Input
-     [antd/form-item {:label "其他:"
-                      :style {:marginBottom "0px"}}
-      [antd/row {:gutter 8 :wrap false}
-       [antd/col
-        [antd/form-item {:name :other-checkbox :valuePropName "checked" :noStyle true} ; Checkbox to control input
-         [antd/checkbox "其他"]]]
-       [antd/col {:flex "auto"}
-        [antd/form-item {:name :other-desc ; Input for description
-                         :noStyle true
-                         :dependencies [:other-checkbox]} ; Depends on checkbox state
-         (fn [form-instance]
-           (let [checked? (.getFieldValue form-instance :other-checkbox)]
-             [antd/input {:placeholder "请输入"
-                          :disabled (not checked?) ; Disable if checkbox is not checked
-                          :style {:width "100%"}}]))]]]]]))
+     ;; 其他 (Other) - 使用通用复选框组件
+     [form-comp/checkbox-with-conditional-input
+      {:label "其他"
+       :checkbox-label "其他"
+       :field-name :other-desc}]]))
 
 (defn physical-examination []
   (let [exam-data @(rf/subscribe [::subs/physical-examination])
@@ -190,28 +73,29 @@
     [antd/form {:form form
                 :layout "vertical"
                 :initialValues exam-data
-                :onValuesChange (fn [changed-values all-values]
+                :onValuesChange (fn [_changed-values all-values]
                                   (rf/dispatch [::events/update-physical-examination all-values]))
                 :style {:padding-bottom "24px"}}
 
-     ;; General Condition
-     [antd/form-item {:name :general-condition :label "一般状况:"}
-      [antd/radio-group {:buttonStyle "solid" :optionType "button"}
-       [antd/radio {:value "bad"} "差"]
-       [antd/radio {:value "fair"} "尚可"]
-       [antd/radio {:value "average"} "一般"]
-       [antd/radio {:value "good"} "好"]]]
+     ;; 使用通用组件
+     [form-comp/radio-button-group
+      {:label "一般状况"
+       :name :general-condition
+       :options [{:value "bad" :label "差"}
+                 {:value "fair" :label "尚可"}
+                 {:value "average" :label "一般"}
+                 {:value "good" :label "好"}]}]
 
-     ;; Height and Weight (using Row/Col for layout within Form)
-     [antd/row {:gutter 16}
-      [antd/col {:span 12}
+     ;; 身高体重 - 使用通用组件
+     [form-comp/two-column-row
+      {:left-item
        [antd/form-item {:name :height :label "身高:"}
-        [antd/input-number {:style {:width "100%"} :addonAfter "cm"}]]]
-      [antd/col {:span 12}
+        [antd/input-number {:style {:width "100%"} :addonAfter "cm"}]]
+       :right-item
        [antd/form-item {:name :weight :label "体重:"}
-        [antd/input-number {:style {:width "100%"} :addonAfter "kg"}]]]]
+        [antd/input-number {:style {:width "100%"} :addonAfter "kg"}]]}]
 
-     ;; Blood Pressure
+     ;; 血压
      [antd/form-item {:label "BP:"}
       [antd/input-group {:compact true}
        [antd/form-item {:name [:bp :systolic] :noStyle true}
@@ -220,56 +104,52 @@
        [antd/form-item {:name [:bp :diastolic] :noStyle true}
         [antd/input {:style {:width "calc(50% - 15px)"} :type "number" :addonAfter "mmHg"}]]]]
 
-     ;; PR and RR
-     [antd/row {:gutter 16}
-      [antd/col {:span 12}
-       [antd/form-item {:name :heart-rate :label "PR:"}
-        [antd/input {:type "number" :addonAfter "次/分"}]]]
-      [antd/col {:span 12}
-       [antd/form-item {:name :respiratory-rate :label "RR:"}
-        [antd/input {:type "number" :addonAfter "次/分"}]]]]
+     ;; 心率和呼吸
+     [form-comp/two-column-row
+      {:left-item [form-comp/number-input-with-unit {:label "PR" :name :heart-rate :unit "次/分"}]
+       :right-item [form-comp/number-input-with-unit {:label "RR" :name :respiratory-rate :unit "次/分"}]}]
 
-     ;; Temperature
-     [antd/form-item {:name :temperature :label "T:"}
-      [antd/input {:type "number" :step "0.1" :addonAfter "°C"}]]
+     ;; 体温
+     [form-comp/number-input-with-unit {:label "T" :name :temperature :step "0.1" :unit "°C"}]
 
-     ;; Mental State
-     [antd/form-item {:name :mental-state :label "精神行为:"}
-      [antd/radio-group {:buttonStyle "solid" :optionType "button"}
-       [antd/radio {:value "normal"} "正常"]
-       [antd/radio {:value "drowsy"} "嗜睡"]
-       [antd/radio {:value "coma"} "昏迷"]
-       [antd/radio {:value "irritable"} "烦躁"]
-       [antd/radio {:value "delirium"} "谵妄"]
-       [antd/radio {:value "cognitive"} "认知障碍"]]]
+     ;; 精神状态
+     [form-comp/radio-button-group
+      {:label "精神行为"
+       :name :mental-state
+       :options [{:value "normal" :label "正常"}
+                 {:value "drowsy" :label "嗜睡"}
+                 {:value "coma" :label "昏迷"}
+                 {:value "irritable" :label "烦躁"}
+                 {:value "delirium" :label "谵妄"}
+                 {:value "cognitive" :label "认知障碍"}]}]
 
-     ;; Head and Neck
-     [antd/form-item {:name :head-neck :label "头颈部:"}
-      [antd/radio-group {:buttonStyle "solid" :optionType "button"}
-       [antd/radio {:value "normal"} "无异常"]
-       [antd/radio {:value "scar"} "疤痕"]
-       [antd/radio {:value "short_neck"} "颈短"]
-       [antd/radio {:value "neck_mass"} "颈部肿块"]
-       [antd/radio {:value "limited_mobility"} "后仰困难"]]]
+     ;; 头颈部
+     [form-comp/radio-button-group
+      {:label "头颈部"
+       :name :head-neck
+       :options [{:value "normal" :label "无异常"}
+                 {:value "scar" :label "疤痕"}
+                 {:value "short_neck" :label "颈短"}
+                 {:value "neck_mass" :label "颈部肿块"}
+                 {:value "limited_mobility" :label "后仰困难"}]}]
 
-     ;; Mouth Opening
-     [antd/form-item {:name :mouth-opening :label "口腔: 张口"}
-      [antd/input {:type "number" :step "0.1" :addonAfter "cm"}]]
+     ;; 张口
+     [form-comp/number-input-with-unit {:label "口腔: 张口" :name :mouth-opening :step "0.1" :unit "cm"}]
 
-     ;; Mallampati and Thyromental Distance
-     [antd/row {:gutter 16}
-      [antd/col {:span 12}
-       [antd/form-item {:name :mallampati-score :label "Mallampati:"}
-        [antd/radio-group {:buttonStyle "solid" :optionType "button"}
-         [antd/radio {:value "I"} "I"]
-         [antd/radio {:value "II"} "II"]
-         [antd/radio {:value "III"} "III"]
-         [antd/radio {:value "IV"} "IV"]]]]
-      [antd/col {:span 12}
-       [antd/form-item {:name :thyromental-distance :label "颏颌距离:"}
-        [antd/input {:type "number" :step "0.1" :addonAfter "cm"}]]]]
+     ;; Mallampati 和 甲颌间距
+     [form-comp/two-column-row
+      {:left-item
+       [form-comp/radio-button-group
+        {:label "Mallampati"
+         :name :mallampati-score
+         :options [{:value "I" :label "I"}
+                   {:value "II" :label "II"}
+                   {:value "III" :label "III"}
+                   {:value "IV" :label "IV"}]}]
+       :right-item
+       [form-comp/number-input-with-unit {:label "颏颌距离" :name :thyromental-distance :step "0.1" :unit "cm"}]}]
 
-     ;; Related History
+     ;; 相关病史
      [antd/form-item {:label "相关病史:"}
       [antd/form-item {:name [:related-history :difficult-airway] :valuePropName "checked" :noStyle true}
        [antd/checkbox "困难气道史"]]
@@ -277,7 +157,7 @@
        [antd/checkbox "术后恶心呕吐史"]]
       [antd/form-item {:name [:related-history :malignant-hyperthermia] :valuePropName "checked" :noStyle true}
        [antd/checkbox "恶性高热史"]]
-      [antd/form-item {:name [:related-history :other-checkbox] :valuePropName "checked" :noStyle true} ; Temp name for checkbox
+      [antd/form-item {:name [:related-history :other-checkbox] :valuePropName "checked" :noStyle true}
        [antd/checkbox "其他"]]
       [antd/form-item {:name [:related-history :other] :noStyle true :dependencies [[:related-history :other-checkbox]]}
        (fn [form-instance]
@@ -286,12 +166,13 @@
                         :style {:width "300px" :marginLeft "10px"}
                         :disabled (not other-checked)}]))]]
 
-     ;; Chest
-     [antd/form-item {:name :chest :label "胸:"}
-      [antd/radio-group {:buttonStyle "solid" :optionType "button"}
-       [antd/radio {:value "normal"} "正常"]
-       [antd/radio {:value "barrel"} "桶状胸"]
-       [antd/radio {:value "pectus_excavatum"} "佝偻胸"]]]]))
+     ;; 胸部
+     [form-comp/radio-button-group
+      {:label "胸"
+       :name :chest
+       :options [{:value "normal" :label "正常"}
+                 {:value "barrel" :label "桶状胸"}
+                 {:value "pectus_excavatum" :label "佝偻胸"}]}]]))
 
 (defn lab-tests []
   (let [lab-data @(rf/subscribe [::subs/lab-tests])
@@ -299,97 +180,101 @@
     [antd/form {:form form
                 :layout "vertical"
                 :initialValues lab-data
-                :onValuesChange (fn [changed-values all-values]
+                :onValuesChange (fn [_changed-values all-values]
                                   (rf/dispatch [::events/update-lab-tests all-values]))
                 :style {:padding-bottom "24px"}}
 
-     [:div.section-title {:style {:fontWeight "bold" :fontSize "16px" :marginBottom "16px"}} "血常规："]
+     ;; 使用通用组件创建标题
+     [form-comp/section-title {:title "血常规：" :margin-top "0"}]
 
-     ;; RBC and Hct
-     [antd/row {:gutter 16}
-      [antd/col {:span 12}
-       [antd/form-item {:name [:complete-blood-count :hemoglobin] :label "RBC:"} ; Corrected label to Hemoglobin (assuming RBC meant this)
-        [antd/input {:type "number" :step "0.1" :addonAfter "×10¹²/L"}]]]
-      [antd/col {:span 12}
-       [antd/form-item {:name [:complete-blood-count :hematocrit] :label "Hct:"}
-        [antd/input {:type "number" :step "0.01" :addonAfter "%"}]]]]
+     ;; RBC和Hct - 使用通用组件
+     [form-comp/two-column-row
+      {:left-item
+       [form-comp/number-input-with-unit
+        {:label "RBC" :name [:complete-blood-count :hemoglobin] :step "0.1" :unit "×10¹²/L"}]
+       :right-item
+       [form-comp/number-input-with-unit
+        {:label "Hct" :name [:complete-blood-count :hematocrit] :step "0.01" :unit "%"}]}]
 
-     ;; PLT and WBC
-     [antd/row {:gutter 16}
-      [antd/col {:span 12}
-       [antd/form-item {:name [:complete-blood-count :platelets] :label "PLT:"}
-        [antd/input {:type "number" :addonAfter "×10⁹/L"}]]]
-      [antd/col {:span 12}
-       [antd/form-item {:name [:complete-blood-count :wbc] :label "WBC:"}
-        [antd/input {:type "number" :step "0.1" :addonAfter "×10⁹/L"}]]]]
+     ;; PLT和WBC - 使用通用组件
+     [form-comp/two-column-row
+      {:left-item
+       [form-comp/number-input-with-unit
+        {:label "PLT" :name [:complete-blood-count :platelets] :unit "×10⁹/L"}]
+       :right-item
+       [form-comp/number-input-with-unit
+        {:label "WBC" :name [:complete-blood-count :wbc] :step "0.1" :unit "×10⁹/L"}]}]
 
-     ;; Blood Type and Rh
-     [antd/row {:gutter 16}
-      [antd/col {:span 12}
-       [antd/form-item {:name :blood-type :label "血型:"}
-        [antd/radio-group {:buttonStyle "solid" :optionType "button"}
-         [antd/radio {:value "A"} "A"]
-         [antd/radio {:value "B"} "B"]
-         [antd/radio {:value "AB"} "AB"]
-         [antd/radio {:value "O"} "O"]]]]
-      [antd/col {:span 12}
-       [antd/form-item {:name :rh :label "Rh:"}
-        [antd/radio-group {:buttonStyle "solid" :optionType "button"}
-         [antd/radio {:value "negative"} "阴性"]
-         [antd/radio {:value "positive"} "阳性"]]]]]
+     ;; 血型和Rh
+     [form-comp/two-column-row
+      {:left-item
+       [form-comp/radio-button-group
+        {:label "血型"
+         :name :blood-type
+         :options [{:value "A" :label "A"}
+                   {:value "B" :label "B"}
+                   {:value "AB" :label "AB"}
+                   {:value "O" :label "O"}]}]
+       :right-item
+       [form-comp/radio-button-group
+        {:label "Rh"
+         :name :rh
+         :options [{:value "negative" :label "阴性"}
+                   {:value "positive" :label "阳性"}]}]}]
 
-     ;; Coagulation and Glucose
-     [antd/row {:gutter 16}
-      [antd/col {:span 12}
-       [antd/form-item {:name :coagulation :label "凝血检查:"}
-        [antd/radio-group {:buttonStyle "solid" :optionType "button"}
-         [antd/radio {:value "normal"} "正常"]
-         [antd/radio {:value "abnormal"} "异常"]]]]
-      [antd/col {:span 12}
-       [antd/form-item {:name [:biochemistry :glucose] :label "血糖值:"}
-        [antd/input {:type "number" :step "0.1" :addonAfter "mmol/L"}]]]]
+     ;; 凝血检查和血糖值
+     [form-comp/two-column-row
+      {:left-item
+       [form-comp/radio-button-group
+        {:label "凝血检查"
+         :name :coagulation
+         :options [{:value "normal" :label "正常"}
+                   {:value "abnormal" :label "异常"}]}]
+       :right-item
+       [form-comp/number-input-with-unit
+        {:label "血糖值" :name [:biochemistry :glucose] :step "0.1" :unit "mmol/L"}]}]
 
-     [:div.section-title {:style {:fontWeight "bold" :fontSize "16px" :margin "24px 0 16px"}} "生化指标："]
+     ;; 使用通用组件创建标题
+     [form-comp/section-title {:title "生化指标："}]
 
-     ;; ALT and AST
-     [antd/row {:gutter 16}
-      [antd/col {:span 12}
-       [antd/form-item {:name [:biochemistry :alt] :label "ALT:"}
-        [antd/input {:type "number" :addonAfter "U/L"}]]]
-      [antd/col {:span 12}
-       [antd/form-item {:name [:biochemistry :ast] :label "AST:"}
-        [antd/input {:type "number" :addonAfter "U/L"}]]]]
+     ;; ALT和AST - 使用通用组件
+     [form-comp/two-column-row
+      {:left-item
+       [form-comp/number-input-with-unit
+        {:label "ALT" :name [:biochemistry :alt] :unit "U/L"}]
+       :right-item
+       [form-comp/number-input-with-unit
+        {:label "AST" :name [:biochemistry :ast] :unit "U/L"}]}]
 
-     ;; Sodium and Potassium
-     [antd/row {:gutter 16}
-      [antd/col {:span 12}
-       [antd/form-item {:name [:biochemistry :sodium] :label "钠:"}
-        [antd/input {:type "number" :addonAfter "mmol/L"}]]]
-      [antd/col {:span 12}
-       [antd/form-item {:name [:biochemistry :potassium] :label "钾:"}
-        [antd/input {:type "number" :step "0.1" :addonAfter "mmol/L"}]]]]
+     ;; 钠和钾 - 使用通用组件
+     [form-comp/two-column-row
+      {:left-item
+       [form-comp/number-input-with-unit
+        {:label "钠" :name [:biochemistry :sodium] :unit "mmol/L"}]
+       :right-item
+       [form-comp/number-input-with-unit
+        {:label "钾" :name [:biochemistry :potassium] :step "0.1" :unit "mmol/L"}]}]
 
-     [:div.section-title {:style {:fontWeight "bold" :fontSize "16px" :margin "24px 0 16px"}} "医学影像："]
+     ;; 使用通用组件创建标题
+     [form-comp/section-title {:title "医学影像："}]
 
-     ;; ECG
+     ;; 心电图
      [antd/form-item {:name :ecg :label "心电图:"}
       [antd/input {:style {:width "100%"}}]]
 
-     ;; Chest X-ray
+     ;; 胸片
      [antd/form-item {:name :chest-xray :label "胸片:"}
       [antd/input {:style {:width "100%"}}]]]))
 
 (defn assessment-result []
-  ;; Remove active-tab subscription as tabs are removed
-  [antd/card {:variant "borderless" :style {:height "calc(100vh - 180px)" :overflowY "auto"}} ; Add overflowY auto to the card
-   ;; Remove antd/tabs component
-   [:div {:style {:padding "0 16px"}} ; Add a container div with padding
-    ;; Render the three sections vertically
-    [:div.section-title {:style {:fontWeight "bold" :fontSize "18px" :marginBottom "16px" :marginTop "16px"}} "简要病史"]
+  [antd/card {:variant "borderless" :style {:height "calc(100vh - 180px)" :overflowY "auto"}}
+   [:div {:style {:padding "0 16px"}}
+    ;; 使用通用的section-title组件
+    [form-comp/section-title {:title "简要病史" :margin-top "16px"}]
     [:f> brief-medical-history]
-    [:div.section-title {:style {:fontWeight "bold" :fontSize "18px" :marginBottom "16px" :marginTop "24px"}} "体格检查"]
+    [form-comp/section-title {:title "体格检查"}]
     [:f> physical-examination]
-    [:div.section-title {:style {:fontWeight "bold" :fontSize "18px" :marginBottom "16px" :marginTop "24px"}} "实验室检查"]
+    [form-comp/section-title {:title "实验室检查"}]
     [:f> lab-tests]]])
 
 (def menu-items

@@ -3,7 +3,8 @@
   (:require [re-frame.core :as rf]
             [hc.hospital.db :as db]
             [cljs.spec.alpha :as s]
-            [clojure.string :as string]))
+            [clojure.string :as string]
+            [reagent.core :as r]))
 
 ;; -- Initialization
 (rf/reg-event-db
