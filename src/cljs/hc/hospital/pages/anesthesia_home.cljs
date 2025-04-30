@@ -71,11 +71,12 @@
   (let [exam-data @(rf/subscribe [::subs/physical-examination])
         [form] ((.-useForm Form))]
     [antd/form {:form form
-                :layout "vertical" ;; 改为vertical布局实现左对齐
-                :initialValues exam-data
-                :onValuesChange (fn [_changed-values all-values]
-                                  (rf/dispatch [::events/update-physical-examination all-values]))
-                :style {:padding-bottom "24px"}}
+                :layout "horizontal" ;; 水平布局，让label和内容在同一行
+                :labelCol {:span 4 :style {:textAlign "left"}} ;; 设置label宽度并左对齐
+                :wrapperCol {:span 20} ;; 设置内容区域宽度
+                :style {:padding-bottom "24px"
+                        :maxWidth "800px" ;; 限制最大宽度使内容集中靠左
+                        :marginLeft "0"}} ;; 确保整体靠左对齐
 
      ;; 使用通用组件
      [form-comp/radio-button-group
