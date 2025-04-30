@@ -1,28 +1,28 @@
 (ns hc.hospital.components.form-components
   (:require [reagent.core :as r]
             [re-frame.core :as rf]
+            [hc.hospital.utils :refer [event-value]]
+            [taoensso.timbre :as timbre]
             [hc.hospital.components.antd :as antd]))
 
 ;; 创建一个"有无"选择组件，包含"无"和"有"的单选按钮，以及一个可选的描述输入框
 (defn yes-no-with-description
   [{:keys [label field-name-prefix]}]
-  [antd/form-item {:label (str label ":")
-                   :style {:marginBottom "0px"}}
-   [antd/row {:gutter 8 :wrap false}
-    [antd/col
-     [antd/form-item {:name (keyword (str field-name-prefix "-radio")) :noStyle true}
-      [antd/radio-group {}
-       [antd/radio {:value "none"} "无"]
-       [antd/radio {:value "yes"} "有"]]]]
-    [antd/col {:flex "auto"}
-     [antd/form-item {:name (keyword (str field-name-prefix "-desc"))
-                      :noStyle true
-                      :dependencies [(keyword (str field-name-prefix "-radio"))]}
-      (fn [form-instance]
-        (let [radio-value (.getFieldValue form-instance (keyword (str field-name-prefix "-radio")))]
+  (let [radio-value* (r/atom "no")]
+    (fn  []
+      [antd/form-item {:label (str label ":")
+                       :style {:marginBottom "0px"}}
+       [antd/row {:gutter 8 :wrap false}
+        [antd/col
+         [antd/form-item {:name (keyword (str field-name-prefix "-radio")) :noStyle true}
+          [antd/radio-group {:onChange  (fn [event] (reset! radio-value* (event-value event)))}
+           [antd/radio {:value "none"} "无"]
+           [antd/radio {:value "yes"} "有"]]]]
+        [antd/col {:flex "auto"}
+         [antd/form-item {:name (keyword (str field-name-prefix "-desc")) :noStyle true}
           [antd/input {:placeholder "请输入"
-                       :disabled (not= radio-value "yes")
-                       :style {:width "100%"}}]))]]]])
+                       :disabled (not=  @radio-value* "yes")
+                       :style {:width "100%"}}]]]]])))
 
 ;; 创建一个复选框组件，带有可选的输入框
 (defn checkbox-with-conditional-input
