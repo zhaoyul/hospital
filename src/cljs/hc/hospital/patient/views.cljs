@@ -7,78 +7,62 @@
 
 ;; --- Progress Bar ---
 (defn progress-bar-component [current-step total-steps step-titles]
-  [:div {:class "progress-bar"} ; Changed from progress-container, removed visual-container
-   [:div {:class "progress-steps"}
+  [:div.progress-bar
+   [:div.progress-steps
     (for [i (range total-steps)]
       [:div {:class (str "progress-step" (if (= i current-step) " active" "")) ; current-step is 0-indexed
              :key (str "step-" i)
              :id (str "step" (inc i))
              :data-title (nth step-titles i nil)}
        (inc i)])]
-   [:div {:class "progress-bar-fill"
-          :id "progress" ; Added id to match HTML
-          :style {:width (str (* (/ (inc current-step) total-steps) 100) "%")}
-          ;; Removed inline styles for height, background-color, border-radius
-          }]])
+   [:div#progress.progress-bar-fill
+    {:style {:width (str (* (/ (inc current-step) total-steps) 100) "%")}
+     ;; Removed inline styles for height, background-color, border-radius
+     }]])
 
 ;; --- Step Section Wrapper ---
 (defn step-section-wrapper [title current-step step-index & children]
-  [:div {:class "section"
-         :id (str "section" (inc step-index))
-         :style (if (= current-step step-index) {} {:display "none"})}
-   [:h2 {:class "section-title"} title]
+  [:div.section {:id (str "section" (inc step-index))
+                 :style (if (= current-step step-index) {} {:display "none"})}
+   [:h2.section-title title]
    (into [:<>] children)])
 
 ;; --- Form Navigation ---
 (defn form-navigation [current-step total-steps submitting?] ; total-steps is count
   (let [max-step-idx (dec total-steps)]
-    [:div {:class "nav-buttons"} ; Changed class, removed inline style
-     (when (> current-step 0)
-       [:button {:type "button"
-                 :id "prevBtn"
-                 :class "btn-secondary" ; Removed inline styles
-                 :onClick #(rf/dispatch [::events/prev-step])}
+    [:div.nav-buttons
+     (when (pos? current-step)
+       [:button#prevBtn.btn-secondary
+        {:type "button"
+         :onClick #(rf/dispatch [::events/prev-step])}
         "上一步"])
-     [:button {:type "button"
-               :id "nextBtn"
-               :class "btn-primary" ; Removed inline styles
-               :style {:width (if (= current-step 0) "100%" "48%")} ; Dynamic width based on questionnaire.html JS
-               :disabled submitting?
-               :onClick (if (< current-step max-step-idx)
-                          #(rf/dispatch [::events/next-step])
-                          #(rf/dispatch [::events/validate-and-submit]))}
+     [:button#nextBtn.btn-primary
+      {:type "button"
+       :style {:width (if (= current-step 0) "100%" "48%")}
+       :disabled submitting?
+       :onClick (if (< current-step max-step-idx)
+                  #(rf/dispatch [::events/next-step])
+                  #(rf/dispatch [::events/validate-and-submit]))}
       (if (< current-step max-step-idx)
         "下一步"
         (if submitting? "提交中..." "提交"))]]))
 
-
-;; --- Custom Divider ---
-(defn custom-divider
-  ([] [:hr {:class "section-divider"}])
-  ([text]
-   (if (empty? text)
-     [custom-divider]
-     [:h3 {:class "subsection-title"} text])))
-
-
-;; --- New Form UI Helper Components ---
-(defn ui-input-item [{:keys [label value placeholder errors field-key data-path type unit data-index] ; Added data-index
+(defn ui-input-item [{:keys [label value placeholder errors field-key data-path type unit data-index]
                       :or {type "text"}}]
   (let [full-path (conj data-path field-key)
         error-msg (get-in errors full-path)
         field-id (str (name field-key) "-" (hash data-path))]
     [:div {:class (if error-msg "form-group error" "form-group")}
-     [:label {:class "form-label" :for field-id :data-index data-index} ; Added :data-index
+     [:label.form-label {:for field-id :data-index data-index}
       label
-      (when unit [:span {:class "unit"} (str " " unit)])]
-     [:input {:type type
-              :id field-id
-              :class "form-input"
-              :value (if (nil? value) "" value)
-              :placeholder (or placeholder (str "请输入" (if (string? label) label "")))
-              :onChange #(rf/dispatch [::events/update-form-field full-path (-> % .-target .-value)])}]
+      (when unit [:span.unit (str " " unit)])]
+     [:input.form-input {:type type
+                         :id field-id
+                         :value (if (nil? value) "" value)
+                         :placeholder (or placeholder (str "请输入" (if (string? label) label "")))
+                         :onChange #(rf/dispatch [::events/update-form-field full-path (-> % .-target .-value)])}]
      (when error-msg
-       [:div {:class "error-message"} error-msg])]))
+       [:div.error-message error-msg])]))
 
 (defn ui-text-area-item [{:keys [label value placeholder errors field-key data-path rows data-index] ; Added data-index
                           :or {rows 3}}]
@@ -86,92 +70,73 @@
         error-msg (get-in errors full-path)
         field-id (str (name field-key) "-" (hash data-path))]
     [:div {:class (if error-msg "form-group error" "form-group")}
-     [:label {:class "form-label" :for field-id :data-index data-index} label] ; Added :data-index
-     [:textarea {:id field-id
-                 :class "form-input"
-                 :value (if (nil? value) "" value)
-                 :rows rows
-                 :placeholder (or placeholder (str "请输入" (if (string? label) label "")))
-                 :onChange #(rf/dispatch [::events/update-form-field full-path (-> % .-target .-value)])}]
+     [:label.form-label {:for field-id :data-index data-index} label] ; Added :data-index
+     [:textarea.form-input {:id field-id
+                            :value (if (nil? value) "" value)
+                            :rows rows
+                            :placeholder (or placeholder (str "请输入" (if (string? label) label "")))
+                            :onChange #(rf/dispatch [::events/update-form-field full-path (-> % .-target .-value)])}]
      (when error-msg
-       [:div {:class "error-message"} error-msg])]))
+       [:div.error-message  error-msg])]))
 
 (defn ui-input-number-item [{:keys [label value placeholder errors field-key data-path min max step unit data-index]}] ; Added data-index
   (let [full-path (conj data-path field-key)
         error-msg (get-in errors full-path)
         field-id (str (name field-key) "-" (hash data-path))]
     [:div {:class (if error-msg "form-group error" "form-group")}
-     [:label {:class "form-label" :for field-id :data-index data-index} ; Added :data-index
+     [:label.form-label {:for field-id :data-index data-index} ; Added :data-index
       label
-      (when unit [:span {:class "unit"} (str " " unit)])]
-     [:input {:type "number"
-              :id field-id
-              :class "form-input"
-              :value (if (nil? value) "" value)
-              :min min
-              :max max
-              :step step
-              :placeholder (or placeholder (str "请输入" (if (string? label) label "")))
-              :onChange #(let [raw-value (-> % .-target .-value)
-                               parsed-value (if (not-empty raw-value)
-                                              (let [num (js/parseFloat raw-value)]
-                                                (if (js/isNaN num) nil num)) ; Return nil if parsing fails
-                                              nil)]  ; Treat empty string as nil for numbers
-                           (rf/dispatch [::events/update-form-field full-path parsed-value]))}]
+      (when unit [:span.unit (str " " unit)])]
+     [:input.form-input
+      {:type "number"
+       :id field-id
+       :value (if (nil? value) "" value)
+       :min min
+       :max max
+       :step step
+       :placeholder (or placeholder (str "请输入" (if (string? label) label "")))
+       :onChange #(let [raw-value (-> % .-target .-value)
+                        parsed-value (when (not-empty raw-value)
+                                       (let [num (js/parseFloat raw-value)]
+                                         (if (js/isNaN num) nil num)))]
+                    (rf/dispatch [::events/update-form-field full-path parsed-value]))}]
      (when error-msg
-       [:div {:class "error-message"} error-msg])]))
+       [:div.error-message error-msg])]))
 
-(defn ui-select-item [{:keys [label value placeholder errors field-key data-path options data-index]}] ; Added data-index
-  (let [full-path (conj data-path field-key)
-        error-msg (get-in errors full-path)
-        field-id (str (name field-key) "-" (hash data-path))]
-    [:div {:class (if error-msg "form-group error" "form-group")}
-     [:label {:class "form-label" :for field-id :data-index data-index} label] ; Added :data-index
-     [:select {:id field-id
-               :class "form-input"
-               :value (if (nil? value) "" value)
-               :onChange #(rf/dispatch [::events/update-form-field full-path (-> % .-target .-value)])}
-      [:option {:value ""} (or placeholder (str "请选择" (if (string? label) label "")))]
-      (for [{opt-val :value opt-label :label} options]
-        ^{:key (str opt-val opt-label)}
-        [:option {:value opt-val} opt-label])]
-     (when error-msg
-       [:div {:class "error-message"} error-msg])]))
-
-(defn ui-radio-group-item [{:keys [label value errors field-key data-path options data-index]}] ; Added data-index
+(defn ui-radio-group-item [{:keys [label value errors field-key data-path options data-index]}]
   (let [full-path (conj data-path field-key)
         error-msg (get-in errors full-path)
         group-name (str (name field-key) "-" (hash data-path))]
     [:div {:class (if error-msg "form-group error" "form-group")}
-     [:label {:class "form-label" :data-index data-index} label] ; Added :data-index (no :for since it's a group)
-     [:div {:class "radio-group"}
+     [:label.form-label {:data-index data-index} label]
+     [:div.radio-group
       (for [{opt-val :value opt-label :label} options]
         ^{:key (str opt-val opt-label)}
-        [:label {:class "radio-label"}
+        [:label.radio-label
          [:input {:type "radio"
                   :name group-name
                   :value opt-val
                   :checked (= value opt-val)
                   :onChange #(rf/dispatch [::events/update-form-field full-path opt-val])}]
-         [:span {} (str " " opt-label)]])] ; Added span for styling checked state text
+         [:span {} (str " " opt-label)]])]
      (when error-msg
-       [:div {:class "error-message"} error-msg])]))
+       [:div.error-message error-msg])]))
 
-(defn ui-boolean-radio-item [{:keys [label bool-value errors field-key data-path data-index]}] ; Added data-index
+(defn ui-boolean-radio-item [{:keys [label bool-value errors field-key data-path data-index]}]
   (let [full-path (conj data-path field-key)
         error-msg (get-in errors full-path)
         group-name (str (name field-key) "-" (hash data-path))]
     [:div {:class (if error-msg "form-group error" "form-group")}
-     [:label {:class "form-label" :data-index data-index} label] ; Added :data-index
-     [:div {:class "radio-group"}
-      [:label {:class "radio-label"}
+     [:label.form-label {:data-index data-index} label] ; Added :data-index
+     [:div.radio-group
+      [:label.radio-label
        [:input {:type "radio"
                 :name group-name
                 :value "yes"
                 :checked (true? bool-value)
                 :onChange #(rf/dispatch [::events/update-form-field full-path true])}]
-       [:span " 有"]] ; Added span
-      [:label {:class "radio-label"}
+       [:span " 有"]]
+      [:label.radio-label
        [:input {:type "radio"
                 :name group-name
                 :value "no"
@@ -179,7 +144,7 @@
                 :onChange #(rf/dispatch [::events/update-form-field full-path false])}]
        [:span " 无"]]] ; Added span
      (when error-msg
-       [:div {:class "error-message"} error-msg])]))
+       [:div.error-message error-msg])]))
 
 (defn ui-date-picker-item [{:keys [label value placeholder errors field-key data-path showTime data-index]}] ; Added data-index
   (let [full-path (conj data-path field-key)
@@ -188,20 +153,19 @@
         input-type (if showTime "datetime-local" "date")
         current-value (utils/format-date value (if (= input-type "datetime-local") "YYYY-MM-DDTHH:mm" "YYYY-MM-DD"))]
     [:div {:class (if error-msg "form-group error" "form-group")}
-     [:label {:class "form-label" :for field-id :data-index data-index} label] ; Added :data-index
-     [:input {:type input-type
-              :id field-id
-              :class "form-input"
-              :value current-value
-              :placeholder (or placeholder (str "请选择" (if (string? label) label "")))
-              :onChange #(let [date-string (-> % .-target .-value)
-                               final-value (if (empty? date-string) nil date-string)]
-                           (rf/dispatch [::events/update-form-field full-path final-value]))}]
+     [:label.form-label {:for field-id :data-index data-index} label]
+     [:input.form-input {:type input-type
+                         :id field-id
+                         :value current-value
+                         :placeholder (or placeholder (str "请选择" (if (string? label) label "")))
+                         :onChange #(let [date-string (-> % .-target .-value)
+                                          final-value (if (empty? date-string) nil date-string)]
+                                      (rf/dispatch [::events/update-form-field full-path final-value]))}]
      (when error-msg
-       [:div {:class "error-message"} error-msg])]))
+       [:div.error-message error-msg])]))
 
 
-(defn ui-file-input-item [{:keys [label value errors field-key data-path data-index]}] ; Added data-index
+(defn ui-file-input-item [{:keys [label value errors field-key data-path data-index]}]
   (let [full-path (conj data-path field-key)
         error-msg (get-in errors full-path)
         field-id (str (name field-key) "-" (hash data-path))
@@ -209,20 +173,20 @@
                         (str "已选择: " value)
                         "选择文件")]
     [:div {:class (if error-msg "form-group error" "form-group")}
-     [:label {:class "form-label" :data-index data-index} label] ; Main label for the field group
-     [:label {:class "file-upload-label" :for field-id} ; Visually styled label acting as button
-      [:i {:class "fas fa-upload mr-2"}]
+     [:label.form-label {:data-index data-index} label] ; Main label for the field group
+     [:label.file-upload-label {:for field-id} ; Visually styled label acting as button
+      [:i.fas.fa-upload.mr-2]
       display-value]
-     [:input {:type "file"
-              :id field-id
-              :class "file-upload" ; This input will be visually hidden by CSS
-              :style {:display "none"} ; Explicitly hide if CSS isn't loaded/working
-              :onChange #(let [file-name (if (-> % .-target .-files .-length (> 0))
-                                            (-> % .-target .-files (.item 0) .-name)
-                                            nil)]
-                           (rf/dispatch [::events/update-form-field full-path (or file-name "-")]))}]
+     [:input.file-upload
+      {:type "file"
+       :id field-id
+       :style {:display "none"} ; Explicitly hide if CSS isn't loaded/working
+       :onChange #(let [file-name (if (-> % .-target .-files .-length (> 0))
+                                    (-> % .-target .-files (.item 0) .-name)
+                                    nil)]
+                    (rf/dispatch [::events/update-form-field full-path (or file-name "-")]))}]
      (when error-msg
-       [:div {:class "error-message"} error-msg])]))
+       [:div.error-message error-msg])]))
 
 ;; Component for items like "Heart condition" which have Normal/Abnormal radio and conditional details text
 (defn ui-condition-item [{:keys [label base-value detail-value errors field-key data-path data-index placeholder]}]
@@ -231,23 +195,23 @@
         error-msg (or (get-in errors base-path) (get-in errors detail-path))
         group-name (str (name field-key) "-" (hash data-path))]
     [:div {:class (if error-msg "form-group error" "form-group")}
-     [:label {:class "form-label" :data-index data-index} label]
-     [:div {:class "radio-group"}
-      [:label {:class "radio-label"}
+     [:label.form-label {:data-index data-index} label]
+     [:div.radio-group
+      [:label.radio-label
        [:input {:type "radio" :name group-name :value "normal" :checked (= base-value "normal")
                 :onChange #(rf/dispatch [::events/update-form-field base-path "normal"])}]
        [:span " 正常"]]
-      [:label {:class "radio-label"}
+      [:label.radio-label
        [:input {:type "radio" :name group-name :value "abnormal" :checked (= base-value "abnormal")
                 :onChange #(rf/dispatch [::events/update-form-field base-path "abnormal"])}]
        [:span " 异常"]]]
      (when (= base-value "abnormal")
-       [:input {:type "text" :class "form-input mt-2"
-                :value (if (nil? detail-value) "" detail-value)
-                :placeholder (or placeholder "如有异常，请说明")
-                :onChange #(rf/dispatch [::events/update-form-field detail-path (-> % .-target .-value)])}])
+       [:input.form-input.mt-2 {:type "text"
+                                :value (if (nil? detail-value) "" detail-value)
+                                :placeholder (or placeholder "如有异常，请说明")
+                                :onChange #(rf/dispatch [::events/update-form-field detail-path (-> % .-target .-value)])}])
      (when error-msg
-       [:div {:class "error-message"} error-msg])]))
+       [:div.error-message error-msg])]))
 
 
 ;; --- Form Steps ---
@@ -314,16 +278,16 @@
            bp-error (get-in errors bp-path) ;; Simplified error check
            field-id-bp (str "blood-pressure-" (hash bp-path))]
        [:div {:class (if bp-error "form-group error" "form-group")}
-        [:label {:class "form-label" :for field-id-bp :data-index "2.5"} "血压 " [:span {:class "unit"} "mmHg"]]
-        [:input {:type "text" :id field-id-bp :class "form-input" :name "blood_pressure" :placeholder "例如：120/80"
-                 :value bp-combined-val
-                 :onChange #(let [value (-> % .-target .-value)
-                                  parts (str/split value #"/")
-                                  systolic (not-empty (first parts)) ; not-empty is fine here
-                                  diastolic (not-empty (second parts))] ; not-empty is fine here
-                              (rf/dispatch [::events/update-form-field (conj bp-path :systolic) systolic])
-                              (rf/dispatch [::events/update-form-field (conj bp-path :diastolic) diastolic]))}]
-        (when bp-error [:div {:class "error-message"} (if (string? bp-error) bp-error "输入无效")])])
+        [:label.form-label {:for field-id-bp :data-index "2.5"} "血压 " [:span.unit "mmHg"]]
+        [:input.form-input {:type "text" :id field-id-bp :name "blood_pressure" :placeholder "例如：120/80"
+                            :value bp-combined-val
+                            :onChange #(let [value (-> % .-target .-value)
+                                             parts (str/split value #"/")
+                                             systolic (not-empty (first parts)) ; not-empty is fine here
+                                             diastolic (not-empty (second parts))] ; not-empty is fine here
+                                         (rf/dispatch [::events/update-form-field (conj bp-path :systolic) systolic])
+                                         (rf/dispatch [::events/update-form-field (conj bp-path :diastolic) diastolic]))}]
+        (when bp-error [:div.error-message (if (string? bp-error) bp-error "输入无效")])])
 
      [ui-input-number-item {:label "脉搏" :value (:pulse general-condition) :errors errors
                             :data-path [:general-condition] :field-key :pulse :unit "次/分"
@@ -335,8 +299,8 @@
                             :data-path [:general-condition] :field-key :temperature :unit "℃" :step 0.1
                             :placeholder "请输入体温" :data-index "2.8"}]
      [ui-input-number-item {:label "SpO2" :value (:spo2 general-condition) :errors errors
-                              :data-path [:general-condition] :field-key :spo2 :unit "%"
-                              :placeholder "请输入血氧饱和度" :data-index "2.9"}]]))
+                            :data-path [:general-condition] :field-key :spo2 :unit "%"
+                            :placeholder "请输入血氧饱和度" :data-index "2.9"}]]))
 
 ;; 病情摘要步骤
 (defn medical-summary-step []
@@ -485,16 +449,14 @@
         total-steps 4 ; From questionnaire.html
         step-titles ["患者信息" "健康状况" "生活习惯" "补充信息"] ; From questionnaire.html progress steps data-title
         submitting? @(rf/subscribe [::subs/submitting?])]
-    [:div {:class "container"}
-     [:div {:class "card mt-6"}
-      [:h1 {:class "text-xl font-bold text-center mb-4"
-            :style {:color "#1890ff" :font-size "22px"}}
+    [:div.container
+     [:div.card.mt-6
+      [:h1.text-xl.font-bold.text-center.mb-4 {:style {:color "#1890ff" :font-size "22px"}}
        "麻醉评估问卷"]
 
       [progress-bar-component current-step total-steps step-titles]
 
-      [:form {:id "questionnaire-form"
-              :onSubmit (fn [e] (.preventDefault e))} ; Prevent default HTML form submission
+      [:form#questionnaire-form {:onSubmit (fn [e] (.preventDefault e))}
 
        [step-section-wrapper "第一部分：患者信息" current-step 0 [basic-info-step]]
        [step-section-wrapper "第二部分：一般情况" current-step 1 [general-condition-step]]
