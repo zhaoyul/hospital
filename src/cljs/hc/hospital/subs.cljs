@@ -1,146 +1,105 @@
-;; Assuming hc.hospital.subs is the correct namespace
 (ns hc.hospital.subs
   (:require [re-frame.core :as rf]
             [clojure.string :as str]
-            [hc.hospital.utils :as utils])) ; For date formatting
+            [hc.hospital.utils :as utils]))
 
 (rf/reg-sub
   ::all-patient-assessments
   (fn [db _]
+    ;; This sub still provides the raw list from API or other sources
     (:all-patient-assessments db)))
 
 (rf/reg-sub
   ::current-patient-id
   (fn [db _]
+    ;; Points to the top-level current-patient-id, which is set by ::select-patient
     (:current-patient-id db)))
 
 (rf/reg-sub
   ::active-tab
   (fn [db _]
-    (:active-tab db "patients"))) ; Default to "patients"
+    (get-in db [:anesthesia :active-tab] "patients")))
 
 (rf/reg-sub
   ::search-term
   (fn [db _]
-    (:search-term db)))
+    (get-in db [:anesthesia :search-term])))
 
 (rf/reg-sub
   ::date-range
   (fn [db _]
-    (:date-range db)))
+    (get-in db [:anesthesia :date-range])))
 
+;; New subscription for the example patient list
+(rf/reg-sub
+  ::anesthesia-example-patients
+  (fn [db _]
+    (get-in db [:anesthesia :patients])))
 
 (rf/reg-sub
   ::filtered-patients
-  :<- [::all-patient-assessments]
+  :<- [::all-patient-assessments] ;; Raw assessments from API/mock
   :<- [::search-term]
   :<- [::date-range]
-  (fn [[assessments search-term date-range] _]
+  :<- [::anesthesia-example-patients] ;; Changed from [:anesthesia :patients]
+  (fn [[api-assessments search-term date-range example-patients] _]
     (let [format-gender (fn [g] (case g "male" "男" "female" "女" "未知"))
-          format-date (fn [d] (if d (utils/format-date d "YYYY-MM-DD") "未知日期")) ; Assuming utils/format-date-string
-          patients (if (seq assessments)
-                     (mapv (fn [assessment]
-                             (let [basic-info (get-in assessment [:assessment_data :basic-info] {})]
-                               {:key (:patient_id assessment)
-                                :name (get basic-info :name "未知姓名")
-                                :sex (format-gender (get basic-info :gender))
-                                :age (get basic-info :age "未知")
-                                :type (get basic-info :planned-surgery "术前评估") ; Or other relevant field
-                                :date (format-date (:created_at assessment)) ; Or another date from assessment_data
-                                :status (or (:doctor_status assessment) "待评估")})) ; Assuming a status field, else default
-                           assessments)
-                     [])]
-      ;; Implement search and date filtering here if needed
-      ;; For now, returning all transformed patients
-      (cond->> patients
+          format-date (fn [d] (if d (utils/format-date d "YYYY-MM-DD") "未知日期"))
+          patients-from-api (if (seq api-assessments)
+                              (mapv (fn [assessment]
+                                      (let [basic-info (get-in assessment [:assessment_data :basic-info] {})]
+                                        {:key (:patient_id assessment) ; Ensure this is the ID used elsewhere
+                                         :name (get basic-info :name "未知姓名")
+                                         :sex (format-gender (get basic-info :gender))
+                                         :age (get basic-info :age "未知")
+                                         :type (get basic-info :planned-surgery "术前评估")
+                                         :date (format-date (:created_at assessment))
+                                         :status (or (:doctor_status assessment) "待评估")}))
+                                    api-assessments)
+                              [])
+          ;; Use example patients if API data is empty and example data exists
+          display-patients (if (empty? patients-from-api)
+                             example-patients ; Assumes example-patients has :key, :name, :sex, :age, :type, :date, :status
+                             patients-from-api)]
+
+      (cond->> display-patients
         (and search-term (not (clojure.string/blank? search-term)))
-        (filterv (fn [p] (clojure.string/includes? (str/lower-case (:name p)) (str/lower-case search-term))))
-        ;; Date range filtering would go here
+        (filterv (fn [p] (clojure.string/includes? (str/lower-case (str (:name p) (:key p))) (str/lower-case search-term))))
+        ;; Date range filtering would go here, assuming :date is comparable
+        date-range
+        (filterv (fn [p] (when-let [p-date (:date p)]
+                           (let [start (when (first date-range) (utils/format-date (first date-range) "YYYY-MM-DD"))
+                                 end (when (second date-range) (utils/format-date (second date-range) "YYYY-MM-DD"))]
+                             (cond
+                               (and start end) (and (>= p-date start) (<= p-date end))
+                               start (>= p-date start)
+                               end (<= p-date end)
+                               :else true)))))
         true identity))))
 
-
+;; Subscription for the entire assessment block for the selected patient
+;; This is what the forms will now use for their initialValues
 (rf/reg-sub
-  ::selected-patient-assessment-data
-  :<- [::all-patient-assessments]
-  :<- [::current-patient-id]
-  (fn [[assessments current-id] _]
-    (when current-id
-      (some #(when (= (:patient_id %) current-id) (:assessment_data %)) assessments))))
+  ::selected-patient-assessment-forms-data
+  (fn [db _]
+    (get-in db [:anesthesia :assessment])))
 
-;; Subscriptions to provide initialValues for doctor's forms
-;; These will take data from ::selected-patient-assessment-data and transform it
-
+;; Specific subscriptions for each form section, deriving from the main assessment block
 (rf/reg-sub
   ::doctor-form-brief-medical-history
-  :<- [::selected-patient-assessment-data]
-  (fn [adata _]
-    (if adata
-      (let [medical-summary (get adata :medical-summary {})
-            comorbidities (get adata :comorbidities {})
-            yes-no-desc (fn [val desc-val] {:yes-no (true? val) :description desc-val})]
-        {:past-history (yes-no-desc (get comorbidities :general-past-history) (get comorbidities :general-past-history-detail))
-         :allergic-history (yes-no-desc (get medical-summary :allergy-history) (get medical-summary :allergen))
-         :surgery-anesthesia-history (yes-no-desc (get comorbidities :past-anesthesia-surgery) (get comorbidities :past-anesthesia-surgery-detail))
-         :pregnancy (yes-no-desc (get comorbidities :pregnancy-history) (get comorbidities :pregnancy-detail))
-         :blood-transfusion-history (yes-no-desc (get comorbidities :transfusion-history) (get comorbidities :transfusion-detail))
-         :menstrual-period (yes-no-desc (get comorbidities :menstrual-period-active) (get comorbidities :menstrual-period-detail))
-         :personal-history (cond-> []
-                             (true? (get medical-summary :smoking-history)) (conj "smoke")
-                             (true? (get medical-summary :drinking-history)) (conj "drink"))
-         :other {:description (get comorbidities :other-history-detail)}})
-      {})))
-
+  :<- [::selected-patient-assessment-forms-data]
+  (fn [assessment-data _]
+    (:brief-medical-history assessment-data)))
 
 (rf/reg-sub
   ::doctor-form-physical-examination
-  :<- [::selected-patient-assessment-data]
-  (fn [adata _]
-    (if adata
-      (let [gc (get adata :general-condition {})
-            pe-doc (get adata :physical-examination-doctor {}) ; Doctor specific observations
-            como (get adata :comorbidities {})]
-        {:general-condition (get-in gc [:doctor-assessment :general-condition-overall])
-         :height (:height gc)
-         :weight (:weight gc)
-         :bp {:systolic (get-in gc [:blood-pressure :systolic])
-              :diastolic (get-in gc [:blood-pressure :diastolic])}
-         :heart-rate (:pulse gc) ; map pulse to heart-rate
-         :respiratory-rate (:respiration gc)
-         :temperature (:temperature gc)
-         :mental-state (get gc :mental-state-doctor)
-         :head-neck (get pe-doc :head-neck)
-         :mouth-opening (get pe-doc :mouth-opening)
-         :mallampati-score (get pe-doc :mallampati-score)
-         :thyromental-distance (get pe-doc :thyromental-distance)
-         :related-history {:difficult-airway (true? (get como :difficult-airway-history))
-                           :postoperative-nausea (true? (get como :postoperative-nausea-history))
-                           :malignant-hyperthermia (true? (get como :malignant-hyperthermia-personal-history))
-                           :other (get como :other-related-history)
-                           :other-checkbox (some? (get como :other-related-history))}
-         :chest (get pe-doc :chest)})
-      {})))
+  :<- [::selected-patient-assessment-forms-data]
+  (fn [assessment-data _]
+    (:physical-examination assessment-data)))
 
 (rf/reg-sub
   ::doctor-form-lab-tests
-  :<- [::selected-patient-assessment-data]
-  (fn [adata _]
-    (if adata
-      (let [aux (get adata :auxiliary-examination {})
-            cbc (get aux :complete-blood-count {})
-            bio (get aux :biochemistry {})]
-        {:complete-blood-count {:hemoglobin (:hemoglobin cbc)
-                                :hematocrit (:hematocrit cbc)
-                                :platelets (:platelets cbc)
-                                :wbc (:wbc cbc)}
-         :blood-type (:blood-type aux)
-         :rh (:rh-factor aux)
-         :coagulation (:coagulation-status aux)
-         :biochemistry {:glucose (:glucose bio)
-                        :alt (:alt bio)
-                        :ast (:ast bio)
-                        :sodium (:sodium bio)
-                        :potassium (:potassium bio)}
-         :ecg (:ecg-summary aux)
-         :chest-xray (:chest-xray-summary aux)})
-      {})))
+  :<- [::selected-patient-assessment-forms-data]
+  (fn [assessment-data _]
+    (:lab-tests assessment-data)))
 
