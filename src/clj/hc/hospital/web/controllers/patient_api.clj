@@ -29,7 +29,7 @@
   (try
     (let [assessment-data (query-fn :get-patient-assessment-by-id {:patient_id patient-id})]
       (if (seq assessment-data)
-        (http-response/ok assessment-data)
+        (http-response/ok (cheshire/decode (:assessment_data assessment-data) keyword))
         (http-response/not-found {:message "未找到该患者的评估数据"})))
     (catch Exception e
       (log/error e "查询评估数据时出错")
