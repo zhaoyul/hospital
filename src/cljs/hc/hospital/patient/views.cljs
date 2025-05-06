@@ -5,12 +5,27 @@
             [hc.hospital.utils :as utils]))
 
 ;; --- Progress Bar ---
-(defn progress-bar-component [current-step total-steps]
-  [:div {:class "progress-container"}
-   [:div {:class "progress-bar"
-          :style {:width (str (* (/ (inc current-step) total-steps) 100) "%")}}]
-   [:div {:class "progress-text"}
-    (str "进度 " (inc current-step) "/" total-steps)]])
+(defn progress-bar-component [current-step total-steps step-titles]
+  [:div {:class "progress-container"} ; Outer wrapper from original CLJS.
+   [:div {:class "progress-bar-visual-container" ; Corresponds to HTML's div.progress-bar (container of steps & fill)
+          ;; Assuming styles for this class are in screen.css, matching HTML's .progress-bar
+          ;; e.g. {:height "6px" :background-color "#e0e0e0" :border-radius "3px" :margin "40px 0 20px" :position "relative"}
+          }
+    [:div {:class "progress-steps"
+           ;; Assuming styles for this class are in screen.css, matching HTML's .progress-steps
+           ;; e.g. {:display "flex" :justify-content "space-between" :position "absolute" :width "100%" :top "-30px"}
+           }
+     (for [i (range total-steps)]
+       [:div {:class (str "progress-step" (if (= i current-step) " active" ""))
+              :key (str "step-" i)
+              :id (str "step" (inc i))
+              :data-title (nth step-titles i nil)} ; Added data-title, handle nil if step-titles too short
+        (inc i)])]
+    [:div {:class "progress-bar-fill" ; Was "progress-bar" in old CLJS, now matches HTML's fill element
+           :style {:width (str (* (/ (inc current-step) total-steps) 100) "%")
+                   ;; Assuming styles for this class are in screen.css, matching HTML's .progress-bar-fill
+                   ;; e.g. {:height "100%" :background-color "#1890ff" :border-radius "3px"}
+                   }}]]])
 
 ;; --- Step Section Wrapper ---
 (defn step-section-wrapper [title current-step step-index & children]
@@ -552,7 +567,7 @@
     (if submit-success?
       [success-page]
       [:div {:class "form-container" :style {:maxWidth "800px" :margin "20px auto" :padding "20px" :boxShadow "0 0 10px rgba(0,0,0,0.1)" :borderRadius "8px"}}
-       [progress-bar-component current-step total-steps]
+       [progress-bar-component current-step total-steps step-titles]
        [:form {:id "patientAssessmentForm"
                :onSubmit (fn [event]
                            (.preventDefault event)

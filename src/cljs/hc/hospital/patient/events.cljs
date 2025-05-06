@@ -98,9 +98,8 @@
                    :params          (select-keys form-data [:basic-info
                                                             :general-condition
                                                             :medical-summary
-                                                            :comorbidities
-                                                            :physical-examination
-                                                            :auxiliary-examination
+                                                            :comorbidities ; Contains physical exam fields and auxiliary-examination map
+                                                            ;; Removed :physical-examination and :auxiliary-examination as they are nested in :comorbidities
                                                             :assessment
                                                             :other-info])
                    :format          (ajax/json-request-format)
