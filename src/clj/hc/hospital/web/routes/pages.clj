@@ -1,16 +1,16 @@
 (ns hc.hospital.web.routes.pages
   (:require
-    [hc.hospital.web.middleware.exception :as exception]
-    [hc.hospital.web.pages.layout :as layout]
-    [integrant.core :as ig]
-    [reitit.ring.middleware.muuntaja :as muuntaja]
-    [reitit.ring.middleware.parameters :as parameters]
-    [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]))
+   [hc.hospital.web.middleware.exception :as exception]
+   [hc.hospital.web.pages.layout :as layout]
+   [integrant.core :as ig]
+   [reitit.ring.middleware.muuntaja :as muuntaja]
+   [reitit.ring.middleware.parameters :as parameters]
+   [ring.middleware.anti-forgery :refer [wrap-anti-forgery]]))
 
 (defn wrap-page-defaults []
   (let [error-page (layout/error-page
-                     {:status 403
-                      :title "Invalid anti-forgery token"})]
+                    {:status 403
+                     :title "Invalid anti-forgery token"})]
     #(wrap-anti-forgery % {:error-response error-page})))
 
 (defn home [request]

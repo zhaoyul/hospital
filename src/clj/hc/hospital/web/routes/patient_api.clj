@@ -18,19 +18,19 @@
    :swagger    {:id :hc.hospital.web.routes.api/api} ;; 使用与主 API 相同的 Swagger ID
    :middleware [;; query-params & form-params
                 parameters/parameters-middleware
-                  ;; 内容协商
+                ;; 内容协商
                 muuntaja/format-negotiate-middleware
-                  ;; 编码响应体
+                ;; 编码响应体
                 muuntaja/format-response-middleware
-                  ;; 异常处理
+                ;; 异常处理
                 coercion/coerce-exceptions-middleware
-                  ;; 解码请求体
+                ;; 解码请求体
                 muuntaja/format-request-middleware
-                  ;; 强制转换响应体
+                ;; 强制转换响应体
                 coercion/coerce-response-middleware
-                  ;; 强制转换请求参数
+                ;; 强制转换请求参数
                 coercion/coerce-request-middleware
-                  ;; 异常处理
+                ;; 异常处理
                 exception/wrap-exception]})
 
 ;; 患者 API 特定路由
