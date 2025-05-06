@@ -25,3 +25,15 @@
 ;; 创建当前日期的dayjs对象
 (defn now []
   (dayjs))
+
+(defn format-datetime-for-input
+  "Formats a date value for HTML date or datetime-local input fields."
+  [value input-type]
+  (when value
+    (let [date-obj (if (string? value) (parse-date value) (dayjs value))]
+      (when (.isValid date-obj)
+        (condp = input-type
+          "date" (.format date-obj "YYYY-MM-DD")
+          "datetime-local" (.format date-obj "YYYY-MM-DDTHH:mm")
+          ;; else, return original value if it's already a string, or nil
+          (if (string? value) value nil))))))
