@@ -1,8 +1,8 @@
 (ns hc.hospital.components.antd
   (:require [reagent.core :as r]
             ["antd" :refer [Layout Menu DatePicker Input InputGroup Button
-                            Switch Space
-                            Tabs Row Col Card Form Radio Checkbox InputNumber Typography Tag]]
+                            Switch Space Select Steps Alert Result
+                            Tabs Row Col Card Form Radio Checkbox InputNumber Typography Tag Divider]]
             ["@ant-design/icons" :as icons]))
 
 ;; Layout Components
@@ -32,6 +32,14 @@
 (def checkbox (r/adapt-react-class Checkbox))
 (def checkbox-group (r/adapt-react-class (.-Group Checkbox)))
 (def input-number (r/adapt-react-class InputNumber))
+(def text-area (r/adapt-react-class (.-TextArea Input)))
+(def select (r/adapt-react-class Select))
+(def option (r/adapt-react-class (.-Option Select)))
+(def steps (r/adapt-react-class Steps))
+(def step (r/adapt-react-class (.-Step Steps)))
+(def alert (r/adapt-react-class Alert))
+(def result (r/adapt-react-class Result))
+(def divider (r/adapt-react-class Divider))
 
 ;; Data Display Components
 (def card (r/adapt-react-class Card))
