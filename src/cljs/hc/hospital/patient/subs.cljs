@@ -32,6 +32,12 @@
    (:comorbidities form)))
 
 (rf/reg-sub
+ ::anesthesia-plan
+ :<- [::patient-form]
+ (fn [form]
+   (:anesthesia-plan form)))
+
+(rf/reg-sub
  ::physical-examination
  :<- [::patient-form]
  (fn [form]
