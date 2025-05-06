@@ -1,0 +1,54 @@
+(ns hc.hospital.web.routes.patient-api
+  (:require
+   [hc.hospital.web.controllers.patient-api :as patient-api]
+   [hc.hospital.web.middleware.exception :as exception]
+   [hc.hospital.web.middleware.formats :as formats]
+   [integrant.core :as ig]
+   [reitit.coercion.malli :as malli]
+   [reitit.ring.coercion :as coercion]
+   [reitit.ring.middleware.muuntaja :as muuntaja]
+   [reitit.ring.middleware.parameters :as parameters]
+   [reitit.swagger :as swagger]))
+
+;; API 路由数据
+(def route-data
+  {:coercion   malli/coercion
+   :muuntaja   formats/instance
+   :swagger    {:id :hc.hospital.web.routes.api/api} ;; 使用与主 API 相同的 Swagger ID
+   :middleware [;; query-params & form-params
+                parameters/parameters-middleware
+                  ;; 内容协商
+                muuntaja/format-negotiate-middleware
+                  ;; 编码响应体
+                muuntaja/format-response-middleware
+                  ;; 异常处理
+                coercion/coerce-exceptions-middleware
+                  ;; 解码请求体
+                muuntaja/format-request-middleware
+                  ;; 强制转换响应体
+                coercion/coerce-response-middleware
+                  ;; 强制转换请求参数
+                coercion/coerce-request-middleware
+                  ;; 异常处理
+                exception/wrap-exception]})
+
+;; 患者 API 特定路由
+(defn patient-api-routes [_opts]
+  [["/patient"
+    ;; 提交评估的 POST 路由
+    ["/assessment" {:post {:summary "提交患者评估信息" ;; 添加摘要说明
+                           :description "接收并存储患者填写的评估表单信息" ;; 添加详细说明
+                           :tags ["患者"] ;; 添加标签，方便在 Swagger UI 中分类
+                           :handler #'patient-api/submit-assessment!
+                           :parameters {:body map?} ;; 参数描述可以更详细，但现在用 map? 简化处理 
+                           :responses {200 {:body {:message string?}}
+                                      500 {:body {:message string?}}}}}]]])
+
+;; 从 :reitit/routes 派生此路由集
+(derive :reitit.routes/patient-api :reitit/routes)
+
+(defmethod ig/init-key :reitit.routes/patient-api
+  [_ {:keys [base-path query-fn]
+      :or   {base-path "/api"}
+      :as   opts}]
+  (fn [] [base-path route-data (patient-api-routes (assoc opts :query-fn query-fn))]))

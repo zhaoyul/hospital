@@ -4,7 +4,10 @@
     [integrant.core :as ig]
     [ring.util.http-response :as http-response]
     [reitit.ring :as ring]
-    [reitit.swagger-ui :as swagger-ui]))
+    [reitit.swagger-ui :as swagger-ui]
+    ;; 引入新路由命名空间
+    [hc.hospital.web.routes.patient-pages]
+    [hc.hospital.web.routes.patient-api]))
 
 (defmethod ig/init-key :handler/ring
   [_ {:keys [router api-path] :as opts}]

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+ <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="医院患者术前评估表单" />
+  <title>患者术前评估表填写</title>
+  <!-- 样式 - 可能需要特定样式或复用现有样式 -->
+  <link href="/css/screen.css" rel="stylesheet" type="text/css" />
+  <!-- Ant Design 样式 -->
+  <link href="/css/antd.min.css" rel="stylesheet" type="text/css" />
+  <link href="https://fonts.googleapis.com/css?family=Noto+Sans+SC:300,400,500,700&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Noto Sans SC', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background-color: #f0f2f5;
+      margin: 0;
+      padding: 0;
+    }
+    .app-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    .header {
+      background: white;
+      padding: 16px;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      border-radius: 4px;
+    }
+  </style>
+ </head>
+ <body>
+  <div id="app" class="app-container">
+    <div class="header">
+      <h1>患者术前评估表</h1>
+      <p>请填写以下信息以完成您的手术前评估</p>
+    </div>
+    <!-- 患者应用将被挂载到这里 -->
+    <div id="patient-app"></div>
+  </div>
+  <!-- 引入患者应用 JS -->
+  <script src="/js/patient/patient-app.js"></script>
+ </body>
+</html>

@@ -3,7 +3,8 @@
  :dependencies [[binaryage/devtools "1.0.3"]
                 [nrepl "0.8.3"]
                 [cider/cider-nrepl "0.30.0"]
-                [cljs-ajax "0.8.4"] 
+                [cljs-ajax "0.8.4"]
+                [day8.re-frame/http-fx "0.2.4"]
                 [reagent "1.1.0"]
                 [re-frame "1.3.0"]
                 [com.taoensso/timbre "6.2.2"]]
@@ -12,4 +13,11 @@
                       :asset-path "/js"
                       :modules    {:app {:entries [hc.hospital.core]
                                          :init-fn hc.hospital.core/init!}}
-                      :devtools   {:after-load hc.hospital.core/mount-root}}}}
+                      :devtools   {:after-load hc.hospital.core/mount-root}}
+
+                :patient-app {:target     :browser
+                              :output-dir "target/classes/cljsbuild/public/js/patient"
+                              :asset-path "/js/patient"
+                              :modules    {:patient-app {:entries [hc.hospital.patient.core]
+                                                         :init-fn hc.hospital.patient.core/init!}}
+                              :devtools   {:after-load hc.hospital.patient.core/mount-root}}}}
