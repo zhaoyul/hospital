@@ -5,7 +5,9 @@
    [hc.hospital.patient.events :as events]
    [hc.hospital.patient.subs :as subs]
    [clojure.string :as str]
-   ["antd" :as antd]))
+   [hc.hospital.utils :as utils]
+   ["antd" :as antd]
+   ["dayjs" :as dayjs]))
 
 ;; Ant Design 组件引用
 (def Button (r/adapt-react-class (.-Button antd)))
@@ -334,10 +336,13 @@
          [FormItem {:label "过敏时间"
                     :validateStatus (when (get-in errors [:medical-summary :allergy-time]) "error")
                     :help (get-in errors [:medical-summary :allergy-time])}
-          [DatePicker #_{:value (:allergy-time medical-summary)
-                         :placeholder "最近发生过敏时间"
-                         :style {:width "100%"}
-                         :onChange #(rf/dispatch [::events/update-form-field [:medical-summary :allergy-time] (when % (.format % "YYYY-MM-DD"))])}]]])
+          [DatePicker {:value (dayjs (:allergy-time medical-summary))
+                       :placeholder "最近发生过敏时间"
+                       :style {:width "100%"}
+                       :format "YYYY-MM-DD"
+                       :onChange #(rf/dispatch [::events/update-form-field
+                                                [:medical-summary :allergy-time]
+                                                (when %1 (.format %1 "YYYY-MM-DD"))])}]]])
 
       [Divider]
 
@@ -480,14 +485,14 @@
                     :onChange #(rf/dispatch [::events/update-form-field [:comorbidities :special-medications :used] (.. % -target -value)])}]]]
        [Col {:span 12}
         [FormItem {:label "最后一次用药时间"}
-         [DatePicker #_{:value (get-in comorbidities [:special-medications :last-time])
-                        :placeholder "最后一次用药时间"
-                        :style {:width "100%"}
-                        :format "YYYY-MM-DD HH:mm"
-                        :showTime {:format "HH:mm"}
-                        :onChange #(rf/dispatch [::events/update-form-field
-                                                 [:comorbidities :special-medications :last-time]
-                                                 (when % (.format % "YYYY-MM-DD HH:mm"))])}]]]]]
+         [DatePicker {:value (dayjs (get-in comorbidities [:special-medications :last-time]))
+                      :placeholder "最后一次用药时间"
+                      :style {:width "100%"}
+                      :format "YYYY-MM-DD HH:mm"
+                      :showTime {:format "HH:mm"}
+                      :onChange #(rf/dispatch [::events/update-form-field
+                                               [:comorbidities :special-medications :last-time]
+                                               (when % (.format % "YYYY-MM-DD HH:mm"))])}]]]]]
 
      [Divider]
 
@@ -694,11 +699,11 @@
         [FormItem {:label "评估日期"
                    :validateStatus (when (get-in errors [:anesthesia-plan :assessment-date]) "error")
                    :help (get-in errors [:anesthesia-plan :assessment-date])}
-         [DatePicker #_{:value (:assessment-date anesthesia-plan)
-                        :placeholder "请选择日期"
-                        :style {:width "100%"}
-                        :format "YYYY-MM-DD"
-                        :onChange #(rf/dispatch [::events/update-form-field [:anesthesia-plan :assessment-date] (when % (.format % "YYYY-MM-DD"))])}]]]]
+         [DatePicker {:value (dayjs (:assessment-date anesthesia-plan))
+                      :placeholder "请选择日期"
+                      :style {:width "100%"}
+                      :format "YYYY-MM-DD"
+                      :onChange #(rf/dispatch [::events/update-form-field [:anesthesia-plan :assessment-date] (when % (.format % "YYYY-MM-DD"))])}]]]]
 
       [form-navigation current-step 7 submitting?]]]))
 
