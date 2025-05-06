@@ -1,15 +1,25 @@
 (ns hc.hospital.web.controllers.patient-api
   (:require
    [clojure.tools.logging :as log]
-   [ring.util.http-response :as http-response]))
+   [ring.util.http-response :as http-response]
+   ;; Removed [hc.hospital.db.core :as db]
+   [cheshire.core :as cheshire]))
 
-(defn submit-assessment! [{{:keys [body]} :parameters :keys [query-fn] :as request}]
+(defn submit-assessment! [{{:keys [body]} :parameters :keys [query-fn] :as _request}]
   ;; 接收和处理患者评估数据
   (log/info "接收到患者评估数据:" body)
   (try
-    ;; TODO: 实现实际数据验证和存储逻辑
-    ;; (db/insert-patient-assessment! query-fn body)
-    (http-response/ok {:message "评估提交成功！"})
+    (let [patient-id (get-in body [:basic-info :outpatient-number])
+          assessment-data-json (cheshire/generate-string body)]
+      (if (nil? patient-id)
+        (do
+          (log/error "患者ID (patient_id) 未在 basic-info 中提供。")
+          (http-response/bad-request {:message "提交失败，患者ID不能为空。"}))
+        (do
+          ;; Corrected database call to use query-fn directly
+          (query-fn :insert-patient-assessment! {:patient_id patient-id
+                                                 :assessment_data assessment-data-json})
+          (http-response/ok {:message "评估提交成功！"}))))
     (catch Exception e
       (log/error e "提交评估时出错")
       (http-response/internal-server-error {:message "提交评估时出错"}))))

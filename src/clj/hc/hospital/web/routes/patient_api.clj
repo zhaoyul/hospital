@@ -14,6 +14,7 @@
 (def route-data
   {:coercion   malli/coercion
    :muuntaja   formats/instance
+
    :swagger    {:id :hc.hospital.web.routes.api/api} ;; 使用与主 API 相同的 Swagger ID
    :middleware [;; query-params & form-params
                 parameters/parameters-middleware
@@ -33,22 +34,25 @@
                 exception/wrap-exception]})
 
 ;; 患者 API 特定路由
-(defn patient-api-routes [_opts]
-  [["/patient"
-    ;; 提交评估的 POST 路由
-    ["/assessment" {:post {:summary "提交患者评估信息" ;; 添加摘要说明
-                           :description "接收并存储患者填写的评估表单信息" ;; 添加详细说明
-                           :tags ["患者"] ;; 添加标签，方便在 Swagger UI 中分类
-                           :handler #'patient-api/submit-assessment!
-                           :parameters {:body map?} ;; 参数描述可以更详细，但现在用 map? 简化处理 
-                           :responses {200 {:body {:message string?}}
-                                      500 {:body {:message string?}}}}}]]])
+(defn patient-api-routes [opts]
+  (let [query-fn (:query-fn opts)]
+    [["/patient"
+      ;; 提交评估的 POST 路由
+      ["/assessment" {:post {:summary "提交患者评估信息"
+                             :description "接收并存储患者填写的评估表单信息"
+                             :tags ["患者"]
+                             ;; Wrap the original handler to inject query-fn
+                             :handler (fn [request]
+                                        (patient-api/submit-assessment! (assoc request :query-fn query-fn)))
+                             :parameters {:body map?}
+                             :responses {200 {:body {:message string?}}
+                                         500 {:body {:message string?}}}}}]]]))
 
 ;; 从 :reitit/routes 派生此路由集
 (derive :reitit.routes/patient-api :reitit/routes)
 
 (defmethod ig/init-key :reitit.routes/patient-api
-  [_ {:keys [base-path query-fn]
+  [_ {:keys [base-path] ; query-fn is available in opts
       :or   {base-path "/api"}
-      :as   opts}]
-  (fn [] [base-path route-data (patient-api-routes (assoc opts :query-fn query-fn))]))
+      :as   opts}] ; opts is the component config, including :query-fn from system.edn
+  (fn [] [base-path route-data (patient-api-routes opts)])) ; Pass opts (which includes query-fn)

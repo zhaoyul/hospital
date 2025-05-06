@@ -11,11 +11,11 @@ WHERE patient_id = :patient_id;
 -- :doc 插入一个新的患者评估记录
 INSERT INTO patient_assessments
 (patient_id, assessment_data, created_at)
-VALUES (:patient_id, :assessment_data, now());
+VALUES (:patient_id, :assessment_data, datetime('now'));
 
 -- 更新患者评估
 -- :name update-patient-assessment! :! :n
 -- :doc 更新现有的患者评估记录
 UPDATE patient_assessments
-SET assessment_data = :assessment_data, updated_at = now()
+SET assessment_data = :assessment_data, updated_at = datetime('now')
 WHERE patient_id = :patient_id;
