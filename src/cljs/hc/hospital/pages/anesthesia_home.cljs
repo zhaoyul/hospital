@@ -4,7 +4,8 @@
             [hc.hospital.events :as events]
             [hc.hospital.subs :as subs]
             [hc.hospital.components.antd :as antd]
-            [hc.hospital.components.form-components :as form-comp]
+            [hc.hospital.components.form-components :as form-comp] ; Ensure this path is correct
+            [hc.hospital.utils :as utils] ; If you have utils for date formatting etc.
             ["antd" :refer [Form]])) ; Import Form
 
 (defn patient-list []
@@ -37,13 +38,13 @@
                              "default")} (:status item)]]])]))
 
 (defn brief-medical-history []
-  (let [medical-history @(rf/subscribe [::subs/brief-medical-history])
+  (let [medical-history @(rf/subscribe [::subs/doctor-form-brief-medical-history])
         [form] ((.-useForm Form))]
     [antd/form {:form form
                 :layout "vertical"
                 :initialValues medical-history
                 :onValuesChange (fn [_changed-values all-values]
-                                  (rf/dispatch [::events/update-brief-medical-history all-values]))
+                                  (rf/dispatch [::events/update-brief-medical-history all-values])) ; Event name matches definition
                 :style {:paddingBottom "24px"}}
 
      ;; 使用通用组件替换重复的模式
@@ -65,18 +66,24 @@
      [form-comp/checkbox-with-conditional-input
       {:label "其他"
        :checkbox-label "其他"
-       :field-name :other-desc}]]))
+       :field-name-prefix :other ; form-comp/checkbox-with-conditional-input might expect :field-name or :field-name-prefix
+       ;; Assuming it creates :other-checkbox and :other-description or similar based on its implementation
+       ;; The subscription ::doctor-form-brief-medical-history provides `{:other {:description "..."}}`
+       ;; The form item name should be `[:other :description]` for the input if checkbox is checked.
+       }]]))
 
 (defn physical-examination []
-  (let [exam-data @(rf/subscribe [::subs/physical-examination])
+  (let [exam-data @(rf/subscribe [::subs/doctor-form-physical-examination])
         [form] ((.-useForm Form))]
-    [antd/form {:form form
-                :layout "horizontal" ;; 水平布局，让label和内容在同一行
+    [antd/form {:form form :layout "horizontal" ;; 水平布局，让label和内容在同一行
                 :labelCol {:span 4 :style {:textAlign "left"}} ;; 设置label宽度并左对齐
                 :wrapperCol {:span 20} ;; 设置内容区域宽度
                 :style {:padding-bottom "24px"
                         :maxWidth "800px" ;; 限制最大宽度使内容集中靠左
-                        :marginLeft "0"}} ;; 确保整体靠左对齐
+                        :marginLeft "0"} ;; 确保整体靠左对齐
+
+                :initialValues exam-data
+                :onValuesChange (fn [_ all-values] (rf/dispatch [::events/update-physical-examination all-values]))}
 
      ;; 使用通用组件
      [form-comp/radio-button-group
@@ -143,7 +150,7 @@
      [antd/form-item {:name :mouth-opening :label "口腔: 张口"}
       [form-comp/number-input-with-unit {:style {:width "100%"} :step "0.1" :unit "cm"}]]
 
-           ;; Mallampati 和 甲颌间距
+     ;; Mallampati 和 甲颌间距
      [antd/row {:gutter 16}
       [antd/col {:span 12}
        [antd/form-item {:name :mallampati-score :label "Mallampati"}
@@ -188,12 +195,14 @@
                  {:value "pectus_excavatum" :label "佝偻胸"}]}]]))
 
 (defn lab-tests []
-  (let [lab-data @(rf/subscribe [::subs/lab-tests])
+  (let [lab-data @(rf/subscribe [::subs/doctor-form-lab-tests])
         [form] ((.-useForm Form))]
     [antd/form {:form form
                 :layout "vertical"
                 :initialValues lab-data
                 :onValuesChange (fn [_changed-values all-values]
+                                  ;; Ensure this event name matches your definition
+                                  ;; For example, if you defined ::events/update-lab-tests-from-doctor
                                   (rf/dispatch [::events/update-lab-tests all-values]))
                 :style {:padding-bottom "24px"}}
 
@@ -302,9 +311,13 @@
    {:key "3" :icon (r/as-element [antd/notification-outlined]) :label "患者签到"}])
 
 (defn anesthesia-home-page []
+  (rf/dispatch-sync [::events/fetch-all-assessments]) ; Fetch data on component init
   (let [active-tab @(rf/subscribe [::subs/active-tab])
         search-term @(rf/subscribe [::subs/search-term])
-        date-range @(rf/subscribe [::subs/date-range])]
+        date-range @(rf/subscribe [::subs/date-range])
+        ;; Get the full assessment data for the selected patient to pass to forms if needed,
+        ;; or rely on forms re-rendering when their specific subscriptions change.
+        _selected-patient-data @(rf/subscribe [::subs/selected-patient-assessment-data])]
     [antd/layout {:style {:minHeight "100vh"}}
      [antd/sider {:width 200 :style {:background "#fff"}}
       [:div {:style {:height "32px" :margin "16px" :background "rgba(0, 0, 0, 0.2)"}}]

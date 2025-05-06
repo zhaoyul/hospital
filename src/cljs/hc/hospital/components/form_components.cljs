@@ -44,11 +44,12 @@
      [antd/form-item {:name field-name
                       :noStyle true
                       :dependencies [(keyword (str field-name "-checkbox"))]}
-      (fn [form-instance]
-        (let [checked? (.getFieldValue form-instance (keyword (str field-name "-checkbox")))]
-          [antd/input {:placeholder "请输入"
-                       :disabled (not checked?)
-                       :style {:width (or input-width "100%")}}]))]]]])
+      ;; fixme
+      #_(fn [form-instance]
+          (let [checked? (.getFieldValue form-instance (keyword (str field-name "-checkbox")))]
+            [antd/input {:placeholder "请输入"
+                         :disabled (not checked?)
+                         :style {:width (or input-width "100%")}}]))]]]])
 
 ;; 创建一个单选按钮组组件
 (defn radio-button-group
