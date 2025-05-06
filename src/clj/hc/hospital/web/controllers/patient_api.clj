@@ -23,3 +23,14 @@
     (catch Exception e
       (log/error e "提交评估时出错")
       (http-response/internal-server-error {:message "提交评估时出错"}))))
+
+(defn get-assessment-by-patient-id [{{{:keys [patient-id]} :path} :parameters :keys [query-fn] :as _request}]
+  (log/info "查询患者评估数据，患者ID:" patient-id)
+  (try
+    (let [assessment-data (query-fn :get-patient-assessment-by-id {:patient_id patient-id})]
+      (if (seq assessment-data)
+        (http-response/ok assessment-data)
+        (http-response/not-found {:message "未找到该患者的评估数据"})))
+    (catch Exception e
+      (log/error e "查询评估数据时出错")
+      (http-response/internal-server-error {:message "查询评估数据时出错"}))))

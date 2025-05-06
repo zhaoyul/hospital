@@ -36,17 +36,28 @@
 ;; 患者 API 特定路由
 (defn patient-api-routes [opts]
   (let [query-fn (:query-fn opts)]
-    [["/patient"
-      ;; 提交评估的 POST 路由
+    [["/patient" ; Start of /patient routes group
       ["/assessment" {:post {:summary "提交患者评估信息"
                              :description "接收并存储患者填写的评估表单信息"
                              :tags ["患者"]
-                             ;; Wrap the original handler to inject query-fn
                              :handler (fn [request]
                                         (patient-api/submit-assessment! (assoc request :query-fn query-fn)))
                              :parameters {:body map?}
                              :responses {200 {:body {:message string?}}
-                                         500 {:body {:message string?}}}}}]]]))
+                                         500 {:body {:message string?}}}}}]
+
+
+      ["/assessment/:patient-id" {:get {:summary "查询指定患者的评估信息"
+                                        :description "根据患者ID查询存储的评估表单信息"
+                                        :tags ["患者"]
+                                        :handler (fn [request]
+                                                   (patient-api/get-assessment-by-patient-id (assoc request :query-fn query-fn)))
+                                        :parameters {:path {:patient-id string?}}
+                                        :responses {200 {:body coll?}
+                                                    404 {:body {:message string?}}
+                                                    500 {:body {:message string?}}}}}]]]))
+
+
 
 ;; 从 :reitit/routes 派生此路由集
 (derive :reitit.routes/patient-api :reitit/routes)
