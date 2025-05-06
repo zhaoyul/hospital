@@ -34,3 +34,17 @@
     (catch Exception e
       (log/error e "查询评估数据时出错")
       (http-response/internal-server-error {:message "查询评估数据时出错"}))))
+
+(defn get-all-patient-assessments-handler [{:keys [query-fn] :as _request}]
+  (log/info "查询所有患者评估数据")
+  (try
+    (let [all-assessments-raw (query-fn :get-all-patient-assessments {})
+          parsed-assessments (mapv (fn [assessment]
+                                     (if (:assessment_data assessment)
+                                       (assoc assessment :assessment_data (cheshire/decode (:assessment_data assessment) keyword))
+                                       assessment))
+                                   all-assessments-raw)]
+      (http-response/ok parsed-assessments))
+    (catch Exception e
+      (log/error e "查询所有评估数据时出错")
+      (http-response/internal-server-error {:message "查询所有评估数据时出错"}))))

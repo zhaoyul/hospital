@@ -55,7 +55,17 @@
                                         :parameters {:path {:patient-id string?}}
                                         :responses {200 {:body coll?}
                                                     404 {:body {:message string?}}
-                                                    500 {:body {:message string?}}}}}]]]))
+                                                    500 {:body {:message string?}}}}}]
+
+      ["/assessments" {:get {:summary "查询所有患者的评估信息列表"
+                             :description "获取所有已存储的患者评估表单信息"
+                             :tags ["患者"]
+                             :handler (fn [request]
+                                        (patient-api/get-all-patient-assessments-handler (assoc request :query-fn query-fn)))
+                             :responses {200 {:body coll?} ; Returns a collection of assessment objects
+                                         500 {:body {:message string?}}}}}]
+
+      ]]))
 
 
 

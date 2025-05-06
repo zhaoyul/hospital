@@ -18,3 +18,8 @@ WHERE patient_id = :patient_id;
 -- :name get-patient-assessment-by-id :? :1
 -- :doc 通过 patient_id 检索患者评估
 SELECT assessment_data FROM patient_assessments WHERE patient_id = :patient_id;
+
+-- 获取所有患者评估信息
+-- :name get-all-patient-assessments :*
+-- :doc 检索所有患者的评估数据
+SELECT * FROM patient_assessments;
