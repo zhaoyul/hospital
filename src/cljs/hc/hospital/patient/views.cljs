@@ -2,30 +2,24 @@
   (:require [re-frame.core :as rf]
             [hc.hospital.patient.events :as events]
             [hc.hospital.patient.subs :as subs]
-            [hc.hospital.utils :as utils]))
+            [hc.hospital.utils :as utils]
+            [clojure.string :as str]))
 
 ;; --- Progress Bar ---
 (defn progress-bar-component [current-step total-steps step-titles]
-  [:div {:class "progress-container"} ; Outer wrapper from original CLJS.
-   [:div {:class "progress-bar-visual-container" ; Corresponds to HTML's div.progress-bar (container of steps & fill)
-          ;; Assuming styles for this class are in screen.css, matching HTML's .progress-bar
-          ;; e.g. {:height "6px" :background-color "#e0e0e0" :border-radius "3px" :margin "40px 0 20px" :position "relative"}
-          }
-    [:div {:class "progress-steps"
-           ;; Assuming styles for this class are in screen.css, matching HTML's .progress-steps
-           ;; e.g. {:display "flex" :justify-content "space-between" :position "absolute" :width "100%" :top "-30px"}
-           }
-     (for [i (range total-steps)]
-       [:div {:class (str "progress-step" (if (= i current-step) " active" ""))
-              :key (str "step-" i)
-              :id (str "step" (inc i))
-              :data-title (nth step-titles i nil)} ; Added data-title, handle nil if step-titles too short
-        (inc i)])]
-    [:div {:class "progress-bar-fill" ; Was "progress-bar" in old CLJS, now matches HTML's fill element
-           :style {:width (str (* (/ (inc current-step) total-steps) 100) "%")
-                   ;; Assuming styles for this class are in screen.css, matching HTML's .progress-bar-fill
-                   ;; e.g. {:height "100%" :background-color "#1890ff" :border-radius "3px"}
-                   }}]]])
+  [:div {:class "progress-bar"} ; Changed from progress-container, removed visual-container
+   [:div {:class "progress-steps"}
+    (for [i (range total-steps)]
+      [:div {:class (str "progress-step" (if (= i current-step) " active" "")) ; current-step is 0-indexed
+             :key (str "step-" i)
+             :id (str "step" (inc i))
+             :data-title (nth step-titles i nil)}
+       (inc i)])]
+   [:div {:class "progress-bar-fill"
+          :id "progress" ; Added id to match HTML
+          :style {:width (str (* (/ (inc current-step) total-steps) 100) "%")}
+          ;; Removed inline styles for height, background-color, border-radius
+          }]])
 
 ;; --- Step Section Wrapper ---
 (defn step-section-wrapper [title current-step step-index & children]
@@ -36,31 +30,27 @@
    (into [:<>] children)])
 
 ;; --- Form Navigation ---
-;; Corrected version from previous interaction
-(defn form-navigation [current-step max-step-idx submitting?]
-  [:div {:class "navigation-buttons" :style {:marginTop "24px" :textAlign "right"}}
-   (when (> current-step 0)
+(defn form-navigation [current-step total-steps submitting?] ; total-steps is count
+  (let [max-step-idx (dec total-steps)]
+    [:div {:class "nav-buttons"} ; Changed class, removed inline style
+     (when (> current-step 0)
+       [:button {:type "button"
+                 :id "prevBtn"
+                 :class "btn-secondary" ; Removed inline styles
+                 :onClick #(rf/dispatch [::events/prev-step])}
+        "上一步"])
      [:button {:type "button"
-               :class "btn-secondary"
-               :style {:marginRight "10px"
-                       :padding "10px 20px" :border "none" :borderRadius "4px" :cursor "pointer"
-                       :backgroundColor "#f0f0f0" :color "#333"}
-               :onClick #(rf/dispatch [::events/prev-step])}
-      "上一步"])
-   (if (< current-step max-step-idx)
-     [:button {:type "button"
-               :class "btn-primary"
-               :style {:padding "10px 20px" :border "none" :borderRadius "4px" :cursor "pointer"
-                       :backgroundColor "#1890ff" :color "white"}
-               :onClick #(rf/dispatch [::events/next-step])}
-      "下一步"]
-     [:button {:type "button" ; Changed from submit to button, form onSubmit handles submission call
-               :class "btn-primary"
-               :style {:padding "10px 20px" :border "none" :borderRadius "4px" :cursor "pointer"
-                       :backgroundColor "#1890ff" :color "white"}
+               :id "nextBtn"
+               :class "btn-primary" ; Removed inline styles
+               :style {:width (if (= current-step 0) "100%" "48%")} ; Dynamic width based on questionnaire.html JS
                :disabled submitting?
-               :onClick #(rf/dispatch [::events/validate-and-submit])}
-      (if submitting? "提交中..." "提交")])])
+               :onClick (if (< current-step max-step-idx)
+                          #(rf/dispatch [::events/next-step])
+                          #(rf/dispatch [::events/validate-and-submit]))}
+      (if (< current-step max-step-idx)
+        "下一步"
+        (if submitting? "提交中..." "提交"))]]))
+
 
 ;; --- Custom Divider ---
 (defn custom-divider
@@ -72,13 +62,13 @@
 
 
 ;; --- New Form UI Helper Components ---
-(defn ui-input-item [{:keys [label value placeholder errors field-key data-path type unit]
+(defn ui-input-item [{:keys [label value placeholder errors field-key data-path type unit data-index] ; Added data-index
                       :or {type "text"}}]
   (let [full-path (conj data-path field-key)
         error-msg (get-in errors full-path)
         field-id (str (name field-key) "-" (hash data-path))]
     [:div {:class (if error-msg "form-group error" "form-group")}
-     [:label {:class "form-label" :for field-id}
+     [:label {:class "form-label" :for field-id :data-index data-index} ; Added :data-index
       label
       (when unit [:span {:class "unit"} (str " " unit)])]
      [:input {:type type
@@ -90,13 +80,13 @@
      (when error-msg
        [:div {:class "error-message"} error-msg])]))
 
-(defn ui-text-area-item [{:keys [label value placeholder errors field-key data-path rows]
+(defn ui-text-area-item [{:keys [label value placeholder errors field-key data-path rows data-index] ; Added data-index
                           :or {rows 3}}]
   (let [full-path (conj data-path field-key)
         error-msg (get-in errors full-path)
         field-id (str (name field-key) "-" (hash data-path))]
     [:div {:class (if error-msg "form-group error" "form-group")}
-     [:label {:class "form-label" :for field-id} label]
+     [:label {:class "form-label" :for field-id :data-index data-index} label] ; Added :data-index
      [:textarea {:id field-id
                  :class "form-input"
                  :value (if (nil? value) "" value)
@@ -106,12 +96,12 @@
      (when error-msg
        [:div {:class "error-message"} error-msg])]))
 
-(defn ui-input-number-item [{:keys [label value placeholder errors field-key data-path min max step unit]}]
+(defn ui-input-number-item [{:keys [label value placeholder errors field-key data-path min max step unit data-index]}] ; Added data-index
   (let [full-path (conj data-path field-key)
         error-msg (get-in errors full-path)
         field-id (str (name field-key) "-" (hash data-path))]
     [:div {:class (if error-msg "form-group error" "form-group")}
-     [:label {:class "form-label" :for field-id}
+     [:label {:class "form-label" :for field-id :data-index data-index} ; Added :data-index
       label
       (when unit [:span {:class "unit"} (str " " unit)])]
      [:input {:type "number"
@@ -131,12 +121,12 @@
      (when error-msg
        [:div {:class "error-message"} error-msg])]))
 
-(defn ui-select-item [{:keys [label value placeholder errors field-key data-path options]}]
+(defn ui-select-item [{:keys [label value placeholder errors field-key data-path options data-index]}] ; Added data-index
   (let [full-path (conj data-path field-key)
         error-msg (get-in errors full-path)
         field-id (str (name field-key) "-" (hash data-path))]
     [:div {:class (if error-msg "form-group error" "form-group")}
-     [:label {:class "form-label" :for field-id} label]
+     [:label {:class "form-label" :for field-id :data-index data-index} label] ; Added :data-index
      [:select {:id field-id
                :class "form-input"
                :value (if (nil? value) "" value)
@@ -148,12 +138,12 @@
      (when error-msg
        [:div {:class "error-message"} error-msg])]))
 
-(defn ui-radio-group-item [{:keys [label value errors field-key data-path options]}]
+(defn ui-radio-group-item [{:keys [label value errors field-key data-path options data-index]}] ; Added data-index
   (let [full-path (conj data-path field-key)
         error-msg (get-in errors full-path)
         group-name (str (name field-key) "-" (hash data-path))]
     [:div {:class (if error-msg "form-group error" "form-group")}
-     [:label {:class "form-label"} label]
+     [:label {:class "form-label" :data-index data-index} label] ; Added :data-index (no :for since it's a group)
      [:div {:class "radio-group"}
       (for [{opt-val :value opt-label :label} options]
         ^{:key (str opt-val opt-label)}
@@ -163,16 +153,16 @@
                   :value opt-val
                   :checked (= value opt-val)
                   :onChange #(rf/dispatch [::events/update-form-field full-path opt-val])}]
-         (str " " opt-label)])]
+         [:span {} (str " " opt-label)]])] ; Added span for styling checked state text
      (when error-msg
        [:div {:class "error-message"} error-msg])]))
 
-(defn ui-boolean-radio-item [{:keys [label bool-value errors field-key data-path]}]
+(defn ui-boolean-radio-item [{:keys [label bool-value errors field-key data-path data-index]}] ; Added data-index
   (let [full-path (conj data-path field-key)
         error-msg (get-in errors full-path)
         group-name (str (name field-key) "-" (hash data-path))]
     [:div {:class (if error-msg "form-group error" "form-group")}
-     [:label {:class "form-label"} label]
+     [:label {:class "form-label" :data-index data-index} label] ; Added :data-index
      [:div {:class "radio-group"}
       [:label {:class "radio-label"}
        [:input {:type "radio"
@@ -180,25 +170,25 @@
                 :value "yes"
                 :checked (true? bool-value)
                 :onChange #(rf/dispatch [::events/update-form-field full-path true])}]
-       " 有"]
+       [:span " 有"]] ; Added span
       [:label {:class "radio-label"}
        [:input {:type "radio"
                 :name group-name
                 :value "no"
                 :checked (false? bool-value)
                 :onChange #(rf/dispatch [::events/update-form-field full-path false])}]
-       " 无"]]
+       [:span " 无"]]] ; Added span
      (when error-msg
        [:div {:class "error-message"} error-msg])]))
 
-(defn ui-date-picker-item [{:keys [label value placeholder errors field-key data-path showTime]}]
+(defn ui-date-picker-item [{:keys [label value placeholder errors field-key data-path showTime data-index]}] ; Added data-index
   (let [full-path (conj data-path field-key)
         error-msg (get-in errors full-path)
         field-id (str (name field-key) "-" (hash data-path))
         input-type (if showTime "datetime-local" "date")
         current-value (utils/format-date value (if (= input-type "datetime-local") "YYYY-MM-DDTHH:mm" "YYYY-MM-DD"))]
     [:div {:class (if error-msg "form-group error" "form-group")}
-     [:label {:class "form-label" :for field-id} label]
+     [:label {:class "form-label" :for field-id :data-index data-index} label] ; Added :data-index
      [:input {:type input-type
               :id field-id
               :class "form-input"
@@ -211,16 +201,16 @@
        [:div {:class "error-message"} error-msg])]))
 
 
-(defn ui-file-input-item [{:keys [label value errors field-key data-path]}]
+(defn ui-file-input-item [{:keys [label value errors field-key data-path data-index]}] ; Added data-index
   (let [full-path (conj data-path field-key)
         error-msg (get-in errors full-path)
         field-id (str (name field-key) "-" (hash data-path))
-        display-value (if (and value (not= value "-") (not (empty? value)))
+        display-value (if (and value (not= value "-") (seq value)) ; Changed (not (empty? value)) to (seq value)
                         (str "已选择: " value)
                         "选择文件")]
     [:div {:class (if error-msg "form-group error" "form-group")}
-     [:label {:class "form-label" :for field-id} label]
-     [:label {:class "file-upload-label" :for field-id} ; Make sure 'for' matches input id
+     [:label {:class "form-label" :data-index data-index} label] ; Main label for the field group
+     [:label {:class "file-upload-label" :for field-id} ; Visually styled label acting as button
       [:i {:class "fas fa-upload mr-2"}]
       display-value]
      [:input {:type "file"
@@ -234,6 +224,31 @@
      (when error-msg
        [:div {:class "error-message"} error-msg])]))
 
+;; Component for items like "Heart condition" which have Normal/Abnormal radio and conditional details text
+(defn ui-condition-item [{:keys [label base-value detail-value errors field-key data-path data-index placeholder]}]
+  (let [base-path (conj data-path field-key)
+        detail-path (conj data-path (keyword (str (name field-key) "-detail")))
+        error-msg (or (get-in errors base-path) (get-in errors detail-path))
+        group-name (str (name field-key) "-" (hash data-path))]
+    [:div {:class (if error-msg "form-group error" "form-group")}
+     [:label {:class "form-label" :data-index data-index} label]
+     [:div {:class "radio-group"}
+      [:label {:class "radio-label"}
+       [:input {:type "radio" :name group-name :value "normal" :checked (= base-value "normal")
+                :onChange #(rf/dispatch [::events/update-form-field base-path "normal"])}]
+       [:span " 正常"]]
+      [:label {:class "radio-label"}
+       [:input {:type "radio" :name group-name :value "abnormal" :checked (= base-value "abnormal")
+                :onChange #(rf/dispatch [::events/update-form-field base-path "abnormal"])}]
+       [:span " 异常"]]]
+     (when (= base-value "abnormal")
+       [:input {:type "text" :class "form-input mt-2"
+                :value (if (nil? detail-value) "" detail-value)
+                :placeholder (or placeholder "如有异常，请说明")
+                :onChange #(rf/dispatch [::events/update-form-field detail-path (-> % .-target .-value)])}])
+     (when error-msg
+       [:div {:class "error-message"} error-msg])]))
+
 
 ;; --- Form Steps ---
 
@@ -244,43 +259,30 @@
     [:<>
      [ui-input-item {:label "门诊号" :value (:outpatient-number basic-info) :errors errors
                      :data-path [:basic-info] :field-key :outpatient-number
-                     :placeholder "请输入门诊号"}]
+                     :placeholder "请输入门诊号" :data-index "1.1"}]
      [ui-input-item {:label "姓名" :value (:name basic-info) :errors errors
                      :data-path [:basic-info] :field-key :name
-                     :placeholder "请输入姓名"}]
+                     :placeholder "请输入姓名" :data-index "1.2"}]
      [ui-radio-group-item {:label "性别" :value (:gender basic-info) :errors errors
                            :data-path [:basic-info] :field-key :gender
                            :options [{:value "male" :label "男"}
-                                     {:value "female" :label "女"}
-                                     {:value "other" :label "其他"}]}]
+                                     {:value "female" :label "女"}] :data-index "1.3"}] ;; Removed "other" to match HTML
      [ui-input-number-item {:label "年龄" :value (:age basic-info) :errors errors
                             :data-path [:basic-info] :field-key :age
                             :min 0 :max 150 :unit "岁"
-                            :placeholder "请输入年龄"}]
-     [ui-input-item {:label "床号" :value (:bed-number basic-info) :errors errors
-                     :data-path [:basic-info] :field-key :bed-number
-                     :placeholder "请输入床号"}]
-     [ui-input-item {:label "住院号" :value (:hospitalization-number basic-info) :errors errors
-                     :data-path [:basic-info] :field-key :hospitalization-number
-                     :placeholder "请输入住院号"}]
-     [ui-input-item {:label "联系电话" :value (:contact-phone basic-info) :errors errors
-                     :data-path [:basic-info] :field-key :contact-phone :type "tel"
-                     :placeholder "请输入联系电话"}]
-     [ui-input-item {:label "身份证号" :value (:id-card-number basic-info) :errors errors
-                     :data-path [:basic-info] :field-key :id-card-number
-                     :placeholder "请输入身份证号"}]
+                            :placeholder "请输入年龄" :data-index "1.4"}]
      [ui-input-item {:label "病区" :value (:ward basic-info) :errors errors
                      :data-path [:basic-info] :field-key :ward
-                     :placeholder "请输入病区信息"}]
+                     :placeholder "请输入病区信息" :data-index "1.5"}]
      [ui-input-item {:label "电子健康卡号" :value (:health-card-number basic-info) :errors errors
                      :data-path [:basic-info] :field-key :health-card-number
-                     :placeholder "请输入电子健康卡号"}]
+                     :placeholder "请输入电子健康卡号" :data-index "1.6"}]
      [ui-text-area-item {:label "术前诊断" :value (:pre-op-diagnosis basic-info) :errors errors
                          :data-path [:basic-info] :field-key :pre-op-diagnosis
-                         :rows 2 :placeholder "请输入术前诊断"}]
+                         :rows 2 :placeholder "请输入术前诊断" :data-index "1.7"}]
      [ui-text-area-item {:label "拟施手术" :value (:planned-surgery basic-info) :errors errors
                          :data-path [:basic-info] :field-key :planned-surgery
-                         :rows 2 :placeholder "请输入拟施手术"}]]))
+                         :rows 2 :placeholder "请输入拟施手术" :data-index "1.8"}]]))
 
 ;; 一般情况步骤
 (defn general-condition-step []
@@ -289,297 +291,214 @@
     [:<>
      [ui-input-number-item {:label "身高" :value (:height general-condition) :errors errors
                             :data-path [:general-condition] :field-key :height
-                            :min 50 :max 250 :unit "cm"
-                            :placeholder "请输入身高"}]
+                            :min 1 :max 300 :unit "cm" ; Adjusted min based on typical values
+                            :placeholder "请输入身高" :data-index "2.1"}]
      [ui-input-number-item {:label "体重" :value (:weight general-condition) :errors errors
                             :data-path [:general-condition] :field-key :weight
-                            :min 1 :max 300 :unit "kg"
-                            :placeholder "请输入体重"}]
+                            :min 1 :max 500 :unit "kg" ; Adjusted max
+                            :placeholder "请输入体重" :data-index "2.2"}]
+     [ui-input-item {:label "精神状态" :value (:mental-state general-condition) :errors errors ;; Assuming mental-state is now text
+                     :data-path [:general-condition] :field-key :mental-state
+                     :placeholder "请输入精神状态" :data-index "2.3"}]
+     [ui-input-item {:label "活动能力" :value (:activity-ability general-condition) :errors errors
+                     :data-path [:general-condition] :field-key :activity-ability
+                     :placeholder "请输入活动能力" :data-index "2.4"}]
+
      (let [bp-path [:general-condition :blood-pressure]
            systolic-val (get-in general-condition [:blood-pressure :systolic])
            diastolic-val (get-in general-condition [:blood-pressure :diastolic])
-           systolic-error (get-in errors (conj bp-path :systolic))
-           diastolic-error (get-in errors (conj bp-path :diastolic))
-           bp-error-msg (or systolic-error diastolic-error)]
-       [:div {:class (if bp-error-msg "form-group error" "form-group")}
-        [:label {:class "form-label"} "血压 " [:span {:class "unit"} "mmHg"]]
-        [:div {:style {:display "flex" :alignItems "center"}}
-         [:input {:type "number" :class "form-input" :style {:flex "1" :marginRight "5px"}
-                  :value (if (nil? systolic-val) "" systolic-val)
-                  :placeholder "收缩压"
-                  :onChange #(let [val (-> % .-target .-value)] (rf/dispatch [::events/update-form-field (conj bp-path :systolic) (if (empty? val) nil (js/parseFloat val))]))}]
-         [:span {:style {:padding "0 5px"}} "/"]
-         [:input {:type "number" :class "form-input" :style {:flex "1" :marginLeft "5px"}
-                  :value (if (nil? diastolic-val) "" diastolic-val)
-                  :placeholder "舒张压"
-                  :onChange #(let [val (-> % .-target .-value)] (rf/dispatch [::events/update-form-field (conj bp-path :diastolic) (if (empty? val) nil (js/parseFloat val))]))}]]
-        (when bp-error-msg [:div {:class "error-message"} bp-error-msg])])
+           ;; Using (seq coll) for non-empty check is idiomatic, but (not-empty string) is also fine and clear for strings.
+           ;; The linter might have been for a direct (not (empty? ...)) check.
+           bp-combined-val (when (or (not-empty systolic-val) (not-empty diastolic-val))
+                             (str (or systolic-val "") "/" (or diastolic-val "")))
+           bp-error (get-in errors bp-path) ;; Simplified error check
+           field-id-bp (str "blood-pressure-" (hash bp-path))]
+       [:div {:class (if bp-error "form-group error" "form-group")}
+        [:label {:class "form-label" :for field-id-bp :data-index "2.5"} "血压 " [:span {:class "unit"} "mmHg"]]
+        [:input {:type "text" :id field-id-bp :class "form-input" :name "blood_pressure" :placeholder "例如：120/80"
+                 :value bp-combined-val
+                 :onChange #(let [value (-> % .-target .-value)
+                                  parts (str/split value #"/")
+                                  systolic (not-empty (first parts)) ; not-empty is fine here
+                                  diastolic (not-empty (second parts))] ; not-empty is fine here
+                              (rf/dispatch [::events/update-form-field (conj bp-path :systolic) systolic])
+                              (rf/dispatch [::events/update-form-field (conj bp-path :diastolic) diastolic]))}]
+        (when bp-error [:div {:class "error-message"} (if (string? bp-error) bp-error "输入无效")])])
 
      [ui-input-number-item {:label "脉搏" :value (:pulse general-condition) :errors errors
-                            :data-path [:general-condition] :field-key :pulse
-                            :min 30 :max 200 :unit "次/分"
-                            :placeholder "请输入脉搏"}]
+                            :data-path [:general-condition] :field-key :pulse :unit "次/分"
+                            :placeholder "请输入脉搏" :data-index "2.6"}]
      [ui-input-number-item {:label "呼吸" :value (:respiration general-condition) :errors errors
-                            :data-path [:general-condition] :field-key :respiration
-                            :min 5 :max 60 :unit "次/分"
-                            :placeholder "请输入呼吸频率"}]
+                            :data-path [:general-condition] :field-key :respiration :unit "次/分"
+                            :placeholder "请输入呼吸频率" :data-index "2.7"}]
      [ui-input-number-item {:label "体温" :value (:temperature general-condition) :errors errors
-                            :data-path [:general-condition] :field-key :temperature
-                            :step 0.1 :min 35 :max 42 :unit "℃"
-                            :placeholder "请输入体温"}]
-     [ui-input-number-item {:label "血氧饱和度 (SpO2)" :value (:spo2 general-condition) :errors errors
-                              :data-path [:general-condition] :field-key :spo2
-                              :min 70 :max 100 :unit "%"
-                              :placeholder "请输入血氧饱和度"}]
-     [ui-select-item {:label "精神状态" :value (:mental-state general-condition) :errors errors
-                      :data-path [:general-condition] :field-key :mental-state
-                      :options [{:value "良好" :label "良好"}
-                                {:value "一般" :label "一般"}
-                                {:value "较差" :label "较差"}]}]
-     [ui-select-item {:label "活动能力" :value (:activity-ability general-condition) :errors errors
-                      :data-path [:general-condition] :field-key :activity-ability
-                      :options [{:value "正常" :label "正常"}
-                                {:value "轻度受限" :label "轻度受限"}
-                                {:value "中度受限" :label "中度受限"}
-                                {:value "重度受限" :label "重度受限"}
-                                {:value "卧床不起" :label "卧床不起"}]}]
-     ]))
+                            :data-path [:general-condition] :field-key :temperature :unit "℃" :step 0.1
+                            :placeholder "请输入体温" :data-index "2.8"}]
+     [ui-input-number-item {:label "SpO2" :value (:spo2 general-condition) :errors errors
+                              :data-path [:general-condition] :field-key :spo2 :unit "%"
+                              :placeholder "请输入血氧饱和度" :data-index "2.9"}]]))
 
-
-;; 病情摘要步骤 (was medical_summary_step, mapping to db.cljs :medical-summary)
+;; 病情摘要步骤
 (defn medical-summary-step []
-  (let [medical-summary @(rf/subscribe [::subs/medical-summary])
+  (let [summary @(rf/subscribe [::subs/medical-summary])
         errors @(rf/subscribe [::subs/form-errors])]
     [:<>
-     [ui-boolean-radio-item {:label "过敏史"
-                             :bool-value (:allergy-history medical-summary)
-                             :errors errors
-                             :data-path [:medical-summary]
-                             :field-key :allergy-history}]
-     (when (:allergy-history medical-summary)
+     [ui-boolean-radio-item {:label "过敏史" :bool-value (:allergy-history summary) :errors errors
+                             :data-path [:medical-summary] :field-key :allergy-history :data-index "3.1"}]
+     (when (:allergy-history summary)
        [:<>
-        [ui-input-item {:label "过敏原"
-                        :value (:allergens medical-summary)
-                        :errors errors
-                        :data-path [:medical-summary]
-                        :field-key :allergens
-                        :placeholder "请输入过敏原"}]
-        [ui-date-picker-item {:label "过敏时间" ; Assuming this is a date, not datetime
-                              :value (:allergy-time medical-summary)
-                              :errors errors
-                              :data-path [:medical-summary]
-                              :field-key :allergy-time
-                              :placeholder "最近发生过敏时间"}]])
-     [custom-divider]
-     [ui-boolean-radio-item {:label "吸烟史"
-                             :bool-value (:smoking-history medical-summary)
-                             :errors errors
-                             :data-path [:medical-summary]
-                             :field-key :smoking-history}]
-     (when (:smoking-history medical-summary)
-       [:<>
-        [ui-input-number-item {:label "吸烟年数"
-                               :value (:smoking-years medical-summary)
-                               :errors errors
-                               :data-path [:medical-summary]
-                               :field-key :smoking-years
-                               :min 0 :max 100 :unit "年"
-                               :placeholder "请输入年数"}]
-        [ui-input-number-item {:label "每天吸烟支数"
-                               :value (:smoking-per-day medical-summary)
-                               :errors errors
-                               :data-path [:medical-summary]
-                               :field-key :smoking-per-day
-                               :min 0 :max 100 :unit "支"
-                               :placeholder "请输入支数"}]])
-     [custom-divider]
-     [ui-boolean-radio-item {:label "饮酒史"
-                             :bool-value (:drinking-history medical-summary)
-                             :errors errors
-                             :data-path [:medical-summary]
-                             :field-key :drinking-history}]
-     (when (:drinking-history medical-summary)
-       [:<>
-        [ui-input-number-item {:label "饮酒年数"
-                               :value (:drinking-years medical-summary)
-                               :errors errors
-                               :data-path [:medical-summary]
-                               :field-key :drinking-years
-                               :min 0 :max 100 :unit "年"
-                               :placeholder "请输入年数"}]
-        [ui-input-number-item {:label "每天饮酒量"
-                               :value (:drinking-ml-per-day medical-summary)
-                               :errors errors
-                               :data-path [:medical-summary]
-                               :field-key :drinking-ml-per-day
-                               :min 0 :max 3000 :unit "ml"
-                               :placeholder "请输入饮酒量"}]])]))
+        [ui-input-item {:label "过敏原" :value (:allergen summary) :errors errors
+                        :data-path [:medical-summary] :field-key :allergen
+                        :placeholder "请输入过敏原" :data-index "3.2"}]
+        [ui-date-picker-item {:label "过敏时间" :value (:allergy-date summary) :errors errors
+                              :data-path [:medical-summary] :field-key :allergy-date
+                              :placeholder "请选择过敏时间" :data-index "3.3"}]])
 
-;; 并存疾病及检查步骤 (was comorbidities_step)
-(defn comorbidities-step []
-  (let [comorbidities @(rf/subscribe [::subs/comorbidities])
+     [ui-boolean-radio-item {:label "吸烟史" :bool-value (:smoking-history summary) :errors errors
+                             :data-path [:medical-summary] :field-key :smoking-history :data-index "3.4"}]
+     (when (:smoking-history summary)
+       [:<>
+        [ui-input-number-item {:label "吸烟年数" :value (:smoking-years summary) :errors errors
+                               :data-path [:medical-summary] :field-key :smoking-years
+                               :placeholder "请输入吸烟年数" :data-index "3.5"}]
+        [ui-input-number-item {:label "每天吸烟支数" :value (:cigarettes-per-day summary) :errors errors
+                               :data-path [:medical-summary] :field-key :cigarettes-per-day
+                               :placeholder "请输入每天吸烟支数" :data-index "3.6"}]])
+
+     [ui-boolean-radio-item {:label "饮酒史" :bool-value (:drinking-history summary) :errors errors
+                             :data-path [:medical-summary] :field-key :drinking-history :data-index "3.7"}]
+     (when (:drinking-history summary)
+       [:<>
+        [ui-input-number-item {:label "饮酒年数" :value (:drinking-years summary) :errors errors
+                               :data-path [:medical-summary] :field-key :drinking-years
+                               :placeholder "请输入饮酒年数" :data-index "3.8"}]
+        [ui-input-item {:label "每天饮酒量" :value (:alcohol-per-day summary) :errors errors
+                        :data-path [:medical-summary] :field-key :alcohol-per-day
+                        :placeholder "请输入每天饮酒量(如 白酒2两 或 啤酒1瓶)" :data-index "3.9"}]])]))
+
+
+;; 并存疾病及其他信息步骤
+(defn coexisting-diseases-step []
+  (let [comorbidities-data @(rf/subscribe [::subs/comorbidities])
+        aux-exam-data @(rf/subscribe [::subs/auxiliary-examination])
+        physical-exam-data @(rf/subscribe [::subs/physical-examination]) ; Added for condition items
         errors @(rf/subscribe [::subs/form-errors])]
     [:<>
-     [custom-divider "主要疾病史"]
-     [ui-text-area-item {:label "呼吸系统疾病" :value (:respiratory-disease comorbidities) :errors errors
-                         :data-path [:comorbidities] :field-key :respiratory-disease
-                         :placeholder "请描述呼吸系统疾病情况"}]
-     [ui-text-area-item {:label "心血管疾病" :value (:cardiovascular-disease comorbidities) :errors errors
-                         :data-path [:comorbidities] :field-key :cardiovascular-disease
-                         :placeholder "请描述心血管疾病情况"}]
-     [ui-text-area-item {:label "内分泌疾病" :value (:endocrine-disease comorbidities) :errors errors
-                         :data-path [:comorbidities] :field-key :endocrine-disease
-                         :placeholder "请描述内分泌疾病情况"}]
-     [ui-text-area-item {:label "神经精神疾病" :value (:neuropsychiatric-disease comorbidities) :errors errors
-                         :data-path [:comorbidities] :field-key :neuropsychiatric-disease
-                         :placeholder "请描述神经精神疾病情况"}]
-     [ui-text-area-item {:label "关节骨骼系统" :value (:skeletal-system comorbidities) :errors errors
-                         :data-path [:comorbidities] :field-key :skeletal-system
-                         :placeholder "请描述关节骨骼系统情况"}]
-     [ui-text-area-item {:label "家族恶性高热史" :value (:family-malignant-hyperthermia comorbidities) :errors errors
-                         :data-path [:comorbidities] :field-key :family-malignant-hyperthermia
-                         :placeholder "请描述家族恶性高热史情况"}]
-     [ui-text-area-item {:label "既往麻醉、手术史" :value (:past-anesthesia-surgery comorbidities) :errors errors
-                         :data-path [:comorbidities] :field-key :past-anesthesia-surgery
-                         :rows 3 :placeholder "请描述既往麻醉、手术史情况"}]
+     ;; Comorbidities Section
+     [ui-boolean-radio-item {:label "呼吸系统疾病" :bool-value (:respiratory-disease comorbidities-data)
+                             :errors errors :data-path [:comorbidities] :field-key :respiratory-disease
+                             :data-index "4.1"}]
+     [ui-boolean-radio-item {:label "神经肌肉疾病" :bool-value (:neuromuscular-disease comorbidities-data) ; Assumes :neuromuscular-disease in db
+                             :errors errors :data-path [:comorbidities] :field-key :neuromuscular-disease
+                             :data-index "4.2"}]
+     [ui-boolean-radio-item {:label "心血管疾病" :bool-value (:cardiovascular-disease comorbidities-data)
+                             :errors errors :data-path [:comorbidities] :field-key :cardiovascular-disease
+                             :data-index "4.3"}]
+     [ui-boolean-radio-item {:label "肝脏疾病" :bool-value (:liver-disease comorbidities-data) ; Assumes :liver-disease in db
+                             :errors errors :data-path [:comorbidities] :field-key :liver-disease ; Fixed typo: :comororbidities -> :comorbidities
+                             :data-index "4.4"}]
+     [ui-boolean-radio-item {:label "内分泌疾病" :bool-value (:endocrine-disease comorbidities-data)
+                             :errors errors :data-path [:comorbidities] :field-key :endocrine-disease
+                             :data-index "4.5"}]
+     [ui-boolean-radio-item {:label "肾脏疾病" :bool-value (:kidney-disease comorbidities-data) ; Assumes :kidney-disease in db
+                             :errors errors :data-path [:comorbidities] :field-key :kidney-disease
+                             :data-index "4.6"}]
+     [ui-boolean-radio-item {:label "神经精神疾病" :bool-value (:neuropsychiatric-disease comorbidities-data)
+                             :errors errors :data-path [:comorbidities] :field-key :neuropsychiatric-disease
+                             :data-index "4.7"}]
+     [ui-boolean-radio-item {:label "关节骨骼系统" :bool-value (:skeletal-system comorbidities-data) ; DB key is :skeletal-system
+                             :errors errors :data-path [:comorbidities] :field-key :skeletal-system
+                             :data-index "4.8"}]
+     [ui-boolean-radio-item {:label "既往麻醉、手术史" :bool-value (:past-anesthesia-surgery comorbidities-data) ; DB key is :past-anesthesia-surgery
+                             :errors errors :data-path [:comorbidities] :field-key :past-anesthesia-surgery
+                             :data-index "4.9"}]
+     [ui-boolean-radio-item {:label "家族恶性高热史" :bool-value (:family-malignant-hyperthermia comorbidities-data)
+                             :errors errors :data-path [:comorbidities] :field-key :family-malignant-hyperthermia
+                             :data-index "4.10"}]
 
-     [custom-divider "特殊药物使用情况"]
-     [ui-text-area-item {:label "使用的特殊药物" :value (get-in comorbidities [:special-medications :used]) :errors errors
-                         :data-path [:comorbidities :special-medications] :field-key :used
-                         :placeholder "请描述使用的特殊药物情况"}]
-     [ui-date-picker-item {:label "最后一次用药时间" :value (get-in comorbidities [:special-medications :last-time]) :errors errors
+     ;; Special Medications - This section needs review for DB structure alignment
+     ;; Current DB: [:comorbidities :special-medications {:used "..." :last-time "..."}]
+     ;; The :bool-value for "使用的特殊药物" needs to correctly interpret the :used string (e.g. "yes", "no", "-") as a boolean.
+     ;; The :value for "药物名称" needs to map to a new :details key under :special-medications.
+     ;; The :value for "最后服药时间" needs to map to :last-time under :special-medications.
+     [ui-boolean-radio-item {:label "使用的特殊药物"
+                             :bool-value (let [used-val (get-in comorbidities-data [:special-medications :used])]
+                                           (cond
+                                             (true? used-val) true
+                                             (false? used-val) false
+                                             (= "yes" used-val) true ;; Example: adapt if DB stores strings
+                                             :else false))
+                             :errors errors :data-path [:comorbidities :special-medications] :field-key :used ;; Path updated
+                             :data-index "4.11"}]
+     (when (let [used-val (get-in comorbidities-data [:special-medications :used])]
+             (or (true? used-val) (= "yes" used-val))) ;; Condition to show details
+       [ui-input-item {:label "药物名称" :value (get-in comorbidities-data [:special-medications :details]) ;; Assumes :details key
+                       :errors errors
+                       :data-path [:comorbidities :special-medications] :field-key :details
+                       :placeholder "如有，请填写药物名称"}])
+
+     [ui-date-picker-item {:label "最后服药时间" :value (get-in comorbidities-data [:special-medications :last-time]) ;; Path updated
+                           :errors errors
                            :data-path [:comorbidities :special-medications] :field-key :last-time
-                           :placeholder "选择最后一次用药时间" :showTime true}] ; showTime for datetime-local
+                           :showTime true :placeholder "年/月/日 --:--" :data-index "4.12"}]
 
-     [custom-divider "体格检查"]
-     [ui-text-area-item {:label "心脏" :value (:heart comorbidities) :errors errors ; Assuming these are direct fields in comorbidities now
-                         :data-path [:comorbidities] :field-key :heart :placeholder "请描述心脏检查情况"}]
-     [ui-text-area-item {:label "肺脏" :value (:lungs comorbidities) :errors errors
-                         :data-path [:comorbidities] :field-key :lungs :placeholder "请描述肺脏检查情况"}]
-     [ui-text-area-item {:label "气道" :value (:airway comorbidities) :errors errors
-                         :data-path [:comorbidities] :field-key :airway :placeholder "请描述气道检查情况"}]
-     [ui-text-area-item {:label "牙齿" :value (:teeth comorbidities) :errors errors
-                         :data-path [:comorbidities] :field-key :teeth :placeholder "请描述牙齿检查情况"}]
-     [ui-text-area-item {:label "脊柱四肢" :value (:spine-limbs comorbidities) :errors errors
-                         :data-path [:comorbidities] :field-key :spine-limbs :placeholder "请描述脊柱四肢情况"}]
-     [ui-text-area-item {:label "神经" :value (:nervous comorbidities) :errors errors
-                         :data-path [:comorbidities] :field-key :nervous :placeholder "请描述神经检查情况"}]
-     [ui-text-area-item {:label "其他体格检查" :value (:other comorbidities) :errors errors ; Renamed from :others to :other to match db
-                         :data-path [:comorbidities] :field-key :other :placeholder "请描述其他体格检查情况"}]
+     ;; Condition Items - Sourced from physical-examination data
+     ;; Current DB for these items are flat strings. ui-condition-item expects base-value and detail-value.
+     ;; This requires either DB structure change (e.g. :heart {:status "normal", :detail "..."})
+     ;; or ui-condition-item to be adapted, or separate fields in DB for details.
+     ;; For now, mapping base-value to the string, and detail-value to an assumed :field-detail key.
+     [ui-condition-item {:label "心脏" :base-value (:heart physical-exam-data) :detail-value (:heart-detail physical-exam-data)
+                         :errors errors :data-path [:physical-examination] :field-key :heart :data-index "4.13"}]
+     [ui-condition-item {:label "肺脏" :base-value (:lungs physical-exam-data) :detail-value (:lungs-detail physical-exam-data)
+                         :errors errors :data-path [:physical-examination] :field-key :lungs :data-index "4.14"}]
+     [ui-condition-item {:label "气道" :base-value (:airway physical-exam-data) :detail-value (:airway-detail physical-exam-data)
+                         :errors errors :data-path [:physical-examination] :field-key :airway :data-index "4.15"}]
+     [ui-condition-item {:label "牙齿" :base-value (:teeth physical-exam-data) :detail-value (:teeth-detail physical-exam-data)
+                         :errors errors :data-path [:physical-examination] :field-key :teeth :data-index "4.16"}]
+     [ui-condition-item {:label "脊柱四肢" :base-value (:spine-limbs physical-exam-data) :detail-value (:spine-limbs-detail physical-exam-data)
+                         :errors errors :data-path [:physical-examination] :field-key :spine-limbs :data-index "4.17"}]
+     [ui-condition-item {:label "神经" :base-value (:nervous physical-exam-data) :detail-value (:nervous-detail physical-exam-data)
+                         :errors errors :data-path [:physical-examination] :field-key :nervous :data-index "4.18"}]
 
+     [ui-input-item {:label "其它" :value (:other physical-exam-data) :errors errors ; From physical-examination
+                     :data-path [:physical-examination] :field-key :other
+                     :placeholder "请填写其他情况" :data-index "4.19"}]
 
-     [custom-divider "相关辅助检查检验结果"]
-     [ui-file-input-item {:label "胸片" :value (get-in comorbidities [:auxiliary-examination :chest-radiography]) :errors errors
-                          :data-path [:comorbidities :auxiliary-examination] :field-key :chest-radiography}]
-     [ui-file-input-item {:label "肺功能" :value (get-in comorbidities [:auxiliary-examination :pulmonary-function]) :errors errors
-                          :data-path [:comorbidities :auxiliary-examination] :field-key :pulmonary-function}]
-     [ui-file-input-item {:label "心脏彩超" :value (get-in comorbidities [:auxiliary-examination :cardiac-ultrasound]) :errors errors
-                          :data-path [:comorbidities :auxiliary-examination] :field-key :cardiac-ultrasound}]
-     [ui-file-input-item {:label "心电图" :value (get-in comorbidities [:auxiliary-examination :ecg]) :errors errors
-                          :data-path [:comorbidities :auxiliary-examination] :field-key :ecg}]
-     [ui-file-input-item {:label "其他检查" :value (get-in comorbidities [:auxiliary-examination :other]) :errors errors
-                          :data-path [:comorbidities :auxiliary-examination] :field-key :other}]
-     ]))
-
-;; 麻醉计划步骤
-(defn anesthesia-plan-step []
-  (let [anesthesia-plan @(rf/subscribe [::subs/anesthesia-plan])
-        errors @(rf/subscribe [::subs/form-errors])]
-    [:<>
-     [custom-divider "评估与分级"]
-     [ui-select-item {:label "ASA分级" :value (:asa-classification anesthesia-plan) :errors errors
-                      :data-path [:assessment] :field-key :asa-classification ; Path corrected based on db.cljs
-                      :options [{:value "I" :label "I级 - 健康人"}
-                                {:value "II" :label "II级 - 轻度全身性疾病"}
-                                {:value "III" :label "III级 - 严重全身性疾病"}
-                                {:value "IV" :label "IV级 - 威胁生命的全身性疾病"}
-                                {:value "V" :label "V级 - 濒死病人"}
-                                {:value "VI" :label "VI级 - 脑死亡病人"}]}]
-     [ui-select-item {:label "心功能分级(NYHA)" :value (:nyha-classification anesthesia-plan) :errors errors
-                      :data-path [:assessment] :field-key :nyha-classification ; Path corrected
-                      :options [{:value "I" :label "I级 - 无症状"}
-                                {:value "II" :label "II级 - 轻度症状"}
-                                {:value "III" :label "III级 - 明显症状"}
-                                {:value "IV" :label "IV级 - 症状严重"}]}]
-
-     [custom-divider "麻醉与监测"]
-     [ui-select-item {:label "拟行麻醉方式" :value (:planned-anesthesia anesthesia-plan) :errors errors
-                      :data-path [:assessment] :field-key :planned-anesthesia ; Path corrected
-                      :options [{:value "全身麻醉" :label "全身麻醉"}
-                                {:value "椎管内麻醉" :label "椎管内麻醉"}
-                                {:value "神经阻滞麻醉" :label "神经阻滞麻醉"}
-                                {:value "局部麻醉" :label "局部麻醉"}
-                                {:value "静脉麻醉" :label "静脉麻醉"}
-                                {:value "联合麻醉" :label "联合麻醉"}
-                                {:value "其他" :label "其他"}]}]
-     [ui-text-area-item {:label "监测项目" :value (:monitoring-items anesthesia-plan) :errors errors
-                         :data-path [:assessment] :field-key :monitoring-items ; Path corrected
-                         :placeholder "请填写监测项目"}]
-     [ui-text-area-item {:label "特殊技术" :value (:special-techniques anesthesia-plan) :errors errors
-                         :data-path [:assessment] :field-key :special-techniques ; Path corrected
-                         :placeholder "请填写特殊技术"}]
-
-     [custom-divider "术前医嘱与备注"]
-     [ui-text-area-item {:label "术前麻醉医嘱" :value (get-in anesthesia-plan [:other-info :pre-op-fasting]) :errors errors
-                         :data-path [:other-info] :field-key :pre-op-fasting
-                         :placeholder "例如：术前禁食N小时，禁饮M小时"}]
-     [ui-text-area-item {:label "术日晨继续应用药物" :value (get-in anesthesia-plan [:other-info :continue-medication]) :errors errors
-                         :data-path [:other-info] :field-key :continue-medication
-                         :placeholder "请填写术日晨需继续应用的药物"}]
-     [ui-text-area-item {:label "术日晨停用药物" :value (get-in anesthesia-plan [:other-info :stop-medication]) :errors errors
-                         :data-path [:other-info] :field-key :stop-medication
-                         :placeholder "请填写术日晨需停用的药物"}]
-     [ui-text-area-item {:label "麻醉中需注意的问题" :value (get-in anesthesia-plan [:other-info :anesthesia-notes]) :errors errors
-                         :data-path [:other-info] :field-key :anesthesia-notes
-                         :rows 3 :placeholder "请填写麻醉中需注意的问题"}]
-
-     [custom-divider "签名与日期"]
-     [ui-input-item {:label "麻醉医师签名" :value (get-in anesthesia-plan [:other-info :anesthesiologist-signature]) :errors errors
-                     :data-path [:other-info] :field-key :anesthesiologist-signature
-                     :placeholder "请输入麻醉医师姓名"}]
-     [ui-date-picker-item {:label "评估日期" :value (get-in anesthesia-plan [:other-info :assessment-date]) :errors errors
-                           :data-path [:other-info] :field-key :assessment-date
-                           :placeholder "请选择日期"}]]))
+     ;; Attachments Section - Sourced from auxiliary-examination data
+     [ui-file-input-item {:label "相关辅助检查检验结果" :value (:general-aux-report aux-exam-data) :errors errors ; Assumes :general-aux-report in DB
+                          :data-path [:auxiliary-examination] :field-key :general-aux-report :data-index "4.20"}]
+     [ui-file-input-item {:label "胸片" :value (:chest-radiography aux-exam-data) :errors errors
+                          :data-path [:auxiliary-examination] :field-key :chest-radiography :data-index "4.21"}]
+     [ui-file-input-item {:label "肺功能" :value (:pulmonary-function aux-exam-data) :errors errors
+                          :data-path [:auxiliary-examination] :field-key :pulmonary-function :data-index "4.22"}]
+     [ui-file-input-item {:label "心脏彩超" :value (:cardiac-ultrasound aux-exam-data) :errors errors
+                          :data-path [:auxiliary-examination] :field-key :cardiac-ultrasound :data-index "4.23"}]
+     [ui-file-input-item {:label "心电图" :value (:ecg aux-exam-data) :errors errors
+                          :data-path [:auxiliary-examination] :field-key :ecg :data-index "4.24"}]
+     [ui-file-input-item {:label "其他" :value (:other aux-exam-data) :errors errors ; DB key is :other for this context
+                          :data-path [:auxiliary-examination] :field-key :other :data-index "4.25"}]]))
 
 
-;; --- Success Page ---
-(defn success-page []
-  [:div {:class "success-container" :style {:textAlign "center" :padding "40px"}}
-   [:h1 {:class "success-title" :style {:fontSize "24px" :color "#4CAF50" :marginBottom "16px"}} "提交成功！"]
-   [:p {:class "success-subtitle" :style {:fontSize "16px" :color "#555" :marginBottom "24px"}}
-    "您的术前评估信息已成功提交，医生将会尽快审核。"]
-   [:button {:type "button"
-             :class "btn-primary"
-             :style {:padding "12px 24px" :border "none" :borderRadius "4px" :cursor "pointer"
-                     :backgroundColor "#1890ff" :color "white"}
-             :onClick #(.reload js/window.location)}
-    "返回首页"]])
-
-;; --- Main Patient Form Component ---
+;; Main patient form component
 (defn patient-form []
   (let [current-step @(rf/subscribe [::subs/current-step])
-        submit-success? @(rf/subscribe [::subs/submit-success?])
-        submitting? @(rf/subscribe [::subs/submitting?])
-        total-steps 5 ; Basic Info, General Condition, Medical Summary, Comorbidities, Anesthesia Plan
-        max-step-idx (dec total-steps)
-        step-titles ["基本信息" "一般情况" "病情摘要" "并存疾病及检查" "麻醉计划"]]
+        total-steps 4 ; From questionnaire.html
+        step-titles ["患者信息" "健康状况" "生活习惯" "补充信息"] ; From questionnaire.html progress steps data-title
+        submitting? @(rf/subscribe [::subs/submitting?])]
+    [:div {:class "container"}
+     [:div {:class "card mt-6"}
+      [:h1 {:class "text-xl font-bold text-center mb-4"
+            :style {:color "#1890ff" :font-size "22px"}}
+       "麻醉评估问卷"]
 
-    (if submit-success?
-      [success-page]
-      [:div {:class "form-container" :style {:maxWidth "800px" :margin "20px auto" :padding "20px" :boxShadow "0 0 10px rgba(0,0,0,0.1)" :borderRadius "8px"}}
-       [progress-bar-component current-step total-steps step-titles]
-       [:form {:id "patientAssessmentForm"
-               :onSubmit (fn [event]
-                           (.preventDefault event)
-                           (rf/dispatch [::events/validate-and-submit]))}
+      [progress-bar-component current-step total-steps step-titles]
 
-        [step-section-wrapper (nth step-titles current-step) current-step current-step
-         (case current-step
-           0 [basic-info-step]
-           1 [general-condition-step]
-           2 [medical-summary-step]
-           3 [comorbidities-step]
-           4 [anesthesia-plan-step]
-           [basic-info-step])] ; Default case
+      [:form {:id "questionnaire-form"
+              :onSubmit (fn [e] (.preventDefault e))} ; Prevent default HTML form submission
 
-        [form-navigation current-step max-step-idx submitting?]]])))
+       [step-section-wrapper "第一部分：患者信息" current-step 0 [basic-info-step]]
+       [step-section-wrapper "第二部分：一般情况" current-step 1 [general-condition-step]]
+       [step-section-wrapper "第三部分：病情摘要" current-step 2 [medical-summary-step]]
+       [step-section-wrapper "第四部分：并存疾病及其他" current-step 3 [coexisting-diseases-step]]
+
+       [form-navigation current-step total-steps submitting?]]]]))
