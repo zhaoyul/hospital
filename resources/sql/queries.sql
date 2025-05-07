@@ -33,6 +33,10 @@ WHERE 1=1
 --~ (when (:updated_to params) "AND updated_at <= :updated_to")
 ORDER BY updated_at DESC;
 
+-- :name delete-patient-assessment-by-id! :! :n
+-- :doc Deletes a patient assessment by patient_id
+DELETE FROM patient_assessments WHERE patient_id = :patient_id;
+
 -- 医生相关操作
 
 -- :name create-doctor! :! :n

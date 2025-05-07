@@ -1,9 +1,10 @@
 (ns hc.hospital.test-utils
   (:require
-    [hc.hospital.core :as core]
-    [peridot.core :as p]
-    [byte-streams :as bs]
-    [integrant.repl.state :as state]))
+   [hc.hospital.core :as core]
+   [peridot.core :as p]
+   [migratus.core :refer [rollback reset]]
+   [byte-streams :as bs]
+   [integrant.repl.state :as state]))
 
 (defn system-state
   []
@@ -12,8 +13,8 @@
 (defn system-fixture
   []
   (fn [f]
-    (when (nil? (system-state))
-      (core/start-app {:opts {:profile :test}}))
+    (core/start-app {:opts {:profile :test}})
+    (reset (:db.sql/migrations (system-state)))
     (f)
     (core/stop-app)))
 
