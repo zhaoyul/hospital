@@ -44,6 +44,7 @@
                                         (patient-api/submit-assessment! (assoc request :query-fn query-fn)))
                              :parameters {:body map?}
                              :responses {200 {:body {:message string?}}
+                                         400 {:body {:message string?}} ; Added for bad request (e.g. missing patient-id)
                                          500 {:body {:message string?}}}}}]
 
 
@@ -53,13 +54,18 @@
                                         :handler (fn [request]
                                                    (patient-api/get-assessment-by-patient-id (assoc request :query-fn query-fn)))
                                         :parameters {:path {:patient-id string?}}
-                                        :responses {200 {:body coll?}
+                                        :responses {200 {:body map?} ; Changed from coll? to map? as it returns a single assessment
                                                     404 {:body {:message string?}}
                                                     500 {:body {:message string?}}}}}
 
       ["/assessments" {:get {:summary "查询所有患者的评估信息列表"
                                :description "获取所有已存储的患者评估表单信息"
                                :tags ["患者"]
+                               :parameters {:query [:map {:closed false} ; Use :closed false if other params might be present and ignored, or true if strict.
+                                                    [:name_pinyin {:optional true} string?]
+                                                    [:name_initial {:optional true} string?]
+                                                    [:updated_from {:optional true} string?]
+                                                    [:updated_to {:optional true} string?]]}
                                :handler (fn [request]
                                           (patient-api/get-all-patient-assessments-handler (assoc request :query-fn query-fn)))
                                :responses {200 {:body coll?} ; Returns a collection of assessment objects
