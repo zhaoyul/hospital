@@ -30,3 +30,28 @@
                  :headers headers
                  :params params)
       (get-response)))
+
+(defn POST [app path body headers]
+  (-> (p/session app)
+      (p/request path
+                 :request-method :post
+                 :content-type "application/json" ; Assuming JSON for POST
+                 :headers headers
+                 :body (if (string? body) body (bs/to-string body))) ; Ensure body is a string
+      (get-response)))
+
+(defn PUT [app path body headers]
+  (-> (p/session app)
+      (p/request path
+                 :request-method :put
+                 :content-type "application/json" ; Assuming JSON for PUT
+                 :headers headers
+                 :body (if (string? body) body (bs/to-string body))) ; Ensure body is a string
+      (get-response)))
+
+(defn DELETE [app path headers]
+  (-> (p/session app)
+      (p/request path
+                 :request-method :delete
+                 :headers headers)
+      (get-response)))
