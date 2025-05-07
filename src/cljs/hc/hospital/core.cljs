@@ -1,5 +1,6 @@
 (ns hc.hospital.core
   (:require
+   ["react" :as react]
    [reagent.core :as r]
    [reagent.dom :as d]
    [re-frame.core :as rf]
@@ -16,6 +17,9 @@
 ;; Views
 
 (defn home-page []
+  (react/useEffect
+   #(rf/dispatch-sync [::events/fetch-all-assessments])
+   [])
   [anesthesia-home-page])
 
 ;; -------------------------
@@ -23,7 +27,7 @@
 
 (defn ^:dev/after-load mount-root []
   (timbre/info "重新挂载应用")
-  (d/render [home-page] (.getElementById js/document "app")))
+  (d/render [:f> home-page] (.getElementById js/document "app")))
 
 (defn ^:export ^:dev/once init! []
   ;; 初始化日志系统

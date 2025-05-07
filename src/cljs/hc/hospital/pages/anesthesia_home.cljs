@@ -380,7 +380,6 @@
    {:key "3" :icon (r/as-element [antd/notification-outlined]) :label "患者签到"}])
 
 (defn anesthesia-home-page []
-  (rf/dispatch-sync [::events/fetch-all-assessments])
   (let [active-tab @(rf/subscribe [::subs/active-tab])
         search-term @(rf/subscribe [::subs/search-term])
         date-range @(rf/subscribe [::subs/date-range])
