@@ -55,6 +55,11 @@
                              :env #ig/ref :system/env
                              :query-fn #ig/ref :db.sql/query-fn}
 
+ ;; Add new doctor API route set here
+ :reitit.routes/doctor-api {:base-path "/api",
+                            :env #ig/ref :system/env
+                            :query-fn #ig/ref :db.sql/query-fn}
+
  :db.sql/query-fn {:conn #ig/ref :db.sql/connection,
                    :options {},
                    :filename "sql/queries.sql"}

@@ -32,3 +32,38 @@ WHERE 1=1
 --~ (when (:updated_from params) "AND updated_at >= :updated_from")
 --~ (when (:updated_to params) "AND updated_at <= :updated_to")
 ORDER BY updated_at DESC;
+
+-- 医生相关操作
+
+-- :name create-doctor! :! :n
+-- :doc 创建一个新医生
+INSERT INTO doctors (username, password_hash, name)
+VALUES (:username, :password_hash, :name);
+
+-- :name get-doctor-by-username :? :1
+-- :doc 根据用户名获取医生信息
+SELECT * FROM doctors WHERE username = :username;
+
+-- :name get-doctor-by-id :? :1
+-- :doc 根据ID获取医生信息
+SELECT id, username, name, created_at, updated_at FROM doctors WHERE id = :id;
+
+-- :name list-doctors :*
+-- :doc 列出所有医生信息 (不包含密码)
+SELECT id, username, name, created_at, updated_at FROM doctors ORDER BY created_at DESC;
+
+-- :name update-doctor-password! :! :n
+-- :doc 更新医生密码
+UPDATE doctors
+SET password_hash = :password_hash, updated_at = datetime('now')
+WHERE id = :id;
+
+-- :name update-doctor-name! :! :n
+-- :doc 更新医生姓名
+UPDATE doctors
+SET name = :name, updated_at = datetime('now')
+WHERE id = :id;
+
+-- :name delete-doctor! :! :n
+-- :doc 根据ID删除医生
+DELETE FROM doctors WHERE id = :id;

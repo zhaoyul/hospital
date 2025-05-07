@@ -7,7 +7,8 @@
     [reitit.swagger-ui :as swagger-ui]
     ;; 引入新路由命名空间
     [hc.hospital.web.routes.patient-pages]
-    [hc.hospital.web.routes.patient-api]))
+    [hc.hospital.web.routes.patient-api]
+    [hc.hospital.web.routes.doctor-api]))
 
 (defmethod ig/init-key :handler/ring
   [_ {:keys [router api-path] :as opts}]
