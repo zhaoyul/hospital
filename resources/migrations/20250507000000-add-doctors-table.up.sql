@@ -6,3 +6,12 @@ CREATE TABLE doctors (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+--;;
+INSERT INTO doctors (username, password_hash, name, created_at, updated_at)
+VALUES (
+    'admin',
+    'bcrypt+sha512$1d088d680ba16c5088e0558230ea62d2$12$50c51211700cc4a74350e1b60f2a04ab022f741da17534ca',
+    '默认管理员',
+    datetime('now'),
+    datetime('now')
+);

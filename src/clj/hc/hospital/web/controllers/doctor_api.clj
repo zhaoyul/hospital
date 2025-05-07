@@ -24,7 +24,7 @@
   "医生登录 API"
   [{{:keys [username password]} :body-params
     :keys [session]
-    {:keys [query-fn]} :integrant-deps}]
+    {:keys [query-fn]} :integrant-deps :as m}]
   (if (or (empty? username) (empty? password))
     (http-response/bad-request {:error "用户名和密码不能为空"})
     (if-let [doctor (doctor.db/verify-doctor-credentials query-fn username password)]
@@ -62,13 +62,13 @@
     authenticated-doctor :identity}] ; 从 session 中获取已认证的医生ID
   ;; 简单示例：这里可以添加权限检查，例如是否是管理员，或者医生ID是否匹配 authenticated-doctor
   (if-not (= (Integer/parseInt id) authenticated-doctor)
-     (http-response/forbidden {:error "无权修改其他医生信息"})
-     (try
-       (doctor.db/update-doctor-name! query-fn (Integer/parseInt id) name)
-       (http-response/ok {:message "医生姓名更新成功"})
-       (catch Exception e
-         (println "更新医生姓名时发生错误:" e)
-         (http-response/internal-server-error {:error "更新医生姓名失败"})))))
+    (http-response/forbidden {:error "无权修改其他医生信息"})
+    (try
+      (doctor.db/update-doctor-name! query-fn (Integer/parseInt id) name)
+      (http-response/ok {:message "医生姓名更新成功"})
+      (catch Exception e
+        (println "更新医生姓名时发生错误:" e)
+        (http-response/internal-server-error {:error "更新医生姓名失败"})))))
 
 (defn update-doctor-password!
   "更新医生密码 API (需要认证, 假设只允许医生更新自己的密码)"

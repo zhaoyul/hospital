@@ -345,7 +345,7 @@ ENTRYPOINT exec java $JAVA_OPTS -jar /hospital/hospital-standalone.jar
   (let* ((prompt-file "code-prompt.md")
          (buffer "*gemini-app-and-server*"))
     (delete-file prompt-file)
-    (shell-command "code2prompt . --no-clipboard --output-file code-prompt.md")
+    (shell-command "code2prompt . --no-clipboard --output code-prompt.md")
     (ignore-errors (gptel-context-remove-all))
     (gptel-add-file prompt-file)
     (when (> (length (window-list)) 1)

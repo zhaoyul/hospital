@@ -47,10 +47,10 @@
             login-password "login_pass"
             _ (doctor.db/create-doctor! query-fn {:username login-username :password login-password :name "登录测试"})]
         (testing "成功登录"
-          (let [response (tu/POST handler "/api/doctors/login"
+          (let [response (tu/POST handler "/api/users/login"
                                   (json/encode {:username login-username :password login-password})
                                   {"content-type" "application/json"})
-                body (json/parse-string (:body response) true)]
+                body (json/parse-string (:body response) keyword)]
             (is (= 200 (:status response)))
             (is (= "登录成功" (:message body)))
             (is (= login-username (get-in body [:doctor :username])))
@@ -58,7 +58,7 @@
             (is (some? (get-in response [:headers "Set-Cookie"])))))
 
         (testing "登录失败 - 密码错误"
-          (let [response (tu/POST handler "/api/doctors/login"
+          (let [response (tu/POST handler "/api/users/login"
                                   (json/encode {:username login-username :password "wrongpass"})
                                   {"content-type" "application/json"})]
             (is (= 401 (:status response)))))
@@ -69,7 +69,7 @@
         ;; Peridot 的 p/session 可以更好地处理这个问题.
         ;; (testing "成功登出"
         ;;   ;; 需要先登录以建立会话
-        ;;   (let [login-resp (tu/POST handler "/api/doctors/login"
+        ;;   (let [login-resp (tu/POST handler "/api/users/login"
         ;;                             (json/encode {:username login-username :password login-password})
         ;;                             {"content-type" "application/json"})
         ;;         cookies (get-in login-resp [:headers "Set-Cookie"])]

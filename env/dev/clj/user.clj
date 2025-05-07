@@ -44,6 +44,7 @@
 
 
 (comment
+  (migratus.core/reset (:db.sql/migrations state/system))
   (go)
   (halt)
   (reset)

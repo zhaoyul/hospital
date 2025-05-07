@@ -69,7 +69,7 @@
       ["/assessments" {:get {:summary "查询所有患者的评估信息列表"
                              :description "获取所有已存储的患者评估表单信息"
                              :tags ["患者"]
-                             :parameters {:query [:map {:closed false} ; Use :closed false if other params might be present and ignored, or true if strict.
+                             :parameters {:query [:map {:closed false}
                                                   [:name_pinyin {:optional true} string?]
                                                   [:name_initial {:optional true} string?]
                                                   [:updated_from {:optional true} string?]

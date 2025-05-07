@@ -12,8 +12,6 @@
 
    ;; Routes
    [hc.hospital.web.routes.api]
-   #_[ohc.hospital.web.routes.pages]
-   ;; 患者应用路由
    [hc.hospital.web.routes.patient-pages]
    [hc.hospital.web.routes.patient-api]
    [kit.edge.db.sql.conman]
