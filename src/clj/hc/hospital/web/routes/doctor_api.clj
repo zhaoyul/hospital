@@ -25,11 +25,12 @@
     {:get {:summary "获取医生列表 (需要认证)"
            :handler doctor-api/list-doctors
            :tags ["医生用户"]
-           :middleware [wrap-restricted]}}
-    {:post {:summary "注册新医生"
+           :middleware [wrap-restricted]}
+     :post {:summary "注册新医生"
             :tags ["医生用户"]
             :parameters {:body {:username string? :password string? :name string?}}
-            :handler doctor-api/register-doctor!}}]
+            :handler doctor-api/register-doctor!}}
+    ]
    ["/users/login"
     {:post {:summary "医生登录"
             :tags ["医生用户"]
@@ -45,13 +46,13 @@
            :tags ["医生用户"]
            :parameters {:path {:id int?}}
            :handler doctor-api/get-doctor-by-id
-           :middleware [wrap-restricted]}}
-    {:put {:summary "更新医生姓名 (需要认证，医生只能更新自己的信息)"
+           :middleware [wrap-restricted]}
+     :put {:summary "更新医生姓名 (需要认证，医生只能更新自己的信息)"
            :tags ["医生用户"]
            :parameters {:path {:id int?} :body {:name string?}}
            :handler doctor-api/update-doctor-name!
-           :middleware [wrap-restricted]}}
-    {:delete {:summary "删除医生 (需要认证，通常管理员权限)"
+           :middleware [wrap-restricted]}
+     :delete {:summary "删除医生 (需要认证，通常管理员权限)"
               :tags ["医生用户"]
               :parameters {:path {:id int?}}
               :handler doctor-api/delete-doctor!
