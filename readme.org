@@ -1,3 +1,346 @@
+#+TITLE: 门诊手术麻醉系统项目文档
+#+LANGUAGE: zh
+#+OPTIONS: toc:nil num:nil
+
+* 项目简介
+~hospital~ 是一个使用 Kit 框架构建的 Web 应用程序.旨在为医院提供麻醉前评估等功能.项目包含患者端问卷填写,医生端数据查看与编辑,以及后台管理等模块.
+
+* 先决条件
+在开始之前, 请确保你已经安装了以下软件:
+- Java Development Kit (JDK) 11 或更高版本 (推荐 OpenJDK)
+- Clojure CLI 工具
+- Node.js 和 Yarn (或 npm) (用于 ClojureScript 部分)
+
+* 快速开始
+** 1. 克隆仓库 (如果需要)
+   #+BEGIN_SRC bash
+   git clone <your-repository-url>
+   cd hospital
+   #+END_SRC
+
+** 2. 安装依赖
+   - Clojure 依赖 (自动处理):
+     Clojure CLI 会根据 =deps.edn= 自动下载依赖.
+   - Javascript 依赖:
+     #+BEGIN_SRC bash
+     yarn install # 或者 npm install
+     #+END_SRC
+
+** 3. 启动开发环境
+   - *启动 Clojure REPL (后端)*:
+     打开一个新的终端.运行以下命令之一:
+     #+BEGIN_SRC bash
+     # 通用开发 REPL
+     clj -M:dev
+
+     # 或者使用 nREPL (适用于 Calva, Cursive 或终端)
+     clj -M:dev:nrepl
+     # 或者 make repl
+
+     # 或者使用 CIDER nREPL (适用于 Emacs CIDER)
+     clj -M:dev:cider
+     #+END_SRC
+     推荐在 Emacs 中使用 CIDER 连接.
+   - *启动 ClojureScript 编译器 (前端)*:
+     打开另一个新的终端.运行:
+     #+BEGIN_SRC bash
+     # 编译并监听医生管理端应用
+     npx shadow-cljs watch app
+
+     # 编译并监听患者问卷应用
+     npx shadow-cljs watch patient-app
+     #+END_SRC
+     这将以监听模式编译 ClojureScript 代码.确保两个前端应用都已启动监听.
+
+** 4. 启动应用程序
+   在 Clojure REPL 中运行:
+   #+BEGIN_SRC clojure
+   (go)
+   #+END_SRC
+
+** 5. 访问应用
+   - 医生管理端 (后台): [[http://localhost:3000]]
+   - 患者问卷填写页面: [[http://localhost:3000/patient/fill]]
+   - API 健康检查: [[http://localhost:3000/api/health]]
+
+* 开发工作流
+  在 Clojure REPL 中使用:
+  #+BEGIN_SRC clojure
+  (go)    ; 启动系统
+  (reset) ; 应用代码更改后重新加载系统
+  (halt)  ; 停止系统
+  #+END_SRC
+
+  连接 ClojureScript REPL:
+  - 启动 ClojureScript 编译器后 (例如 =npx shadow-cljs watch app=),
+    连接到 7002 端口的 nREPL.
+  - 在 CLJS REPL 中运行 =(shadow.cljs.devtools.api/repl :app)= (或 =:patient-app=) 连接到浏览器.
+  - 测试连接: =(js/alert "Hello from CLJS!")=
+
+* 项目结构
+  #+BEGIN_EXAMPLE
+  hospital
+  ├── Dockerfile             # 用于构建 Docker 镜像
+  ├── Makefile               # 常用开发命令快捷方式
+  ├── README.md              # (英文) 简要说明
+  ├── bb.edn                 # Babashka 任务配置
+  ├── build.clj              # Clojure Tools Build 构建脚本
+  ├── deps.edn               # Clojure 项目依赖和配置
+  ├── docs                   # 文档目录
+  │   ├── questionnaire.html # 问卷静态原型
+  │   ├── requirment.md      # 需求文档
+  │   └── 术前评估表.md      # 评估表字段定义
+  ├── env                    # 环境特定配置
+  │   ├── dev                # 开发环境
+  │   │   ├── clj
+  │   │   │   ├── hc/hospital # 开发环境特定 Clojure 代码
+  │   │   │   └── user.clj    # REPL 辅助函数
+  │   │   └── resources       # 开发环境特定资源 (如 logback.xml)
+  │   ├── prod               # 生产环境
+  │   └── test               # 测试环境
+  ├── kit.edn                # Kit 框架模块配置
+  ├── package.json           # Node.js 依赖 (用于 CLJS)
+  ├── readme.org             # 本文件
+  ├── resources              # 应用资源
+  │   ├── html               # Selmer HTML 模板 (后端渲染和前端 CLJS 挂载点)
+  │   │   ├── home.html      # 医生管理端挂载点
+  │   │   └── patient_form.html # 患者问卷挂载点
+  │   ├── migrations         #数据库迁移脚本
+  │   │   ├── ...-add-patient-assessments-table.up.sql
+  │   │   └── ...-add-doctors-table.up.sql
+  │   ├── public             # 静态文件 (CSS, JS, 图片)
+  │   │   ├── css/screen.css # 主要的 CSS 文件
+  │   │   └── js/            # ClojureScript 编译输出目录 (通过 shadow-cljs 配置)
+  │   ├── sql                # SQL 查询 (HugSQL)
+  │   │   └── queries.sql
+  │   └── system.edn         # Integrant 系统配置 (核心)
+  ├── shadow-cljs.edn        # Shadow-cljs 编译器配置
+  ├── src                    # 源代码
+  │   ├── clj                # Clojure 源代码 (后端)
+  │   │   └── hc/hospital
+  │   │       ├── config.clj # 配置加载
+  │   │       ├── core.clj   # 应用入口 (启动/停止)
+  │   │       ├── db         # 数据库交互逻辑 (如 doctor.clj)
+  │   │       └── web        # Web 相关代码
+  │   │           ├── controllers # 控制器 (业务逻辑处理: doctor_api, patient, patient_api)
+  │   │           ├── handler.clj # Ring/Reitit 处理程序设置
+  │   │           ├── middleware  # 中间件 (auth, core, exception, formats)
+  │   │           ├── pages       # 页面布局 (Selmer)
+  │   │           └── routes      # 路由定义 (Reitit: api, doctor_api, pages, patient_api, patient_pages)
+  │   └── cljs               # ClojureScript 源代码 (前端)
+  │       └── hc/hospital
+  │           ├── components # Reagent/Ant Design 组件封装 (antd.cljs, form_components.cljs)
+  │           ├── core.cljs  # 医生管理端 (app) CLJS 应用入口
+  │           ├── db.cljs    # 医生管理端 re-frame 应用数据库 schema
+  │           ├── events.cljs# 医生管理端 re-frame 事件处理器
+  │           ├── pages      # 医生管理端页面视图组件 (anesthesia_home.cljs)
+  │           ├── patient    # 患者问卷 (patient-app) 相关 CLJS 代码
+  │           │   ├── core.cljs  # 患者问卷应用入口
+  │           │   ├── db.cljs    # 患者问卷 re-frame 数据库
+  │           │   ├── events.cljs# 患者问卷 re-frame 事件
+  │           │   ├── subs.cljs  # 患者问卷 re-frame 订阅
+  │           │   └── views.cljs # 患者问卷 re-frame 视图
+  │           ├── subs.cljs   # 医生管理端 re-frame 订阅
+  │           └── utils.cljs  # 前端通用工具函数
+  ├── test                   # 测试代码
+  └── yarn.lock              # Yarn 锁定文件
+  #+END_EXAMPLE
+
+* 配置
+** 核心配置文件
+   - =resources/system.edn=: Integrant 系统定义.包括服务器,数据库连接,路由等.通过 Aero 读取配置.
+   - =deps.edn=: Clojure 项目依赖和别名.
+   - =shadow-cljs.edn=: ClojureScript 构建配置.定义了两个构建目标:
+     - =:app=: 医生管理端应用.输出到 =target/classes/cljsbuild/public/js/app.js=.
+     - =:patient-app=: 患者问卷应用.输出到 =target/classes/cljsbuild/public/js/patient/patient-app.js=.
+   - =build.clj=: Uberjar 构建脚本.包含 ClojureScript 的生产构建.
+
+** 环境变量
+   配置文件可以使用 =#env= 标签读取环境变量.重要环境变量包括:
+   - =PORT=: HTTP 服务器端口 (默认 3000).
+   - =COOKIE_SECRET~=: 会话 Cookie 的密钥.*生产环境中必须更改此值!*
+   - =JDBC_URL~=: 生产数据库的连接 URL (开发/测试环境使用 SQLite 文件).
+
+** 环境特定配置
+   - =env/dev= 和 =env/prod= 目录包含特定于环境的配置和代码, 例如 =env.clj= 和 =logback.xml=.
+   - 开发环境 REPL 辅助函数位于 =env/dev/clj/user.clj=.
+
+* 模块与功能
+** 后端 (Clojure - src/clj/hc/hospital)
+- *Web 服务器*: Undertow.通过 =kit.edge.server.undertow= 模块集成.
+- *路由*: Reitit.定义在 =web/routes/*= 下.
+  - =web/routes/api.clj=: 通用 API 路由 (如健康检查).
+  - =web/routes/pages.clj=: 后端渲染的页面路由 (医生管理端主页).
+  - =web/routes/patient_pages.clj=: 患者问卷表单页面路由 (=/patient/fill=).
+  - =web/routes/patient_api.clj=: 患者问卷提交相关 API.
+  - =web/routes/doctor_api.clj=: 医生用户认证和管理 API.
+- *API 控制器*: 位于 =web/controllers/*=.
+  - =health.clj=: 健康检查.
+  - =patient.clj=: 渲染患者问卷页面.
+  - =patient_api.clj=: 处理患者问卷提交.姓名转拼音 (使用 HanLP).
+  - =doctor_api.clj=: 处理医生注册,登录,登出,信息获取,修改,删除等.
+- *数据库交互*:
+  - Conman 和 HugSQL: SQL 查询定义在 =resources/sql/queries.sql=.
+  - Migratus: 数据库迁移脚本在 =resources/migrations/*=.
+  - 开发/测试使用 SQLite.生产环境通过 =JDBC_URL= 连接.
+- *认证*: Buddy Auth.用于医生端 API 认证.配置在 =web/middleware/auth.clj=.
+- *HTML 模板*: Selmer.模板位于 =resources/html/*=.
+- *中间件*: 位于 =web/middleware/*=.包括基础设置,异常处理,数据格式化,认证等.
+
+** 前端 (ClojureScript - src/cljs/hc/hospital)
+- *医生管理端 (app)*:
+  - 入口: =core.cljs=, 挂载到 =resources/html/home.html= 的 =#app= 元素.
+  - UI 框架: Reagent 和 Re-frame.
+  - 状态管理: Re-frame (db, events, subs).
+  - 主要页面: =pages/anesthesia_home.cljs=.包含患者列表,评估表单等.
+  - UI 组件库: Ant Design, 封装在 =components/antd.cljs=.自定义表单组件在 =components/form_components.cljs=.
+- *患者问卷端 (patient-app)*:
+  - 入口: =patient/core.cljs=, 挂载到 =resources/html/patient_form.html= 的 =#patient-app= 元素.
+  - UI 框架: Reagent 和 Re-frame.
+  - 状态管理: Re-frame (patient/db, patient/events, patient/subs).
+  - 主要视图: =patient/views.cljs=.实现多步骤问卷表单.
+  - 样式: 主要依赖 Tailwind CSS (通过 CDN 引入) 及 =resources/html/patient_form.html= 内的内联样式.
+- *构建工具*: Shadow-cljs.
+
+** 数据库
+- 开发/测试: SQLite (例如 =hospital_dev.db=, =hospital_test.db=).
+- 生产: 通过 =JDBC_URL= 环境变量配置.预期为兼容 JDBC 的数据库 (如 PostgreSQL).
+- 表结构:
+  - =patient_assessments=: 存储患者评估数据.包括 =patient_id=, =assessment_data (JSON)=, =patient_name_pinyin=, =patient_name_initial= 等.
+  - =doctors=: 存储医生信息.包括 =username=, =password_hash=, =name= 等.
+- 迁移: Migratus 管理.启动时自动运行迁移 (见 =system.edn= 中 =:migrate-on-init? true=).
+
+据流程
+** 1. 患者填写问卷
+- 用户访问 =/patient/fill= 页面.
+- =hc.hospital.web.controllers.patient/patient-form-page= 渲染 =patient_form.html=.
+- =patient_form.html= 加载 =/js/patient/patient-app.js= (由 =hc.hospital.patient.core.cljs= 编译).
+- 用户在前端填写表单 (多步骤.Re-frame 管理状态).
+- 提交时.前端 Re-frame 事件 (如 =::events/validate-and-submit=) 触发.
+- 表单数据通过 AJAX POST 请求发送到 =/api/patient/assessment=.
+- 后端 =hc.hospital.web.controllers.patient-api/submit-assessment!= 处理请求:
+  - 解析 JSON 数据.
+  - 使用 HanLP 将患者姓名转换为拼音和首字母.
+  - 根据 =patient_id= 判断是插入新记录还是更新现有记录.
+  - 通过 HugSQL (方法如 =:insert-patient-assessment!= 或 =:update-patient-assessment!=) 将数据存入 =patient_assessments= 表.
+  - 返回成功或失败响应.
+
+** 2. 医生登录与查看/编辑患者数据 (医生管理端)
+- 用户访问 =/= (根路径).
+- =hc.hospital.web.routes.pages/home= 渲染 =home.html=.
+- =home.html= 加载 =/js/app.js= (由 =hc.hospital.core.cljs= 编译).
+- *登录*:
+  - 医生在前端输入用户名密码.
+  - 前端通过 AJAX POST 请求到 =/api/doctors/login=.
+  - 后端 =hc.hospital.web.controllers.doctor-api/login-doctor!= 处理:
+    - 验证凭据 (与 =doctors= 表中的 =password_hash= 比较).
+    - 成功则在 session 中存入医生信息 (如 =:identity=).
+- *查看患者列表*:
+  - 前端 (例如 =anesthesia_home.cljs=) 通过 Re-frame 事件 (如 =::events/fetch-all-assessments=) 触发.
+  - AJAX GET 请求到 =/api/patient/assessments=.
+  - 后端 =hc.hospital.web.controllers.patient-api/get-all-patient-assessments-handler= 处理:
+    - 可选地根据姓名拼音,首字母,日期等参数进行过滤.
+    - 通过 HugSQL (方法如 =:get-all-patient-assessments=) 从 =patient_assessments= 表查询数据.
+    - 返回患者列表数据.
+  - 前端展示列表.并允许医生选择特定患者.
+- *查看/编辑单个患者评估*:
+  - 选择患者后.前端 Re-frame 事件 (如 =::events/select-patient=) 更新当前选定患者.
+  - 评估数据 (从 =assessment_data= JSON 字段解析) 填充到 Ant Design 表单中.
+  - 医生编辑表单内容.Re-frame 事件 (如 =::events/update-brief-medical-history=) 更新前端状态.
+  - *保存/更新评估*: (当前保存逻辑可能在患者选择时自动合并或需要显式保存按钮触发)
+    - 若需显式保存.则前端 AJAX PUT 请求到 =/api/patient/assessment/:patient-id=.
+    - 后端 =hc.hospital.web.controllers.patient-api/update-assessment-by-patient-id!= 处理:
+      - 更新 =patient_assessments= 表中对应记录的 =assessment_data=.
+- *其他医生操作*:
+  - 注册,登出,修改密码等通过 =/api/doctors/*= 相关端点处理.
+
+** 3. HIS 系统集成 (需求提及.当前未实现)
+- 需求文档 (=docs/requirment.md=) 提及 HIS 系统接口导入患者数据.并与扫码填写的患者匹配.这是未来的一个数据来源.
+
+* 测试
+  运行测试:
+  #+BEGIN_SRC bash
+  clj -M:test
+  # 或者
+  make test
+  #+END_SRC
+  - 使用 =clojure.test=.
+  - 测试辅助函数位于 =test/clj/hc/hospital/test_utils.clj=.
+  - 测试默认使用 =:test= profile.
+
+* 构建和部署
+** 构建 Uberjar (独立 Jar 包)
+   #+BEGIN_SRC bash
+   clj -T:build all
+   # 或者
+   make uberjar
+   #+END_SRC
+   生成 =target/hospital-standalone.jar=.此过程也会触发 ClojureScript 的生产构建 (通过 =build.clj= 中的 =build-cljs= 函数调用 =npx shadow-cljs release app= 和 =npx shadow-cljs release patient-app=).
+
+** 运行 Uberjar
+   #+BEGIN_SRC bash
+   # 设置生产环境所需的环境变量
+   export JDBC_URL="<your_production_database_url>"
+   export COOKIE_SECRET="<your_strong_production_secret>"
+   export PORT=8080 # (可选)
+   java -jar target/hospital-standalone.jar
+   #+END_SRC
+
+** Docker
+项目包含一个 =Dockerfile=, 用于构建 Docker 镜像进行容器化部署.
+#+BEGIN_SRC dockerfile
+# syntax = docker/dockerfile:1.2
+FROM clojure:openjdk-17 AS build
+
+WORKDIR /
+COPY . /
+
+RUN clj -Sforce -T:build all
+
+FROM azul/zulu-openjdk-alpine:17
+
+COPY --from=build /target/hospital-standalone.jar /hospital/hospital-standalone.jar
+
+EXPOSE $PORT
+
+ENTRYPOINT exec java $JAVA_OPTS -jar /hospital/hospital-standalone.jar
+#+END_SRC
+
+* 编辑器设置
+** Emacs + CIDER
+   为了让 CIDER 正确识别开发和测试的源路径和别名, 在项目根目录创建或确保存在 =.dir-locals.el= 文件, 内容如下:
+   #+BEGIN_SRC elisp
+   ((clojure-mode . ((cider-preferred-build-tool . clojure-cli)
+                     (cider-clojure-cli-aliases . ":dev:test"))))
+   #+END_SRC
+
+* 主要技术栈
+  - Clojure / ClojureScript
+  - Kit Framework
+  - Ring / Reitit (路由)
+  - Undertow (Web 服务器)
+  - Integrant (组件管理)
+  - Selmer (HTML 模板 - 后端)
+  - Shadow-cljs (CLJS 构建)
+  - Reagent / Re-frame (CLJS UI)
+  - Ant Design (UI 组件库)
+  - HugSQL / Conman / Migratus (SQL 数据库交互)
+  - SQLite (开发/测试数据库)
+  - Buddy (认证)
+  - HanLP (中文处理.用于姓名转拼音)
+
+* TODO / 未来展望 (根据需求文档)
+  - [ ] HIS 系统接口导入患者数据.并与扫码填写的患者匹配.
+  - [ ] 患者列表支持时间筛选.姓名模糊查找 (部分已通过 API 参数实现.前端 UI 可能需要增强).
+  - [ ] 医生端支持删除患者操作.
+  - [ ] 医生能够看到所有患者.患者需要标注所属医生(只有所属医生能够编辑患者内容)-> 权限细化.
+  - [ ] 评估表审核流程 (批准,暂缓,驳回状态流转).
+  - [ ] 填写知情同意书 (按照模版.医生填写).
+  - [ ] 调用医生电子签名 (加到模版里).
+  - [ ] 打印预览与打印功能.
+  - [ ] 管理后台:医生列表 (院区.科室.账号增删改查.维护电子签名.从 HIS 同步花名册).字典管理.
+
+* gptel
 #+begin_src elisp :results silent
   (let* ((prompt-file "code-prompt.md")
          (buffer "*gemini-app-and-server*"))
