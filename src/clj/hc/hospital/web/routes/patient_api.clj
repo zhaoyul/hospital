@@ -7,8 +7,7 @@
    [reitit.coercion.malli :as malli]
    [reitit.ring.coercion :as coercion]
    [reitit.ring.middleware.muuntaja :as muuntaja]
-   [reitit.ring.middleware.parameters :as parameters]
-   [reitit.swagger :as swagger]))
+   [reitit.ring.middleware.parameters :as parameters]))
 
 ;; API 路由数据
 (def route-data
@@ -56,24 +55,31 @@
                                         :parameters {:path {:patient-id string?}}
                                         :responses {200 {:body map?} ; Changed from coll? to map? as it returns a single assessment
                                                     404 {:body {:message string?}}
-                                                    500 {:body {:message string?}}}}}
+                                                    500 {:body {:message string?}}}}
+                                  :put {:summary "更新指定患者的评估信息"
+                                        :description "根据患者ID更新已存储的评估表单信息"
+                                        :tags ["患者"]
+                                        :parameters {:path {:patient-id string?} :body map?}
+                                        :handler (fn [request]
+                                                   (patient-api/update-assessment-by-patient-id! (assoc request :query-fn query-fn)))
+                                        :responses {200 {:body {:message string?}}
+                                                    404 {:body {:message string?}}
+                                                    500 {:body {:message string?}}}}}]
 
       ["/assessments" {:get {:summary "查询所有患者的评估信息列表"
-                               :description "获取所有已存储的患者评估表单信息"
-                               :tags ["患者"]
-                               :parameters {:query [:map {:closed false} ; Use :closed false if other params might be present and ignored, or true if strict.
-                                                    [:name_pinyin {:optional true} string?]
-                                                    [:name_initial {:optional true} string?]
-                                                    [:updated_from {:optional true} string?]
-                                                    [:updated_to {:optional true} string?]]}
-                               :handler (fn [request]
-                                          (patient-api/get-all-patient-assessments-handler (assoc request :query-fn query-fn)))
-                               :responses {200 {:body coll?} ; Returns a collection of assessment objects
-                                           500 {:body {:message string?}}}}}]
+                             :description "获取所有已存储的患者评估表单信息"
+                             :tags ["患者"]
+                             :parameters {:query [:map {:closed false} ; Use :closed false if other params might be present and ignored, or true if strict.
+                                                  [:name_pinyin {:optional true} string?]
+                                                  [:name_initial {:optional true} string?]
+                                                  [:updated_from {:optional true} string?]
+                                                  [:updated_to {:optional true} string?]]}
+                             :handler (fn [request]
+                                        (patient-api/get-all-patient-assessments-handler (assoc request :query-fn query-fn)))
+                             :responses {200 {:body coll?} ; Returns a collection of assessment objects
+                                         500 {:body {:message string?}}}}}]
 
-      ]]]))
-
-
+      ]])) ; Corrected closing bracket
 
 ;; 从 :reitit/routes 派生此路由集
 (derive :reitit.routes/patient-api :reitit/routes)

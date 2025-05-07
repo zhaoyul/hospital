@@ -80,3 +80,22 @@
     (catch Exception e
       (log/error e "查询所有评估数据时出错")
       (http-response/internal-server-error {:message "查询所有评估数据时出错"}))))
+
+(defn update-assessment-by-patient-id! [{{{:keys [patient-id]} :path :keys [body]} :parameters :keys [query-fn] :as _request}]
+  (log/info "请求更新患者评估数据，患者ID:" patient-id)
+  (try
+    (let [existing-assessment (query-fn :get-patient-assessment-by-id {:patient_id patient-id})]
+      (if (seq existing-assessment)
+        (let [patient-name (get-in body [:basic-info :name] "") ;; 从请求体中获取患者姓名，可能已更新
+              {:keys [pinyin initial]} (get-pinyin-parts patient-name)
+              assessment-data-json (cheshire/generate-string body)]
+          (query-fn :update-patient-assessment!
+                    {:patient_id patient-id
+                     :assessment_data assessment-data-json
+                     :patient_name_pinyin pinyin
+                     :patient_name_initial initial})
+          (http-response/ok {:message "评估更新成功！"}))
+        (http-response/not-found {:message "未找到该患者的评估数据，无法更新。"})))
+    (catch Exception e
+      (log/error e "更新评估时出错" {:patient-id patient-id :error (ex-message e) :data (ex-data e)})
+      (http-response/internal-server-error {:message (str "更新评估时出错: " (ex-message e))}))))
