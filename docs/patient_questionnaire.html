@@ -1,0 +1,967 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>患者问卷 - 门诊手术麻醉评估系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background-color: #f0f2f5;
+            margin: 0;
+        }
+        
+        .layout {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* 侧边导航栏样式 */
+        .ant-layout-sider {
+            width: 80px;
+            background: #fff;
+            border-right: 1px solid #f0f0f0;
+            position: relative;
+            transition: all 0.3s;
+            z-index: 10;
+        }
+
+        .logo {
+            height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .menu-item {
+            height: 70px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            padding: 8px;
+        }
+
+        .menu-item:hover {
+            background-color: #f0f7ff;
+        }
+
+        .menu-item.active {
+            background-color: #e6f7ff;
+            border-right: 3px solid #1890ff;
+        }
+
+        .menu-icon {
+            font-size: 20px;
+            color: #595959;
+            margin-bottom: 4px;
+        }
+
+        .active .menu-icon {
+            color: #1890ff;
+        }
+
+        .sidebar-text {
+            font-size: 12px;
+            color: #595959;
+        }
+
+        .active .sidebar-text {
+            color: #1890ff;
+        }
+
+        /* 主内容区域样式 */
+        .ant-layout {
+            flex: 1;
+            background: #f0f2f5;
+        }
+
+        .ant-layout-header {
+            height: 64px;
+            background: #fff;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        }
+
+        .system-title {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .ant-layout-content {
+            padding: 24px;
+            min-height: calc(100vh - 64px);
+        }
+
+        /* 搜索区域样式 */
+        .search-area {
+            background: #fff;
+            padding: 24px;
+            border-radius: 2px;
+            margin-bottom: 24px;
+        }
+
+        .search-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+        }
+
+        .search-left {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            flex: 1;
+        }
+
+        .search-center {
+            flex: 1;
+            max-width: 320px;
+        }
+
+        .date-range-picker {
+            display: flex;
+            align-items: center;
+            white-space: nowrap;
+        }
+
+        .search-input-wrapper {
+            flex: 1;
+        }
+
+        .ant-input-affix-wrapper {
+            width: 100%;
+        }
+
+        .search-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        /* 表格样式 */
+        .ant-card {
+            background: #fff;
+            border-radius: 2px;
+        }
+
+        .ant-table {
+            width: 100%;
+        }
+
+        .ant-table-thead > tr > th {
+            background: #fafafa;
+            padding: 16px;
+            font-weight: 500;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .ant-table-tbody > tr > td {
+            padding: 16px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .ant-table-row:hover {
+            background: #fafafa;
+        }
+
+        /* 按钮样式 */
+        .ant-btn {
+            height: 32px;
+            padding: 4px 15px;
+            border-radius: 2px;
+            border: 1px solid #d9d9d9;
+            background: #fff;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .ant-btn-primary {
+            background: #1890ff;
+            border-color: #1890ff;
+            color: #fff;
+        }
+
+        .ant-btn-link {
+            border: none;
+            padding: 4px 8px;
+            color: #1890ff;
+        }
+
+        /* 标签样式 */
+        .ant-tag {
+            display: inline-block;
+            padding: 0 7px;
+            font-size: 12px;
+            line-height: 20px;
+            border-radius: 2px;
+        }
+
+        .ant-tag-green {
+            color: #52c41a;
+            background: #f6ffed;
+            border: 1px solid #b7eb8f;
+        }
+
+        .ant-tag-warning {
+            color: #faad14;
+            background: #fffbe6;
+            border: 1px solid #ffe58f;
+        }
+
+        /* 分页样式 */
+        .ant-pagination {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 16px 24px;
+        }
+
+        /* 问卷预览弹窗样式 */
+        .ant-modal-root {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            z-index: 1000;
+        }
+
+        .ant-modal-mask {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(0, 0, 0, 0.45);
+            z-index: 1000;
+        }
+
+        .ant-modal-wrap {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            overflow: auto;
+            outline: 0;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ant-modal {
+            background: #fff;
+            border-radius: 8px;
+            position: relative;
+        }
+
+        .ant-modal-content {
+            position: relative;
+        }
+
+        .ant-modal-header {
+            padding: 16px 24px;
+            border-bottom: 1px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .ant-modal-close {
+            border: none;
+            background: none;
+            cursor: pointer;
+            padding: 4px 8px;
+        }
+
+        .ant-modal-close:hover {
+            color: #1890ff;
+        }
+
+        .ant-modal-body {
+            padding: 24px;
+        }
+
+        .preview-section {
+            margin-bottom: 24px;
+        }
+
+        .preview-section-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #1890ff;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .preview-item {
+            display: flex;
+            margin-bottom: 12px;
+        }
+
+        .preview-label {
+            width: 120px;
+            color: #666;
+        }
+
+        .preview-value {
+            flex: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <!-- 侧边导航栏 -->
+        <div class="ant-layout-sider">
+            <div class="logo">
+                <i class="fas fa-user-md"></i>
+            </div>
+            <div class="menu">
+                <div class="menu-item" onclick="window.location.href='patient_list.html'">
+                    <div class="menu-icon">
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <div class="sidebar-text">麻醉管理</div>
+                </div>
+                <div class="menu-item active">
+                    <div class="menu-icon">
+                        <i class="fas fa-file-medical"></i>
+                    </div>
+                    <div class="sidebar-text">问卷列表</div>
+                </div>
+                <div class="menu-item">
+                    <div class="menu-icon">
+                        <i class="fas fa-cog"></i>
+                    </div>
+                    <div class="sidebar-text">系统设置</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主内容区域 -->
+        <div class="ant-layout">
+            <!-- 顶部导航栏 -->
+            <div class="ant-layout-header">
+                <div class="system-title">
+                    <i class="fas fa-hospital-user"></i>
+                    <h1 style="margin: 0; font-size: 18px;">麻醉信息管理平台</h1>
+                </div>
+                <div class="user-info">
+                    <span class="ant-avatar ant-avatar-circle ant-avatar-icon" style="background-color: #1890ff; color: #fff;">
+                        <i class="fas fa-user"></i>
+                    </span>
+                    <span>张医生</span>
+                    <i class="fas fa-chevron-down" style="margin-left: 8px; color: #999;"></i>
+                </div>
+            </div>
+
+            <!-- 内容区域 -->
+            <div class="ant-layout-content">
+                <!-- 搜索区域 -->
+                <div class="search-area">
+                    <div class="search-row">
+                        <div class="search-left">
+                            <div class="date-range-picker">
+                                <span style="display: inline-block; width: 70px;">填写日期:</span>
+                                <div class="ant-picker">
+                                    <input type="text" placeholder="开始日期" readonly id="startDate" value="2025-05-06" class="ant-picker-input">
+                                </div>
+                                <span class="separator" style="margin: 0 8px;">至</span>
+                                <div class="ant-picker">
+                                    <input type="text" placeholder="结束日期" readonly id="endDate" value="2025-05-06" class="ant-picker-input">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="search-center">
+                            <div class="search-input-wrapper">
+                                <div class="ant-input-affix-wrapper">
+                                    <span class="ant-input-prefix">
+                                        <i class="fas fa-search" style="color: #999;"></i>
+                                    </span>
+                                    <input type="text" id="searchInput" class="ant-input" placeholder="输入姓名/身份证号搜索">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="search-actions">
+                            <button class="ant-btn" onclick="resetFilters()" style="margin-right: 8px;">重置</button>
+                            <button class="ant-btn ant-btn-primary" onclick="searchQuestionnaires()">
+                                <i class="fas fa-search" style="margin-right: 4px;"></i>搜索
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 问卷列表 -->
+                <div class="ant-card">
+                    <div class="ant-card-body" style="padding: 0;">
+                        <div class="ant-table-wrapper">
+                            <table class="ant-table">
+                                <thead class="ant-table-thead">
+                                    <tr>
+                                        <th>填写时间</th>
+                                        <th>姓名</th>
+                                        <th>身份证号</th>
+                                        <th>联系电话</th>
+                                        <th>问卷状态</th>
+                                        <th style="text-align: center;">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="ant-table-tbody">
+                                    <tr class="ant-table-row">
+                                        <td>2025-05-06 10:30</td>
+                                        <td>张三</td>
+                                        <td>3101********1234</td>
+                                        <td>138****5678</td>
+                                        <td>
+                                            <span class="ant-tag ant-tag-green">已关联</span>
+                                            <br>
+                                            <span class="text-gray-500 text-xs">患者ID: P20231025001</span>
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <a class="ant-btn ant-btn-link" onclick="viewQuestionnaire('1')">查看</a>
+                                            <a class="ant-btn ant-btn-link" style="color: #faad14;" onclick="unlinkQuestionnaire('1')">解除关联</a>
+                                            <a class="ant-btn ant-btn-link" style="color: #ff4d4f;" onclick="deleteQuestionnaire('1')">删除</a>
+                                        </td>
+                                    </tr>
+                                    <tr class="ant-table-row">
+                                        <td>2025-05-06 09:15</td>
+                                        <td>李四</td>
+                                        <td>3101********5678</td>
+                                        <td>139****1234</td>
+                                        <td>
+                                            <span class="ant-tag ant-tag-warning">未关联</span>
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <a class="ant-btn ant-btn-link" onclick="viewQuestionnaire('2')">查看</a>
+                                            <a class="ant-btn ant-btn-link" style="color: #52c41a;" onclick="linkQuestionnaire('2')">关联患者</a>
+                                            <a class="ant-btn ant-btn-link" style="color: #ff4d4f;" onclick="deleteQuestionnaire('2')">删除</a>
+                                        </td>
+                                    </tr>
+                                    <tr class="ant-table-row">
+                                        <td>2025-05-06 09:00</td>
+                                        <td>王五</td>
+                                        <td>3101********8901</td>
+                                        <td>137****2468</td>
+                                        <td>
+                                            <span class="ant-tag ant-tag-green">已关联</span>
+                                            <br>
+                                            <span class="text-gray-500 text-xs">患者ID: P20231025003</span>
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <a class="ant-btn ant-btn-link" onclick="viewQuestionnaire('3')">查看</a>
+                                            <a class="ant-btn ant-btn-link" style="color: #faad14;" onclick="unlinkQuestionnaire('3')">解除关联</a>
+                                            <a class="ant-btn ant-btn-link" style="color: #ff4d4f;" onclick="deleteQuestionnaire('3')">删除</a>
+                                        </td>
+                                    </tr>
+                                    <tr class="ant-table-row">
+                                        <td>2025-05-06 08:45</td>
+                                        <td>赵六</td>
+                                        <td>3101********3456</td>
+                                        <td>136****1357</td>
+                                        <td>
+                                            <span class="ant-tag ant-tag-warning">未关联</span>
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <a class="ant-btn ant-btn-link" onclick="viewQuestionnaire('4')">查看</a>
+                                            <a class="ant-btn ant-btn-link" style="color: #52c41a;" onclick="linkQuestionnaire('4')">关联患者</a>
+                                            <a class="ant-btn ant-btn-link" style="color: #ff4d4f;" onclick="deleteQuestionnaire('4')">删除</a>
+                                        </td>
+                                    </tr>
+                                    <tr class="ant-table-row">
+                                        <td>2025-05-06 08:30</td>
+                                        <td>孙七</td>
+                                        <td>3101********7890</td>
+                                        <td>135****9876</td>
+                                        <td>
+                                            <span class="ant-tag ant-tag-green">已关联</span>
+                                            <br>
+                                            <span class="text-gray-500 text-xs">患者ID: P20231025005</span>
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <a class="ant-btn ant-btn-link" onclick="viewQuestionnaire('5')">查看</a>
+                                            <a class="ant-btn ant-btn-link" style="color: #faad14;" onclick="unlinkQuestionnaire('5')">解除关联</a>
+                                            <a class="ant-btn ant-btn-link" style="color: #ff4d4f;" onclick="deleteQuestionnaire('5')">删除</a>
+                                        </td>
+                                    </tr>
+                                    <tr class="ant-table-row">
+                                        <td>2025-05-06 08:15</td>
+                                        <td>周八</td>
+                                        <td>3101********2345</td>
+                                        <td>134****5432</td>
+                                        <td>
+                                            <span class="ant-tag ant-tag-warning">未关联</span>
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <a class="ant-btn ant-btn-link" onclick="viewQuestionnaire('6')">查看</a>
+                                            <a class="ant-btn ant-btn-link" style="color: #52c41a;" onclick="linkQuestionnaire('6')">关联患者</a>
+                                            <a class="ant-btn ant-btn-link" style="color: #ff4d4f;" onclick="deleteQuestionnaire('6')">删除</a>
+                                        </td>
+                                    </tr>
+                                    <tr class="ant-table-row">
+                                        <td>2025-05-06 08:00</td>
+                                        <td>吴九</td>
+                                        <td>3101********6789</td>
+                                        <td>133****1111</td>
+                                        <td>
+                                            <span class="ant-tag ant-tag-green">已关联</span>
+                                            <br>
+                                            <span class="text-gray-500 text-xs">患者ID: P20231025007</span>
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <a class="ant-btn ant-btn-link" onclick="viewQuestionnaire('7')">查看</a>
+                                            <a class="ant-btn ant-btn-link" style="color: #faad14;" onclick="unlinkQuestionnaire('7')">解除关联</a>
+                                            <a class="ant-btn ant-btn-link" style="color: #ff4d4f;" onclick="deleteQuestionnaire('7')">删除</a>
+                                        </td>
+                                    </tr>
+                                    <tr class="ant-table-row">
+                                        <td>2025-05-06 07:45</td>
+                                        <td>郑十</td>
+                                        <td>3101********4321</td>
+                                        <td>132****2222</td>
+                                        <td>
+                                            <span class="ant-tag ant-tag-warning">未关联</span>
+                                        </td>
+                                        <td style="text-align: center;">
+                                            <a class="ant-btn ant-btn-link" onclick="viewQuestionnaire('8')">查看</a>
+                                            <a class="ant-btn ant-btn-link" style="color: #52c41a;" onclick="linkQuestionnaire('8')">关联患者</a>
+                                            <a class="ant-btn ant-btn-link" style="color: #ff4d4f;" onclick="deleteQuestionnaire('8')">删除</a>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- 分页 -->
+                        <div class="ant-pagination" style="margin: 16px 0; padding: 0 24px;">
+                            <ul class="ant-pagination">
+                                <li class="ant-pagination-prev">
+                                    <button class="ant-pagination-item-link" type="button" tabindex="-1">
+                                        <i class="fas fa-chevron-left"></i>
+                                    </button>
+                                </li>
+                                <li class="ant-pagination-item ant-pagination-item-active">
+                                    <a>1</a>
+                                </li>
+                                <li class="ant-pagination-item">
+                                    <a>2</a>
+                                </li>
+                                <li class="ant-pagination-item">
+                                    <a>3</a>
+                                </li>
+                                <li class="ant-pagination-next">
+                                    <button class="ant-pagination-item-link" type="button" tabindex="-1">
+                                        <i class="fas fa-chevron-right"></i>
+                                    </button>
+                                </li>
+                                <li class="ant-pagination-total-text">共 24 条</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 关联患者弹窗 -->
+    <div class="ant-modal-root" id="linkPatientModal" style="display: none;">
+        <div class="ant-modal-mask"></div>
+        <div class="ant-modal-wrap">
+            <div class="ant-modal" style="width: 520px;">
+                <div class="ant-modal-content">
+                    <div class="ant-modal-header">
+                        <div class="text-lg font-medium">关联患者</div>
+                    </div>
+                    <div class="ant-modal-body">
+                        <div class="mb-4">
+                            <div class="mb-2">患者信息</div>
+                            <div class="ant-input-affix-wrapper w-full">
+                                <span class="ant-input-prefix">
+                                    <i class="fas fa-search" style="color: #999;"></i>
+                                </span>
+                                <input type="text" id="patientSearchInput" class="ant-input" placeholder="输入患者姓名/ID搜索">
+                            </div>
+                        </div>
+                        <div class="max-h-80 overflow-y-auto">
+                            <table class="ant-table" style="margin-bottom: 0;">
+                                <thead class="ant-table-thead">
+                                    <tr>
+                                        <th style="width: 60px;"></th>
+                                        <th>患者ID</th>
+                                        <th>姓名</th>
+                                        <th>身份证号</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="ant-table-tbody" id="patientSearchResults">
+                                    <tr class="ant-table-row">
+                                        <td>
+                                            <input type="radio" name="patientSelect" value="P20231025001">
+                                        </td>
+                                        <td>P20231025001</td>
+                                        <td>张三</td>
+                                        <td>3101********1234</td>
+                                    </tr>
+                                    <tr class="ant-table-row">
+                                        <td>
+                                            <input type="radio" name="patientSelect" value="P20231025002">
+                                        </td>
+                                        <td>P20231025002</td>
+                                        <td>李四</td>
+                                        <td>3101********5678</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    <div class="ant-modal-footer">
+                        <button class="ant-btn" onclick="closeLinkPatientModal()">取消</button>
+                        <button class="ant-btn ant-btn-primary ml-2" onclick="confirmLinkPatient()">确定</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 问卷预览弹窗 -->
+    <div class="ant-modal-root" id="questionnairePreviewModal" style="display: none;">
+        <div class="ant-modal-mask"></div>
+        <div class="ant-modal-wrap">
+            <div class="ant-modal" style="width: 800px;">
+                <div class="ant-modal-content">
+                    <div class="ant-modal-header">
+                        <div class="text-lg font-medium">问卷详情</div>
+                        <button class="ant-modal-close" onclick="closePreviewModal()">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <div class="ant-modal-body" style="max-height: 70vh; overflow-y: auto;">
+                        <div id="questionnaireContent"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 重置筛选条件
+        function resetFilters() {
+            document.getElementById('startDate').value = '2025-05-06';
+            document.getElementById('endDate').value = '2025-05-06';
+            document.getElementById('searchInput').value = '';
+            // 重新加载数据
+            searchQuestionnaires();
+        }
+
+        // 搜索问卷
+        function searchQuestionnaires() {
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
+            const searchText = document.getElementById('searchInput').value;
+            // TODO: 实现搜索逻辑
+            console.log('搜索参数:', { startDate, endDate, searchText });
+        }
+
+        // 查看问卷详情
+        async function viewQuestionnaire(id) {
+            try {
+                // 这里应该是从后端获取问卷数据，现在用模拟数据演示
+                const questionnaireData = await mockFetchQuestionnaireData(id);
+                const content = generateQuestionnairePreview(questionnaireData);
+                openPreviewModal(content);
+            } catch (error) {
+                console.error('获取问卷数据失败:', error);
+                alert('获取问卷数据失败，请稍后重试');
+            }
+        }
+
+        // 模拟获取问卷数据
+        function mockFetchQuestionnaireData(id) {
+            return new Promise((resolve) => {
+                setTimeout(() => {
+                    resolve({
+                        patientInfo: {
+                            outpatientNo: "OP2025050600" + id,
+                            name: document.querySelector(`[onclick="viewQuestionnaire('${id}')"]`).closest('tr').querySelector('td:nth-child(2)').textContent,
+                            gender: "男",
+                            age: "45",
+                            ward: "普通外科",
+                            healthCardNo: "HC20250506" + id,
+                            preDiagnosis: "胆结石",
+                            plannedSurgery: "胆囊切除术"
+                        },
+                        generalCondition: {
+                            height: "175",
+                            weight: "70",
+                            mentalState: "清醒",
+                            activityAbility: "正常",
+                            bloodPressure: "120/80",
+                            pulse: "75",
+                            respiration: "18",
+                            temperature: "36.5",
+                            spo2: "98"
+                        },
+                        medicalHistory: {
+                            allergyHistory: "无",
+                            smokingHistory: "无",
+                            drinkingHistory: "无"
+                        },
+                        coexistingDiseases: {
+                            respiratoryDisease: "无",
+                            cardiovascularDisease: "无",
+                            liverDisease: "无",
+                            endocrineDisease: "无",
+                            kidneyDisease: "无",
+                            neuropsychiatricDisease: "无"
+                        },
+                        physicalExamination: {
+                            heartCondition: "正常",
+                            lungCondition: "正常",
+                            airwayCondition: "正常",
+                            teethCondition: "正常",
+                            spineLimbsCondition: "正常",
+                            nerveCondition: "正常"
+                        }
+                    });
+                }, 500);
+            });
+        }
+
+        // 生成问卷预览内容
+        function generateQuestionnairePreview(data) {
+            return `
+                <div class="preview-section">
+                    <div class="preview-section-title">第一部分：患者信息</div>
+                    <div class="preview-item">
+                        <div class="preview-label">门诊号：</div>
+                        <div class="preview-value">${data.patientInfo.outpatientNo}</div>
+                    </div>
+                    <div class="preview-item">
+                        <div class="preview-label">姓名：</div>
+                        <div class="preview-value">${data.patientInfo.name}</div>
+                    </div>
+                    <div class="preview-item">
+                        <div class="preview-label">性别：</div>
+                        <div class="preview-value">${data.patientInfo.gender}</div>
+                    </div>
+                    <div class="preview-item">
+                        <div class="preview-label">年龄：</div>
+                        <div class="preview-value">${data.patientInfo.age}岁</div>
+                    </div>
+                    <div class="preview-item">
+                        <div class="preview-label">病区：</div>
+                        <div class="preview-value">${data.patientInfo.ward}</div>
+                    </div>
+                    <div class="preview-item">
+                        <div class="preview-label">术前诊断：</div>
+                        <div class="preview-value">${data.patientInfo.preDiagnosis}</div>
+                    </div>
+                    <div class="preview-item">
+                        <div class="preview-label">拟施手术：</div>
+                        <div class="preview-value">${data.patientInfo.plannedSurgery}</div>
+                    </div>
+                </div>
+
+                <div class="preview-section">
+                    <div class="preview-section-title">第二部分：一般情况</div>
+                    <div class="preview-item">
+                        <div class="preview-label">身高：</div>
+                        <div class="preview-value">${data.generalCondition.height} cm</div>
+                    </div>
+                    <div class="preview-item">
+                        <div class="preview-label">体重：</div>
+                        <div class="preview-value">${data.generalCondition.weight} kg</div>
+                    </div>
+                    <div class="preview-item">
+                        <div class="preview-label">精神状态：</div>
+                        <div class="preview-value">${data.generalCondition.mentalState}</div>
+                    </div>
+                    <div class="preview-item">
+                        <div class="preview-label">血压：</div>
+                        <div class="preview-value">${data.generalCondition.bloodPressure} mmHg</div>
+                    </div>
+                    <div class="preview-item">
+                        <div class="preview-label">脉搏：</div>
+                        <div class="preview-value">${data.generalCondition.pulse} 次/分</div>
+                    </div>
+                    <div class="preview-item">
+                        <div class="preview-label">SpO2：</div>
+                        <div class="preview-value">${data.generalCondition.spo2}%</div>
+                    </div>
+                </div>
+
+                <div class="preview-section">
+                    <div class="preview-section-title">第三部分：病情摘要</div>
+                    <div class="preview-item">
+                        <div class="preview-label">过敏史：</div>
+                        <div class="preview-value">${data.medicalHistory.allergyHistory}</div>
+                    </div>
+                    <div class="preview-item">
+                        <div class="preview-label">吸烟史：</div>
+                        <div class="preview-value">${data.medicalHistory.smokingHistory}</div>
+                    </div>
+                    <div class="preview-item">
+                        <div class="preview-label">饮酒史：</div>
+                        <div class="preview-value">${data.medicalHistory.drinkingHistory}</div>
+                    </div>
+                </div>
+
+                <div class="preview-section">
+                    <div class="preview-section-title">第四部分：并存疾病</div>
+                    <div class="preview-item">
+                        <div class="preview-label">呼吸系统：</div>
+                        <div class="preview-value">${data.coexistingDiseases.respiratoryDisease}</div>
+                    </div>
+                    <div class="preview-item">
+                        <div class="preview-label">心血管系统：</div>
+                        <div class="preview-value">${data.coexistingDiseases.cardiovascularDisease}</div>
+                    </div>
+                    <div class="preview-item">
+                        <div class="preview-label">肝脏：</div>
+                        <div class="preview-value">${data.coexistingDiseases.liverDisease}</div>
+                    </div>
+                    <div class="preview-item">
+                        <div class="preview-label">内分泌系统：</div>
+                        <div class="preview-value">${data.coexistingDiseases.endocrineDisease}</div>
+                    </div>
+                    <div class="preview-item">
+                        <div class="preview-label">肾脏：</div>
+                        <div class="preview-value">${data.coexistingDiseases.kidneyDisease}</div>
+                    </div>
+                    <div class="preview-item">
+                        <div class="preview-label">神经系统：</div>
+                        <div class="preview-value">${data.coexistingDiseases.neuropsychiatricDisease}</div>
+                    </div>
+                </div>
+
+                <div class="preview-section">
+                    <div class="preview-section-title">第五部分：体格检查</div>
+                    <div class="preview-item">
+                        <div class="preview-label">心脏：</div>
+                        <div class="preview-value">${data.physicalExamination.heartCondition}</div>
+                    </div>
+                    <div class="preview-item">
+                        <div class="preview-label">肺部：</div>
+                        <div class="preview-value">${data.physicalExamination.lungCondition}</div>
+                    </div>
+                    <div class="preview-item">
+                        <div class="preview-label">气道：</div>
+                        <div class="preview-value">${data.physicalExamination.airwayCondition}</div>
+                    </div>
+                    <div class="preview-item">
+                        <div class="preview-label">牙齿：</div>
+                        <div class="preview-value">${data.physicalExamination.teethCondition}</div>
+                    </div>
+                    <div class="preview-item">
+                        <div class="preview-label">脊柱四肢：</div>
+                        <div class="preview-value">${data.physicalExamination.spineLimbsCondition}</div>
+                    </div>
+                    <div class="preview-item">
+                        <div class="preview-label">神经系统：</div>
+                        <div class="preview-value">${data.physicalExamination.nerveCondition}</div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // 点击遮罩层关闭问卷预览弹窗
+        document.querySelector('#questionnairePreviewModal .ant-modal-wrap').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closePreviewModal();
+            }
+        });
+
+        let currentQuestionnaireId = null;
+
+        // 打开关联患者弹窗
+        function linkQuestionnaire(id) {
+            currentQuestionnaireId = id;
+            document.getElementById('linkPatientModal').style.display = 'block';
+            document.getElementById('patientSearchInput').focus();
+        }
+
+        // 关闭关联患者弹窗
+        function closeLinkPatientModal() {
+            document.getElementById('linkPatientModal').style.display = 'none';
+            document.getElementById('patientSearchInput').value = '';
+            currentQuestionnaireId = null;
+        }
+
+        // 确认关联患者
+        function confirmLinkPatient() {
+            const selectedPatient = document.querySelector('input[name="patientSelect"]:checked');
+            if (!selectedPatient) {
+                alert('请先选择要关联的患者');
+                return;
+            }
+
+            // TODO: 实现关联逻辑
+            console.log('关联问卷:', currentQuestionnaireId, '到患者:', selectedPatient.value);
+            
+            // 关闭弹窗
+            closeLinkPatientModal();
+            
+            // 刷新列表
+            searchQuestionnaires();
+        }
+
+        // 搜索患者
+        document.getElementById('patientSearchInput').addEventListener('input', function(e) {
+            const searchText = e.target.value.trim();
+            // TODO: 实现患者搜索逻辑
+            console.log('搜索患者:', searchText);
+        });
+
+        // 点击遮罩层关闭弹窗
+        document.querySelector('.ant-modal-wrap').addEventListener('click', function(e) {
+            if (e.target === this) {
+                closeLinkPatientModal();
+            }
+        });
+
+        // 解除关联
+        function unlinkQuestionnaire(id) {
+            if (confirm('确定要解除该问卷的关联吗？')) {
+                // TODO: 实现解除关联逻辑
+                console.log('解除关联:', id);
+            }
+        }
+
+        // 删除问卷
+        function deleteQuestionnaire(id) {
+            if (confirm('确定要删除这条问卷记录吗？此操作不可撤销。')) {
+                // TODO: 实现删除逻辑
+                console.log('删除问卷:', id);
+            }
+        }
+
+        // 打开问卷预览弹窗
+        function openPreviewModal(content) {
+            document.getElementById('questionnaireContent').innerHTML = content;
+            document.getElementById('questionnairePreviewModal').style.display = 'block';
+        }
+
+        // 关闭问卷预览弹窗
+        function closePreviewModal() {
+            document.getElementById('questionnairePreviewModal').style.display = 'none';
+            document.getElementById('questionnaireContent').innerHTML = '';
+        }
+    </script>
+</body>
+</html>

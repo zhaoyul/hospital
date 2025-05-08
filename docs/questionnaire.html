@@ -1,0 +1,1037 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>麻醉评估问卷</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        body {
+            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background-color: #f5f7fa;
+            height: 100vh;
+            overflow: hidden;
+            color: #333;
+        }
+        .container {
+            max-width: 390px;
+            margin: 0 auto;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+        }
+        .card {
+            background-color: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            padding: 20px;
+            margin: 20px;
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .btn-primary {
+            display: inline-block;
+            width: 48%;
+            padding: 12px 16px;
+            background-color: #1890ff;
+            color: white;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+            transition: background-color 0.3s;
+            font-size: 16px;
+            border: none;
+        }
+        .btn-primary:hover {
+            background-color: #40a9ff;
+        }
+        .btn-secondary {
+            display: inline-block;
+            width: 48%;
+            padding: 12px 16px;
+            background-color: #f0f0f0;
+            color: #333;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: 500;
+            transition: background-color 0.3s;
+            font-size: 16px;
+            border: none;
+        }
+        .btn-secondary:hover {
+            background-color: #e0e0e0;
+        }
+        .progress-bar {
+            height: 6px;
+            background-color: #e0e0e0;
+            border-radius: 3px;
+            margin: 40px 0 20px;
+            position: relative;
+        }
+        .progress-bar-fill {
+            height: 100%;
+            background-color: #1890ff;
+            border-radius: 3px;
+            width: 25%;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .progress-steps {
+            display: flex;
+            justify-content: space-between;
+            position: absolute;
+            width: 100%;
+            top: -30px;
+        }
+        .progress-step {
+            font-size: 14px;
+            color: #666;
+            position: relative;
+            text-align: center;
+            width: 28px;
+            height: 28px;
+            line-height: 28px;
+            background: #fff;
+            border: 1px solid #e0e0e0;
+            border-radius: 50%;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            z-index: 1;
+        }
+        .progress-step::after {
+            content: attr(data-title);
+            position: absolute;
+            top: -24px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            white-space: nowrap;
+            color: #999;
+            transition: color 0.3s ease;
+        }
+        .progress-step.active {
+            background: #1890ff;
+            color: #fff;
+            border-color: #1890ff;
+            transform: scale(1.1);
+            box-shadow: 0 3px 6px rgba(24, 144, 255, 0.3);
+        }
+        .progress-step.active::after {
+            color: #1890ff;
+            font-weight: 500;
+        }
+        #questionnaire-form {
+            flex: 1;
+            overflow-y: auto;
+            padding-right: 10px;
+            padding-bottom: 80px;
+            -webkit-overflow-scrolling: touch; /* 提高iOS滚动体验 */
+        }
+        .form-group {
+            margin-bottom: 16px;
+        }
+        .form-label {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #333;
+            position: relative;
+            padding-left: 30px;
+        }
+        .form-label::before {
+            content: attr(data-index);
+            position: absolute;
+            left: 0;
+            color: #1890ff;
+            font-size: 1em;
+            font-weight: 600;
+        }
+        .unit {
+            color: #666;
+            font-size: 0.9em;
+        }
+        .radio-group {
+            display: flex;
+            gap: 16px;
+            margin-top: 4px;
+        }
+        .radio-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            padding: 8px 12px;
+            background-color: #f5f7fa;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            user-select: none;
+        }
+        .radio-label:hover {
+            background-color: #e6f7ff;
+        }
+        .radio-label input[type="radio"] {
+            margin-right: 6px;
+            accent-color: #1890ff;
+        }
+        .radio-label input[type="radio"]:checked + span {
+            color: #1890ff;
+            font-weight: 500;
+        }
+        .form-input {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 8px;
+            transition: all 0.3s;
+            background-color: #fafafa;
+        }
+        .form-input:focus {
+            border-color: #1890ff;
+            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+            outline: none;
+            background-color: #fff;
+        }
+        .detail-section {
+            margin-top: 12px;
+            padding: 12px;
+            background: #f8f8f8;
+            border-radius: 8px;
+            border: 1px solid #e8e8e8;
+            animation: slideDown 0.3s ease-out;
+        }
+        
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 12px;
+        }
+        
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.2s ease;
+        }
+        
+        .checkbox-label:hover {
+            background: #e6f7ff;
+        }
+        
+        .checkbox-label input[type="checkbox"] {
+            margin-right: 6px;
+            accent-color: #1890ff;
+        }
+        
+        .form-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .mt-2 {
+            margin-top: 8px;
+        }
+        
+        .ml-2 {
+            margin-left: 8px;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .section-title {
+            font-weight: 600;
+            color: #1890ff;
+            margin-top: 20px;
+            margin-bottom: 15px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .file-upload {
+            display: none;
+        }
+        .file-upload-label {
+            display: inline-block;
+            padding: 10px 14px;
+            background-color: #f0f0f0;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-top: 6px;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+        .file-upload-label:hover {
+            background-color: #e6f7ff;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+        }
+        .file-upload-label i {
+            color: #1890ff;
+            margin-right: 6px;
+        }
+        .nav-buttons {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 20px;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: white;
+            padding: 15px 20px;
+            box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.1);
+            z-index: 100;
+            max-width: 390px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        /* 为了防止内容被固定按钮遮挡 */
+        #questionnaire-form {
+            padding-bottom: 80px;
+        }
+        .section {
+            animation: fadeIn 0.5s ease-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card mt-6">
+            <h1 class="text-xl font-bold text-center mb-4" style="color: #1890ff; font-size: 22px;">麻醉评估问卷</h1>
+            
+            <div class="progress-bar">
+                <div class="progress-steps">
+                    <div class="progress-step active" id="step1" data-title="基本信息">1</div>
+                    <div class="progress-step" id="step2" data-title="病情摘要">2</div>
+                    <div class="progress-step" id="step3" data-title="麻醉评估">3</div>
+                </div>
+                <div class="progress-bar-fill" id="progress" style="transition: width 0.5s ease-in-out;"></div>
+            </div>
+            
+            <form id="questionnaire-form">
+                <!-- 患者信息 -->
+                <div id="section1" class="section">
+                    <h2 class="section-title">第一部分：基本信息</h2>
+                    
+                    <div class="form-group">
+                        <label class="form-label" data-index="1.1">门诊号</label>
+                        <div style="display: flex; gap: 8px;">
+                            <input type="text" class="form-input" name="outpatient_no" required style="flex: 1;">
+                            <button type="button" class="btn-scan" onclick="startScan()" style="padding: 0 12px; background: #1890ff; color: white; border-radius: 8px; display: flex; align-items: center;">
+                                <i class="fas fa-qrcode"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" data-index="1.2">姓名</label>
+                        <input type="text" class="form-input" name="name" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" data-index="1.3">身份证号</label>
+                        <input type="text" class="form-input" name="id_number" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" data-index="1.4">手机号</label>
+                        <input type="tel" class="form-input" name="phone" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" data-index="1.5">性别</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="gender" value="male" required> <span>男</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="gender" value="female"> <span>女</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" data-index="1.6">年龄</label>
+                        <input type="number" class="form-input" name="age" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" data-index="1.7">院区</label>
+                        <select class="form-input" name="hospital_district" required>
+                            <option value="">请选择院区</option>
+                            <option value="main">总院</option>
+                            <option value="jst">积水潭院区</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <!-- 病情摘要 -->
+                <div id="section2" class="section" style="display: none;">
+                    <h2 class="section-title">第二部分：病情摘要</h2>
+                    
+                    <div class="form-group">
+                        <label class="form-label" data-index="2.1">过敏史</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="allergy_history" value="no" checked onchange="toggleDetails('allergy')"> <span>无</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="allergy_history" value="yes" onchange="toggleDetails('allergy')"> <span>有</span>
+                            </label>
+                        </div>
+                        <div id="allergy_details" class="detail-section" style="display: none;">
+                            <div class="form-row mt-2">
+                                <div style="flex: 1;">
+                                    <input type="text" class="form-input" name="allergy_source" placeholder="过敏源" required>
+                                </div>
+                            </div>
+                            <div class="form-row mt-2">
+                                <div style="flex: 1;">
+                                    <input type="text" class="form-input" name="allergy_time" placeholder="过敏时间" onfocus="(this.type='date')" onblur="if(!this.value) this.type='text'" required>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" data-index="2.2">吸烟史</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="smoking_history" value="no" checked onchange="toggleDetails('smoking')"> <span>无</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="smoking_history" value="yes" onchange="toggleDetails('smoking')"> <span>有</span>
+                            </label>
+                        </div>
+                        <div id="smoking_details" class="detail-section" style="display: none;">
+                            <div class="form-row mt-2">
+                                <input type="number" class="form-input" name="smoking_years" placeholder="吸烟年数" style="flex: 1;" required>
+                                <span class="unit">年</span>
+                            </div>
+                            <div class="form-row mt-2">
+                                <input type="number" class="form-input" name="smoking_per_day" placeholder="每天吸烟支数" style="flex: 1;" required>
+                                <span class="unit">支/天</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" data-index="2.3">饮酒史</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="drinking_history" value="no" checked onchange="toggleDetails('drinking')"> <span>无</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="drinking_history" value="yes" onchange="toggleDetails('drinking')"> <span>有</span>
+                            </label>
+                        </div>
+                        <div id="drinking_details" class="detail-section" style="display: none;">
+                            <div class="form-row mt-2">
+                                <input type="number" class="form-input" name="drinking_years" placeholder="饮酒年数" style="flex: 1;" required>
+                                <span class="unit">年</span>
+                            </div>
+                            <div class="form-row mt-2">
+                                <input type="number" class="form-input" name="drinking_amount" placeholder="每天饮酒量" style="flex: 1;" required>
+                                <span class="unit">ml/天</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- 麻醉评估 -->
+                <div id="section3" class="section" style="display: none;">
+                    <h2 class="section-title">第三部分：麻醉评估</h2>
+                    
+                    <div class="form-group">
+                        <label class="form-label" data-index="3.1">呼吸系统疾病</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="respiratory_disease" value="no" checked> <span>无</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="respiratory_disease" value="yes"> <span>有</span>
+                            </label>
+                        </div>
+                        <div class="input-details" id="respiratory_details" style="display: none; margin-top: 10px;">
+                            <textarea class="form-input" name="respiratory_detail" placeholder="请简要描述疾病情况" rows="1"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" data-index="3.2">神经肌肉疾病</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="neuromuscular_disease" value="no" checked> <span>无</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="neuromuscular_disease" value="yes"> <span>有</span>
+                            </label>
+                        </div>
+                        <div class="input-details" id="neuromuscular_details" style="display: none; margin-top: 10px;">
+                            <textarea class="form-input" name="neuromuscular_detail" placeholder="请简要描述疾病情况" rows="1"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" data-index="3.3">心血管疾病</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="cardiovascular_disease" value="no" checked> <span>无</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="cardiovascular_disease" value="yes"> <span>有</span>
+                            </label>
+                        </div>
+                        <div id="cardiovascular_details" class="detail-section" style="display: none;">
+                            <textarea class="form-input" name="cardiovascular_detail" placeholder="请简要描述疾病情况" rows="1"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" data-index="3.4">消化系统疾病</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="digestive_disease" value="no" checked> <span>无</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="digestive_disease" value="yes"> <span>有</span>
+                            </label>
+                        </div>
+                        <div id="digestive_details" class="detail-section" style="display: none;">
+                            <textarea class="form-input" name="digestive_detail" placeholder="请简要描述疾病情况" rows="1"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" data-index="3.5">内分泌疾病</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="endocrine_disease" value="no" checked> <span>无</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="endocrine_disease" value="yes"> <span>有</span>
+                            </label>
+                        </div>
+                        <div id="endocrine_details" class="detail-section" style="display: none;">
+                            <textarea class="form-input" name="endocrine_detail" placeholder="请简要描述疾病情况" rows="1"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" data-index="3.6">肾脏疾病</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="kidney_disease" value="no" checked> <span>无</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="kidney_disease" value="yes"> <span>有</span>
+                            </label>
+                        </div>
+                        <div id="kidney_details" class="detail-section" style="display: none;">
+                            <textarea class="form-input" name="kidney_detail" placeholder="请简要描述疾病情况" rows="1"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" data-index="3.7">神经精神疾病</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="neuropsychiatric_disease" value="no" checked> <span>无</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="neuropsychiatric_disease" value="yes"> <span>有</span>
+                            </label>
+                        </div>
+                        <div id="neuropsychiatric_details" class="detail-section" style="display: none;">
+                            <textarea class="form-input" name="neuropsychiatric_detail" placeholder="请简要描述疾病情况" rows="1"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" data-index="3.8">关节骨骼系统</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="musculoskeletal_system" value="no" checked> <span>无</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="musculoskeletal_system" value="yes"> <span>有</span>
+                            </label>
+                        </div>
+                        <div id="musculoskeletal_details" class="detail-section" style="display: none;">
+                            <textarea class="form-input" name="musculoskeletal_detail" placeholder="请简要描述疾病情况" rows="1"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" data-index="3.9">凝血功能</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="coagulation_function" value="no" checked> <span>无</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="coagulation_function" value="yes"> <span>有</span>
+                            </label>
+                        </div>
+                        <div id="coagulation_details" class="detail-section" style="display: none;">
+                            <textarea class="form-input" name="coagulation_detail" placeholder="请简要描述异常情况" rows="1"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" data-index="3.10">家族恶性高热史</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="family_malignant_hyperthermia" value="no" checked> <span>无</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="family_malignant_hyperthermia" value="yes"> <span>有</span>
+                            </label>
+                        </div>
+                        <div id="hyperthermia_details" class="detail-section" style="display: none;">
+                            <textarea class="form-input" name="hyperthermia_detail" placeholder="请简要描述相关情况" rows="1"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" data-index="3.11">使用的特殊药物</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="special_medications_used" value="no" checked> <span>无</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="special_medications_used" value="yes"> <span>有</span>
+                            </label>
+                        </div>
+                        <div id="special_medications_details" class="detail-section" style="display: none;">
+                            <div class="mb-2">
+                                <label class="form-label">药物名称：</label>
+                                <input type="text" class="form-input" name="special_medications_name" placeholder="请填写药物名称，如抗凝药、降压药、降糖药等">
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label">最后服药时间：</label>
+                                <input type="datetime-local" class="form-input" name="last_medication_time" placeholder="请选择最后服药时间">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- 其他检查项目 -->
+                    <div class="form-group">
+                        <label class="form-label" data-index="3.12">心脏</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="heart_condition" value="normal" checked onchange="toggleConditionDetails('heart_condition')"> <span>正常</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="heart_condition" value="abnormal" onchange="toggleConditionDetails('heart_condition')"> <span>异常</span>
+                            </label>
+                        </div>
+                        <div id="heart_condition_details" class="detail-section" style="display: none;">
+                            <textarea class="form-input" name="heart_condition_detail" placeholder="请简要描述异常情况" rows="1"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" data-index="3.13">肺脏</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="lung_condition" value="normal" checked onchange="toggleConditionDetails('lung_condition')"> <span>正常</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="lung_condition" value="abnormal" onchange="toggleConditionDetails('lung_condition')"> <span>异常</span>
+                            </label>
+                        </div>
+                        <div id="lung_condition_details" class="detail-section" style="display: none;">
+                            <textarea class="form-input" name="lung_condition_detail" placeholder="请简要描述异常情况" rows="1"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" data-index="3.14">气道</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="airway_condition" value="normal" checked onchange="toggleConditionDetails('airway_condition')"> <span>正常</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="airway_condition" value="abnormal" onchange="toggleConditionDetails('airway_condition')"> <span>异常</span>
+                            </label>
+                        </div>
+                        <div id="airway_condition_details" class="detail-section" style="display: none;">
+                            <textarea class="form-input" name="airway_condition_detail" placeholder="请简要描述异常情况" rows="1"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" data-index="3.15">牙齿</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="teeth_condition" value="normal" checked onchange="toggleConditionDetails('teeth_condition')"> <span>正常</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="teeth_condition" value="abnormal" onchange="toggleConditionDetails('teeth_condition')"> <span>异常</span>
+                            </label>
+                        </div>
+                        <div id="teeth_condition_details" class="detail-section" style="display: none;">
+                            <textarea class="form-input" name="teeth_condition_detail" placeholder="请简要描述异常情况" rows="1"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" data-index="3.16">脊柱四肢</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="spine_limbs_condition" value="normal" checked onchange="toggleConditionDetails('spine_limbs_condition')"> <span>正常</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="spine_limbs_condition" value="abnormal" onchange="toggleConditionDetails('spine_limbs_condition')"> <span>异常</span>
+                            </label>
+                        </div>
+                        <div id="spine_limbs_condition_details" class="detail-section" style="display: none;">
+                            <textarea class="form-input" name="spine_limbs_condition_detail" placeholder="请简要描述异常情况" rows="1"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" data-index="3.17">神经</label>
+                        <div class="radio-group">
+                            <label class="radio-label">
+                                <input type="radio" name="nerve_condition" value="normal" checked onchange="toggleConditionDetails('nerve_condition')"> <span>正常</span>
+                            </label>
+                            <label class="radio-label">
+                                <input type="radio" name="nerve_condition" value="abnormal" onchange="toggleConditionDetails('nerve_condition')"> <span>异常</span>
+                            </label>
+                        </div>
+                        <div id="nerve_condition_details" class="detail-section" style="display: none;">
+                            <textarea class="form-input" name="nerve_condition_detail" placeholder="请简要描述异常情况" rows="1"></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" data-index="3.18">其它</label>
+                        <input type="text" class="form-input" name="other_conditions" placeholder="请简要填写其他情况">
+                    </div>
+                    
+                    <!-- 附件上传 -->
+                    <div class="form-group">
+                        <label class="form-label" data-index="3.19">相关辅助检查检验结果</label>
+                        <label class="file-upload-label">
+                            <i class="fas fa-upload mr-2"></i> 选择文件
+                            <input type="file" class="file-upload" name="auxiliary_examination">
+                        </label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" data-index="3.20">胸片</label>
+                        <label class="file-upload-label">
+                            <i class="fas fa-upload mr-2"></i> 选择文件
+                            <input type="file" class="file-upload" name="chest_xray">
+                        </label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" data-index="3.21">肺功能</label>
+                        <label class="file-upload-label">
+                            <i class="fas fa-upload mr-2"></i> 选择文件
+                            <input type="file" class="file-upload" name="lung_function">
+                        </label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" data-index="3.22">心脏彩超</label>
+                        <label class="file-upload-label">
+                            <i class="fas fa-upload mr-2"></i> 选择文件
+                            <input type="file" class="file-upload" name="cardiac_ultrasound">
+                        </label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" data-index="3.23">心电图</label>
+                        <label class="file-upload-label">
+                            <i class="fas fa-upload mr-2"></i> 选择文件
+                            <input type="file" class="file-upload" name="ecg">
+                        </label>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label" data-index="3.24">其他</label>
+                        <label class="file-upload-label">
+                            <i class="fas fa-upload mr-2"></i> 选择文件
+                            <input type="file" class="file-upload" name="other_attachments">
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="nav-buttons">
+                    <button type="button" class="btn-secondary" id="prevBtn" style="display: none;">上一步</button>
+                    <button type="button" class="btn-primary" id="nextBtn">下一步</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentSection = 1;
+        const totalSections = 3;
+        
+        // 初始化显示第一部分
+        document.addEventListener('DOMContentLoaded', function() {
+            showSection(1);
+            
+            // 高亮当前步骤
+            updateStepIndicators(1);
+        });
+
+        // 控制体检项目详细信息的显示和隐藏
+        function toggleConditionDetails(conditionName) {
+            const detailsDiv = document.getElementById(`${conditionName}_details`);
+            const selectedValue = document.querySelector(`input[name="${conditionName}"]:checked`).value;
+            detailsDiv.style.display = selectedValue === 'abnormal' ? 'block' : 'none';
+        }
+        
+        function showSection(sectionNumber) {
+            document.querySelectorAll('.section').forEach(section => {
+                section.style.display = 'none';
+            });
+            document.getElementById(`section${sectionNumber}`).style.display = 'block';
+            
+            // 更新进度条
+            document.getElementById('progress').style.width = `${(sectionNumber / totalSections) * 100}%`;
+            
+            // 更新按钮显示
+            document.getElementById('prevBtn').style.display = sectionNumber === 1 ? 'none' : 'inline-block';
+            
+            if (sectionNumber === totalSections) {
+                document.getElementById('nextBtn').textContent = '提交';
+            } else {
+                document.getElementById('nextBtn').textContent = '下一步';
+            }
+            
+            // 如果是第一部分，设置下一步按钮宽度为100%
+            if (sectionNumber === 1) {
+                document.getElementById('nextBtn').style.width = '100%';
+            } else {
+                document.getElementById('nextBtn').style.width = '48%';
+            }
+            
+            // 滚动到顶部
+            window.scrollTo(0, 0);
+        }
+        
+        function updateStepIndicators(currentStep) {
+            document.querySelectorAll('.progress-step').forEach((step, index) => {
+                if (index + 1 <= currentStep) {
+                    step.classList.add('active');
+                } else {
+                    step.classList.remove('active');
+                }
+            });
+        }
+        
+        document.getElementById('prevBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            if (currentSection > 1) {
+                currentSection--;
+                showSection(currentSection);
+                updateStepIndicators(currentSection);
+            }
+        });
+        
+        document.getElementById('nextBtn').addEventListener('click', (e) => {
+            e.preventDefault();
+            if (currentSection < totalSections) {
+                // 可以在这里添加表单验证逻辑
+                currentSection++;
+                showSection(currentSection);
+                updateStepIndicators(currentSection);
+            } else {
+                // 提交表单，不显示alert提示，直接重定向
+                showSuccessIcon();
+                
+                // 模拟提交后重定向
+                setTimeout(() => {
+                    window.location.href = 'submit_success.html';
+                }, 1500);
+            }
+        });
+        
+        function showSuccessIcon() {
+            // 创建成功图标元素
+            const successDiv = document.createElement('div');
+            successDiv.style.position = 'fixed';
+            successDiv.style.top = '0';
+            successDiv.style.left = '0';
+            successDiv.style.width = '100%';
+            successDiv.style.height = '100%';
+            successDiv.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+            successDiv.style.display = 'flex';
+            successDiv.style.justifyContent = 'center';
+            successDiv.style.alignItems = 'center';
+            successDiv.style.flexDirection = 'column';
+            successDiv.style.zIndex = '1000';
+            
+            const icon = document.createElement('i');
+            icon.className = 'fas fa-check-circle';
+            icon.style.fontSize = '80px';
+            icon.style.color = '#52c41a';
+            icon.style.marginBottom = '20px';
+            
+            const text = document.createElement('div');
+            text.textContent = '提交成功';
+            text.style.fontSize = '18px';
+            text.style.fontWeight = '500';
+            
+            successDiv.appendChild(icon);
+            successDiv.appendChild(text);
+            document.body.appendChild(successDiv);
+        }
+        
+        // 文件上传预览
+        document.querySelectorAll('.file-upload').forEach(input => {
+            input.addEventListener('change', function() {
+                const label = this.parentElement;
+                if (this.files.length > 0) {
+                    label.innerHTML = `<i class="fas fa-check mr-2"></i> ${this.files[0].name}`;
+                }
+            });
+        });
+
+        // 添加扫码功能
+        function startScan() {
+            // 创建视频元素
+            const videoElement = document.createElement('div');
+            videoElement.innerHTML = `
+                <div id="scannerModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <div style="position: relative; width: 300px; height: 300px; background: white; border-radius: 8px; overflow: hidden;">
+                        <video id="qr-video" style="width: 100%; height: 100%; object-fit: cover;"></video>
+                        <div style="position: absolute; top: 16px; right: 16px;">
+                            <button onclick="closeScan()" style="width: 32px; height: 32px; background: rgba(0,0,0,0.5); border: none; color: white; font-size: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(0,0,0,0.7)'" onmouseout="this.style.background='rgba(0,0,0,0.5)'">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div style="color: white; margin-top: 16px; text-align: center;">
+                        <p>请将二维码对准扫描框</p>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(videoElement);
+
+            // 初始化扫码器
+            const video = document.getElementById('qr-video');
+            navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+                .then(function(stream) {
+                    video.srcObject = stream;
+                    video.play();
+                    
+                    // 创建canvas用于截取视频帧
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    
+                    // 定期扫描二维码
+                    const scanInterval = setInterval(() => {
+                        if (video.videoWidth) {
+                            canvas.width = video.videoWidth;
+                            canvas.height = video.videoHeight;
+                            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+                            
+                            // 获取图像数据
+                            const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                            
+                            // TODO: 这里需要集成实际的二维码识别库
+                            // 示例：使用假数据模拟扫码结果
+                            setTimeout(() => {
+                                const mockResult = "OP2023050600001";
+                                handleScanResult(mockResult);
+                                closeScan();
+                            }, 2000);
+                        }
+                    }, 500);
+
+                    // 存储interval ID以便关闭时清除
+                    window.currentScanInterval = scanInterval;
+                })
+                .catch(function(err) {
+                    console.error("摄像头访问失败:", err);
+                    alert("无法访问摄像头，请确保已授予摄像头权限。");
+                });
+        }
+
+        // 处理扫描结果
+        function handleScanResult(result) {
+            document.querySelector('input[name="outpatient_no"]').value = result;
+        }
+
+        // 关闭扫码界面
+        function closeScan() {
+            const scannerModal = document.getElementById('scannerModal');
+            if (scannerModal) {
+                // 停止视频流
+                const video = document.getElementById('qr-video');
+                if (video && video.srcObject) {
+                    video.srcObject.getTracks().forEach(track => track.stop());
+                }
+                
+                // 清除扫描间隔
+                if (window.currentScanInterval) {
+                    clearInterval(window.currentScanInterval);
+                }
+                
+                // 移除模态框
+                scannerModal.parentElement.remove();
+            }
+        }
+
+        // 显示或隐藏详细选项
+        function toggleDetails(section) {
+            const details = document.getElementById(`${section}_details`);
+            const radios = document.querySelectorAll(`input[name="${section}_history"]`);
+            radios.forEach(radio => {
+                if (radio.checked && radio.value === 'yes') {
+                    details.style.display = 'block';
+                } else if (radio.checked && radio.value === 'no') {
+                    details.style.display = 'none';
+                }
+            });
+        }
+
+        // 为所有radio按钮添加事件监听
+        document.addEventListener('DOMContentLoaded', function() {
+            // 获取所有form-group
+            const formGroups = document.querySelectorAll('.form-group');
+            
+            formGroups.forEach(group => {
+                const radioInputs = group.querySelectorAll('input[type="radio"]');
+                const detailsDiv = group.querySelector('.input-details');
+                
+                if (detailsDiv) {
+                    radioInputs.forEach(radio => {
+                        radio.addEventListener('change', function() {
+                            // 如果选择"有"，显示详情输入框
+                            detailsDiv.style.display = this.value === 'yes' ? 'block' : 'none';
+                        });
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

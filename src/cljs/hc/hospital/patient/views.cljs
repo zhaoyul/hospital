@@ -47,7 +47,7 @@
         "下一步"
         (if submitting? "提交中..." "提交"))]]))
 
-(defn ui-input-item [{:keys [label value placeholder errors field-key data-path type unit data-index]
+(defn ui-input-item [{:keys [label value placeholder errors field-key data-path type unit data-index extra]
                       :or {type "text"}}]
   (let [full-path (conj data-path field-key)
         error-msg (get-in errors full-path)
@@ -56,11 +56,13 @@
      [:label.form-label {:for field-id :data-index data-index}
       label
       (when unit [:span.unit (str " " unit)])]
-     [:input.form-input {:type type
-                         :id field-id
-                         :value (if (nil? value) "" value)
-                         :placeholder (or placeholder (str "请输入" (if (string? label) label "")))
-                         :onChange #(rf/dispatch [::events/update-form-field full-path (-> % .-target .-value)])}]
+     [:div {:style {:display "flex" :gap "8px"}}
+      [:input.form-input {:type type
+                          :id field-id
+                          :value (if (nil? value) "" value)
+                          :placeholder (or placeholder (str "请输入" (if (string? label) label "")))
+                          :onChange #(rf/dispatch [::events/update-form-field full-path (-> % .-target .-value)])}]
+      (when extra extra)]
      (when error-msg
        [:div.error-message error-msg])]))
 
@@ -214,39 +216,55 @@
        [:div.error-message error-msg])]))
 
 
+;; 定义 ui-select-item 组件
+(defn ui-select-item [{:keys [label value placeholder errors field-key data-path options data-index]}]
+  (let [full-path (conj data-path field-key)
+        error-msg (get-in errors full-path)
+        field-id (str (name field-key) "-" (hash data-path))]
+    [:div {:class (if error-msg "form-group error" "form-group")}
+     [:label.form-label {:for field-id :data-index data-index} label]
+     [:select.form-input {:id field-id
+                          :value (or value "")
+                          :onChange #(rf/dispatch [::events/update-form-field full-path (-> % .-target .-value)])}
+      [:option {:value "" :disabled true} (or placeholder "请选择")]
+      (for [{:keys [label value]} options]
+        ^{:key value}
+        [:option {:value value} label])]
+     (when error-msg
+       [:div.error-message error-msg])]))
+
+
 ;; --- Form Steps ---
 
-;; 基本信息步骤
+;; 更新基本信息部分以支持扫码功能和最新字段
 (defn basic-info-step []
   (let [basic-info @(rf/subscribe [::subs/basic-info])
         errors @(rf/subscribe [::subs/form-errors])]
     [:<>
      [ui-input-item {:label "门诊号" :value (:outpatient-number basic-info) :errors errors
                      :data-path [:basic-info] :field-key :outpatient-number
-                     :placeholder "请输入门诊号" :data-index "1.1"}]
+                     :placeholder "请输入门诊号" :data-index "1.1"
+                     :extra [:button.btn-scan {:onClick #(js/startScan)} "扫码"]}]
      [ui-input-item {:label "姓名" :value (:name basic-info) :errors errors
                      :data-path [:basic-info] :field-key :name
                      :placeholder "请输入姓名" :data-index "1.2"}]
+     [ui-input-item {:label "身份证号" :value (:id-number basic-info) :errors errors
+                     :data-path [:basic-info] :field-key :id-number
+                     :placeholder "请输入身份证号" :data-index "1.3"}]
+     [ui-input-item {:label "手机号" :value (:phone basic-info) :errors errors
+                     :data-path [:basic-info] :field-key :phone
+                     :placeholder "请输入手机号" :data-index "1.4"}]
      [ui-radio-group-item {:label "性别" :value (:gender basic-info) :errors errors
                            :data-path [:basic-info] :field-key :gender
-                           :options [{:value "male" :label "男"}
-                                     {:value "female" :label "女"}] :data-index "1.3"}] ;; Removed "other" to match HTML
+                           :options [{:label "男" :value "male"} {:label "女" :value "female"}]
+                           :data-index "1.5"}]
      [ui-input-number-item {:label "年龄" :value (:age basic-info) :errors errors
                             :data-path [:basic-info] :field-key :age
-                            :min 0 :max 150 :unit "岁"
-                            :placeholder "请输入年龄" :data-index "1.4"}]
-     [ui-input-item {:label "病区" :value (:ward basic-info) :errors errors
-                     :data-path [:basic-info] :field-key :ward
-                     :placeholder "请输入病区信息" :data-index "1.5"}]
-     [ui-input-item {:label "电子健康卡号" :value (:health-card-number basic-info) :errors errors
-                     :data-path [:basic-info] :field-key :health-card-number
-                     :placeholder "请输入电子健康卡号" :data-index "1.6"}]
-     [ui-text-area-item {:label "术前诊断" :value (:pre-op-diagnosis basic-info) :errors errors
-                         :data-path [:basic-info] :field-key :pre-op-diagnosis
-                         :rows 2 :placeholder "请输入术前诊断" :data-index "1.7"}]
-     [ui-text-area-item {:label "拟施手术" :value (:planned-surgery basic-info) :errors errors
-                         :data-path [:basic-info] :field-key :planned-surgery
-                         :rows 2 :placeholder "请输入拟施手术" :data-index "1.8"}]]))
+                            :placeholder "请输入年龄" :data-index "1.6"}]
+     [ui-select-item {:label "院区" :value (:hospital-district basic-info) :errors errors
+                      :data-path [:basic-info] :field-key :hospital-district
+                      :options [{:label "总院" :value "main"} {:label "积水潭院区" :value "jst"}]
+                      :placeholder "请选择院区" :data-index "1.7"}]]))
 
 ;; 一般情况步骤
 (defn general-condition-step []
@@ -446,8 +464,8 @@
 ;; Main patient form component
 (defn patient-form []
   (let [current-step @(rf/subscribe [::subs/current-step])
-        total-steps 4 ; From questionnaire.html
-        step-titles ["患者信息" "健康状况" "生活习惯" "补充信息"] ; From questionnaire.html progress steps data-title
+        total-steps 3 ; 更新为最新问卷的总步骤数
+        step-titles ["基本信息" "病情摘要" "麻醉评估"] ; 更新为最新问卷的步骤标题
         submitting? @(rf/subscribe [::subs/submitting?])]
     [:div.container
      [:div.card.mt-6
@@ -458,9 +476,8 @@
 
       [:form#questionnaire-form {:onSubmit (fn [e] (.preventDefault e))}
 
-       [step-section-wrapper "第一部分：患者信息" current-step 0 [basic-info-step]]
-       [step-section-wrapper "第二部分：一般情况" current-step 1 [general-condition-step]]
-       [step-section-wrapper "第三部分：病情摘要" current-step 2 [medical-summary-step]]
-       [step-section-wrapper "第四部分：并存疾病及其他" current-step 3 [coexisting-diseases-step]]
+       [step-section-wrapper "第一部分：基本信息" current-step 0 [basic-info-step]]
+       [step-section-wrapper "第二部分：病情摘要" current-step 1 [medical-summary-step]]
+       [step-section-wrapper "第三部分：麻醉评估" current-step 2 [coexisting-diseases-step]]
 
        [form-navigation current-step total-steps submitting?]]]]))
