@@ -340,12 +340,43 @@ ENTRYPOINT exec java $JAVA_OPTS -jar /hospital/hospital-standalone.jar
   - [ ] 打印预览与打印功能.
   - [ ] 管理后台:医生列表 (院区.科室.账号增删改查.维护电子签名.从 HIS 同步花名册).字典管理.
 
+* 请在migration中增加一个新用户
+
+好的，我们可以在 =resources/migrations= 目录下创建一个新的 SQL 迁移文件来添加一个新用户 (医生)。
+
+首先，你需要为新用户密码生成一个哈希值。你可以在 Clojure REPL 中执行以下操作：
+#+begin_src clojure
+(require '[buddy.hashers :as hashers])
+(hashers/derive "你的密码") ; 将 "你的密码" 替换为你想要的密码
+#+end_src
+复制输出的哈希字符串。
+
+然后，创建以下迁移文件：
+
+1.  文件名: =resources/migrations/YYYYMMDDHHMMSS-add-default-admin-user.up.sql=
+    (请将 =YYYYMMDDHHMMSS= 替换为当前时间戳，确保它在现有迁移之后，例如 =20250507000100=)
+
+    #+begin_src sql
+    -- resources/migrations/20250507000100-add-default-admin-user.up.sql
+    INSERT INTO doctors (username, password_hash, name, created_at, updated_at)
+    VALUES (
+        'admin',
+        -- 将下面的哈希替换为你用 (hashers/derive "你的密码") 生成的实际哈希值
+        '$2a$11$YOUR_GENERATED_PASSWORD_HASH_HERE_REPLACE_ME',
+        '默认管理员',
+        datetime('now'),
+        datetime('now')
+    );
+    #+end_src
+
+
+
 * gptel
 #+begin_src elisp :results silent
   (let* ((prompt-file "code-prompt.md")
          (buffer "*gemini-app-and-server*"))
     (delete-file prompt-file)
-    (shell-command "code2prompt . --no-clipboard --output code-prompt.md")
+    (shell-command "code2prompt . --no-clipboard --output-file code-prompt.md")
     (ignore-errors (gptel-context-remove-all))
     (gptel-add-file prompt-file)
     (when (> (length (window-list)) 1)

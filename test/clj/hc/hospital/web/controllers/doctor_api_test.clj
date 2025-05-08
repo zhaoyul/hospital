@@ -4,92 +4,124 @@
             [ring.mock.request :as mock]
             [cheshire.core :as json]
             [clojure.string :as str]
-            [hc.hospital.web.controllers.doctor-api :as doctor-api.ctlr]
-            [hc.hospital.db.doctor :as doctor.db]))
+            [hc.hospital.web.controllers.doctor-api :as doctor-api.ctlr] ;; 引入被测试的控制器命名空间
+            [hc.hospital.db.doctor :as doctor.db])) ;; 引入医生数据库操作命名空间
 
+;; :once fixture 确保测试系统在所有测试开始前启动一次，并在结束后关闭。
 (use-fixtures :once (tu/system-fixture))
 
-(defn get-handler-and-query-fn []
-  (let [system (tu/system-state)]
-    {:handler (:handler/ring system)
-     :query-fn (or (get system :db.sql/query-fn) ; Adjust if necessary
-                   (get-in system [:db.sql/query-fn :query-fn]))}))
+(defn get-handler-and-query-fn
+  "从测试系统中获取 Ring handler 和数据库查询函数。
+   返回一个 map，包含 :handler 和 :query-fn。
+   :query-fn 会尝试从系统 map 中的 :db.sql/query-fn 或 :db.sql/query-fn :query-fn 路径获取。"
+  []
+  (let [system (tu/system-state) ;; 获取当前测试系统状态
+        handler (:handler/ring system) ;; Ring 请求处理器
+        query-fn (or (get system :db.sql/query-fn)
+                     (get-in system [:db.sql/query-fn :query-fn]))] ;; 数据库查询函数
+    {:handler handler
+     :query-fn query-fn}))
 
 (deftest doctor-api-controller-tests
-  (let [{:keys [handler query-fn]} (get-handler-and-query-fn)
-        _ (assert handler "Ring handler should not be nil")
-        _ (assert query-fn "Query function should not be nil")]
+  (let [{:keys [handler query-fn]} (get-handler-and-query-fn) ;; 解构获取到的 handler 和 query-fn
+        _ (assert handler "Ring handler 不能为空")
+        _ (assert query-fn "数据库查询函数 query-fn 不能为空")]
 
     (testing "医生注册 API"
       (testing "成功注册"
-        (let [response (tu/POST handler "/api/doctors"
+        (let [response (tu/POST handler "/api/doctors" ;; 构造 POST 请求
                                 (json/encode {:username "api_doc1" :password "apipass" :name "API医生"})
                                 {"content-type" "application/json"})]
-          (is (= 200 (:status response)))
-          (is (str/includes? (:body response) "医生注册成功"))))
+          (is (= 200 (:status response)) "响应状态码应为 200")
+          (is (str/includes? (:body response) "医生注册成功") "响应体应包含成功信息")))
       (testing "用户名已存在"
-        (tu/POST handler "/api/doctors" (json/encode {:username "api_doc_dup" :password "pass" :name "Dup"}) {}) ; 先创建
+        ;; 先创建一个同名用户
+        (tu/POST handler "/api/doctors" (json/encode {:username "api_doc_dup" :password "pass" :name "Dup"}) {})
         (let [response (tu/POST handler "/api/doctors"
                                 (json/encode {:username "api_doc_dup" :password "pass" :name "Dup Again"})
                                 {"content-type" "application/json"})]
-          (is (= 409 (:status response)))
-          (is (str/includes? (:body response) "用户名已存在"))))
-      (testing "缺少参数"
+          (is (= 409 (:status response)) "响应状态码应为 409 (Conflict)")
+          (is (str/includes? (:body response) "用户名已存在") "响应体应包含用户名已存在的信息")))
+      (testing "缺少参数（例如密码）"
         (let [response (tu/POST handler "/api/doctors"
-                                (json/encode {:username "incomplete_doc"})
+                                (json/encode {:username "incomplete_doc" :name "残缺医生"}) ;; 故意缺少 password
                                 {"content-type" "application/json"})]
-          (is (= 400 (:status response)))
-          (is (str/includes? (:body response) "用户名和密码不能为空")))))
+          (is (= 400 (:status response)) "响应状态码应为 400 (Bad Request)")
+          (is (or (str/includes? (:body response) "用户名和密码不能为空") ;; 根据实际错误信息调整
+                  (str/includes? (:body response) "密码不能为空"))
+              "响应体应包含参数错误信息"))))
 
 
     (testing "医生登录和登出 API"
-      (let [login-username "login_doc"
-            login-password "login_pass"
-            _ (doctor.db/create-doctor! query-fn {:username login-username :password login-password :name "登录测试"})]
+      (let [login-username "login_doc" ;; 用于登录测试的用户名
+            login-password "login_pass" ;; 用于登录测试的密码
+            _ (doctor.db/create-doctor! query-fn {:username login-username :password login-password :name "登录测试医生"})] ;; 前置条件：创建测试医生
+
         (testing "成功登录"
           (let [response (tu/POST handler "/api/users/login"
                                   (json/encode {:username login-username :password login-password})
                                   {"content-type" "application/json"})
-                body (json/parse-string (:body response) keyword)]
-            (is (= 200 (:status response)))
-            (is (= "登录成功" (:message body)))
-            (is (= login-username (get-in body [:doctor :username])))
-            ;; 检查 session cookie 是否被设置 (更复杂的测试可能需要 Peridot 的会话跟踪)
-            (is (some? (get-in response [:headers "Set-Cookie"])))))
+                body (json/parse-string (:body response) keyword)] ;; 解析 JSON 响应体
+            (is (= 200 (:status response)) "登录成功状态码应为 200")
+            (is (= "登录成功" (:message body)) "响应消息应为登录成功")
+            (is (= login-username (get-in body [:doctor :username])) "响应体中应包含正确的医生用户名")
+            ;; 检查 session cookie 是否被设置
+            (is (some? (get-in response [:headers "Set-Cookie"])) "响应头中应包含 Set-Cookie")))
 
         (testing "登录失败 - 密码错误"
           (let [response (tu/POST handler "/api/users/login"
                                   (json/encode {:username login-username :password "wrongpass"})
                                   {"content-type" "application/json"})]
-            (is (= 401 (:status response)))))
+            (is (= 401 (:status response)) "密码错误状态码应为 401 (Unauthorized)")))
 
-        ;; 登出测试较为复杂.因为它依赖于会话.
-        ;; 简单测试:调用登出端点.期望它返回成功.并清除会话.
-        ;; 真正验证会话是否清除需要后续请求.
-        ;; Peridot 的 p/session 可以更好地处理这个问题.
-        ;; (testing "成功登出"
-        ;;   ;; 需要先登录以建立会话
-        ;;   (let [login-resp (tu/POST handler "/api/users/login"
-        ;;                             (json/encode {:username login-username :password login-password})
-        ;;                             {"content-type" "application/json"})
-        ;;         cookies (get-in login-resp [:headers "Set-Cookie"])]
-        ;;     (let [logout-resp (tu/POST handler "/api/doctors/logout" "" {"Cookie" (first cookies)})]
-        ;;       (is (= 200 (:status logout-resp)))
-        ;;       (is (str/includes? (:body logout-resp) "登出成功"))
-        ;;       ;; 检查 Set-Cookie 是否用于清除会话 (例如.max-age=0 或 expires=past_date)
-        ;;       (is (some #(str/includes? % "Max-Age=0") (get-in logout-resp [:headers "Set-Cookie"] "")))
-        ;;       )))
-        ))
+        (testing "成功登出"
+          ;; 步骤1: 先登录以建立会话
+          (let [login-resp (tu/POST handler "/api/users/login"
+                                    (json/encode {:username login-username :password login-password})
+                                    {"content-type" "application/json"})
+                _ (def login-resp login-resp)
+                ;; 从登录响应中提取 Set-Cookie 头部信息
+                login-cookies (let [set-cookie-header (get-in login-resp [:headers "Set-Cookie"])]
+                                (cond
+                                  (string? set-cookie-header) [set-cookie-header] ;; 如果是单个字符串，包装成向量
+                                  (sequential? set-cookie-header) (vec set-cookie-header)   ;; 如果已经是向量，直接使用
+                                  :else []))]
+            (is (= 200 (:status login-resp)) "登出前，登录应成功")
+            (is (not-empty login-cookies) "登录后应设置了 Cookie")
 
-    ;; 注意: 对于需要认证的端点 (如 /api/doctors, /api/doctors/:id),
-    ;; 测试它们需要模拟已认证的会话.
-    ;; 这通常通过在请求中包含有效的会话 cookie 来完成.
-    ;; 使用 Ring Mock Request 时.你可能需要手动管理 session 或模拟 :identity.
-    ;; 例如.直接调用控制器函数并提供一个包含 :identity 的模拟请求:
-    #_(testing "获取医生列表 (模拟已认证)"
-        (let [mock-req (-> (mock/request :get "/api/doctors")
-                           (assoc :integrant-deps {:query-fn query-fn}) ; 控制器需要这个
-                           (assoc :identity {:id 1}))] ; 模拟已认证用户ID为1, buddy-auth 通常期望 :identity 是一个 map
-          (let [response (doctor-api.ctlr/list-doctors-handler mock-req)] ; 确保调用正确的处理函数
-            (is (= 200 (:status response)))
-            (is (some? (-> response :body (json/parse-string true) :doctors))))))))
+            ;; 步骤2: 使用获取到的 cookie 执行登出操作
+            ;; Ring Cookie 通常是 name=value; Path=/; HttpOnly 格式，取第一个即可
+            (let [session-cookie (first login-cookies)
+                  logout-resp (tu/POST handler "/api/users/logout" "" (if session-cookie {"Cookie" session-cookie} {}))]
+              (is (= 200 (:status logout-resp)) "登出成功状态码应为 200")
+              (is (str/includes? (:body logout-resp) "登出成功") "响应体应包含登出成功信息")
+              ;; 检查 Set-Cookie 是否用于清除会话 (例如 Max-Age=0 或 Expires 指向过去时间)
+              (let [logout-set-cookies (let [header-val (get-in logout-resp [:headers "Set-Cookie"])]
+                                         (cond->> header-val (string? header-val) vector))] ;; 确保是 cookies 列表
+                (is (some? logout-set-cookies) "登出响应应包含 Set-Cookie 以清除会话")
+                (is (some #(or (str/includes? % "Max-Age=0")
+                               (str/includes? % "expires=")) ;; 简单检查 expires 属性
+                          logout-set-cookies) "Set-Cookie 应包含 Max-Age=0 或 expires 来清除会话")))))))
+
+    (testing "获取医生列表 (模拟已认证用户)"
+      ;; 前置条件：创建一些医生数据，以便列表非空
+      (doctor.db/create-doctor! query-fn {:username "doc_list_1" :password "p" :name "列表医生1"})
+      (doctor.db/create-doctor! query-fn {:username "doc_list_2" :password "p" :name "列表医生2"})
+
+      ;; 模拟一个已认证的医生用户身份 (通常由认证中间件如 buddy-auth 设置在 request map 的 :identity key)
+      (let [authenticated-identity {:id 99 :username "test_auth_user" :roles #{:doctor}} ;; 模拟的身份信息，id 和 roles 根据实际需要
+            mock-req (-> (mock/request :get "/api/doctors")
+                         ;; 将模拟的身份信息放入请求 map 中
+                         (assoc :identity authenticated-identity)
+                         ;; 如果控制器直接从 request map 的 :integrant-deps 中取依赖，则需要此行
+                         ;; 如果依赖已由 Ring handler/middleware 注入，则可能不需要
+                         (assoc :integrant-deps {:query-fn query-fn}))
+            response (handler mock-req)] ;; 使用主 handler 处理这个伪造的、已认证的请求
+
+        (is (= 200 (:status response)) "获取医生列表状态码应为 200")
+        (let [body (json/parse-string (:body response) keyword)]
+          (is (vector? body) "响应体应为一个 JSON 数组（医生列表）")
+          (is (pos? (count body)) "医生列表不应为空")
+          ;; 可以进一步检查列表中的医生信息是否符合预期
+          (is (some #(= "列表医生1" (:name %)) body) "列表中应包含测试医生1")
+          (is (some #(= "列表医生2" (:name %)) body) "列表中应包含测试医生2"))))))
