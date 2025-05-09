@@ -19,7 +19,7 @@
 (defn home-page []
   (react/useEffect
    #(rf/dispatch-sync [::events/fetch-all-assessments])
-   [])
+   #js [])
   [anesthesia-home-page])
 
 ;; -------------------------
