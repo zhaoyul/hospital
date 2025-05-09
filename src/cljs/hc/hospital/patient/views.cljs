@@ -47,6 +47,7 @@
         "下一步"
         (if submitting? "提交中..." "提交"))]]))
 
+;; --- UI Components ---
 (defn ui-input-item [{:keys [label value placeholder errors field-key data-path type unit data-index extra]
                       :or {type "text"}}]
   (let [full-path (conj data-path field-key)
@@ -66,13 +67,13 @@
      (when error-msg
        [:div.error-message error-msg])]))
 
-(defn ui-text-area-item [{:keys [label value placeholder errors field-key data-path rows data-index] ; Added data-index
+(defn ui-text-area-item [{:keys [label value placeholder errors field-key data-path rows data-index]
                           :or {rows 3}}]
   (let [full-path (conj data-path field-key)
         error-msg (get-in errors full-path)
         field-id (str (name field-key) "-" (hash data-path))]
     [:div {:class (if error-msg "form-group error" "form-group")}
-     [:label.form-label {:for field-id :data-index data-index} label] ; Added :data-index
+     [:label.form-label {:for field-id :data-index data-index} label]
      [:textarea.form-input {:id field-id
                             :value (if (nil? value) "" value)
                             :rows rows
@@ -81,12 +82,12 @@
      (when error-msg
        [:div.error-message  error-msg])]))
 
-(defn ui-input-number-item [{:keys [label value placeholder errors field-key data-path min max step unit data-index]}] ; Added data-index
+(defn ui-input-number-item [{:keys [label value placeholder errors field-key data-path min max step unit data-index]}]
   (let [full-path (conj data-path field-key)
         error-msg (get-in errors full-path)
         field-id (str (name field-key) "-" (hash data-path))]
     [:div {:class (if error-msg "form-group error" "form-group")}
-     [:label.form-label {:for field-id :data-index data-index} ; Added :data-index
+     [:label.form-label {:for field-id :data-index data-index}
       label
       (when unit [:span.unit (str " " unit)])]
      [:input.form-input
@@ -127,28 +128,28 @@
 (defn ui-boolean-radio-item [{:keys [label bool-value errors field-key data-path data-index]}]
   (let [full-path (conj data-path field-key)
         error-msg (get-in errors full-path)
-        group-name (str (name field-key) "-" (hash data-path))]
-    [:div {:class (if error-msg "form-group error" "form-group")}
-     [:label.form-label {:data-index data-index} label] ; Added :data-index
+        group-name (str (name field-key) "-" (hash data-path) "-bool")] ; Ensure unique name for boolean radio
+    [:div {:class (if error-msg "form-group error" "form-group")} ; Kept form-group for consistency, can be reviewed
+     [:label.form-label {:data-index data-index} label]
      [:div.radio-group
       [:label.radio-label
        [:input {:type "radio"
                 :name group-name
-                :value "no"
-                :checked (false? bool-value)
-                :onChange #(rf/dispatch [::events/update-form-field full-path false])}]
-       [:span " 无"]]
+                :value "yes" ; Standardized to "yes" for true
+                :checked (true? bool-value)
+                :onChange #(rf/dispatch [::events/update-form-field full-path true])}]
+       [:span " 有"]]
       [:label.radio-label
        [:input {:type "radio"
                 :name group-name
-                :value "yes"
-                :checked (true? bool-value)
-                :onChange #(rf/dispatch [::events/update-form-field full-path true])}]
-       [:span " 有"]]]
+                :value "no" ; Standardized to "no" for false
+                :checked (false? bool-value)
+                :onChange #(rf/dispatch [::events/update-form-field full-path false])}]
+       [:span " 无"]]]
      (when error-msg
        [:div.error-message error-msg])]))
 
-(defn ui-date-picker-item [{:keys [label value placeholder errors field-key data-path showTime data-index]}] ; Added data-index
+(defn ui-date-picker-item [{:keys [label value placeholder errors field-key data-path showTime data-index]}]
   (let [full-path (conj data-path field-key)
         error-msg (get-in errors full-path)
         field-id (str (name field-key) "-" (hash data-path))
@@ -166,23 +167,22 @@
      (when error-msg
        [:div.error-message error-msg])]))
 
-
 (defn ui-file-input-item [{:keys [label value errors field-key data-path data-index]}]
   (let [full-path (conj data-path field-key)
         error-msg (get-in errors full-path)
         field-id (str (name field-key) "-" (hash data-path))
-        display-value (if (and value (not= value "-") (seq value)) ; Changed (not (empty? value)) to (seq value)
+        display-value (if (and value (not= value "-") (seq value))
                         (str "已选择: " value)
                         "选择文件")]
     [:div {:class (if error-msg "form-group error" "form-group")}
-     [:label.form-label {:data-index data-index} label] ; Main label for the field group
-     [:label.file-upload-label {:for field-id} ; Visually styled label acting as button
+     [:label.form-label {:data-index data-index} label]
+     [:label.file-upload-label {:for field-id}
       [:i.fas.fa-upload.mr-2]
       display-value]
      [:input.file-upload
       {:type "file"
        :id field-id
-       :style {:display "none"} ; Explicitly hide if CSS isn't loaded/working
+       :style {:display "none"}
        :onChange #(let [file-name (if (-> % .-target .-files .-length (> 0))
                                     (-> % .-target .-files (.item 0) .-name)
                                     nil)]
@@ -190,7 +190,6 @@
      (when error-msg
        [:div.error-message error-msg])]))
 
-;; Component for items like "Heart condition" which have Normal/Abnormal radio and conditional details text
 (defn ui-condition-item [{:keys [label base-value detail-value errors field-key data-path data-index placeholder]}]
   (let [base-path (conj data-path field-key)
         detail-path (conj data-path (keyword (str (name field-key) "-detail")))
@@ -215,8 +214,6 @@
      (when error-msg
        [:div.error-message error-msg])]))
 
-
-;; 定义 ui-select-item 组件
 (defn ui-select-item [{:keys [label value placeholder errors field-key data-path options data-index]}]
   (let [full-path (conj data-path field-key)
         error-msg (get-in errors full-path)
@@ -227,34 +224,66 @@
                           :value (or value "")
                           :onChange #(rf/dispatch [::events/update-form-field full-path (-> % .-target .-value)])}
       [:option {:value "" :disabled true} (or placeholder "请选择")]
-      (for [{:keys [label value]} options]
-        ^{:key value}
-        [:option {:value value} label])]
+      (for [{opt-val :value opt-label :label} options] ; Changed :keys to :keys [label value] for clarity
+        ^{:key opt-val} ; Assuming opt-val is unique for key
+        [:option {:value opt-val} opt-label])]
      (when error-msg
        [:div.error-message error-msg])]))
 
+;; --- Refactored Helper Components ---
+(defn ui-conditional-group
+  "A group with a boolean radio question, and conditional children if the answer is true.
+  Wraps content in :div.form-group-container."
+  [{:keys [label bool-value errors data-path field-key data-index]} & children-hiccup]
+  [:div.form-group-container
+   [ui-boolean-radio-item {:label label
+                           :bool-value bool-value
+                           :errors errors
+                           :data-path data-path
+                           :field-key field-key
+                           :data-index data-index}]
+   (when bool-value
+     (if (and children-hiccup (= 1 (count children-hiccup)))
+       (first children-hiccup)
+       (when (seq children-hiccup)
+         (into [:<>] children-hiccup))))])
+
+(defn ui-comorbidity-item
+  "An item for a comorbidity, typically a boolean 'has' and 'details' text input.
+  Wraps content in :div.form-group-container."
+  [{:keys [label has-value details-value errors base-path has-field-key details-field-key data-index details-placeholder]
+    :or {has-field-key :has details-field-key :details details-placeholder "请填写详情"}}]
+  [:div.form-group-container
+   [ui-boolean-radio-item {:label label
+                           :bool-value has-value
+                           :errors errors
+                           :data-path base-path
+                           :field-key has-field-key
+                           :data-index data-index}]
+   (when has-value
+     [ui-input-item {:label nil ; Details field typically doesn't have its own visible label here
+                     :value details-value
+                     :errors errors
+                     :data-path base-path
+                     :field-key details-field-key
+                     :placeholder details-placeholder}])])
+
 
 ;; --- Form Steps ---
-
-;; 更新基本信息部分以支持扫码功能和最新字段
 (defn basic-info-step []
   (let [basic-info @(rf/subscribe [::subs/basic-info])
         errors @(rf/subscribe [::subs/form-errors])
-        outpatient-number-path [:basic-info :outpatient-number]] ; 定义路径
+        outpatient-number-path [:basic-info :outpatient-number]]
     [:<>
      [ui-input-item {:label "门诊号" :value (:outpatient-number basic-info) :errors errors
                      :data-path [:basic-info] :field-key :outpatient-number
                      :placeholder "请输入门诊号" :data-index "1.1"
                      :extra [:button.btn-scan
                              {:onClick (fn []
-                                         ;; 1. 设置全局回调函数
                                          (set! (.-onScanSuccessCallback js/window)
                                                (fn [scanned-value]
-                                                 ;; 2. 分发事件更新表单字段
                                                  (rf/dispatch [::events/update-form-field outpatient-number-path scanned-value])
-                                                 ;; 3. 清理回调函数 (可选但推荐)
                                                  (set! (.-onScanSuccessCallback js/window) nil)))
-                                         ;; 4. 调用 JavaScript 扫描函数
                                          (js/startScan))}
                              "扫码"]}]
      [ui-input-item {:label "姓名" :value (:name basic-info) :errors errors
@@ -278,20 +307,19 @@
                       :options [{:label "总院" :value "main"} {:label "积水潭院区" :value "jst"}]
                       :placeholder "请选择院区" :data-index "1.7"}]]))
 
-;; 一般情况步骤
 (defn general-condition-step []
   (let [general-condition @(rf/subscribe [::subs/general-condition])
         errors @(rf/subscribe [::subs/form-errors])]
     [:<>
      [ui-input-number-item {:label "身高" :value (:height general-condition) :errors errors
                             :data-path [:general-condition] :field-key :height
-                            :min 1 :max 300 :unit "cm" ; Adjusted min based on typical values
+                            :min 1 :max 300 :unit "cm"
                             :placeholder "请输入身高" :data-index "2.1"}]
      [ui-input-number-item {:label "体重" :value (:weight general-condition) :errors errors
                             :data-path [:general-condition] :field-key :weight
-                            :min 1 :max 500 :unit "kg" ; Adjusted max
+                            :min 1 :max 500 :unit "kg"
                             :placeholder "请输入体重" :data-index "2.2"}]
-     [ui-input-item {:label "精神状态" :value (:mental-state general-condition) :errors errors ;; Assuming mental-state is now text
+     [ui-input-item {:label "精神状态" :value (:mental-state general-condition) :errors errors
                      :data-path [:general-condition] :field-key :mental-state
                      :placeholder "请输入精神状态" :data-index "2.3"}]
      [ui-input-item {:label "活动能力" :value (:activity-ability general-condition) :errors errors
@@ -301,11 +329,9 @@
      (let [bp-path [:general-condition :blood-pressure]
            systolic-val (get-in general-condition [:blood-pressure :systolic])
            diastolic-val (get-in general-condition [:blood-pressure :diastolic])
-           ;; Using (seq coll) for non-empty check is idiomatic, but (not-empty string) is also fine and clear for strings.
-           ;; The linter might have been for a direct (not (empty? ...)) check.
            bp-combined-val (when (or (not-empty systolic-val) (not-empty diastolic-val))
                              (str (or systolic-val "") "/" (or diastolic-val "")))
-           bp-error (get-in errors bp-path) ;; Simplified error check
+           bp-error (get-in errors bp-path)
            field-id-bp (str "blood-pressure-" (hash bp-path))]
        [:div {:class (if bp-error "form-group error" "form-group")}
         [:label.form-label {:for field-id-bp :data-index "2.5"} "血压 " [:span.unit "mmHg"]]
@@ -313,8 +339,8 @@
                             :value bp-combined-val
                             :onChange #(let [value (-> % .-target .-value)
                                              parts (str/split value #"/")
-                                             systolic (not-empty (first parts)) ; not-empty is fine here
-                                             diastolic (not-empty (second parts))] ; not-empty is fine here
+                                             systolic (not-empty (first parts))
+                                             diastolic (not-empty (second parts))]
                                          (rf/dispatch [::events/update-form-field (conj bp-path :systolic) systolic])
                                          (rf/dispatch [::events/update-form-field (conj bp-path :diastolic) diastolic]))}]
         (when bp-error [:div.error-message (if (string? bp-error) bp-error "输入无效")])])
@@ -332,224 +358,104 @@
                             :data-path [:general-condition] :field-key :spo2 :unit "%"
                             :placeholder "请输入血氧饱和度" :data-index "2.9"}]]))
 
-
 (defn medical-summary-step "病情摘要步骤" []
   (let [summary @(rf/subscribe [::subs/medical-summary])
         errors @(rf/subscribe [::subs/form-errors])]
     [:<>
-     [ui-boolean-radio-item {:label "过敏史" :bool-value (:allergy-history summary) :errors errors
-                             :data-path [:medical-summary] :field-key :allergy-history :data-index "3.1"}]
-     (when (:allergy-history summary)
-       [:<>
-        [ui-input-item {:label "过敏原" :value (:allergen summary) :errors errors
-                        :data-path [:medical-summary] :field-key :allergen
-                        :placeholder "请输入过敏原" :data-index "3.2"}]
-        [ui-date-picker-item {:label "过敏时间" :value (:allergy-date summary) :errors errors
-                              :data-path [:medical-summary] :field-key :allergy-date
-                              :placeholder "请选择过敏时间" :data-index "3.3"}]])
+     [ui-conditional-group {:label "过敏史" :bool-value (:allergy-history summary) :errors errors
+                            :data-path [:medical-summary] :field-key :allergy-history :data-index "3.1"}
+      [ui-input-item {:label "过敏原" :value (:allergen summary) :errors errors
+                      :data-path [:medical-summary] :field-key :allergen
+                      :placeholder "请输入过敏原" :data-index "3.2"}] ; data-index for sub-items if needed, or rely on parent
+      [ui-date-picker-item {:label "过敏时间" :value (:allergy-date summary) :errors errors
+                            :data-path [:medical-summary] :field-key :allergy-date
+                            :placeholder "请选择过敏时间" :data-index "3.3"}]]
 
-     [ui-boolean-radio-item {:label "吸烟史" :bool-value (:smoking-history summary) :errors errors
-                             :data-path [:medical-summary] :field-key :smoking-history :data-index "3.4"}]
-     (when (:smoking-history summary)
-       [:<>
-        [ui-input-number-item {:label "吸烟年数" :value (:smoking-years summary) :errors errors
-                               :data-path [:medical-summary] :field-key :smoking-years
-                               :placeholder "请输入吸烟年数" :data-index "3.5"}]
-        [ui-input-number-item {:label "每天吸烟支数" :value (:cigarettes-per-day summary) :errors errors
-                               :data-path [:medical-summary] :field-key :cigarettes-per-day
-                               :placeholder "请输入每天吸烟支数" :data-index "3.6"}]])
+     [ui-conditional-group {:label "吸烟史" :bool-value (:smoking-history summary) :errors errors
+                            :data-path [:medical-summary] :field-key :smoking-history :data-index "3.4"}
+      [ui-input-number-item {:label "吸烟年数" :value (:smoking-years summary) :errors errors
+                             :data-path [:medical-summary] :field-key :smoking-years
+                             :placeholder "请输入吸烟年数" :data-index "3.5"}]
+      [ui-input-number-item {:label "每天吸烟支数" :value (:cigarettes-per-day summary) :errors errors
+                             :data-path [:medical-summary] :field-key :cigarettes-per-day
+                             :placeholder "请输入每天吸烟支数" :data-index "3.6"}]]
 
-     [ui-boolean-radio-item {:label "饮酒史" :bool-value (:drinking-history summary) :errors errors
-                             :data-path [:medical-summary] :field-key :drinking-history :data-index "3.7"}]
-     (when (:drinking-history summary)
-       [:<>
-        [ui-input-number-item {:label "饮酒年数" :value (:drinking-years summary) :errors errors
-                               :data-path [:medical-summary] :field-key :drinking-years
-                               :placeholder "请输入饮酒年数" :data-index "3.8"}]
-        [ui-input-item {:label "每天饮酒量" :value (:alcohol-per-day summary) :errors errors
-                        :data-path [:medical-summary] :field-key :alcohol-per-day
-                        :placeholder "请输入每天饮酒量(如 白酒2两 或 啤酒1瓶)" :data-index "3.9"}]])]))
+     [ui-conditional-group {:label "饮酒史" :bool-value (:drinking-history summary) :errors errors
+                            :data-path [:medical-summary] :field-key :drinking-history :data-index "3.7"}
+      [ui-input-number-item {:label "饮酒年数" :value (:drinking-years summary) :errors errors
+                             :data-path [:medical-summary] :field-key :drinking-years
+                             :placeholder "请输入饮酒年数" :data-index "3.8"}]
+      [ui-input-item {:label "每天饮酒量" :value (:alcohol-per-day summary) :errors errors
+                      :data-path [:medical-summary] :field-key :alcohol-per-day
+                      :placeholder "请输入每天饮酒量(如 白酒2两 或 啤酒1瓶)" :data-index "3.9"}]]]))
 
-
-;; 并存疾病及其他信息步骤
 (defn coexisting-diseases-step []
   (let [comorbidities-data @(rf/subscribe [::subs/comorbidities])
         aux-exam-data @(rf/subscribe [::subs/auxiliary-examination])
         physical-exam-data @(rf/subscribe [::subs/physical-examination])
         errors @(rf/subscribe [::subs/form-errors])]
     [:<>
-     ;; Comorbidities Section - Updated structure
-     [:div.form-group-container ;; Wrapper for a single comorbidity item
-      [ui-boolean-radio-item {:label "呼吸系统疾病"
-                              :bool-value (get-in comorbidities-data [:respiratory-disease :has])
-                              :errors errors
-                              :data-path [:comorbidities :respiratory-disease]
-                              :field-key :has
-                              :data-index "4.1"}]
-      (when (get-in comorbidities-data [:respiratory-disease :has])
-        [ui-input-item {:value (get-in comorbidities-data [:respiratory-disease :details])
-                        :errors errors
-                        :data-path [:comorbidities :respiratory-disease]
-                        :field-key :details
-                        :placeholder "请填写详情"}])]
+     ;; Comorbidities Section using ui-comorbidity-item
+     [ui-comorbidity-item {:label "呼吸系统疾病"
+                           :has-value (get-in comorbidities-data [:respiratory-disease :has])
+                           :details-value (get-in comorbidities-data [:respiratory-disease :details])
+                           :errors errors :base-path [:comorbidities :respiratory-disease] :data-index "4.1"}]
+     [ui-comorbidity-item {:label "神经肌肉疾病"
+                           :has-value (get-in comorbidities-data [:neuromuscular-disease :has])
+                           :details-value (get-in comorbidities-data [:neuromuscular-disease :details])
+                           :errors errors :base-path [:comorbidities :neuromuscular-disease] :data-index "4.2"}]
+     [ui-comorbidity-item {:label "心血管疾病"
+                           :has-value (get-in comorbidities-data [:cardiovascular-disease :has])
+                           :details-value (get-in comorbidities-data [:cardiovascular-disease :details])
+                           :errors errors :base-path [:comorbidities :cardiovascular-disease] :data-index "4.3"}]
+     [ui-comorbidity-item {:label "肝脏疾病"
+                           :has-value (get-in comorbidities-data [:liver-disease :has])
+                           :details-value (get-in comorbidities-data [:liver-disease :details])
+                           :errors errors :base-path [:comorbidities :liver-disease] :data-index "4.4"}]
+     [ui-comorbidity-item {:label "内分泌疾病"
+                           :has-value (get-in comorbidities-data [:endocrine-disease :has])
+                           :details-value (get-in comorbidities-data [:endocrine-disease :details])
+                           :errors errors :base-path [:comorbidities :endocrine-disease] :data-index "4.5"}]
+     [ui-comorbidity-item {:label "肾脏疾病"
+                           :has-value (get-in comorbidities-data [:kidney-disease :has])
+                           :details-value (get-in comorbidities-data [:kidney-disease :details])
+                           :errors errors :base-path [:comorbidities :kidney-disease] :data-index "4.6"}]
+     [ui-comorbidity-item {:label "神经精神疾病"
+                           :has-value (get-in comorbidities-data [:neuropsychiatric-disease :has])
+                           :details-value (get-in comorbidities-data [:neuropsychiatric-disease :details])
+                           :errors errors :base-path [:comorbidities :neuropsychiatric-disease] :data-index "4.7"}]
+     [ui-comorbidity-item {:label "关节骨骼系统疾病"
+                           :has-value (get-in comorbidities-data [:skeletal-system-disease :has])
+                           :details-value (get-in comorbidities-data [:skeletal-system-disease :details])
+                           :errors errors :base-path [:comorbidities :skeletal-system-disease] :data-index "4.8"}]
+     [ui-comorbidity-item {:label "凝血功能"
+                           :has-value (get-in comorbidities-data [:coagulation-function :has])
+                           :details-value (get-in comorbidities-data [:coagulation-function :details])
+                           :errors errors :base-path [:comorbidities :coagulation-function] :data-index "4.9"}]
+     [ui-comorbidity-item {:label "既往麻醉、手术史"
+                           :has-value (get-in comorbidities-data [:past-anesthesia-surgery :has])
+                           :details-value (get-in comorbidities-data [:past-anesthesia-surgery :details])
+                           :errors errors :base-path [:comorbidities :past-anesthesia-surgery] :data-index "4.10"}]
+     [ui-comorbidity-item {:label "家族恶性高热史"
+                           :has-value (get-in comorbidities-data [:family-malignant-hyperthermia :has])
+                           :details-value (get-in comorbidities-data [:family-malignant-hyperthermia :details])
+                           :errors errors :base-path [:comorbidities :family-malignant-hyperthermia] :data-index "4.11"}]
 
-     [:div.form-group-container
-      [ui-boolean-radio-item {:label "神经肌肉疾病"
-                              :bool-value (get-in comorbidities-data [:neuromuscular-disease :has])
-                              :errors errors
-                              :data-path [:comorbidities :neuromuscular-disease]
-                              :field-key :has
-                              :data-index "4.2"}]
-      (when (get-in comorbidities-data [:neuromuscular-disease :has])
-        [ui-input-item {:value (get-in comorbidities-data [:neuromuscular-disease :details])
-                        :errors errors
-                        :data-path [:comorbidities :neuromuscular-disease]
-                        :field-key :details
-                        :placeholder "请填写详情"}])]
+     ;; Special Medications section using ui-conditional-group
+     [ui-conditional-group {:label "特殊用药史" :bool-value (get-in comorbidities-data [:special-medications :used])
+                            :errors errors
+                            :data-path [:comorbidities :special-medications] :field-key :used
+                            :data-index "4.12"}
+      [ui-input-item {:label "药物名称" :value (get-in comorbidities-data [:special-medications :details])
+                      :errors errors
+                      :data-path [:comorbidities :special-medications] :field-key :details
+                      :placeholder "如有，请填写药物名称"}]
+      [ui-date-picker-item {:label "最后服药时间" :value (get-in comorbidities-data [:special-medications :last-time])
+                            :errors errors
+                            :data-path [:comorbidities :special-medications] :field-key :last-time
+                            :showTime true :placeholder "年/月/日 --:--"}]]
 
-     [:div.form-group-container
-      [ui-boolean-radio-item {:label "心血管疾病"
-                              :bool-value (get-in comorbidities-data [:cardiovascular-disease :has])
-                              :errors errors
-                              :data-path [:comorbidities :cardiovascular-disease]
-                              :field-key :has
-                              :data-index "4.3"}]
-      (when (get-in comorbidities-data [:cardiovascular-disease :has])
-        [ui-input-item {:value (get-in comorbidities-data [:cardiovascular-disease :details])
-                        :errors errors
-                        :data-path [:comorbidities :cardiovascular-disease]
-                        :field-key :details
-                        :placeholder "请填写详情"}])]
-
-     [:div.form-group-container
-      [ui-boolean-radio-item {:label "肝脏疾病"
-                              :bool-value (get-in comorbidities-data [:liver-disease :has])
-                              :errors errors
-                              :data-path [:comorbidities :liver-disease]
-                              :field-key :has
-                              :data-index "4.4"}]
-      (when (get-in comorbidities-data [:liver-disease :has])
-        [ui-input-item {:value (get-in comorbidities-data [:liver-disease :details])
-                        :errors errors
-                        :data-path [:comorbidities :liver-disease]
-                        :field-key :details
-                        :placeholder "请填写详情"}])]
-
-     [:div.form-group-container
-      [ui-boolean-radio-item {:label "内分泌疾病"
-                              :bool-value (get-in comorbidities-data [:endocrine-disease :has])
-                              :errors errors
-                              :data-path [:comorbidities :endocrine-disease]
-                              :field-key :has
-                              :data-index "4.5"}]
-      (when (get-in comorbidities-data [:endocrine-disease :has])
-        [ui-input-item {:value (get-in comorbidities-data [:endocrine-disease :details])
-                        :errors errors
-                        :data-path [:comorbidities :endocrine-disease]
-                        :field-key :details
-                        :placeholder "请填写详情"}])]
-
-     [:div.form-group-container
-      [ui-boolean-radio-item {:label "肾脏疾病"
-                              :bool-value (get-in comorbidities-data [:kidney-disease :has])
-                              :errors errors
-                              :data-path [:comorbidities :kidney-disease]
-                              :field-key :has
-                              :data-index "4.6"}]
-      (when (get-in comorbidities-data [:kidney-disease :has])
-        [ui-input-item {:value (get-in comorbidities-data [:kidney-disease :details])
-                        :errors errors
-                        :data-path [:comorbidities :kidney-disease]
-                        :field-key :details
-                        :placeholder "请填写详情"}])]
-
-     [:div.form-group-container
-      [ui-boolean-radio-item {:label "神经精神疾病"
-                              :bool-value (get-in comorbidities-data [:neuropsychiatric-disease :has])
-                              :errors errors
-                              :data-path [:comorbidities :neuropsychiatric-disease]
-                              :field-key :has
-                              :data-index "4.7"}]
-      (when (get-in comorbidities-data [:neuropsychiatric-disease :has])
-        [ui-input-item {:value (get-in comorbidities-data [:neuropsychiatric-disease :details])
-                        :errors errors
-                        :data-path [:comorbidities :neuropsychiatric-disease]
-                        :field-key :details
-                        :placeholder "请填写详情"}])]
-
-     [:div.form-group-container ;; Changed: skeletal-system to skeletal-system-disease
-      [ui-boolean-radio-item {:label "关节骨骼系统疾病" ;; Changed label
-                              :bool-value (get-in comorbidities-data [:skeletal-system-disease :has])
-                              :errors errors
-                              :data-path [:comorbidities :skeletal-system-disease] ;; Changed key
-                              :field-key :has
-                              :data-index "4.8"}]
-      (when (get-in comorbidities-data [:skeletal-system-disease :has])
-        [ui-input-item {:value (get-in comorbidities-data [:skeletal-system-disease :details])
-                        :errors errors
-                        :data-path [:comorbidities :skeletal-system-disease] ;; Changed key
-                        :field-key :details
-                        :placeholder "请填写详情"}])]
-
-     [:div.form-group-container ;; Added: coagulation-function
-      [ui-boolean-radio-item {:label "凝血功能"
-                              :bool-value (get-in comorbidities-data [:coagulation-function :has])
-                              :errors errors
-                              :data-path [:comorbidities :coagulation-function]
-                              :field-key :has
-                              :data-index "4.9"}]
-      (when (get-in comorbidities-data [:coagulation-function :has])
-        [ui-input-item {:value (get-in comorbidities-data [:coagulation-function :details])
-                        :errors errors
-                        :data-path [:comorbidities :coagulation-function]
-                        :field-key :details
-                        :placeholder "请填写详情"}])]
-
-     [:div.form-group-container
-      [ui-boolean-radio-item {:label "既往麻醉、手术史"
-                              :bool-value (get-in comorbidities-data [:past-anesthesia-surgery :has])
-                              :errors errors
-                              :data-path [:comorbidities :past-anesthesia-surgery]
-                              :field-key :has
-                              :data-index "4.10"}]
-      (when (get-in comorbidities-data [:past-anesthesia-surgery :has])
-        [ui-input-item {:value (get-in comorbidities-data [:past-anesthesia-surgery :details])
-                        :errors errors
-                        :data-path [:comorbidities :past-anesthesia-surgery]
-                        :field-key :details
-                        :placeholder "请填写详情"}])]
-
-     [:div.form-group-container
-      [ui-boolean-radio-item {:label "家族恶性高热史"
-                              :bool-value (get-in comorbidities-data [:family-malignant-hyperthermia :has])
-                              :errors errors
-                              :data-path [:comorbidities :family-malignant-hyperthermia]
-                              :field-key :has
-                              :data-index "4.11"}]
-      (when (get-in comorbidities-data [:family-malignant-hyperthermia :has])
-        [ui-input-item {:value (get-in comorbidities-data [:family-malignant-hyperthermia :details])
-                        :errors errors
-                        :data-path [:comorbidities :family-malignant-hyperthermia]
-                        :field-key :details
-                        :placeholder "请填写详情"}])]
-
-     ;; Special Medications section (already follows a similar pattern)
-     [:div.form-group-container
-      [ui-boolean-radio-item {:label "特殊用药史" :bool-value (get-in comorbidities-data [:special-medications :used])
-                              :errors errors
-                              :data-path [:comorbidities :special-medications] :field-key :used
-                              :data-index "4.12"}] ; Adjusted data-index
-      (when (get-in comorbidities-data [:special-medications :used])
-        [:<>
-         [ui-input-item {:label "药物名称" :value (get-in comorbidities-data [:special-medications :details])
-                         :errors errors
-                         :data-path [:comorbidities :special-medications] :field-key :details
-                         :placeholder "如有，请填写药物名称"}]
-         [ui-date-picker-item {:label "最后服药时间" :value (get-in comorbidities-data [:special-medications :last-time])
-                               :errors errors
-                               :data-path [:comorbidities :special-medications] :field-key :last-time
-                               :showTime true :placeholder "年/月/日 --:--"}]])]
-
+     ;; Physical Examination using ui-condition-item
      [ui-condition-item {:label "心脏" :base-value (:heart physical-exam-data) :detail-value (:heart-detail physical-exam-data)
                          :errors errors :data-path [:physical-examination] :field-key :heart :data-index "4.13"}]
      [ui-condition-item {:label "肺脏" :base-value (:lungs physical-exam-data) :detail-value (:lungs-detail physical-exam-data)
@@ -563,12 +469,12 @@
      [ui-condition-item {:label "神经" :base-value (:nervous physical-exam-data) :detail-value (:nervous-detail physical-exam-data)
                          :errors errors :data-path [:physical-examination] :field-key :nervous :data-index "4.18"}]
 
-     [ui-input-item {:label "其它" :value (:other physical-exam-data) :errors errors ; From physical-examination
+     [ui-input-item {:label "其它" :value (:other physical-exam-data) :errors errors
                      :data-path [:physical-examination] :field-key :other
                      :placeholder "请填写其他情况" :data-index "4.19"}]
 
-     ;; Attachments Section - Sourced from auxiliary-examination data
-     [ui-file-input-item {:label "相关辅助检查检验结果" :value (:general-aux-report aux-exam-data) :errors errors ; Assumes :general-aux-report in DB
+     ;; Attachments Section
+     [ui-file-input-item {:label "相关辅助检查检验结果" :value (:general-aux-report aux-exam-data) :errors errors
                           :data-path [:auxiliary-examination] :field-key :general-aux-report :data-index "4.20"}]
      [ui-file-input-item {:label "胸片" :value (:chest-radiography aux-exam-data) :errors errors
                           :data-path [:auxiliary-examination] :field-key :chest-radiography :data-index "4.21"}]
@@ -578,16 +484,15 @@
                           :data-path [:auxiliary-examination] :field-key :cardiac-ultrasound :data-index "4.23"}]
      [ui-file-input-item {:label "心电图" :value (:ecg aux-exam-data) :errors errors
                           :data-path [:auxiliary-examination] :field-key :ecg :data-index "4.24"}]
-     [ui-file-input-item {:label "其他" :value (:other aux-exam-data) :errors errors ; DB key is :other for this context
-                          :data-path [:auxiliary-examination] :field-key :other :data-index "4.25"}]
-     ]))
+     [ui-file-input-item {:label "其他" :value (:other aux-exam-data) :errors errors
+                          :data-path [:auxiliary-examination] :field-key :other :data-index "4.25"}]]))
 
 
 ;; Main patient form component
 (defn patient-form []
   (let [current-step @(rf/subscribe [::subs/current-step])
-        total-steps 3 ; 更新为最新问卷的总步骤数
-        step-titles ["基本信息" "病情摘要" "麻醉评估"] ; 更新为最新问卷的步骤标题
+        total-steps 3 ; Reflects the 3 steps defined below
+        step-titles ["基本信息" "病情摘要" "麻醉评估"] ; Matches the 3 steps
         submitting? @(rf/subscribe [::subs/submitting?])]
     [:div.container
      [:div.card.mt-6
@@ -601,10 +506,10 @@
        [step-section-wrapper "第一部分：基本信息" current-step 0 [basic-info-step]]
        [step-section-wrapper "第二部分：病情摘要" current-step 1 [medical-summary-step]]
        [step-section-wrapper "第三部分：麻醉评估" current-step 2 [coexisting-diseases-step]]
+       ;; Note: general-condition-step is defined but not used in this form structure.
 
        [form-navigation current-step total-steps submitting?]
 
-       ;; 新增：提交成功提示
        (when @(rf/subscribe [::subs/patient-form-submit-success?])
          [:div.success-overlay
           [:div.success-icon "✓"]
