@@ -11,7 +11,7 @@
     {:pinyin nil :initial nil}
     (let [pinyin-list (HanLP/convertToPinyinList name-str)
           pinyin-full (str/join "" (map #(.getPinyinWithoutTone %) pinyin-list))
-          initials (str/join "" (map #(.getInitial %) pinyin-list))]
+          initials (str/join "" (map #(.getShengmu %) pinyin-list))]
       {:pinyin (str/lower-case pinyin-full)
        :initial (str/lower-case initials)})))
 
