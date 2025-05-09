@@ -375,72 +375,181 @@
 (defn coexisting-diseases-step []
   (let [comorbidities-data @(rf/subscribe [::subs/comorbidities])
         aux-exam-data @(rf/subscribe [::subs/auxiliary-examination])
-        physical-exam-data @(rf/subscribe [::subs/physical-examination]) ; Added for condition items
+        physical-exam-data @(rf/subscribe [::subs/physical-examination])
         errors @(rf/subscribe [::subs/form-errors])]
     [:<>
-     ;; Comorbidities Section
-     [ui-boolean-radio-item {:label "呼吸系统疾病" :bool-value (:respiratory-disease comorbidities-data)
-                             :errors errors :data-path [:comorbidities] :field-key :respiratory-disease
-                             :data-index "4.1"}]
-     [ui-boolean-radio-item {:label "神经肌肉疾病" :bool-value (:neuromuscular-disease comorbidities-data) ; Assumes :neuromuscular-disease in db
-                             :errors errors :data-path [:comorbidities] :field-key :neuromuscular-disease
-                             :data-index "4.2"}]
-     [ui-boolean-radio-item {:label "心血管疾病" :bool-value (:cardiovascular-disease comorbidities-data)
-                             :errors errors :data-path [:comorbidities] :field-key :cardiovascular-disease
-                             :data-index "4.3"}]
-     [ui-boolean-radio-item {:label "肝脏疾病" :bool-value (:liver-disease comorbidities-data) ; Assumes :liver-disease in db
-                             :errors errors :data-path [:comorbidities] :field-key :liver-disease ; Fixed typo: :comororbidities -> :comorbidities
-                             :data-index "4.4"}]
-     [ui-boolean-radio-item {:label "内分泌疾病" :bool-value (:endocrine-disease comorbidities-data)
-                             :errors errors :data-path [:comorbidities] :field-key :endocrine-disease
-                             :data-index "4.5"}]
-     [ui-boolean-radio-item {:label "肾脏疾病" :bool-value (:kidney-disease comorbidities-data) ; Assumes :kidney-disease in db
-                             :errors errors :data-path [:comorbidities] :field-key :kidney-disease
-                             :data-index "4.6"}]
-     [ui-boolean-radio-item {:label "神经精神疾病" :bool-value (:neuropsychiatric-disease comorbidities-data)
-                             :errors errors :data-path [:comorbidities] :field-key :neuropsychiatric-disease
-                             :data-index "4.7"}]
-     [ui-boolean-radio-item {:label "关节骨骼系统" :bool-value (:skeletal-system comorbidities-data) ; DB key is :skeletal-system
-                             :errors errors :data-path [:comorbidities] :field-key :skeletal-system
-                             :data-index "4.8"}]
-     [ui-boolean-radio-item {:label "既往麻醉、手术史" :bool-value (:past-anesthesia-surgery comorbidities-data) ; DB key is :past-anesthesia-surgery
-                             :errors errors :data-path [:comorbidities] :field-key :past-anesthesia-surgery
-                             :data-index "4.9"}]
-     [ui-boolean-radio-item {:label "家族恶性高热史" :bool-value (:family-malignant-hyperthermia comorbidities-data)
-                             :errors errors :data-path [:comorbidities] :field-key :family-malignant-hyperthermia
-                             :data-index "4.10"}]
+     ;; Comorbidities Section - Updated structure
+     [:div.form-group-container ;; Wrapper for a single comorbidity item
+      [ui-boolean-radio-item {:label "呼吸系统疾病"
+                              :bool-value (get-in comorbidities-data [:respiratory-disease :has])
+                              :errors errors
+                              :data-path [:comorbidities :respiratory-disease]
+                              :field-key :has
+                              :data-index "4.1"}]
+      (when (get-in comorbidities-data [:respiratory-disease :has])
+        [ui-input-item {:value (get-in comorbidities-data [:respiratory-disease :details])
+                        :errors errors
+                        :data-path [:comorbidities :respiratory-disease]
+                        :field-key :details
+                        :placeholder "请填写详情"}])]
 
-     ;; Special Medications - This section needs review for DB structure alignment
-     ;; Current DB: [:comorbidities :special-medications {:used "..." :last-time "..."}]
-     ;; The :bool-value for "使用的特殊药物" needs to correctly interpret the :used string (e.g. "yes", "no", "-") as a boolean.
-     ;; The :value for "药物名称" needs to map to a new :details key under :special-medications.
-     ;; The :value for "最后服药时间" needs to map to :last-time under :special-medications.
-     [ui-boolean-radio-item {:label "使用的特殊药物"
-                             :bool-value (let [used-val (get-in comorbidities-data [:special-medications :used])]
-                                           (cond
-                                             (true? used-val) true
-                                             (false? used-val) false
-                                             (= "yes" used-val) true ;; Example: adapt if DB stores strings
-                                             :else false))
-                             :errors errors :data-path [:comorbidities :special-medications] :field-key :used ;; Path updated
-                             :data-index "4.11"}]
-     (when (let [used-val (get-in comorbidities-data [:special-medications :used])]
-             (or (true? used-val) (= "yes" used-val))) ;; Condition to show details
-       [ui-input-item {:label "药物名称" :value (get-in comorbidities-data [:special-medications :details]) ;; Assumes :details key
-                       :errors errors
-                       :data-path [:comorbidities :special-medications] :field-key :details
-                       :placeholder "如有，请填写药物名称"}])
+     [:div.form-group-container
+      [ui-boolean-radio-item {:label "神经肌肉疾病"
+                              :bool-value (get-in comorbidities-data [:neuromuscular-disease :has])
+                              :errors errors
+                              :data-path [:comorbidities :neuromuscular-disease]
+                              :field-key :has
+                              :data-index "4.2"}]
+      (when (get-in comorbidities-data [:neuromuscular-disease :has])
+        [ui-input-item {:value (get-in comorbidities-data [:neuromuscular-disease :details])
+                        :errors errors
+                        :data-path [:comorbidities :neuromuscular-disease]
+                        :field-key :details
+                        :placeholder "请填写详情"}])]
 
-     [ui-date-picker-item {:label "最后服药时间" :value (get-in comorbidities-data [:special-medications :last-time]) ;; Path updated
-                           :errors errors
-                           :data-path [:comorbidities :special-medications] :field-key :last-time
-                           :showTime true :placeholder "年/月/日 --:--" :data-index "4.12"}]
+     [:div.form-group-container
+      [ui-boolean-radio-item {:label "心血管疾病"
+                              :bool-value (get-in comorbidities-data [:cardiovascular-disease :has])
+                              :errors errors
+                              :data-path [:comorbidities :cardiovascular-disease]
+                              :field-key :has
+                              :data-index "4.3"}]
+      (when (get-in comorbidities-data [:cardiovascular-disease :has])
+        [ui-input-item {:value (get-in comorbidities-data [:cardiovascular-disease :details])
+                        :errors errors
+                        :data-path [:comorbidities :cardiovascular-disease]
+                        :field-key :details
+                        :placeholder "请填写详情"}])]
 
-     ;; Condition Items - Sourced from physical-examination data
-     ;; Current DB for these items are flat strings. ui-condition-item expects base-value and detail-value.
-     ;; This requires either DB structure change (e.g. :heart {:status "normal", :detail "..."})
-     ;; or ui-condition-item to be adapted, or separate fields in DB for details.
-     ;; For now, mapping base-value to the string, and detail-value to an assumed :field-detail key.
+     [:div.form-group-container
+      [ui-boolean-radio-item {:label "肝脏疾病"
+                              :bool-value (get-in comorbidities-data [:liver-disease :has])
+                              :errors errors
+                              :data-path [:comorbidities :liver-disease]
+                              :field-key :has
+                              :data-index "4.4"}]
+      (when (get-in comorbidities-data [:liver-disease :has])
+        [ui-input-item {:value (get-in comorbidities-data [:liver-disease :details])
+                        :errors errors
+                        :data-path [:comorbidities :liver-disease]
+                        :field-key :details
+                        :placeholder "请填写详情"}])]
+
+     [:div.form-group-container
+      [ui-boolean-radio-item {:label "内分泌疾病"
+                              :bool-value (get-in comorbidities-data [:endocrine-disease :has])
+                              :errors errors
+                              :data-path [:comorbidities :endocrine-disease]
+                              :field-key :has
+                              :data-index "4.5"}]
+      (when (get-in comorbidities-data [:endocrine-disease :has])
+        [ui-input-item {:value (get-in comorbidities-data [:endocrine-disease :details])
+                        :errors errors
+                        :data-path [:comorbidities :endocrine-disease]
+                        :field-key :details
+                        :placeholder "请填写详情"}])]
+
+     [:div.form-group-container
+      [ui-boolean-radio-item {:label "肾脏疾病"
+                              :bool-value (get-in comorbidities-data [:kidney-disease :has])
+                              :errors errors
+                              :data-path [:comorbidities :kidney-disease]
+                              :field-key :has
+                              :data-index "4.6"}]
+      (when (get-in comorbidities-data [:kidney-disease :has])
+        [ui-input-item {:value (get-in comorbidities-data [:kidney-disease :details])
+                        :errors errors
+                        :data-path [:comorbidities :kidney-disease]
+                        :field-key :details
+                        :placeholder "请填写详情"}])]
+
+     [:div.form-group-container
+      [ui-boolean-radio-item {:label "神经精神疾病"
+                              :bool-value (get-in comorbidities-data [:neuropsychiatric-disease :has])
+                              :errors errors
+                              :data-path [:comorbidities :neuropsychiatric-disease]
+                              :field-key :has
+                              :data-index "4.7"}]
+      (when (get-in comorbidities-data [:neuropsychiatric-disease :has])
+        [ui-input-item {:value (get-in comorbidities-data [:neuropsychiatric-disease :details])
+                        :errors errors
+                        :data-path [:comorbidities :neuropsychiatric-disease]
+                        :field-key :details
+                        :placeholder "请填写详情"}])]
+
+     [:div.form-group-container ;; Changed: skeletal-system to skeletal-system-disease
+      [ui-boolean-radio-item {:label "关节骨骼系统疾病" ;; Changed label
+                              :bool-value (get-in comorbidities-data [:skeletal-system-disease :has])
+                              :errors errors
+                              :data-path [:comorbidities :skeletal-system-disease] ;; Changed key
+                              :field-key :has
+                              :data-index "4.8"}]
+      (when (get-in comorbidities-data [:skeletal-system-disease :has])
+        [ui-input-item {:value (get-in comorbidities-data [:skeletal-system-disease :details])
+                        :errors errors
+                        :data-path [:comorbidities :skeletal-system-disease] ;; Changed key
+                        :field-key :details
+                        :placeholder "请填写详情"}])]
+
+     [:div.form-group-container ;; Added: coagulation-function
+      [ui-boolean-radio-item {:label "凝血功能"
+                              :bool-value (get-in comorbidities-data [:coagulation-function :has])
+                              :errors errors
+                              :data-path [:comorbidities :coagulation-function]
+                              :field-key :has
+                              :data-index "4.9"}]
+      (when (get-in comorbidities-data [:coagulation-function :has])
+        [ui-input-item {:value (get-in comorbidities-data [:coagulation-function :details])
+                        :errors errors
+                        :data-path [:comorbidities :coagulation-function]
+                        :field-key :details
+                        :placeholder "请填写详情"}])]
+
+     [:div.form-group-container
+      [ui-boolean-radio-item {:label "既往麻醉、手术史"
+                              :bool-value (get-in comorbidities-data [:past-anesthesia-surgery :has])
+                              :errors errors
+                              :data-path [:comorbidities :past-anesthesia-surgery]
+                              :field-key :has
+                              :data-index "4.10"}]
+      (when (get-in comorbidities-data [:past-anesthesia-surgery :has])
+        [ui-input-item {:value (get-in comorbidities-data [:past-anesthesia-surgery :details])
+                        :errors errors
+                        :data-path [:comorbidities :past-anesthesia-surgery]
+                        :field-key :details
+                        :placeholder "请填写详情"}])]
+
+     [:div.form-group-container
+      [ui-boolean-radio-item {:label "家族恶性高热史"
+                              :bool-value (get-in comorbidities-data [:family-malignant-hyperthermia :has])
+                              :errors errors
+                              :data-path [:comorbidities :family-malignant-hyperthermia]
+                              :field-key :has
+                              :data-index "4.11"}]
+      (when (get-in comorbidities-data [:family-malignant-hyperthermia :has])
+        [ui-input-item {:value (get-in comorbidities-data [:family-malignant-hyperthermia :details])
+                        :errors errors
+                        :data-path [:comorbidities :family-malignant-hyperthermia]
+                        :field-key :details
+                        :placeholder "请填写详情"}])]
+
+     ;; Special Medications section (already follows a similar pattern)
+     [:div.form-group-container
+      [ui-boolean-radio-item {:label "特殊用药史" :bool-value (get-in comorbidities-data [:special-medications :used])
+                              :errors errors
+                              :data-path [:comorbidities :special-medications] :field-key :used
+                              :data-index "4.12"}] ; Adjusted data-index
+      (when (get-in comorbidities-data [:special-medications :used])
+        [:<>
+         [ui-input-item {:label "药物名称" :value (get-in comorbidities-data [:special-medications :details])
+                         :errors errors
+                         :data-path [:comorbidities :special-medications] :field-key :details
+                         :placeholder "如有，请填写药物名称"}]
+         [ui-date-picker-item {:label "最后服药时间" :value (get-in comorbidities-data [:special-medications :last-time])
+                               :errors errors
+                               :data-path [:comorbidities :special-medications] :field-key :last-time
+                               :showTime true :placeholder "年/月/日 --:--"}]])]
+
      [ui-condition-item {:label "心脏" :base-value (:heart physical-exam-data) :detail-value (:heart-detail physical-exam-data)
                          :errors errors :data-path [:physical-examination] :field-key :heart :data-index "4.13"}]
      [ui-condition-item {:label "肺脏" :base-value (:lungs physical-exam-data) :detail-value (:lungs-detail physical-exam-data)
@@ -470,7 +579,8 @@
      [ui-file-input-item {:label "心电图" :value (:ecg aux-exam-data) :errors errors
                           :data-path [:auxiliary-examination] :field-key :ecg :data-index "4.24"}]
      [ui-file-input-item {:label "其他" :value (:other aux-exam-data) :errors errors ; DB key is :other for this context
-                          :data-path [:auxiliary-examination] :field-key :other :data-index "4.25"}]]))
+                          :data-path [:auxiliary-examination] :field-key :other :data-index "4.25"}]
+     ]))
 
 
 ;; Main patient form component
