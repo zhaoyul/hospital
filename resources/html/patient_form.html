@@ -320,7 +320,12 @@
                         const code = jsQR(imageData.data, imageData.width, imageData.height);
 
                         if (code) {
-                            alert(`二维码内容: ${code.data}`);
+                            if (window.onScanSuccessCallback) { // 新增：检查回调函数是否存在
+                                window.onScanSuccessCallback(code.data);
+                            } else {
+                                console.warn("window.onScanSuccessCallback is not defined. Scanned data:", code.data);
+                                alert(`二维码内容: ${code.data}`); // 保留 alert 作为后备或用于调试
+                            }
                             closeScan();
                         }
                     }
@@ -331,6 +336,7 @@
             .catch(function(err) {
                 console.error("摄像头访问失败:", err);
                 alert("无法访问摄像头，请确保已授予摄像头权限。");
+                closeScan(); // 如果摄像头访问失败，也尝试关闭扫描界面
             });
     }
 

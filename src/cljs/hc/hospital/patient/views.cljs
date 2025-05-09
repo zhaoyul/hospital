@@ -239,12 +239,24 @@
 ;; 更新基本信息部分以支持扫码功能和最新字段
 (defn basic-info-step []
   (let [basic-info @(rf/subscribe [::subs/basic-info])
-        errors @(rf/subscribe [::subs/form-errors])]
+        errors @(rf/subscribe [::subs/form-errors])
+        outpatient-number-path [:basic-info :outpatient-number]] ; 定义路径
     [:<>
      [ui-input-item {:label "门诊号" :value (:outpatient-number basic-info) :errors errors
                      :data-path [:basic-info] :field-key :outpatient-number
                      :placeholder "请输入门诊号" :data-index "1.1"
-                     :extra [:button.btn-scan {:onClick #(js/startScan)} "扫码"]}]
+                     :extra [:button.btn-scan
+                             {:onClick (fn []
+                                         ;; 1. 设置全局回调函数
+                                         (set! (.-onScanSuccessCallback js/window)
+                                               (fn [scanned-value]
+                                                 ;; 2. 分发事件更新表单字段
+                                                 (rf/dispatch [::events/update-form-field outpatient-number-path scanned-value])
+                                                 ;; 3. 清理回调函数 (可选但推荐)
+                                                 (set! (.-onScanSuccessCallback js/window) nil)))
+                                         ;; 4. 调用 JavaScript 扫描函数
+                                         (js/startScan))}
+                             "扫码"]}]
      [ui-input-item {:label "姓名" :value (:name basic-info) :errors errors
                      :data-path [:basic-info] :field-key :name
                      :placeholder "请输入姓名" :data-index "1.2"}]
