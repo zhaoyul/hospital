@@ -134,17 +134,17 @@
       [:label.radio-label
        [:input {:type "radio"
                 :name group-name
-                :value "yes"
-                :checked (true? bool-value)
-                :onChange #(rf/dispatch [::events/update-form-field full-path true])}]
-       [:span " 有"]]
-      [:label.radio-label
-       [:input {:type "radio"
-                :name group-name
                 :value "no"
                 :checked (false? bool-value)
                 :onChange #(rf/dispatch [::events/update-form-field full-path false])}]
-       [:span " 无"]]] ; Added span
+       [:span " 无"]]
+      [:label.radio-label
+       [:input {:type "radio"
+                :name group-name
+                :value "yes"
+                :checked (true? bool-value)
+                :onChange #(rf/dispatch [::events/update-form-field full-path true])}]
+       [:span " 有"]]]
      (when error-msg
        [:div.error-message error-msg])]))
 
@@ -332,8 +332,8 @@
                             :data-path [:general-condition] :field-key :spo2 :unit "%"
                             :placeholder "请输入血氧饱和度" :data-index "2.9"}]]))
 
-;; 病情摘要步骤
-(defn medical-summary-step []
+
+(defn medical-summary-step "病情摘要步骤" []
   (let [summary @(rf/subscribe [::subs/medical-summary])
         errors @(rf/subscribe [::subs/form-errors])]
     [:<>
