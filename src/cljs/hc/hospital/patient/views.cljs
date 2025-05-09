@@ -602,4 +602,10 @@
        [step-section-wrapper "第二部分：病情摘要" current-step 1 [medical-summary-step]]
        [step-section-wrapper "第三部分：麻醉评估" current-step 2 [coexisting-diseases-step]]
 
-       [form-navigation current-step total-steps submitting?]]]]))
+       [form-navigation current-step total-steps submitting?]
+
+       ;; 新增：提交成功提示
+       (when @(rf/subscribe [::subs/patient-form-submit-success?])
+         [:div.success-overlay
+          [:div.success-icon "✓"]
+          [:div.success-message "提交成功"]])]]]))

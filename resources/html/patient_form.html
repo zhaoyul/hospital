@@ -1,360 +1,394 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
-<head>
+  <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>麻醉评估问卷</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
     <style>
-        body {
-            font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
-            background-color: #f5f7fa;
-            height: 100vh;
-            overflow: hidden;
-            color: #333;
-            display: flex; /* Ensure body itself is a flex container for #patient-app */
-            flex-direction: column; /* Stack #patient-app vertically */
-        }
-        #patient-app {
-            display: flex;
-            flex-direction: column;
-            height: 100%; /* Make #patient-app take full height of body */
-            flex: 1; /* Allow #patient-app to grow and shrink if body is flex */
-            min-height: 0; /* Added for robustness with flex children */
-        }
-        .container {
-            max-width: 390px;
-            margin: 0 auto;
-            height: 100%;
-            display: flex;
-            flex-direction: column;
-            min-height: 0; /* Existing: Added for robustness in flex sizing */
-            width: 100%; /* Ensure container takes full width of #patient-app */
-        }
-        .card {
-            background-color: white;
-            border-radius: 16px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            padding: 20px;
-            margin: 20px;
-            display: flex;
-            flex-direction: column;
-            flex: 1;
-            transition: all 0.3s ease;
-            min-height: 0; /* Existing: Added for robustness in flex sizing */
-        }
-        .btn-primary {
-            display: inline-block;
-            width: 48%;
-            padding: 12px 16px;
-            background-color: #1890ff;
-            color: white;
-            border-radius: 8px;
-            text-align: center;
-            font-weight: 500;
-            transition: background-color 0.3s;
-            font-size: 16px;
-            border: none;
-        }
-        .btn-primary:hover {
-            background-color: #40a9ff;
-        }
-        .btn-secondary {
-            display: inline-block;
-            width: 48%;
-            padding: 12px 16px;
-            background-color: #f0f0f0;
-            color: #333;
-            border-radius: 8px;
-            text-align: center;
-            font-weight: 500;
-            transition: background-color 0.3s;
-            font-size: 16px;
-            border: none;
-        }
-        .btn-secondary:hover {
-            background-color: #e0e0e0;
-        }
-        .progress-bar {
-            height: 6px;
-            background-color: #e0e0e0;
-            border-radius: 3px;
-            margin: 40px 0 20px;
-            position: relative;
-        }
-        .progress-bar-fill {
-            height: 100%;
-            background-color: #1890ff;
-            border-radius: 3px;
-            width: 25%; /* Initial width, will be updated by JS/CLJS */
-            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .progress-steps {
-            display: flex;
-            justify-content: space-between;
-            position: absolute;
-            width: 100%;
-            top: -30px;
-        }
-        .progress-step {
-            font-size: 14px;
-            color: #666;
-            position: relative;
-            text-align: center;
-            width: 28px;
-            height: 28px;
-            line-height: 28px;
-            background: #fff;
-            border: 1px solid #e0e0e0;
-            border-radius: 50%;
-            margin-top: 20px;
-            transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
-            z-index: 1;
-        }
-        .progress-step::after {
-            content: attr(data-title);
-            position: absolute;
-            top: -24px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-size: 12px;
-            white-space: nowrap;
-            color: #999;
-            transition: color 0.3s ease;
-        }
-        .progress-step.active {
-            background: #1890ff;
-            color: #fff;
-            border-color: #1890ff;
-            transform: scale(1.1);
-            box-shadow: 0 3px 6px rgba(24, 144, 255, 0.3);
-        }
-        .progress-step.active::after {
-            color: #1890ff;
-            font-weight: 500;
-        }
-        #questionnaire-form {
-            flex: 1;
-            overflow-y: auto;
-            padding-right: 10px; /* For scrollbar space if needed */
-            padding-bottom: 80px; /* To prevent nav buttons from overlapping content */
-            -webkit-overflow-scrolling: touch; /* Improve iOS scrolling experience */
-            min-height: 0; /* Allow shrinking in flex container to enable scrolling */
-        }
-        .form-group {
-            margin-bottom: 16px;
-        }
-        .form-label {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-            font-weight: 500;
-            color: #333;
-            position: relative;
-            padding-left: 30px; /* Space for the data-index number */
-        }
-        .form-label::before {
-            content: attr(data-index);
-            position: absolute;
-            left: 0;
-            color: #1890ff;
-            font-size: 1em;
-            font-weight: 600;
-        }
-        .unit {
-            color: #666;
-            font-size: 0.9em;
-        }
-        .radio-group {
-            display: flex;
-            gap: 16px;
-            margin-top: 4px;
-        }
-        .radio-label {
-            display: flex;
-            align-items: center;
-            cursor: pointer;
-            padding: 8px 12px;
-            background-color: #f5f7fa;
-            border-radius: 8px;
-            transition: all 0.2s ease;
-            user-select: none;
-        }
-        .radio-label:hover {
-            background-color: #e6f7ff;
-        }
-        .radio-label input[type="radio"] {
-            margin-right: 6px;
-            accent-color: #1890ff;
-        }
-        .radio-label input[type="radio"]:checked + span { /* If span is used next to input */
-            color: #1890ff;
-            font-weight: 500;
-        }
-        /* Style for radio checked text when span is not direct sibling or not used */
-        .radio-label input[type="radio"]:checked ~ span { /* More general if span is not immediate */
-             color: #1890ff;
-             font-weight: 500;
-        }
-        .form-input {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #d9d9d9;
-            border-radius: 8px;
-            transition: all 0.3s;
-            background-color: #fafafa;
-        }
-        .form-input:focus {
-            border-color: #1890ff;
-            box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
-            outline: none;
-            background-color: #fff;
-        }
-        .section-title {
-            font-weight: 600;
-            color: #1890ff;
-            margin-top: 20px;
-            margin-bottom: 15px;
-            padding-bottom: 8px;
-            border-bottom: 1px solid #f0f0f0;
-        }
-        .file-upload { /* Hides the default file input */
-            display: none;
-        }
-        .file-upload-label {
-            display: inline-block;
-            padding: 10px 14px;
-            background-color: #f0f0f0;
-            border-radius: 8px;
-            cursor: pointer;
-            margin-top: 6px;
-            transition: all 0.2s ease;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-        }
-        .file-upload-label:hover {
-            background-color: #e6f7ff;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
-        }
-        .file-upload-label i { /* Icon style */
-            color: #1890ff;
-            margin-right: 6px;
-        }
-        .nav-buttons {
-            display: flex;
-            justify-content: space-between;
-            margin-top: 20px; /* Or adjust as needed */
-            position: fixed; /* Fixed at the bottom */
-            bottom: 0;
-            left: 0;
-            right: 0;
-            background: white;
-            padding: 15px 20px;
-            box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.1);
-            z-index: 100;
-            max-width: 390px; /* To match container width */
-            margin-left: auto;
-            margin-right: auto;
-        }
-        .section {
-            animation: fadeIn 0.5s ease-out;
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        /* Error message styling (optional, but good practice) */
-        .form-group.error .form-label {
-            color: #ff4d4f; /* Ant Design red for errors */
-        }
-        .form-group.error .form-input {
-            border-color: #ff4d4f;
-        }
-        .error-message {
-            color: #ff4d4f;
-            font-size: 0.875em;
-            margin-top: 4px;
-        }
+      body {
+          font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif;
+          background-color: #f5f7fa;
+          height: 100vh;
+          overflow: hidden;
+          color: #333;
+          display: flex; /* Ensure body itself is a flex container for #patient-app */
+          flex-direction: column; /* Stack #patient-app vertically */
+      }
+      #patient-app {
+          display: flex;
+          flex-direction: column;
+          height: 100%; /* Make #patient-app take full height of body */
+          flex: 1; /* Allow #patient-app to grow and shrink if body is flex */
+          min-height: 0; /* Added for robustness with flex children */
+      }
+      .container {
+          max-width: 390px;
+          margin: 0 auto;
+          height: 100%;
+          display: flex;
+          flex-direction: column;
+          min-height: 0; /* Existing: Added for robustness in flex sizing */
+          width: 100%; /* Ensure container takes full width of #patient-app */
+      }
+      .card {
+          background-color: white;
+          border-radius: 16px;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+          padding: 20px;
+          margin: 20px;
+          display: flex;
+          flex-direction: column;
+          flex: 1;
+          transition: all 0.3s ease;
+          min-height: 0; /* Existing: Added for robustness in flex sizing */
+      }
+      .btn-primary {
+          display: inline-block;
+          width: 48%;
+          padding: 12px 16px;
+          background-color: #1890ff;
+          color: white;
+          border-radius: 8px;
+          text-align: center;
+          font-weight: 500;
+          transition: background-color 0.3s;
+          font-size: 16px;
+          border: none;
+      }
+      .btn-primary:hover {
+          background-color: #40a9ff;
+      }
+      .btn-secondary {
+          display: inline-block;
+          width: 48%;
+          padding: 12px 16px;
+          background-color: #f0f0f0;
+          color: #333;
+          border-radius: 8px;
+          text-align: center;
+          font-weight: 500;
+          transition: background-color 0.3s;
+          font-size: 16px;
+          border: none;
+      }
+      .btn-secondary:hover {
+          background-color: #e0e0e0;
+      }
+      .progress-bar {
+          height: 6px;
+          background-color: #e0e0e0;
+          border-radius: 3px;
+          margin: 40px 0 20px;
+          position: relative;
+      }
+      .progress-bar-fill {
+          height: 100%;
+          background-color: #1890ff;
+          border-radius: 3px;
+          width: 25%; /* Initial width, will be updated by JS/CLJS */
+          transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .progress-steps {
+          display: flex;
+          justify-content: space-between;
+          position: absolute;
+          width: 100%;
+          top: -30px;
+      }
+      .progress-step {
+          font-size: 14px;
+          color: #666;
+          position: relative;
+          text-align: center;
+          width: 28px;
+          height: 28px;
+          line-height: 28px;
+          background: #fff;
+          border: 1px solid #e0e0e0;
+          border-radius: 50%;
+          margin-top: 20px;
+          transition: all 0.3s ease;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+          z-index: 1;
+      }
+      .progress-step::after {
+          content: attr(data-title);
+          position: absolute;
+          top: -24px;
+          left: 50%;
+          transform: translateX(-50%);
+          font-size: 12px;
+          white-space: nowrap;
+          color: #999;
+          transition: color 0.3s ease;
+      }
+      .progress-step.active {
+          background: #1890ff;
+          color: #fff;
+          border-color: #1890ff;
+          transform: scale(1.1);
+          box-shadow: 0 3px 6px rgba(24, 144, 255, 0.3);
+      }
+      .progress-step.active::after {
+          color: #1890ff;
+          font-weight: 500;
+      }
+      #questionnaire-form {
+          flex: 1;
+          overflow-y: auto;
+          padding-right: 10px; /* For scrollbar space if needed */
+          padding-bottom: 80px; /* To prevent nav buttons from overlapping content */
+          -webkit-overflow-scrolling: touch; /* Improve iOS scrolling experience */
+          min-height: 0; /* Allow shrinking in flex container to enable scrolling */
+      }
+      .form-group {
+          margin-bottom: 16px;
+      }
+      .form-label {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 8px;
+          font-weight: 500;
+          color: #333;
+          position: relative;
+          padding-left: 30px; /* Space for the data-index number */
+      }
+      .form-label::before {
+          content: attr(data-index);
+          position: absolute;
+          left: 0;
+          color: #1890ff;
+          font-size: 1em;
+          font-weight: 600;
+      }
+      .unit {
+          color: #666;
+          font-size: 0.9em;
+      }
+      .radio-group {
+          display: flex;
+          gap: 16px;
+          margin-top: 4px;
+      }
+      .radio-label {
+          display: flex;
+          align-items: center;
+          cursor: pointer;
+          padding: 8px 12px;
+          background-color: #f5f7fa;
+          border-radius: 8px;
+          transition: all 0.2s ease;
+          user-select: none;
+      }
+      .radio-label:hover {
+          background-color: #e6f7ff;
+      }
+      .radio-label input[type="radio"] {
+          margin-right: 6px;
+          accent-color: #1890ff;
+      }
+      .radio-label input[type="radio"]:checked + span { /* If span is used next to input */
+          color: #1890ff;
+          font-weight: 500;
+      }
+      /* Style for radio checked text when span is not direct sibling or not used */
+      .radio-label input[type="radio"]:checked ~ span { /* More general if span is not immediate */
+          color: #1890ff;
+          font-weight: 500;
+      }
+      .form-input {
+          width: 100%;
+          padding: 10px 12px;
+          border: 1px solid #d9d9d9;
+          border-radius: 8px;
+          transition: all 0.3s;
+          background-color: #fafafa;
+      }
+      .form-input:focus {
+          border-color: #1890ff;
+          box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+          outline: none;
+          background-color: #fff;
+      }
+      .section-title {
+          font-weight: 600;
+          color: #1890ff;
+          margin-top: 20px;
+          margin-bottom: 15px;
+          padding-bottom: 8px;
+          border-bottom: 1px solid #f0f0f0;
+      }
+      .file-upload { /* Hides the default file input */
+          display: none;
+      }
+      .file-upload-label {
+          display: inline-block;
+          padding: 10px 14px;
+          background-color: #f0f0f0;
+          border-radius: 8px;
+          cursor: pointer;
+          margin-top: 6px;
+          transition: all 0.2s ease;
+          box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      .file-upload-label:hover {
+          background-color: #e6f7ff;
+          box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+      }
+      .file-upload-label i { /* Icon style */
+          color: #1890ff;
+          margin-right: 6px;
+      }
+      .nav-buttons {
+          display: flex;
+          justify-content: space-between;
+          margin-top: 20px; /* Or adjust as needed */
+          position: fixed; /* Fixed at the bottom */
+          bottom: 0;
+          left: 0;
+          right: 0;
+          background: white;
+          padding: 15px 20px;
+          box-shadow: 0 -2px 6px rgba(0, 0, 0, 0.1);
+          z-index: 100;
+          max-width: 390px; /* To match container width */
+          margin-left: auto;
+          margin-right: auto;
+      }
+      .section {
+          animation: fadeIn 0.5s ease-out;
+      }
+      @keyframes fadeIn {
+          from { opacity: 0; transform: translateY(20px); }
+          to { opacity: 1; transform: translateY(0); }
+      }
+      /* Error message styling (optional, but good practice) */
+      .form-group.error .form-label {
+          color: #ff4d4f; /* Ant Design red for errors */
+      }
+      .form-group.error .form-input {
+          border-color: #ff4d4f;
+      }
+      .error-message {
+          color: #ff4d4f;
+          font-size: 0.875em;
+          margin-top: 4px;
+      }
+      /* Styles for success overlay */
+      .success-overlay {
+          position: fixed; /* Cover the whole screen */
+          top: 0;
+          left: 0;
+          width: 100%;
+          height: 100%;
+          background-color: rgba(255, 255, 255, 0.9); /* Semi-transparent white background */
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+          align-items: center;
+          z-index: 1000; /* Ensure it's on top */
+          }
+
+           .success-icon {
+               width: 80px;
+               height: 80px;
+               border-radius: 50%;
+               background-color: #4CAF50; /* Green background for the circle */
+               color: white; /* White checkmark */
+               font-size: 48px; /* Size of the checkmark */
+               display: flex;
+               justify-content: center;
+               align-items: center;
+               margin-bottom: 20px;
+           }
+
+           .success-message {
+               font-size: 20px;
+               color: #333; /* Darker text for better readability */
+               font-weight: 500;
+           }
+
     </style>
-</head>
-<body>
-  <div id="patient-app"></div>
-  <script src="/js/patient/patient-app.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
-  <script>
-    function startScan() {
+  </head>
+  <body>
+    <div id="patient-app"></div>
+    <script src="/js/patient/patient-app.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jsqr/dist/jsQR.js"></script>
+    <script>
+      function startScan() {
         const videoElement = document.createElement('div');
         videoElement.innerHTML = `
             <div id="scannerModal" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 1000; display: flex; flex-direction: column; align-items: center; justify-content: center;">
                 <div style="position: relative; width: 300px; height: 300px; background: white; border-radius: 8px; overflow: hidden;">
                     <video id="qr-video" style="width: 100%; height: 100%; object-fit: cover;"></video>
-                    <div style="position: absolute; top: 16px; right: 16px;">
-                        <button onclick="closeScan()" style="width: 32px; height: 32px; background: rgba(0,0,0,0.5); border: none; color: white; font-size: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(0,0,0,0.7)'" onmouseout="this.style.background='rgba(0,0,0,0.5)'"><i class="fas fa-times"></i></button>
-                    </div>
-                </div>
-                <div style="color: white; margin-top: 16px; text-align: center;">
-                    <p>请将二维码对准扫描框</p>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(videoElement);
+      <div style="position: absolute; top: 16px; right: 16px;">
+        <button onclick="closeScan()" style="width: 32px; height: 32px; background: rgba(0,0,0,0.5); border: none; color: white; font-size: 18px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.3s ease;" onmouseover="this.style.background='rgba(0,0,0,0.7)'" onmouseout="this.style.background='rgba(0,0,0,0.5)'"><i class="fas fa-times"></i></button>
+      </div>
+</div>
+<div style="color: white; margin-top: 16px; text-align: center;">
+  <p>请将二维码对准扫描框</p>
+</div>
+</div>
+`;
+document.body.appendChild(videoElement);
 
-        const video = document.getElementById('qr-video');
-        const canvas = document.createElement('canvas');
-        const context = canvas.getContext('2d');
+const video = document.getElementById('qr-video');
+const canvas = document.createElement('canvas');
+const context = canvas.getContext('2d');
 
-        navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
-            .then(function(stream) {
-                video.srcObject = stream;
-                video.play();
+navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } })
+.then(function(stream) {
+video.srcObject = stream;
+video.play();
 
-                const scanInterval = setInterval(() => {
-                    if (video.readyState === video.HAVE_ENOUGH_DATA) {
-                        canvas.width = video.videoWidth;
-                        canvas.height = video.videoHeight;
-                        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+const scanInterval = setInterval(() => {
+if (video.readyState === video.HAVE_ENOUGH_DATA) {
+canvas.width = video.videoWidth;
+canvas.height = video.videoHeight;
+context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-                        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-                        const code = jsQR(imageData.data, imageData.width, imageData.height);
+const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+const code = jsQR(imageData.data, imageData.width, imageData.height);
 
-                        if (code) {
-                            if (window.onScanSuccessCallback) { // 新增：检查回调函数是否存在
-                                window.onScanSuccessCallback(code.data);
-                            } else {
-                                console.warn("window.onScanSuccessCallback is not defined. Scanned data:", code.data);
-                                alert(`二维码内容: ${code.data}`); // 保留 alert 作为后备或用于调试
-                            }
-                            closeScan();
-                        }
-                    }
-                }, 500);
+if (code) {
+if (window.onScanSuccessCallback) { // 新增：检查回调函数是否存在
+window.onScanSuccessCallback(code.data);
+} else {
+console.warn("window.onScanSuccessCallback is not defined. Scanned data:", code.data);
+alert(`二维码内容: ${code.data}`); // 保留 alert 作为后备或用于调试
+}
+closeScan();
+}
+}
+}, 500);
 
-                window.currentScanInterval = scanInterval;
-            })
-            .catch(function(err) {
-                console.error("摄像头访问失败:", err);
-                alert("无法访问摄像头，请确保已授予摄像头权限。");
-                closeScan(); // 如果摄像头访问失败，也尝试关闭扫描界面
-            });
-    }
+window.currentScanInterval = scanInterval;
+})
+.catch(function(err) {
+console.error("摄像头访问失败:", err);
+alert("无法访问摄像头，请确保已授予摄像头权限。");
+closeScan(); // 如果摄像头访问失败，也尝试关闭扫描界面
+});
+}
 
-    function closeScan() {
-        const scannerModal = document.getElementById('scannerModal');
-        if (scannerModal) {
-            const video = document.getElementById('qr-video');
-            if (video && video.srcObject) {
-                video.srcObject.getTracks().forEach(track => track.stop());
-            }
+function closeScan() {
+const scannerModal = document.getElementById('scannerModal');
+if (scannerModal) {
+const video = document.getElementById('qr-video');
+if (video && video.srcObject) {
+video.srcObject.getTracks().forEach(track => track.stop());
+}
 
-            if (window.currentScanInterval) {
-                clearInterval(window.currentScanInterval);
-            }
+if (window.currentScanInterval) {
+clearInterval(window.currentScanInterval);
+}
 
-            scannerModal.parentElement.remove();
-        }
-    }
-  </script>
+scannerModal.parentElement.remove();
+}
+}
+</script>
 </body>
 </html>

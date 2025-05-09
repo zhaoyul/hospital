@@ -88,24 +88,24 @@
    (let [form-data-to-submit (get-in db [:patient-form])]
      ;; 从 form-data-to-submit 中移除 :form-errors, :submitting?, :submit-success?, :submit-error, :current-step
      ;; 以免将它们发送到后端。后端通常只需要实际的表单数据。
-     (let [cleaned-form-data (dissoc form-data-to-submit
-                                     :form-errors :submitting? :submit-success? :submit-error :current-step)]
-       {:http-xhrio {:method          :post
-                     :uri             "/api/patient/assessment"
-                     :params          cleaned-form-data
-                     :format          (ajax/json-request-format)
-                     :response-format (ajax/json-response-format {:keywords? true})
-                     :on-success      [::submit-success]
-                     :on-failure      [::submit-failure]}}))))
+     {:http-xhrio {:method          :post
+                   :uri             "/api/patient/assessment"
+                   :params          (dissoc form-data-to-submit
+                                           :form-errors :submitting? :submit-success? :submit-error :current-step)
+                   :format          (ajax/json-request-format)
+                   :response-format (ajax/json-response-format {:keywords? true})
+                   :on-success      [::submit-success]
+                   :on-failure      [::submit-failure]}})))
 
 ;; 提交成功
-(rf/reg-event-db
+(rf/reg-event-fx ; Changed from reg-event-db
  ::submit-success
- (fn [db [_ response]]
+ (fn [{:keys [db]} [_ response]]
    (timbre/debug "表单提交成功:" response)
-   (-> db
-       (assoc-in [:patient-form :submitting?] false)
-       (assoc-in [:patient-form :submit-success?] true))))
+   {:db (-> db
+            (assoc-in [:patient-form :submitting?] false)
+            (assoc-in [:patient-form :submit-success?] true))
+    :dispatch-later [{:ms 3000 :dispatch [::reset-patient-form-success]}]}))
 
 ;; 提交失败
 (rf/reg-event-db
@@ -117,9 +117,13 @@
        (assoc-in [:patient-form :submit-success?] false)
        (assoc-in [:patient-form :submit-error] (or (:message (:response response)) "提交失败，请稍后再试")))))
 
+;; 新增事件：重置表单提交成功状态
+(rf/reg-event-db
+ ::reset-patient-form-success
+ (fn [db _]
+   (assoc-in db [:patient-form :submit-success?] false)))
 
 ;; 如果 hc.hospital.patient.events/toggle-boolean-field 仍在使用，它应该可以正常工作
-;; 因为它使用 (into [:patient-form] path) 来定位
 (rf/reg-event-db
   ::toggle-boolean-field
   (fn [db [_ path]]

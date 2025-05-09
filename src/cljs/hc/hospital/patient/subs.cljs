@@ -98,3 +98,8 @@
  :<- [::patient-form]
  (fn [form]
    (:submit-error form)))
+
+(rf/reg-sub
+ ::patient-form-submit-success?
+ (fn [db _]
+   (get-in db [:patient-form :submit-success?])))
