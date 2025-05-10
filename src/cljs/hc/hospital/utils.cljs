@@ -37,3 +37,9 @@
           "datetime-local" (.format date-obj "YYYY-MM-DDTHH:mm")
           ;; else, return original value if it's already a string, or nil
           (if (string? value) value nil))))))
+
+(defn display-value [v]
+  (str v))
+
+(defn display-list [v]
+  (str v))

@@ -118,3 +118,30 @@
  :<- [::selected-patient-assessment-forms-data]
  (fn [assessment-data _]
    (:lab-tests assessment-data)))
+
+(rf/reg-sub
+ ::selected-patient-raw-details
+ :<- [::current-patient-id]
+ :<- [::all-patient-assessments]
+ :<- [::anesthesia-example-patients] ; Fallback for example data
+ (fn [[patient-key api-assessments example-patients] _]
+   (let [find-in-api (when patient-key (first (filter #(= (:patient_id %) patient-key) api-assessments)))
+         find-in-examples (when (and patient-key (not find-in-api))
+                            (first (filter #(= (:key %) patient-key) example-patients)))]
+     (cond
+       find-in-api find-in-api ; Return the full assessment object from API
+       find-in-examples find-in-examples ; Return the example patient object
+       :else nil))))
+
+(rf/reg-sub
+ ::anesthesia-plan-details
+ :<- [::selected-patient-assessment-forms-data]
+ (fn [assessment-data _]
+   (:anesthesia-plan assessment-data)))
+
+(rf/reg-sub
+ ::assessment-notes
+ :<- [::anesthesia-plan-details]
+ (fn [anesthesia-plan _]
+   (when anesthesia-plan
+     (:notes anesthesia-plan))))

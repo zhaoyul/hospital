@@ -84,6 +84,12 @@
  (fn [db [_ form-values]]
    (assoc-in db [:anesthesia :assessment :lab-tests] form-values)))
 
+(rf/reg-event-db
+ ::update-assessment-notes
+ (fn [db [_ notes-text]]
+   (assoc-in db [:anesthesia :assessment :anesthesia-plan :notes] notes-text)))
+
+
 ;; --- Patient List Filters and Actions ---
 (rf/reg-event-db
  ::set-active-tab
@@ -130,3 +136,41 @@
 (rf/reg-event-fx ::approve-patient (fn [{:keys [db]} _] (js/alert (str "批准患者: " (get-in db [:anesthesia :current-patient-id]))) {}))
 (rf/reg-event-fx ::postpone-patient (fn [{:keys [db]} _] (js/alert (str "暂缓患者: " (get-in db [:anesthesia :current-patient-id]))) {}))
 (rf/reg-event-fx ::reject-patient (fn [{:keys [db]} _] (js/alert (str "驳回患者: " (get-in db [:anesthesia :current-patient-id]))) {}))
+
+;; --- Save Final Assessment ---
+(rf/reg-event-fx
+ ::save-final-assessment
+ (fn [{:keys [db]} _]
+   (let [current-patient-id (get-in db [:anesthesia :current-patient-id])
+         assessment-data (get-in db [:anesthesia :assessment])]
+     (if current-patient-id
+       (do
+         (timbre/info "保存评估结果 для пациента:" current-patient-id "Данные:" assessment-data)
+         ;; 在实际应用中，这里会有一个 :http-xhrio 调用来将数据发送到后端
+         ;; 例如:
+         #_{:http-xhrio {:method          :put ; 或者 :post，取决于您的API
+                         :uri             (str "/api/patient/assessment/" current-patient-id)
+                         :params          assessment-data
+                         :response-format (ajax/json-response-format {:keywords? true})
+                         :on-success      [::save-assessment-success]
+                         :on-failure      [::save-assessment-failed]}}
+         (js/alert (str "评估结果已保存 (模拟) 患者ID: " current-patient-id))
+         {:db db}) ; 暂时不修改db，实际成功后可能需要更新列表状态等
+       (do
+         (js/alert "没有选中的患者，无法保存。")
+         {:db db})))))
+
+(rf/reg-event-db
+ ::save-assessment-success
+ (fn [db [_ response]]
+   (timbre/info "评估保存成功:" response)
+   ;; 可能需要更新患者列表中的状态或重新获取数据
+   (rf/dispatch [::fetch-all-assessments]) ; 例如，保存后刷新列表
+   db))
+
+(rf/reg-event-db
+ ::save-assessment-failed
+ (fn [db [_ error]]
+   (timbre/error "评估保存失败:" error)
+   (js/alert (str "保存失败: " (pr-str error)))
+   db))
