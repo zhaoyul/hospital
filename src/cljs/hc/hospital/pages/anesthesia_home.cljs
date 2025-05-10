@@ -1,11 +1,13 @@
 (ns hc.hospital.pages.anesthesia-home
   (:require
    ["@ant-design/icons" :as icons]
-   ["antd" :refer [Avatar Layout Menu Space Space Tag Typography]] ; Added Modal, Table, Space
+   ["dayjs" :as dayjs]
+   ["antd" :refer [Avatar Button DatePicker Input Layout Menu Modal Pagination Space Table Tag Typography]] ; Added Modal, Table, Space, Button, DatePicker, Input, Pagination
    [hc.hospital.events :as events]
    [hc.hospital.pages.anesthesia :refer [anesthesia-content]]
    [hc.hospital.pages.comps :refer [custom-sider-trigger]]
    [hc.hospital.pages.settings :refer [system-settings-content]]
+   [hc.hospital.pages.questionnaire :refer [questionnaire-list-content]]
    [hc.hospital.subs :as subs]
    [re-frame.core :as rf]
    [reagent.core :as r]
@@ -70,10 +72,11 @@
 
 (defn right-side "患者麻醉管理\"patients\", 问卷列表\"assessment\", 系统设置\"settings\"" [active-tab]
   [:> Layout {:style {:height "calc(100vh - 64px)"
-                      :overflow "hidden"}}
+                      :overflow "auto" ;; Changed from hidden to auto
+                      :background "#f0f2f5"}} ;; Added background color to match prototype
    (case (timbre/spy :info active-tab)
      "patients" [anesthesia-content]
-     "assessment" [:div {:style {:padding "24px" :background "#fff" :margin "16px" :borderRadius "4px"}} "问卷列表内容"]
+     "assessment" [questionnaire-list-content] ;; Use the new component
      "settings" [:f> system-settings-content]
      [:div {:style {:padding "24px" :background "#fff" :margin "16px" :borderRadius "4px"}} "未知标签页内容"])])
 
