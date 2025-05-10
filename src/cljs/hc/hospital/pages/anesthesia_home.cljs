@@ -5,6 +5,7 @@
             [hc.hospital.subs :as subs]
             [hc.hospital.components.antd :as antd]
             [hc.hospital.components.form-components :as form-comp]
+            ["@ant-design/icons" :refer [LeftOutlined RightOutlined]]
             ["antd" :refer [Form]]))
 
 (defn patient-list []
@@ -379,56 +380,85 @@
    {:key "2" :icon (r/as-element [antd/user-outlined]) :label "患者文书"}
    {:key "3" :icon (r/as-element [antd/notification-outlined]) :label "患者签到"}])
 
+(defn custom-sider-trigger [*collapsed? on-toggle]
+  [antd/button
+   {:type "primary"
+    :shape "circle"
+    :icon (if @*collapsed?
+            (r/as-element [:> RightOutlined])
+            (r/as-element [:> LeftOutlined]))
+    :on-click on-toggle
+    :style {:position "absolute"
+            :top "72px"      ;; 根据你的设计调整垂直位置
+            :right "-12px"   ;; 负值使其部分悬浮在Sider外部
+            :z-index 1       ;; 确保在Sider之上
+            :display "flex"
+            :align-items "center"
+            :justify-content "center"
+            :font-size "12px" ; 调整图标大小
+            :box-shadow "0 2px 8px rgba(0, 0, 0, 0.15)"
+            :background-color "#fff" ; 白色背景
+            :color "#1890ff"         ; Ant Design 主蓝色图标
+            :border "none"}}])
+
 (defn anesthesia-home-page []
   (let [active-tab @(rf/subscribe [::subs/active-tab])
         search-term @(rf/subscribe [::subs/search-term])
         date-range @(rf/subscribe [::subs/date-range])
-        _selected-forms-data @(rf/subscribe [::subs/selected-patient-assessment-forms-data])]
-    [antd/layout {:style {:minHeight "100vh"}}
-     [antd/sider {:width 200 :style {:background "#fff"}}
-      [:div {:style {:height "32px" :margin "16px" :background "rgba(0, 0, 0, 0.2)"}}]
-      [antd/menu {:mode "inline"
-                  :selectedKeys [(case active-tab "patients" "1" "assessment" "2" "history" "3" "1")]
-                  :onChange #(rf/dispatch [::events/set-active-tab (case % "1" "patients" "2" "assessment" "3" "history")])
-                  :style {:height "100%" :borderRight 0}
-                  :items menu-items}]]
-     [antd/layout {:style {:padding "0 24px 24px"}}
-      [antd/header {:style {:background "#fff" :padding "0 16px" :display "flex" :alignItems "center" :justifyContent "space-between" :borderBottom "1px solid #f0f0f0"}}
-       [:div {:style {:display "flex" :alignItems "center"}}
-        [antd/text {:style {:marginRight 8}} "申请日期:"]
-        [antd/range-picker {:style {:marginRight 16}
-                            :value date-range
-                            :onChange #(rf/dispatch [::events/set-date-range %])}]
-        [antd/input-search {:placeholder "请输入搜索内容"
-                            :allowClear true
-                            :value search-term
-                            :onChange #(rf/dispatch [::events/update-search-term (.. % -target -value)])
-                            :onSearch #(rf/dispatch [::events/search-patients %])
-                            :style {:width 300 :marginRight 8}}]
-        [antd/button {:icon (r/as-element [antd/filter-outlined])}]]
-       [:div {:style {:display "flex" :alignItems "center"}}
-        [antd/text {:style {:marginRight 8}} "患者登记:"]
-        [antd/input {:placeholder "请输入患者住院号/门诊号或扫描登记患者"
-                     :style {:width 300 :marginRight 16}}]
-        [antd/button {:type "primary"
-                      :style {:marginRight 8}
-                      :onClick #(rf/dispatch [::events/approve-patient])} "批准"]
-        [antd/button {:style {:marginRight 8}
-                      :onClick #(rf/dispatch [::events/postpone-patient])} "暂缓"]
-        [antd/button {:danger true
-                      :onClick #(rf/dispatch [::events/reject-patient])} "驳回"]]]
-      [antd/content {:style {:padding "16px 0" :margin 0 :minHeight 280}}
-       [antd/tabs {:activeKey (if (= active-tab "patients") "1" "2")
-                   :onChange #(rf/dispatch [::events/set-active-tab (if (= % "1") "patients" "assessment")])
-                   :items [{:key "1"
-                            :label "门诊麻醉评估"
-                            :children (r/as-element
-                                       [antd/row {:gutter 16}
-                                        [antd/col {:span 6}
-                                         [antd/card {:title "患者列表" :variant "borderless" :style {:height "calc(100vh - 180px)"}}
-                                          [patient-list]]]
-                                        [antd/col {:span 18}
-                                         [assessment-result]]])}
-                           {:key "2"
-                            :label "门诊麻醉同意"
-                            :children "门诊麻醉同意内容"}]}]]]]))
+        _selected-forms-data @(rf/subscribe [::subs/selected-patient-assessment-forms-data])
+        sidebar-collapsed? (r/atom true)]
+
+    (fn []
+      [antd/layout
+       [antd/sider {:sidebar-collapsed? true
+                    :theme "light"
+                    :collapsed @sidebar-collapsed?
+                    :trigger nil
+                    :collapsible true}
+        [custom-sider-trigger sidebar-collapsed? #(swap! sidebar-collapsed? not)]
+        [antd/menu {:mode "inline"
+                    :inlineCollapsed @sidebar-collapsed?
+                    :selectedKeys [(case active-tab "patients" "1" "assessment" "2" "history" "3" "1")]
+                    :onChange #(rf/dispatch [::events/set-active-tab (case % "1" "patients" "2" "assessment" "3" "history")])
+                    :style {:height "100%" :borderRight 0}
+                    :items menu-items}]]
+       [antd/layout {:style {:padding "0 24px 24px"}}
+        [antd/header {:style {:background "#fff" :padding "0 16px" :display "flex" :alignItems "center" :justifyContent "space-between" :borderBottom "1px solid #f0f0f0"}}
+         [:div {:style {:display "flex" :alignItems "center"}}
+          [antd/text {:style {:marginRight 8}} "申请日期:"]
+          [antd/range-picker {:style {:marginRight 16}
+                              :value date-range
+                              :onChange #(rf/dispatch [::events/set-date-range %])}]
+          [antd/input-search {:placeholder "请输入搜索内容"
+                              :allowClear true
+                              :value search-term
+                              :onChange #(rf/dispatch [::events/update-search-term (.. % -target -value)])
+                              :onSearch #(rf/dispatch [::events/search-patients %])
+                              :style {:width 300 :marginRight 8}}]
+          [antd/button {:icon (r/as-element [antd/filter-outlined])}]]
+         [:div {:style {:display "flex" :alignItems "center"}}
+          [antd/text {:style {:marginRight 8}} "患者登记:"]
+          [antd/input {:placeholder "请输入患者住院号/门诊号或扫描登记患者"
+                       :style {:width 300 :marginRight 16}}]
+          [antd/button {:type "primary"
+                        :style {:marginRight 8}
+                        :onClick #(rf/dispatch [::events/approve-patient])} "批准"]
+          [antd/button {:style {:marginRight 8}
+                        :onClick #(rf/dispatch [::events/postpone-patient])} "暂缓"]
+          [antd/button {:danger true
+                        :onClick #(rf/dispatch [::events/reject-patient])} "驳回"]]]
+        [antd/content {:style {:padding "16px 0" :margin 0 :minHeight 280}}
+         [antd/tabs {:activeKey (if (= active-tab "patients") "1" "2")
+                     :onChange #(rf/dispatch [::events/set-active-tab (if (= % "1") "patients" "assessment")])
+                     :items [{:key "1"
+                              :label "门诊麻醉评估"
+                              :children (r/as-element
+                                         [antd/row {:gutter 16}
+                                          [antd/col {:span 6}
+                                           [antd/card {:title "患者列表" :variant "borderless" :style {:height "calc(100vh - 180px)"}}
+                                            [patient-list]]]
+                                          [antd/col {:span 18}
+                                           [assessment-result]]])}
+                             {:key "2"
+                              :label "门诊麻醉同意"
+                              :children "门诊麻醉同意内容"}]}]]]])))
