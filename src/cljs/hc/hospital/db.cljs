@@ -7,17 +7,25 @@
     :search-term ""         ;; 患者搜索词
     :date-range nil         ;; 日期过滤范围
 
+    :assessment-status-filter "all"
+
     :patients               ;; 患者列表示例数据
     [{:key "P001" :name "张三" :age 45 :gender "男" :type "择期手术" :status "待评估"
-      :department "骨科" :diagnosis "股骨颈骨折" :doctor "李医生" :date "2025-04-28"}
+      :department "骨科" :diagnosis "股骨颈骨折" :doctor "李医生" :date "2025-04-28"
+      :patient-id-display "01864297 | Inp01864297" :anesthesia-type "静脉复合麻醉"}
      {:key "P002" :name "李四" :age 32 :gender "女" :type "紧急手术" :status "已评估"
-      :department "普外科" :diagnosis "急性阑尾炎" :doctor "王医生" :date "2025-04-29"}
+      :department "普外科" :diagnosis "急性阑尾炎" :doctor "王医生" :date "2025-04-29"
+      :patient-id-display "01864297 | Inp01864297" :anesthesia-type "静脉复合麻醉"}
      {:key "P003" :name "王五" :age 67 :gender "男" :type "择期手术" :status "评估中"
-      :department "心胸外科" :diagnosis "冠心病" :doctor "张医生" :date "2025-04-30"}]
+      :department "心胸外科" :diagnosis "冠心病" :doctor "张医生" :date "2025-04-30"
+      :patient-id-display "01864297 | Inp01864297" :anesthesia-type "静脉复合麻醉"}]
 
     :ui
     {:active-assessment-tab "brief-history"  ;; 评估页面的标签：brief-history, physical-exam, lab-tests
      :show-advanced-options false}           ;; 是否显示高级选项
+
+    :all-patient-assessments []
+    :fetch-assessments-error nil
 
     :assessment
     {:brief-medical-history     ;; 简要病史
@@ -47,37 +55,37 @@
       :mallampati-score nil   ;; radio: "I", "II", "III", "IV"
       :thyromental-distance nil ;; number input
       :related-history {      ;; antd/form-item names like [:related-history :difficult-airway]
-       :difficult-airway false
-       :postoperative-nausea false
-       :malignant-hyperthermia false
-       :other-checkbox false
-       :other ""
-       }
+                        :difficult-airway false
+                        :postoperative-nausea false
+                        :malignant-hyperthermia false
+                        :other-checkbox false
+                        :other ""
+                        }
       :chest nil              ;; radio: "normal", "barrel", etc.
       }
 
      :lab-tests              ;; 实验室检查
      {;; Fields based on anesthesia_home.cljs and structured for antd-form
       :complete-blood-count { ;; names like [:complete-blood-count :hemoglobin]
-       :hemoglobin nil       ;; was "RBC" in old label, but seems to be hemoglobin value
-       :hematocrit nil       ;; was "Hct"
-       :platelets nil        ;; was "PLT"
-       :wbc nil              ;; was "WBC"
-       }
+                             :hemoglobin nil       ;; was "RBC" in old label, but seems to be hemoglobin value
+                             :hematocrit nil       ;; was "Hct"
+                             :platelets nil        ;; was "PLT"
+                             :wbc nil              ;; was "WBC"
+                             }
       :blood-type nil         ;; radio: "A", "B", "AB", "O"
       :rh nil                 ;; radio: "negative", "positive"
       :coagulation nil        ;; radio: "normal", "abnormal"
       :biochemistry {         ;; names like [:biochemistry :glucose]
-       :glucose nil
-       :alt nil
-       :ast nil
-       :sodium nil
-       :potassium nil
-       }
+                     :glucose nil
+                     :alt nil
+                     :ast nil
+                     :sodium nil
+                     :potassium nil
+                     }
       :ecg ""                 ;; text input
       :chest-xray ""          ;; text input
       }
-      ;; Preserving :anesthesia-plan from the original db.cljs structure
+     ;; Preserving :anesthesia-plan from the original db.cljs structure
      :anesthesia-plan
      {:anesthesia-type "全身麻醉"
       :risk-assessment

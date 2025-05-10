@@ -6,38 +6,92 @@
             [hc.hospital.subs :as subs]
             [hc.hospital.components.antd :as antd]
             [taoensso.timbre :as timbre]
-            ["@ant-design/icons" :as icons]
+            ["@ant-design/icons" :as icons :refer [UserOutlined SyncOutlined QrcodeOutlined CheckCircleOutlined ClockCircleOutlined CloseCircleOutlined]]
             [hc.hospital.components.form-components :as form-comp]
             ["antd" :refer [Form]]))
+
+(defn patient-list-filters []
+  (let [search-term @(rf/subscribe [::subs/search-term])
+        date-range @(rf/subscribe [::subs/date-range])
+        assessment-status @(rf/subscribe [::subs/assessment-status-filter])
+        assessment-status-options [{:value "all" :label "全部状态"}
+                                   {:value "待评估" :label "待评估"}
+                                   {:value "已批准" :label "已批准"}
+                                   {:value "已驳回" :label "已驳回"}
+                                   {:value "已暂缓" :label "已暂缓"}]]
+    [:div {:style {:padding "16px" :borderBottom "1px solid #f0f0f0"}}
+     ;; 按钮组
+     [antd/space {:style {:marginBottom "16px" :width "100%"}}
+      [antd/button {:type "primary"
+                    :icon (r/as-element [:> SyncOutlined])
+                    :onClick #(rf/dispatch [::events/sync-applications]) ; 您需要定义此事件
+                    :style {:display "flex" :alignItems "center"}}
+       "同步申请"]
+      [antd/button {:icon (r/as-element [:> QrcodeOutlined])
+                    :onClick #(rf/dispatch [::events/scan-check-in]) ; 您需要定义此事件
+                    :style {:display "flex" :alignItems "center"}}
+       "扫码签到"]]
+
+     ;; 申请日期
+     [:div {:style {:marginBottom "8px" :color "#666"}} "申请日期:"]
+     [antd/range-picker
+      {:style {:width "100%" :marginBottom "12px"}
+       :value date-range
+       :onChange #(rf/dispatch [::events/set-date-range %])}]
+
+     ;; 评估状态
+     [antd/select
+      {:style {:width "100%" :marginBottom "16px"}
+       :placeholder "评估状态: 请选择"
+       :value (if (= assessment-status "all") nil assessment-status) ; "all" 时显示 placeholder
+       :allowClear true
+       :onChange #(rf/dispatch [::events/set-assessment-status-filter (or % "all")])
+       :options assessment-status-options}]
+
+     ;; 搜索框
+     [antd/input-search
+      {:placeholder "请输入患者姓名/门诊号"
+       :allowClear true
+       :value search-term
+       :onChange #(rf/dispatch [::events/update-search-term (-> % .-target .-value)])
+       :onSearch #(rf/dispatch [::events/search-patients %])}]]))
 
 (defn patient-list []
   (let [patients @(rf/subscribe [::subs/filtered-patients])
         current-patient-id @(rf/subscribe [::subs/current-patient-id])]
-    [:div {:style {:height "calc(100vh - 200px)" :overflowY "auto"}}
-     (for [item patients]
-       ^{:key (:key item)}
-       [:div {:style {:padding "10px"
-                      :borderBottom "1px solid #f0f0f0"
-                      :display "flex"
-                      :justifyContent "space-between"
-                      :alignItems "center"
-                      :background (when (= (:key item) current-patient-id) "#e6f7ff")
-                      :cursor "pointer"}
-              :onClick #(rf/dispatch [::events/select-patient (:key item)])}
-        [:div {:style {:display "flex" :alignItems "center"}}
-         [:> icons/UserOutlined {:style {:marginRight "8px"}}]
-         [:div
-          [:div {:style {:fontWeight "bold"}} (:name item)]
-          [:div {:style {:fontSize "12px" :color "gray"}}
-           (str (:sex item) " " (:age item) "岁 " (:type item))]]]
-        [:div {:style {:textAlign "right"}}
-         [:div {:style {:fontSize "12px" :color "gray"}} (:date item)]
-         [antd/tag {:color (case (:status item)
-                             "待评估" "orange"
-                             "已批准" "green"
-                             "已暂缓" "blue"
-                             "已驳回" "red"
-                             "default")} (:status item)]]])]))
+    (if (empty? patients)
+      [:div {:style {:textAlign "center" :padding "20px" :color "#999"}} "暂无患者数据"]
+      [:div {:style {:flexGrow 1 :overflowY "auto"}} ; 确保列表内容可滚动
+       (for [item patients]
+         ^{:key (:key item)}
+         [:div {:class (str "patient-item" (when (= (:key item) current-patient-id) " active"))
+                :style {:padding "12px 16px"
+                        :borderBottom "1px solid #f0f0f0"
+                        :cursor "pointer"
+                        :background (when (= (:key item) current-patient-id) "#e6f7ff")}
+                :onClick #(rf/dispatch [::events/select-patient (:key item)])}
+          [:div {:style {:display "flex" :justifyContent "space-between" :alignItems "center" :marginBottom "8px"}}
+           [:span {:style {:fontWeight 500 :fontSize "15px"}} (:name item)]
+           [antd/tag {:color (case (:status item)
+                               "待评估" "orange"
+                               "已批准" "green"
+                               "已暂缓" "blue"
+                               "已驳回" "red"
+                               "processing") ; 默认颜色或根据需要调整
+                      :style {:marginRight 0}} (:status item)]]
+          [:div {:style {:fontSize "13px" :color "#595959" :marginBottom "4px"}}
+           (or (:patient-id-display item) (:key item))] ; 显示门诊号
+          [:div {:style {:fontSize "13px" :color "#595959" :marginBottom "4px"}}
+           (str (:sex item) " | " (:age item) "岁")]
+          [:div {:style {:fontSize "13px" :color "#595959" :marginBottom "4px"}}
+           (or (:anesthesia-type item) "未知麻醉方式")]
+          [:div {:style {:fontSize "12px" :color "#8c8c8c"}}
+           (or (:date item) "未知日期")]])])))
+
+(defn patient-list-panel []
+  [:<>
+   [patient-list-filters]
+   [patient-list]])
 
 (defn brief-medical-history []
   (let [medical-history @(rf/subscribe [::subs/doctor-form-brief-medical-history])
@@ -377,51 +431,11 @@
       [antd/card {:title "体格检查"}
        [:f> physical-examination]]]]]])
 
-(defn header []
-  (let [search-term @(rf/subscribe [::subs/search-term])
-        date-range @(rf/subscribe [::subs/date-range])]
-    [antd/header {:style {:background "#fff" :padding "0 16px" :display "flex" :alignItems "center" :justifyContent "space-between" :borderBottom "1px solid #f0f0f0"}}
-     [:div {:style {:display "flex" :alignItems "center"}}
-      [antd/text {:style {:marginRight 8}} "申请日期:"]
-      [antd/range-picker {:style {:marginRight 16}
-                          :value date-range
-                          :onChange #(rf/dispatch [::events/set-date-range %])}]
-      [antd/input-search {:placeholder "请输入搜索内容"
-                          :allowClear true
-                          :value search-term
-                          :onChange #(rf/dispatch [::events/update-search-term (.. % -target -value)])
-                          :onSearch #(rf/dispatch [::events/search-patients %])
-                          :style {:width 300 :marginRight 8}}]
-      [antd/button {:icon (r/as-element [:> icons/FilterOutlined])}]]
-     [:div {:style {:display "flex" :alignItems "center"}}
-      [antd/text {:style {:marginRight 8}} "患者登记:"]
-      [antd/input {:placeholder "请输入患者住院号/门诊号或扫描登记患者"
-                   :style {:width 300 :marginRight 16}}]
-      [antd/button {:type "primary"
-                    :style {:marginRight 8}
-                    :onClick #(rf/dispatch [::events/approve-patient])} "批准"]
-      [antd/button {:style {:marginRight 8}
-                    :onClick #(rf/dispatch [::events/postpone-patient])} "暂缓"]
-      [antd/button {:danger true
-                    :onClick #(rf/dispatch [::events/reject-patient])} "驳回"]]]))
-
 (defn anesthesia-content []
-  (let [active-tab (r/atom "patients")]
-    (fn []
-      [:<>
-       [header]
-       [antd/content {:style {:padding "16px 0" :margin 0 :minHeight 280}}
-        [antd/tabs {:activeKey (if (= @active-tab "patients") "1" "2")
-                    :onChange #(rf/dispatch [::events/set-active-tab (if (= % "1") "patients" "assessment")])
-                    :items [{:key "1"
-                             :label "门诊麻醉评估"
-                             :children (r/as-element
-                                        [antd/row {:gutter 16}
-                                         [antd/col {:span 6}
-                                          [antd/card {:title "患者列表" :variant "borderless" :style {:height "calc(100vh - 180px)"}}
-                                           [patient-list]]]
-                                         [antd/col {:span 18}
-                                          [assessment-result]]])}
-                            {:key "2"
-                             :label "门诊麻醉同意"
-                             :children "门诊麻醉同意内容"}]}]]])))
+  [antd/content {:style {:padding "16px 0" :margin 0 :minHeight 280}}
+   [antd/row {:gutter 16}
+    [antd/col {:span 6}
+     [antd/card {:title "患者列表" :variant "borderless" :style {:height "calc(100vh - 180px)"}}
+      [patient-list-panel]]]
+    [antd/col {:span 18}
+     [assessment-result]]]])

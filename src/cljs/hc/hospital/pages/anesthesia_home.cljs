@@ -72,7 +72,6 @@
     [antd/layout {:style {:minHeight "100vh"}} ; 确保应用占满整个视窗高度
      [sider-bar active-tab] ; 左侧边栏
      [antd/layout {:style {:padding "0 12px 12px"}}
-      [app-header] ; <-- 新增的应用顶部导航栏
-      ;; 顶部栏下方的实际内容区域
-      [antd/content {:style {:margin "0"}} ; 内容区域，移除了外层 padding
+      [app-header]
+      [antd/content {:style {:margin "0"}}
        [right-side active-tab]]]]))
