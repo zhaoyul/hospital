@@ -102,15 +102,10 @@
 
 ;; 辅助函数，用于显示患者基本信息
 (defn- patient-info []
-  ;; 假设编辑中的患者信息存储在 ::subs/editing-patient-info 中
-  ;; 当选择患者时，应 dispatch 一个事件 (如 ::events/init-patient-form-data) 来填充它
-  (let [editable-info @(rf/subscribe [::subs/selected-patient-assessment-forms-data])] ; 假设这是编辑中的数据
+  (let [editable-info @(rf/subscribe [::subs/selected-patient-assessment-forms-data])]
     (if (seq editable-info)
       [antd/form {:layout "vertical"
-                  :initialValues editable-info ; antd Form 可以使用 initialValues 填充
-                  ;; 如果不用 initialValues, 你需要在每个 Input 组件上手动设置 :value
-                  }
-       ;; 使用 Grid 布局来模拟之前的 Descriptions column 效果
+                  :initialValues editable-info}
        [:div {:style {:display "grid"
                       :gridTemplateColumns "repeat(4, 1fr)" ; 4 列
                       :gap "0px 16px"}} ; 列间距
