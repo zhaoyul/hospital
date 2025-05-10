@@ -53,7 +53,7 @@
   (let [start-date (r/atom "2025-05-06")
         end-date (r/atom "2025-05-06")
         search-text (r/atom "")]
-    [:div {:style {:padding "24px" :background "#f0f2f5"}}
+    [:<>
      ;; Search Area
      [:div {:style {:background "#fff" :padding "24px" :border-radius "2px" :margin-bottom "24px"}}
       [:> Space {:style {:display "flex" :justifyContent "space-between" :alignItems "center"}}

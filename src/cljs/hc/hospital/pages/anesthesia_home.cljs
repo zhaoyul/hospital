@@ -74,11 +74,12 @@
   [:> Layout {:style {:height "calc(100vh - 64px)"
                       :overflow "auto" ;; Changed from hidden to auto
                       :background "#f0f2f5"}} ;; Added background color to match prototype
-   (case (timbre/spy :info active-tab)
-     "patients" [anesthesia-content]
-     "assessment" [questionnaire-list-content] ;; Use the new component
-     "settings" [:f> system-settings-content]
-     [:div {:style {:padding "24px" :background "#fff" :margin "16px" :borderRadius "4px"}} "未知标签页内容"])])
+   [:div {:style {:padding "24px"}} ;; Added common styling wrapper and height adjustment
+    (case active-tab
+      "patients" [anesthesia-content]
+      "assessment" [questionnaire-list-content] ;; Use the new component
+      "settings" [:f> system-settings-content]
+      [:div "未知标签页内容"])]]) ; Removed inline style from default case as it's handled by the wrapper
 
 (defn anesthesia-home-page []
   (let [active-tab @(rf/subscribe [::subs/active-tab])]

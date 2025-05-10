@@ -2,7 +2,7 @@
   (:require
    ["@ant-design/icons" :as icons]
    ["react" :as React]
-   ["antd" :refer [Button Form Input Modal Select Space Table Typography Upload]]
+   ["antd" :refer [Button Form Input Modal Select Space Table Typography Upload Card]]
    [hc.hospital.events :as events]
    [hc.hospital.subs :as subs]
    [re-frame.core :as rf]
@@ -16,16 +16,7 @@
 
     (React/useEffect (fn [] (rf/dispatch [::events/initialize-doctors])))
 
-    [:div {:style {:flex 1
-                   :background "#fff"
-                   :borderRadius "4px"
-                   :boxShadow "0 1px 4px rgba(0, 0, 0, 0.05)"
-                   :padding "24px 32px"
-                   :overflowY "auto"
-                   :display "flex"
-                   :flexDirection "column"
-                   :margin "16px"
-                   :height "calc(100vh - 64px - 32px)"}}
+    [:> Card
      [:> Typography.Title {:level 2
                            :style {:marginTop 0 :marginBottom "16px"
                                    :fontSize "18px" :fontWeight 500 :color "#333"}}

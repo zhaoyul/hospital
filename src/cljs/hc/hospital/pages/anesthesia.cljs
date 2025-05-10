@@ -652,7 +652,7 @@
        [:> Empty {:description "请从左侧选择一位患者开始评估"}]])))
 
 (defn anesthesia-content []
-  [:> Layout.Content {:style {:padding "0" :margin 0 :minHeight 280 :overflow "hidden" :display "flex" :flexDirection "row"}}
+  [:> Layout.Content {:style {:margin 0 :minHeight 280 :overflow "hidden" :display "flex" :flexDirection "row"}}
    ;; 左侧患者列表区域
    [:> Card {:style {:width "350px"
                      :minWidth "300px"
