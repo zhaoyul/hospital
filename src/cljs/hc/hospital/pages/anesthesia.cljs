@@ -8,9 +8,10 @@
             [hc.hospital.utils :as utils]
             [taoensso.timbre :as timbre]
             [clojure.string :as str]
-            ["@ant-design/icons" :as icons :refer [SyncOutlined QrcodeOutlined]]
+            ["@ant-design/icons" :as icons :refer [SyncOutlined QrcodeOutlined SaveOutlined UserOutlined HeartOutlined FileTextOutlined ExperimentOutlined EditOutlined MessageOutlined]] ; Added more icons
             [hc.hospital.components.form-components :as form-comp]
-            ["antd" :refer [Collapse Descriptions Empty Button]]))
+            ;; 确保 antd/Form 等组件已引入
+            ["antd" :refer [Collapse Descriptions Empty Button Input InputNumber Select Form]]))
 
 
 (defn patient-list-filters []
@@ -100,24 +101,76 @@
 
 
 ;; 辅助函数，用于显示患者基本信息
-(defn- patient-info-display []
-  (let [patient-details @(rf/subscribe [::subs/selected-patient-raw-details])
-        basic-info (or (:basic-info patient-details) ; API data might have basic_info nested
-                       patient-details)] ; Example data might be flat
-    (if (seq basic-info) ; Check if basic-info has keys
-      [:> Descriptions {:bordered true :column 4 :size "small"}
-       [:> Descriptions.Item {:label "门诊号"} (or (:outpatient-number basic-info) (:patient-id-display basic-info) "N/A")]
-       [:> Descriptions.Item {:label "姓名"} (or (:name basic-info) "N/A")]
-       [:> Descriptions.Item {:label "性别"} (or (:sex basic-info) "N/A")]
-       [:> Descriptions.Item {:label "年龄"} (if-let [age (:age basic-info)] (str age "岁") "N/A")]
-       [:> Descriptions.Item {:label "病区" :span 2} (or (:department basic-info) "N/A")]
-       [:> Descriptions.Item {:label "电子健康卡号" :span 2} (or (:health-card-number basic-info) "暂无")]
-       [:> Descriptions.Item {:label "术前诊断" :span 4} (or (:diagnosis basic-info) "N/A")]
-       [:> Descriptions.Item {:label "拟施手术" :span 4} (or (:planned-surgery basic-info) (:type basic-info) "N/A")]]
-      [:> Empty {:description "暂无患者信息"}])))
+(defn- patient-info []
+  ;; 假设编辑中的患者信息存储在 ::subs/editing-patient-info 中
+  ;; 当选择患者时，应 dispatch 一个事件 (如 ::events/init-patient-form-data) 来填充它
+  (let [editable-info @(rf/subscribe [::subs/selected-patient-assessment-forms-data])] ; 假设这是编辑中的数据
+    (if (seq editable-info)
+      [antd/form {:layout "vertical"
+                  :initialValues editable-info ; antd Form 可以使用 initialValues 填充
+                  ;; 如果不用 initialValues, 你需要在每个 Input 组件上手动设置 :value
+                  }
+       ;; 使用 Grid 布局来模拟之前的 Descriptions column 效果
+       [:div {:style {:display "grid"
+                      :gridTemplateColumns "repeat(4, 1fr)" ; 4 列
+                      :gap "0px 16px"}} ; 列间距
+
+        [antd/form-item {:label "门诊号" :name :outpatient-number ; :name 用于 Form 自动关联
+                         :rules [{:required true :message "请输入门诊号!"}]} ; 示例：添加校验规则
+         [antd/input {:value (:outpatient-number editable-info) ; 显式绑定 value
+                      :placeholder "请输入门诊号"
+                      :onChange #(rf/dispatch [::events/update-patient-form-field :outpatient-number (-> % .-target .-value)])}]]
+
+        [antd/form-item {:label "姓名" :name :name}
+         [antd/input {:value (:name editable-info)
+                      :placeholder "请输入姓名"
+                      :onChange #(rf/dispatch [::events/update-patient-form-field :name (-> % .-target .-value)])}]]
+
+        [antd/form-item {:label "性别" :name :sex}
+         [antd/select {:value (:sex editable-info)
+                       :placeholder "请选择性别"
+                       :onChange #(rf/dispatch [::events/update-patient-form-field :sex %])
+                       :options [{:value "男" :label "男"}
+                                 {:value "女" :label "女"}
+                                 {:value "其他" :label "其他"}]}]]
+
+        [antd/form-item {:label "年龄" :name :age}
+         [antd/input-number {:value (:age editable-info)
+                             :placeholder "岁"
+                             :min 0
+                             :style {:width "100%"}
+                             :addonAfter "岁"
+                             :onChange #(rf/dispatch [::events/update-patient-form-field :age %])}]]
+
+        [antd/form-item {:label "病区" :name :department
+                         :style {:gridColumn "span 2"}} ; 占据两列
+         [antd/input {:value (:department editable-info)
+                      :placeholder "请输入病区"
+                      :onChange #(rf/dispatch [::events/update-patient-form-field :department (-> % .-target .-value)])}]]
+
+        [antd/form-item {:label "电子健康卡号" :name :health-card-number
+                         :style {:gridColumn "span 2"}} ; 占据两列
+         [antd/input {:value (:health-card-number editable-info)
+                      :placeholder "请输入电子健康卡号 (可选)"
+                      :onChange #(rf/dispatch [::events/update-patient-form-field :health-card-number (-> % .-target .-value)])}]]
+
+        [antd/form-item {:label "术前诊断" :name :diagnosis
+                         :style {:gridColumn "span 4"}} ; 占据四列
+         [antd/text-area {:value (:diagnosis editable-info)
+                          :placeholder "请输入术前诊断"
+                          :rows 2
+                          :onChange #(rf/dispatch [::events/update-patient-form-field :diagnosis (-> % .-target .-value)])}]]
+
+        [antd/form-item {:label "拟施手术" :name :planned-surgery ; 假设API返回的字段是 :planned-surgery
+                         :style {:gridColumn "span 4"}} ; 占据四列
+         [antd/text-area {:value (:planned-surgery editable-info) ; 或者 (:type editable-info) 取决于你的数据结构
+                          :placeholder "请输入拟施手术"
+                          :rows 2
+                          :onChange #(rf/dispatch [::events/update-patient-form-field :planned-surgery (-> % .-target .-value)])}]]]]
+      [:> Empty {:description "请先选择患者或患者无基本信息可编辑"}])))
 
 ;; 辅助函数，用于显示一般情况
-(defn- general-condition-display []
+(defn- general-condition []
   (let [exam-data @(rf/subscribe [::subs/doctor-form-physical-examination])]
     (if (seq exam-data) ; 检查 exam-data 是否有内容
       [:> Descriptions {:bordered true :column 2 :size "small"}
@@ -133,12 +186,12 @@
       [:> Empty {:description "暂无一般情况信息"}])))
 
 
-(defn- medical-summary-display []
+(defn- medical-summary []
   )
 
 
 ;; 辅助函数，用于显示术前麻醉医嘱
-(defn- preoperative-orders-display []
+(defn- preoperative-orders []
   (let [plan-details @(rf/subscribe [::subs/anesthesia-plan-details])]
     (if (seq plan-details)
       [:> Descriptions {:bordered true :column 1 :size "small"}
@@ -149,7 +202,7 @@
       [:> Empty {:description "暂无术前麻醉医嘱"}])))
 
 ;; 辅助函数，用于显示签名和日期
-(defn- signature-and-date-display []
+(defn- signature-and-date []
   (let [patient-details @(rf/subscribe [::subs/selected-patient-raw-details])
         assessment-date (or (get-in patient-details [:assessment_data :assessment-date]) ; 尝试从评估数据中获取
                             (:updated_at patient-details) ; API 患者对象的更新时间
@@ -159,14 +212,14 @@
      [:> Descriptions.Item {:label "评估日期"} (utils/format-date assessment-date "YYYY-MM-DD HH:mm")]]))
 
 ;; 辅助函数，用于显示备注信息
-(defn- remarks-display []
+(defn- remarks []
   (let [notes @(rf/subscribe [::subs/assessment-notes])]
     [antd/text-area {:rows 3
                      :value (or notes "")
                      :placeholder "备注信息（如有特殊情况请在此注明）"
                      :onChange (fn [e] (rf/dispatch [::events/update-assessment-notes (.. e -target -value)]))}]))
 
-(defn assessment-result []
+(defn- assessment []
   (let [current-patient-id @(rf/subscribe [::subs/current-patient-id])]
     (if current-patient-id
       ;; 有选择患者时的视图
@@ -179,27 +232,27 @@
          [:div
           [antd/card {:title (r/as-element [:span [:> icons/UserOutlined {:style {:marginRight "8px"}}] "患者信息"])
                       :type "inner" :style {:marginBottom "12px"}}
-           [patient-info-display]]
+           [patient-info]]
 
           [antd/card {:title (r/as-element [:span [:> icons/HeartOutlined {:style {:marginRight "8px"}}] "一般情况"])
                       :type "inner" :style {:marginBottom "12px"}}
-           [general-condition-display]]
+           [general-condition]]
 
           [antd/card {:title (r/as-element [:span [:> icons/FileTextOutlined {:style {:marginRight "8px"}}] "病情摘要（病史、体检及辅助检查）"])
                       :type "inner" :style {:marginBottom "12px"}}
-           [medical-summary-display]]
+           [medical-summary]]
 
           [antd/card {:title (r/as-element [:span [:> icons/ExperimentOutlined {:style {:marginRight "8px"}}] "术前麻醉医嘱"])
                       :type "inner" :style {:marginBottom "12px"}}
-           [preoperative-orders-display]]
+           [preoperative-orders]]
 
           [antd/card {:title (r/as-element [:span [:> icons/EditOutlined {:style {:marginRight "8px"}}] "麻醉医师签名及日期"])
                       :type "inner" :style {:marginBottom "12px"}}
-           [signature-and-date-display]]
+           [signature-and-date]]
 
           [antd/card {:title (r/as-element [:span [:> icons/MessageOutlined {:style {:marginRight "8px"}}] "备注信息"])
                       :type "inner" :style {:marginBottom "44px"}}
-           [remarks-display]]]]]
+           [remarks]]]]]
 
        ;; 固定在底部的保存按钮区域
        [:div {:style {:padding "10px 0"
@@ -236,4 +289,4 @@
 
    ;; 右侧评估详情区域
    [:div {:style {:flexGrow 1 :background "#f0f2f5" :overflow "hidden"}}
-    [assessment-result]]])
+    [assessment]]])

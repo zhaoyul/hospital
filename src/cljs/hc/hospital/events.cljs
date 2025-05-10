@@ -174,3 +174,21 @@
    (timbre/error "评估保存失败:" error)
    (js/alert (str "保存失败: " (pr-str error)))
    db))
+
+
+(rf/reg-event-fx
+ ::select-patient-and-load-details
+ (fn [{:keys [db]} [_ patient-id]]
+   (let [patient-raw-details (get-in db [:all-patients-map patient-id])] ; 假设你有这个
+     {:db (-> db
+              (assoc :current-patient-id patient-id)
+              ;; 初始化表单数据
+              (assoc ::editing-patient-info (or (:basic-info patient-raw-details) patient-raw-details)))
+      ;; :dispatch-later 或 :http-xhrio 如果需要从后端获取更多详情
+      })))
+
+(rf/reg-event-db
+ ::update-patient-form-field
+ (fn [db [_ field-path new-value]]
+   ;; field-path 可以是一个 keyword 或者一个 vector (用于嵌套数据)
+   (assoc-in db [:editing-patient-info field-path] new-value)))
