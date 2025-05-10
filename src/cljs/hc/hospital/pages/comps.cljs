@@ -1,11 +1,11 @@
 (ns hc.hospital.pages.comps
   (:require
    ["@ant-design/icons" :refer [LeftOutlined RightOutlined]]
-   [hc.hospital.components.antd :as antd]
+   ["antd" :refer [Button]]
    [reagent.core :as r]))
 
 (defn custom-sider-trigger [*collapsed? on-toggle]
-  [antd/button
+  [:> Button
    {:type "primary"
     :shape "circle"
     :icon (if @*collapsed?
