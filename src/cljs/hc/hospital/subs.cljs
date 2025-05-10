@@ -102,6 +102,11 @@
    (get-in db [:anesthesia :assessment])))
 
 (rf/reg-sub
+ ::medical-summary-data
+ (fn [_ _]
+   []))
+
+(rf/reg-sub
  ::doctor-form-brief-medical-history
  :<- [::selected-patient-assessment-forms-data]
  (fn [assessment-data _]

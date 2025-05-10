@@ -8,10 +8,12 @@
             [hc.hospital.utils :as utils]
             [taoensso.timbre :as timbre]
             [clojure.string :as str]
-            ["@ant-design/icons" :as icons :refer [SyncOutlined QrcodeOutlined SaveOutlined UserOutlined HeartOutlined FileTextOutlined ExperimentOutlined EditOutlined MessageOutlined]] ; Added more icons
+            ["@ant-design/icons" :as icons :refer [SyncOutlined QrcodeOutlined SaveOutlined UserOutlined HeartOutlined
+                                                   DeleteOutlined EyeOutlined PaperClipOutlined UploadOutlined
+                                                   FileTextOutlined ExperimentOutlined EditOutlined MessageOutlined]] ; Added more icons
             [hc.hospital.components.form-components :as form-comp]
             ;; 确保 antd/Form 等组件已引入
-            ["antd" :refer [Collapse Descriptions Empty Button Input InputNumber Select Form]]))
+            ["antd" :refer [Collapse   Descriptions Empty Button Input InputNumber Select Form Tooltip]]))
 
 
 (defn patient-list-filters []
@@ -166,24 +168,346 @@
 
 ;; 辅助函数，用于显示一般情况
 (defn- general-condition []
-  (let [exam-data @(rf/subscribe [::subs/doctor-form-physical-examination])]
-    (if (seq exam-data) ; 检查 exam-data 是否有内容
-      [:> Descriptions {:bordered true :column 2 :size "small"}
-       [:> Descriptions.Item {:label "身高"} (str (:height exam-data "N/A") " cm")]
-       [:> Descriptions.Item {:label "体重"} (str (:weight exam-data "N/A") " kg")]
-       [:> Descriptions.Item {:label "精神状态"} (utils/display-value (:mental-state exam-data))]
-       [:> Descriptions.Item {:label "活动能力"} (utils/display-value (get exam-data :activity-level))] ; 需要在 db 和 subs 中添加 :activity-level
-       [:> Descriptions.Item {:label "血压 (BP)"} (str (get-in exam-data [:bp :systolic] "N/A") "/" (get-in exam-data [:bp :diastolic] "N/A") " mmHg")]
-       [:> Descriptions.Item {:label "脉搏 (PR)"} (str (:heart-rate exam-data "N/A") " 次/分")]
-       [:> Descriptions.Item {:label "呼吸 (RR)"} (str (:respiratory-rate exam-data "N/A") " 次/分")]
-       [:> Descriptions.Item {:label "体温 (T)"} (str (:temperature exam-data "N/A") " °C")]
-       [:> Descriptions.Item {:label "SpO2"} (utils/display-value (get exam-data :spo2))]] ; 需要在 db 和 subs 中添加 :spo2
-      [:> Empty {:description "暂无一般情况信息"}])))
+  (let [exam-data @(rf/subscribe [::subs/doctor-form-physical-examination])
+        ;; 定义选项数据
+        mental-status-options [{:value "清醒" :label "清醒"}
+                               {:value "嗜睡" :label "嗜睡"}
+                               {:value "模糊" :label "模糊"}
+                               {:value "谵妄" :label "谵妄"}
+                               {:value "昏睡" :label "昏睡"}
+                               {:value "浅昏迷" :label "浅昏迷"}
+                               {:value "深昏迷" :label "深昏迷"}
+                               {:value "其他" :label "其他"}]
+        activity-level-options [{:value "正常活动" :label "正常活动"}
+                                {:value "轻度受限" :label "轻度受限"}
+                                {:value "重度受限" :label "重度受限"}
+                                {:value "卧床" :label "卧床"}
+                                {:value "其他" :label "其他"}]]
+    (if (some? exam-data) ; 确保 exam-data 不是 nil，空 map {} 也是有效的
+      [antd/form {:layout "vertical"}
+       ;; 第一部分：身高、体重、精神状态、活动能力
+       [:div {:key "vital-signs-group-1"}
+        [:h4 {:style {:marginBottom "12px" :fontSize "14px" :fontWeight "bold"}}
+         (r/as-element [:> HeartOutlined {:style {:marginRight "8px" :color "#1890ff"}}])
+         "生命体征"]
+        [:div {:style {:display "grid"
+                       :gridTemplateColumns "repeat(4, 1fr)"
+                       :gap "0px 16px"
+                       :marginBottom "16px"}}
+         [antd/form-item {:label "身高" :name :height}
+          [antd/input-number {:value (:height exam-data)
+                              :placeholder "cm"
+                              :addonAfter "cm"
+                              :style {:width "100%"}
+                              :min 0
+                              :onChange #(rf/dispatch [::events/update-doctor-form-physical-examination-field :height %])}]]
+         [antd/form-item {:label "体重" :name :weight}
+          [antd/input-number {:value (:weight exam-data)
+                              :placeholder "kg"
+                              :addonAfter "kg"
+                              :style {:width "100%"}
+                              :min 0
+                              :onChange #(rf/dispatch [::events/update-doctor-form-physical-examination-field :weight %])}]]
+         [antd/form-item {:label "精神状态" :name :mental-state}
+          [antd/select {:value (:mental-state exam-data)
+                        :placeholder "请选择"
+                        :style {:width "100%"}
+                        :allowClear true
+                        :options mental-status-options
+                        :onChange #(rf/dispatch [::events/update-doctor-form-physical-examination-field :mental-state %])}]]
+         [antd/form-item {:label "活动能力" :name :activity-level}
+          [antd/select {:value (:activity-level exam-data)
+                        :placeholder "请选择"
+                        :style {:width "100%"}
+                        :allowClear true
+                        :options activity-level-options
+                        :onChange #(rf/dispatch [::events/update-doctor-form-physical-examination-field :activity-level %])}]]]]
+
+       ;; 分隔线 (可选，如果视觉上需要)
+       ;; [:> Divider {:style {:margin "0 0 16px 0"}}]
+
+       ;; 第二部分：血压、脉搏、呼吸、体温、SpO2
+       [:div {:key "vital-signs-group-2"}
+        [:h4 {:style {:marginBottom "12px" :fontSize "14px" :fontWeight "bold"}}
+         (r/as-element [:> HeartOutlined {:style {:marginRight "8px" :color "#1890ff"}}])
+         "生命体征"]
+        [:div {:style {:display "flex" :flexWrap "wrap" :gap "8px 24px"}} ; 增大列间距
+         ;; 血压
+         [antd/form-item {:label "血压"}
+          [:div {:style {:display "flex" :alignItems "center"}}
+           [antd/form-item {:name [:bp :systolic] :noStyle true}
+            [antd/input-number {:value (get-in exam-data [:bp :systolic])
+                                :placeholder "收缩压"
+                                :min 0
+                                :style {:width "70px"}
+                                :onChange #(rf/dispatch [::events/update-doctor-form-physical-examination-field [:bp :systolic] %])}]]
+           [:span {:style {:margin "0 4px"}} "/"]
+           [antd/form-item {:name [:bp :diastolic] :noStyle true}
+            [antd/input-number {:value (get-in exam-data [:bp :diastolic])
+                                :placeholder "舒张压"
+                                :min 0
+                                :style {:width "70px"}
+                                :onChange #(rf/dispatch [::events/update-doctor-form-physical-examination-field [:bp :diastolic] %])}]]
+           [:span {:style {:marginLeft "8px"}} "mmHg"]]]
+
+         ;; 脉搏
+         [antd/form-item {:label "脉搏" :name :heart-rate}
+          [antd/input-number {:value (:heart-rate exam-data)
+                              :placeholder "次/分"
+                              :addonAfter "次/分"
+                              :min 0
+                              :style {:width "130px"}
+                              :onChange #(rf/dispatch [::events/update-doctor-form-physical-examination-field :heart-rate %])}]]
+
+         ;; 呼吸
+         [antd/form-item {:label "呼吸" :name :respiratory-rate}
+          [antd/input-number {:value (:respiratory-rate exam-data)
+                              :placeholder "次/分"
+                              :addonAfter "次/分"
+                              :min 0
+                              :style {:width "130px"}
+                              :onChange #(rf/dispatch [::events/update-doctor-form-physical-examination-field :respiratory-rate %])}]]
+
+         ;; 体温
+         [antd/form-item {:label "体温" :name :temperature}
+          [antd/input-number {:value (:temperature exam-data)
+                              :placeholder "°C"
+                              :addonAfter "°C"
+                              :precision 1 ; 体温通常一位小数
+                              :step 0.1
+                              :style {:width "110px"}
+                              :onChange #(rf/dispatch [::events/update-doctor-form-physical-examination-field :temperature %])}]]
+
+         ;; SpO2
+         [antd/form-item {:label "SpO2" :name :spo2}
+          [antd/input-number {:value (:spo2 exam-data)
+                              :placeholder "%"
+                              :addonAfter "%"
+                              :min 0 :max 100
+                              :style {:width "100px"}
+                              :onChange #(rf/dispatch [::events/update-doctor-form-physical-examination-field :spo2 %])}]]]]]
+
+      [:> Empty {:description "暂无一般情况信息或未选择患者"}])))
 
 
 (defn- medical-summary []
-  )
+  (let [summary-data @(rf/subscribe [::subs/medical-summary-data])] ; 假设订阅 medical-summary-data
+    [antd/form {:layout "vertical" :initialValues summary-data}
+     [:> Descriptions {:bordered true :column 1 :labelStyle {:width "180px" :verticalAlign "top" :background "#fafafa"}}
+      ;; 第一部分：过敏史和生活习惯
+      [:> Descriptions.Item {:label (r/as-element
+                                     [:div {:style {:fontWeight "500"}}
+                                      [:div "病情摘要"]
+                                      [:div "(病史、体检及"]
+                                      [:div "辅助检查)"]])}
 
+       [:div
+        ;; 过敏史
+        [:div {:style {:marginBottom "24px"}}
+         [:h4 {:style {:marginBottom "12px" :fontSize "14px" :fontWeight "bold"}}
+          [:i {:class "fas fa-allergies" :style {:marginRight "8px" :color "#fa8c16"}}] "过敏史"]
+         [antd/row {:gutter 16}
+          [antd/col {:span 24}
+           [antd/form-item {:name [:allergy :has] :label "过敏史：" :label-col {:span 24} :wrapper-col {:span 24} :style {:marginBottom "8px"}}
+            [antd/radio-group {:value (get-in summary-data [:allergy :has])
+                               :onChange #(rf/dispatch [::events/update-medical-summary-field [:allergy :has] (-> % .-target .-value)])}
+             [antd/radio {:value "no"} "无"]
+             [antd/radio {:value "yes"} "有"]]]]
+          (when (= (get-in summary-data [:allergy :has]) "yes")
+            [:<>
+             [antd/col {:span 12}
+              [antd/form-item {:name [:allergy :allergen] :label "过敏原：" :label-col {:span 24}}
+               [antd/input {:value (get-in summary-data [:allergy :allergen])
+                            :placeholder "请输入过敏原"
+                            :onChange #(rf/dispatch [::events/update-medical-summary-field [:allergy :allergen] (-> % .-target .-value)])}]]]
+             [antd/col {:span 12}
+              [antd/form-item {:name [:allergy :last-reaction-date] :label "最近发生过敏时间：" :label-col {:span 24}}
+               [antd/date-picker {:value (utils/to-moment (get-in summary-data [:allergy :last-reaction-date]))
+                                  :style {:width "100%"}
+                                  :placeholder "请选择日期"
+                                  :onChange #(rf/dispatch [::events/update-medical-summary-field [:allergy :last-reaction-date] (utils/date->iso-string %)])}]]]])]]]
+
+       ;; 生活习惯
+       [:div
+        [:h4 {:style {:marginBottom "12px" :fontSize "14px" :fontWeight "bold"}}
+         [:i {:class "fas fa-smoking" :style {:marginRight "8px" :color "#722ed1"}}] "生活习惯"]
+        ;; 吸烟史
+        [antd/row {:gutter 16 :align "bottom"}
+         [antd/col {:span 24}
+          [antd/form-item {:name [:habits :smoking :has] :label "吸烟史：" :label-col {:span 24} :wrapper-col {:span 24} :style {:marginBottom "8px"}}
+           [antd/radio-group {:value (get-in summary-data [:habits :smoking :has])
+                              :onChange #(rf/dispatch [::events/update-medical-summary-field [:habits :smoking :has] (-> % .-target .-value)])}
+            [antd/radio {:value "no"} "无"]
+            [antd/radio {:value "yes"} "有"]]]]
+         (when (= (get-in summary-data [:habits :smoking :has]) "yes")
+           [:<>
+            [antd/col
+             [antd/form-item {:name [:habits :smoking :years] :label "吸烟"}
+              [antd/input-number {:value (get-in summary-data [:habits :smoking :years])
+                                  :min 0
+                                  :addonAfter "年"
+                                  :style {:width "100px"}
+                                  :onChange #(rf/dispatch [::events/update-medical-summary-field [:habits :smoking :years] %])}]]]
+            [antd/col
+             [antd/form-item {:name [:habits :smoking :per-day] :label "每天"}
+              [antd/input-number {:value (get-in summary-data [:habits :smoking :per-day])
+                                  :min 0
+                                  :addonAfter "支"
+                                  :style {:width "100px"}
+                                  :onChange #(rf/dispatch [::events/update-medical-summary-field [:habits :smoking :per-day] %])}]]]] )]
+        ;; 饮酒史
+        [antd/row {:gutter 16 :align "bottom" :style {:marginTop "8px"}}
+         [antd/col {:span 24}
+          [antd/form-item {:name [:habits :drinking :has] :label "饮酒史：" :label-col {:span 24} :wrapper-col {:span 24} :style {:marginBottom "8px"}}
+           [antd/radio-group {:value (get-in summary-data [:habits :drinking :has])
+                              :onChange #(rf/dispatch [::events/update-medical-summary-field [:habits :drinking :has] (-> % .-target .-value)])}
+            [antd/radio {:value "no"} "无"]
+            [antd/radio {:value "yes"} "有"]]]]
+         (when (= (get-in summary-data [:habits :drinking :has]) "yes")
+           [:<>
+            [antd/col
+             [antd/form-item {:name [:habits :drinking :years] :label "饮酒"}
+              [antd/input-number {:value (get-in summary-data [:habits :drinking :years])
+                                  :min 0
+                                  :addonAfter "年"
+                                  :style {:width "100px"}
+                                  :onChange #(rf/dispatch [::events/update-medical-summary-field [:habits :drinking :years] %])}]]]
+            [antd/col
+             [antd/form-item {:name [:habits :drinking :per-day] :label "每天"}
+              [antd/input-number {:value (get-in summary-data [:habits :drinking :per-day])
+                                  :min 0
+                                  :addonAfter "ml"
+                                  :style {:width "100px"}
+                                  :onChange #(rf/dispatch [::events/update-medical-summary-field [:habits :drinking :per-day] %])}]]]] )]]]]
+
+
+     ;; 第二部分：体格检查 (心脏、肺脏等)
+     ;; 使用一个辅助函数来创建这些重复的条目
+     (letfn [(physical-exam-item [field-key label-text]
+               (let [path [:physical-exam field-key]
+                     status-path (conj path :status)
+                     notes-path (conj path :notes)
+                     current-status (get-in summary-data status-path "normal")]
+                 [:> Descriptions.Item {:label label-text}
+                  [antd/form-item {:name status-path :style {:marginBottom "8px"}}
+                   [antd/radio-group {:value current-status
+                                      :onChange #(rf/dispatch [::events/update-medical-summary-field status-path (-> % .-target .-value)])}
+                    [antd/radio {:value "normal"} "正常"]
+                    [antd/radio {:value "abnormal"} "异常"]]]
+                  (when (= current-status "abnormal")
+                    [antd/form-item {:name notes-path}
+                     [antd/input {:value (get-in summary-data notes-path)
+                                  :placeholder "请补充异常描述"
+                                  :onChange #(rf/dispatch [::events/update-medical-summary-field notes-path (-> % .-target .-value)])}]])]))]
+       ;; 体格检查项 - 每行两个
+       ;; 需要手动将它们配对放入 Descriptions.Item 中，或者调整 Descriptions 的 column 设置
+       ;; 这里为了简单，我们每项单独一行，若要严格按截图，需要更复杂的布局或调整 Descriptions
+       ;; 为了模仿截图的左右两栏，我们可以用 Row/Col 或者嵌套 Descriptions
+       ;; 这里我们用 Descriptions column={2}
+       ;; (为了简洁，下面先按单列写，后续可优化为多列)
+       ;; 更新：参照截图，用 Descriptions column=2 结构
+       (let [physical-exam-fields [[:heart "3.13 心脏"] [:lungs "3.14 肺脏"]
+                                   [:airway "3.15 气道"] [:teeth "3.16 牙齿"]
+                                   [:spine-limbs "3.17 脊柱四肢"] [:neuro "3.18 神经"]]]
+         (for [pair (partition 2 physical-exam-fields)]
+           [:> Descriptions {:bordered false :column 2 :style {:marginBottom "-1px"} :labelStyle {:width "100px"}} ; 内嵌 descriptions
+            (physical-exam-item (first (first pair)) (second (first pair)))
+            (physical-exam-item (first (second pair)) (second (second pair)))])))
+
+
+     ;; 第三部分：相关辅助检查检验结果
+     [:> Descriptions.Item {:label [:div {:style {:fontWeight "500"}} "相关辅助检查检验结果"]}
+      [:div
+       [:h4 {:style {:marginBottom "12px" :fontSize "14px" :fontWeight "bold"}}
+        [:i {:class "fas fa-file-medical" :style {:marginRight "8px" :color "#1890ff"}}] "检查报告"]
+       [antd/row {:gutter 16 :align "middle" :style {:marginBottom "8px"}}
+        [antd/col [:span "肺功能："]
+         [antd/upload {:name [:aux-exams :pulmonary-function-files]
+                       ;; :fileList (get-in summary-data [:aux-exams :pulmonary-function-files])
+                       :beforeUpload (fn [_] false) ; 阻止自动上传，手动处理
+                       :onChange (fn [info] (rf/dispatch [::events/handle-file-upload [:aux-exams :pulmonary-function-files] info]))}
+          [antd/button {:icon (r/as-element [:> UploadOutlined])} "上传附件"]]]
+        [antd/col [:span "心脏彩超："]
+         [antd/upload {:name [:aux-exams :cardiac-echo-files]
+                       :beforeUpload (fn [_] false)
+                       :onChange (fn [info] (rf/dispatch [::events/handle-file-upload [:aux-exams :cardiac-echo-files] info]))}
+          [antd/button {:icon (r/as-element [:> UploadOutlined])} "上传附件"]]]
+        [antd/col [:span "心电图："]
+         [antd/upload {:name [:aux-exams :ecg-files]
+                       :beforeUpload (fn [_] false)
+                       :onChange (fn [info] (rf/dispatch [::events/handle-file-upload [:aux-exams :ecg-files] info]))}
+          [antd/button {:icon (r/as-element [:> UploadOutlined])} "上传附件"]]]]
+       ;; 文件列表显示 (示例，具体实现依赖 ::events/handle-file-upload 和数据结构)
+       (let [files (get-in summary-data [:aux-exams :ecg-files] [])] ; 示例仅显示心电图文件
+         (when (seq files)
+           [:div {:class "ant-upload-list ant-upload-list-text" :style {:marginTop "8px"}}
+            (for [file files]
+              ^{:key (:uid file)}
+              [:div {:class "ant-upload-list-item ant-upload-list-item-done"}
+               [:div {:class "ant-upload-list-item-info"}
+                [:span {:class "ant-upload-span"}
+                 [:> PaperClipOutlined {:style {:marginRight "8px" :color "#1890ff"}}]
+                 [:a {:href (:url file) :target "_blank" :rel "noopener noreferrer" :class "ant-upload-list-item-name" :title (:name file)} (:name file)]
+                 [:span {:class "ant-upload-list-item-card-actions"}
+                  [:> Tooltip {:title "预览文件"}
+                   [:button {:type "button" :class "ant-btn ant-btn-text ant-btn-sm ant-btn-icon-only"
+                             :onClick #(js/window.open (:url file) "_blank")}
+                    [:> EyeOutlined]]]
+                  [:> Tooltip {:title "删除文件"}
+                   [:button {:type "button" :class "ant-btn ant-btn-text ant-btn-sm ant-btn-icon-only"
+                             :onClick #(rf/dispatch [::events/remove-uploaded-file [:aux-exams :ecg-files] (:uid file)])}
+                    [:> DeleteOutlined]]]]]]])]))]]
+
+
+     ;; 第四部分：ASA分级和心功能分级
+     ;; 为了实现截图的两列效果，这里可以包裹在一个 Descriptions.Item 中，内部使用 Row/Col
+     [:> Descriptions.Item {:label nil :span 1} ;; 占满整行，移除外部 label
+      [antd/row {:gutter 16}
+       [antd/col {:span 12}
+        [antd/form-item {:label "ASA分级" :name :asa-grade :label-col {:span 6} :wrapper-col {:span 18}}
+         [antd/select {:value (:asa-grade summary-data)
+                       :style {:width "100%"}
+                       :placeholder "请选择ASA分级"
+                       :options (for [i (range 1 7)] {:value (str "ASA " (utils/to-roman i) "级") :label (str "ASA " (utils/to-roman i) "级")})
+                       :onChange #(rf/dispatch [::events/update-medical-summary-field :asa-grade %])}]]]
+       [antd/col {:span 12}
+        [antd/form-item {:label "心功能分级(NYHA)" :name :nyha-grade :label-col {:span 10} :wrapper-col {:span 14}}
+         [antd/select {:value (:nyha-grade summary-data)
+                       :style {:width "100%"}
+                       :placeholder "请选择NYHA分级"
+                       :options (for [i (range 1 5)] {:value (str "NYHA " (utils/to-roman i) "级") :label (str "NYHA " (utils/to-roman i) "级")})
+                       :onChange #(rf/dispatch [::events/update-medical-summary-field :nyha-grade %])}]]]]]
+
+
+     ;; 第五部分：拟行麻醉方案和监测项目
+     [:> Descriptions.Item {:label nil :span 1}
+      [antd/row {:gutter 16}
+       [antd/col {:span 12}
+        [antd/form-item {:label "拟行麻醉方案" :name :anesthesia-plan :label-col {:span 6} :wrapper-col {:span 18}}
+         [antd/select {:mode "tags"
+                       :value (:anesthesia-plan summary-data)
+                       :style {:width "100%"}
+                       :placeholder "请选择或输入麻醉方案"
+                       :options (->> ["全身麻醉" "气管插管" "静脉复合麻醉" "椎管内麻醉" "神经阻滞"]
+                                     (map (fn [item] {:value item :label item})))
+                       :onChange #(rf/dispatch [::events/update-medical-summary-field :anesthesia-plan %])}]]]
+       [antd/col {:span 12}
+        [antd/form-item {:label "监测项目" :name :monitoring-items :label-col {:span 6} :wrapper-col {:span 18}}
+         [antd/select {:mode "tags"
+                       :value (:monitoring-items summary-data)
+                       :style {:width "100%"}
+                       :placeholder "请选择或输入监测项目"
+                       :options (->> ["常规监测" "有创动脉压" "中心静脉压" "麻醉深度监测" "肌松监测"]
+                                     (map (fn [item] {:value item :label item})))
+                       :onChange #(rf/dispatch [::events/update-medical-summary-field :monitoring-items %])}]]]]]
+
+
+     ;; 第六部分：特殊技术
+     [:> Descriptions.Item {:label "特殊技术"}
+      [antd/form-item {:name :special-techniques :style {:marginBottom 0}}
+       [antd/input {:value (:special-techniques summary-data)
+                    :placeholder "如有特殊技术要求请在此注明"
+                    :onChange #(rf/dispatch [::events/update-medical-summary-field :special-techniques (-> % .-target .-value)])}]]]]))
 
 ;; 辅助函数，用于显示术前麻醉医嘱
 (defn- preoperative-orders []
