@@ -13,7 +13,6 @@
             ["antd" :refer [Collapse
                             Form  Descriptions Empty Affix Tooltip Button Input Select]]))
 
-(def collapse-panel (r/adapt-react-class (.-Panel Collapse)))
 
 (defn patient-list-filters []
   (let [search-term @(rf/subscribe [::subs/search-term])
@@ -100,129 +99,6 @@
    [patient-list-filters]
    [patient-list]])
 
-(defn brief-medical-history []
-  (let [medical-history @(rf/subscribe [::subs/doctor-form-brief-medical-history])
-        [form] ((.-useForm Form))]
-    (when medical-history               ; 确保数据存在才渲染表单
-      [antd/form {:form form
-                  :layout "vertical"
-                  :initialValues medical-history
-                  :onValuesChange (fn [_changed-values all-values]
-                                    (rf/dispatch [::events/update-brief-medical-history all-values]))
-                  :style {:paddingBottom "24px"}}
-
-       ;; 既往史
-       [form-comp/yes-no-with-description
-        {:form form :label "既往史" :name-yes-no [:past-history :yes-no] :name-description [:past-history :description]}]
-       ;; 过敏史
-       [form-comp/yes-no-with-description
-        {:form form :label "过敏史" :name-yes-no [:allergic-history :yes-no] :name-description [:allergic-history :description]}]
-       ;; 手术麻醉史
-       [form-comp/yes-no-with-description
-        {:form form :label "手术麻醉史" :name-yes-no [:surgery-anesthesia-history :yes-no] :name-description [:surgery-anesthesia-history :description]}]
-       ;; 怀孕
-       [form-comp/yes-no-with-description
-        {:form form :label "怀孕" :name-yes-no [:pregnancy :yes-no] :name-description [:pregnancy :description]}]
-       ;; 输血史
-       [form-comp/yes-no-with-description
-        {:form form :label "输血史" :name-yes-no [:blood-transfusion-history :yes-no] :name-description [:blood-transfusion-history :description]}]
-       ;; 月经期
-       [form-comp/yes-no-with-description
-        {:form form :label "月经期" :name-yes-no [:menstrual-period :yes-no] :name-description [:menstrual-period :description]}]
-
-       ;; 个人史 (Personal History) - Checkbox Group
-       [antd/form-item {:name :personal-history
-                        :label "个人史:"}
-        [antd/checkbox-group {}
-         [antd/checkbox {:value "smoke"} "烟"]
-         [antd/checkbox {:value "drink"} "酒"]]]
-
-       ;; 其他 (Other)
-       [form-comp/checkbox-with-conditional-input
-        {:form form :label "其他" :name-checkbox [:other :checkbox] :name-input [:other :description]
-         :checkbox-label "有其他情况需要说明" :input-placeholder "请描述其他情况详情"}]])))
-
-
-(defn physical-examination []
-  (let [exam-data @(rf/subscribe [::subs/doctor-form-physical-examination])
-        [form] ((.-useForm Form))]
-    (when exam-data
-      [antd/form {:form form :layout "horizontal"
-                  :labelCol {:span 6 :style {:textAlign "left"}}
-                  :wrapperCol {:span 18}
-                  :style {:paddingBottom "24px" :maxWidth "800px" :marginLeft "0"}
-                  :initialValues exam-data
-                  :onValuesChange (fn [_ all-values] (rf/dispatch [::events/update-physical-examination all-values]))}
-
-       [form-comp/radio-button-group
-        {:label "一般状况" :name :general-condition
-         :options [{:value "bad" :label "差"} {:value "fair" :label "尚可"} {:value "average" :label "一般"} {:value "good" :label "好"}]}]
-       [antd/row {:gutter 16}
-        [antd/col {:span 12} [antd/form-item {:name :height :label "身高"} [form-comp/number-input-with-unit {:unit "cm"}]]]
-        [antd/col {:span 12} [antd/form-item {:name :weight :label "体重"} [form-comp/number-input-with-unit {:unit "kg"}]]]]
-       [antd/form-item {:label "BP:"}
-        [Input.Group {:compact true}
-         [antd/form-item {:name [:bp :systolic] :noStyle true} [antd/input {:style {:width "80px"} :type "number"}]]
-         [:span {:style {:display "inline-block" :width "30px" :lineHeight "32px" :textAlign "center"}} "/"]
-         [antd/form-item {:name [:bp :diastolic] :noStyle true} [antd/input {:style {:width "80px"} :type "number"}]]
-         [:span {:style {:marginLeft "8px"}} "mmHg"]]]
-       [antd/row {:gutter 16}
-        [antd/col {:span 12} [antd/form-item {:name :heart-rate :label "PR"} [form-comp/number-input-with-unit {:unit "次/分"}]]]
-        [antd/col {:span 12} [antd/form-item {:name :respiratory-rate :label "RR"} [form-comp/number-input-with-unit {:unit "次/分"}]]]]
-       [antd/form-item {:name :temperature :label "T"} [form-comp/number-input-with-unit {:step "0.1" :unit "°C"}]]
-       [form-comp/radio-button-group
-        {:label "精神行为" :name :mental-state
-         :options [{:value "normal" :label "正常"} {:value "drowsy" :label "嗜睡"} {:value "coma" :label "昏迷"} {:value "irritable" :label "烦躁"} {:value "delirium" :label "谵妄"} {:value "cognitive" :label "认知障碍"}]}]
-       [form-comp/radio-button-group
-        {:label "头颈部" :name :head-neck
-         :options [{:value "normal" :label "无异常"} {:value "scar" :label "疤痕"} {:value "short_neck" :label "颈短"} {:value "neck_mass" :label "颈部肿块"} {:value "limited_mobility" :label "后仰困难"}]}]
-       [antd/form-item {:name :mouth-opening :label "口腔: 张口"} [form-comp/number-input-with-unit {:step "0.1" :unit "cm"}]]
-       [antd/row {:gutter 16}
-        [antd/col {:span 12}
-         [antd/form-item {:name :mallampati-score :label "Mallampati"}
-          [form-comp/radio-button-group {:name :mallampati-score :options [{:value "I" :label "I"} {:value "II" :label "II"} {:value "III" :label "III"} {:value "IV" :label "IV"}]}]]]
-        [antd/col {:span 12} [antd/form-item {:name :thyromental-distance :label "颏颌距离"} [form-comp/number-input-with-unit {:step "0.1" :unit "cm"}]]]]
-       [antd/form-item {:label "相关病史:"}
-        [antd/space {:direction "vertical"}
-         [antd/form-item {:name [:related-history :difficult-airway] :valuePropName "checked" :noStyle true} [antd/checkbox "困难气道史"]]
-         [antd/form-item {:name [:related-history :postoperative-nausea] :valuePropName "checked" :noStyle true} [antd/checkbox "术后恶心呕吐史"]]
-         [antd/form-item {:name [:related-history :malignant-hyperthermia] :valuePropName "checked" :noStyle true} [antd/checkbox "恶性高热史"]]
-         [form-comp/checkbox-with-conditional-input {:form form :name-checkbox [:related-history :other-checkbox] :name-input [:related-history :other] :checkbox-label "其他" :input-placeholder "请输入其他相关病史"}]]]
-       [form-comp/radio-button-group
-        {:label "胸" :name :chest
-         :options [{:value "normal" :label "正常"} {:value "barrel" :label "桶状胸"} {:value "pectus_excavatum" :label "佝偻胸"}]}]])))
-
-(defn lab-tests []
-  (let [lab-data @(rf/subscribe [::subs/doctor-form-lab-tests])
-        [form] ((.-useForm Form))]
-    (when lab-data
-      [antd/form {:form form :layout "vertical" :initialValues lab-data
-                  :onValuesChange (fn [_ all-values] (rf/dispatch [::events/update-lab-tests all-values]))
-                  :style {:paddingBottom "24px"}}
-       [form-comp/section-title {:title "血常规：" :margin-top "0"}]
-       [form-comp/two-column-row
-        {:left-item [form-comp/number-input-with-unit {:label "HGB" :name [:complete-blood-count :hemoglobin] :unit "g/L"}] ; HGB not RBC
-         :right-item [form-comp/number-input-with-unit {:label "Hct" :name [:complete-blood-count :hematocrit] :step "0.01" :unit "%"}]}]
-       [form-comp/two-column-row
-        {:left-item [form-comp/number-input-with-unit {:label "PLT" :name [:complete-blood-count :platelets] :unit "×10⁹/L"}]
-         :right-item [form-comp/number-input-with-unit {:label "WBC" :name [:complete-blood-count :wbc] :step "0.1" :unit "×10⁹/L"}]}]
-       [form-comp/two-column-row
-        {:left-item [form-comp/radio-button-group {:label "血型" :name :blood-type :options [{:value "A" :label "A"} {:value "B" :label "B"} {:value "AB" :label "AB"} {:value "O" :label "O"}]}]
-         :right-item [form-comp/radio-button-group {:label "Rh" :name :rh :options [{:value "negative" :label "阴性"} {:value "positive" :label "阳性"}]}]}]
-       [form-comp/two-column-row
-        {:left-item [form-comp/radio-button-group {:label "凝血检查" :name :coagulation :options [{:value "normal" :label "正常"} {:value "abnormal" :label "异常"}]}]
-         :right-item [form-comp/number-input-with-unit {:label "血糖值" :name [:biochemistry :glucose] :step "0.1" :unit "mmol/L"}]}]
-       [form-comp/section-title {:title "生化指标："}]
-       [form-comp/two-column-row
-        {:left-item [form-comp/number-input-with-unit {:label "ALT" :name [:biochemistry :alt] :unit "U/L"}]
-         :right-item [form-comp/number-input-with-unit {:label "AST" :name [:biochemistry :ast] :unit "U/L"}]}]
-       [form-comp/two-column-row
-        {:left-item [form-comp/number-input-with-unit {:label "钠" :name [:biochemistry :sodium] :unit "mmol/L"}]
-         :right-item [form-comp/number-input-with-unit {:label "钾" :name [:biochemistry :potassium] :step "0.1" :unit "mmol/L"}]}]
-       [form-comp/section-title {:title "医学影像："}]
-       [form-comp/limited-text-input {:name :ecg :label "心电图" :placeholder "请输入心电图检查结果"}]
-       [form-comp/limited-text-input {:name :chest-xray :label "胸片" :placeholder "请输入胸片检查结果"}]])))
-
 
 ;; 辅助函数，用于显示患者基本信息
 (defn- patient-info-display []
@@ -259,26 +135,7 @@
 
 
 (defn- medical-summary-display []
-  (let [current-patient-id @(rf/subscribe [::subs/current-patient-id])]
-    (if current-patient-id
-      [:div
-       [:> Collapse {:defaultActiveKey ["1"] :accordion false} ; accordion false 允许多个展开
-        [collapse-panel {:header "简要病史" :key "1"}
-         [:f> brief-medical-history]]
-        [collapse-panel {:header "体格检查" :key "2"}
-         [:f> physical-examination]]
-        [collapse-panel {:header "实验室检查" :key "3"}
-         [:f> lab-tests]]
-        [collapse-panel {:header "麻醉计划摘要" :key "4"}
-         (let [plan-details @(rf/subscribe [::subs/anesthesia-plan-details])]
-           (if (seq plan-details)
-             [:> Descriptions {:bordered true :column 1 :size "small"}
-              [:> Descriptions.Item {:label "ASA分级"} (utils/display-value (get-in plan-details [:risk-assessment :asa-grade]))]
-              [:> Descriptions.Item {:label "拟行麻醉方案"} (utils/display-value (:anesthesia-type plan-details))]
-              [:> Descriptions.Item {:label "监测项目"} (utils/display-list (get-in plan-details [:monitoring :items]))]
-              [:> Descriptions.Item {:label "特殊技术"} (utils/display-list (:special-considerations plan-details))]]
-             [:> Empty {:description "暂无麻醉计划摘要"}]))]]]
-      [:> Empty {:description "请先选择一位患者以查看病情摘要" :style {:paddingTop "20px"}}])))
+  )
 
 
 ;; 辅助函数，用于显示术前麻醉医嘱
@@ -314,11 +171,11 @@
   (let [current-patient-id @(rf/subscribe [::subs/current-patient-id])]
     [antd/card {:title "麻醉评估总览"
                 :variant "borderless"
-                :style {:height "calc(100vh - 120px)" ; 调整高度以适应顶部栏和底部按钮
+                :style {
                         :overflowY "auto"
                         :padding "0 8px"}}
      (if current-patient-id
-       [:<>
+       [:div {:style {:overflowY "auto" :height "100%"}}
         [antd/card {:title (r/as-element [:span [:> icons/UserOutlined {:style {:marginRight "8px"}}] "患者信息"])
                     :type "inner" :style {:marginBottom "12px"}}
          [patient-info-display]]
@@ -370,5 +227,5 @@
      [patient-list-panel]]]
 
    ;; 右侧评估详情区域
-   [:div {:style {:flexGrow 1 :height "calc(100vh - 64px)" :overflowY "auto" :background "#f0f2f5" :padding "10px"}}
+   [:div {:style {:flexGrow 1 :background "#f0f2f5" :padding "10px"}}
     [assessment-result]]])
