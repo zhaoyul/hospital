@@ -606,31 +606,31 @@
        ;; 评估内容区域 - 可滚动
        [:div {:style {:flexGrow 1 :overflowY "auto" :padding "0 8px"}}
         [:> Card {:title "麻醉评估总览"
-                    :variant "borderless"
-                    :style {:marginBottom "12px"}}
+                  :variant "borderless"
+                  :style {:marginBottom "12px"}}
          [:div
           [:> Card {:title (r/as-element [:span [:> icons/UserOutlined {:style {:marginRight "8px"}}] "患者信息"])
-                      :type "inner" :style {:marginBottom "12px"}}
+                    :type "inner" :style {:marginBottom "12px"}}
            [patient-info]]
 
           [:> Card {:title (r/as-element [:span [:> icons/HeartOutlined {:style {:marginRight "8px"}}] "一般情况"])
-                      :type "inner" :style {:marginBottom "12px"}}
+                    :type "inner" :style {:marginBottom "12px"}}
            [general-condition]]
 
           [:> Card {:title (r/as-element [:span [:> icons/FileTextOutlined {:style {:marginRight "8px"}}] "病情摘要（病史、体检及辅助检查）"])
-                      :type "inner" :style {:marginBottom "12px"}}
+                    :type "inner" :style {:marginBottom "12px"}}
            [medical-summary]]
 
           [:> Card {:title (r/as-element [:span [:> icons/ExperimentOutlined {:style {:marginRight "8px"}}] "术前麻醉医嘱"])
-                      :type "inner" :style {:marginBottom "12px"}}
+                    :type "inner" :style {:marginBottom "12px"}}
            [preoperative-orders]]
 
           [:> Card {:title (r/as-element [:span [:> icons/EditOutlined {:style {:marginRight "8px"}}] "麻醉医师签名及日期"])
-                      :type "inner" :style {:marginBottom "12px"}}
+                    :type "inner" :style {:marginBottom "12px"}}
            [signature-and-date]]
 
           [:> Card {:title (r/as-element [:span [:> icons/MessageOutlined {:style {:marginRight "8px"}}] "备注信息"])
-                      :type "inner" :style {:marginBottom "44px"}}
+                    :type "inner" :style {:marginBottom "44px"}}
            [remarks]]]]]
 
        ;; 固定在底部的保存按钮区域
@@ -648,7 +648,7 @@
 
       ;; 无选择患者时的空状态
       [:div {:style {:display "flex" :justifyContent "center" :alignItems "center" :height "100%"}}
-       [:> Empty {:description "请从左侧选择一位患者开始评估" :imageStyle {:height 80}}]])))
+       [:> Empty {:description "请从左侧选择一位患者开始评估"}]])))
 
 (defn anesthesia-content []
   [:> Layout.Content {:style {:padding "0" :margin 0 :minHeight 280 :overflow "hidden" :display "flex" :flexDirection "row"}}
@@ -660,7 +660,7 @@
                      :display "flex"
                      :flexDirection "column"
                      :padding "0"}
-             :bodyStyle {:padding "0" :flexGrow 1 :overflow "hidden" :display "flex" :flexDirection "column"}}
+             }
 
     ;; 患者列表主体
     [:div {:style {:flexGrow 1 :overflowY "auto"}}
