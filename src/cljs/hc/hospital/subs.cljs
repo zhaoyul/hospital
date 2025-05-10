@@ -17,7 +17,7 @@
 (rf/reg-sub
  ::active-tab
  (fn [db _]
-   (get-in db [:anesthesia :active-tab] "patients")))
+   (get-in db [:active-tab] "patients")))
 
 (rf/reg-sub
  ::search-term
@@ -150,3 +150,18 @@
  (fn [anesthesia-plan _]
    (when anesthesia-plan
      (:notes anesthesia-plan))))
+
+(rf/reg-sub
+ ::doctors
+ (fn [db _]
+   (get db :doctors []))) ; Default to empty vector if not present
+
+(rf/reg-sub
+ ::doctor-modal-visible?
+ (fn [db _]
+   (get db :doctor-modal-visible? false))) ; Default to false
+
+(rf/reg-sub
+ ::editing-doctor
+ (fn [db _]
+   (get db :editing-doctor {}))) ; Default to empty map

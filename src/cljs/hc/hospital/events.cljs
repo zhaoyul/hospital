@@ -3,7 +3,7 @@
             [day8.re-frame.http-fx]
             [hc.hospital.db :as app-db]
             [ajax.core :as ajax]
-            [taoensso.timbre :as timbre]))
+            [taoensso.timbre :as timbre])) ; Assuming you have a db.cljs for initial app state
 
 ;; -- Initialization
 (rf/reg-event-db
@@ -69,37 +69,26 @@
 
 
 ;; --- Updating Assessment Data from Doctor's Forms ---
-(rf/reg-event-db
- ::update-brief-medical-history
- (fn [db [_ form-values]]
-   (assoc-in db [:anesthesia :assessment :brief-medical-history] form-values)))
+(rf/reg-event-db ::update-brief-medical-history
+  (fn [db [_ form-values]]
+    (assoc-in db [:anesthesia :assessment :brief-medical-history] form-values)))
 
-(rf/reg-event-db
- ::update-physical-examination
- (fn [db [_ form-values]]
-   (assoc-in db [:anesthesia :assessment :physical-examination] form-values)))
+(rf/reg-event-db ::update-physical-examination
+  (fn [db [_ form-values]]
+    (assoc-in db [:anesthesia :assessment :physical-examination] form-values)))
 
-(rf/reg-event-db
- ::update-lab-tests
- (fn [db [_ form-values]]
-   (assoc-in db [:anesthesia :assessment :lab-tests] form-values)))
+(rf/reg-event-db ::update-lab-tests
+  (fn [db [_ form-values]]
+    (assoc-in db [:anesthesia :assessment :lab-tests] form-values)))
 
-(rf/reg-event-db
- ::update-assessment-notes
- (fn [db [_ notes-text]]
-   (assoc-in db [:anesthesia :assessment :anesthesia-plan :notes] notes-text)))
+(rf/reg-event-db ::update-assessment-notes
+  (fn [db [_ notes-text]]
+    (assoc-in db [:anesthesia :assessment :anesthesia-plan :notes] notes-text)))
 
 
-;; --- Patient List Filters and Actions ---
-(rf/reg-event-db
- ::set-active-tab
- (fn [db [_ tab]]
-   (assoc-in db [:anesthesia :active-tab] tab)))
-
-(rf/reg-event-db
- ::update-search-term
- (fn [db [_ term]]
-   (assoc-in db [:anesthesia :search-term] term)))
+(rf/reg-event-db ::update-search-term
+  (fn [db [_ term]]
+    (assoc-in db [:anesthesia :search-term] term)))
 
 (rf/reg-event-db
  ::set-date-range
@@ -107,30 +96,26 @@
    ;; range-values 是 Ant Design RangePicker 返回的 [moment, moment] 数组或 nil
    (assoc-in db [:anesthesia :date-range] range-values)))
 
-(rf/reg-event-db
- ::set-assessment-status-filter
- (fn [db [_ status]]
-   (assoc-in db [:anesthesia :assessment-status-filter] status)))
+(rf/reg-event-db ::set-assessment-status-filter
+  (fn [db [_ status]]
+    (assoc-in db [:anesthesia :assessment-status-filter] status)))
 
-(rf/reg-event-fx
- ::sync-applications
- (fn [_ _]
-   (js/alert "正在从HIS系统同步患者列表数据...")
-   {})) ; no db change, just side effect
+(rf/reg-event-fx ::sync-applications
+  (fn [_ _]
+    (js/alert "正在从HIS系统同步患者列表数据...")
+    {})) ; no db change, just side effect
 
-(rf/reg-event-fx
- ::scan-check-in
- (fn [_ _]
-   (js/alert "请将患者二维码对准扫描设备")
-   {}))
+(rf/reg-event-fx ::scan-check-in
+  (fn [_ _]
+    (js/alert "请将患者二维码对准扫描设备")
+    {}))
 
 ;; 这个事件由 input-search 的 onSearch 触发，可以与 update-search-term 合并
 ;; 或者用于显式的API搜索（如果后端支持）
-(rf/reg-event-db
- ::search-patients
- (fn [db [_ term]]
-   (timbre/info "显式搜索患者:" term)
-   (assoc-in db [:anesthesia :search-term] term))) ; 简单地更新搜索词
+(rf/reg-event-db ::search-patients
+  (fn [db [_ term]]
+    (timbre/info "显式搜索患者:" term)
+    (assoc-in db [:anesthesia :search-term] term))) ; 简单地更新搜索词
 
 ;; --- Assessment Actions ---
 (rf/reg-event-fx ::approve-patient (fn [{:keys [db]} _] (js/alert (str "批准患者: " (get-in db [:anesthesia :current-patient-id]))) {}))
@@ -165,7 +150,7 @@
  (fn [db [_ response]]
    (timbre/info "评估保存成功:" response)
    ;; 可能需要更新患者列表中的状态或重新获取数据
-   (rf/dispatch [::fetch-all-assessments]) ; 例如，保存后刷新列表
+   (rf/dispatch [:fetch-all-assessments]) ; 例如，保存后刷新列表
    db))
 
 (rf/reg-event-db
@@ -192,3 +177,61 @@
  (fn [db [_ field-path new-value]]
    ;; field-path 可以是一个 keyword 或者一个 vector (用于嵌套数据)
    (assoc-in db [:editing-patient-info field-path] new-value)))
+
+;; Initialize with some mock doctor data or load from db
+(rf/reg-event-db
+ ::initialize-doctors
+ (fn [db _]
+   (if (empty? (get-in db [:doctors])) ; Only initialize if not already populated
+     (assoc db :doctors [{:name "马志明" :username "mazhiming" :role "麻醉医生" :signature nil}
+                         {:name "李主任" :username "lizhur" :role "主任" :signature nil}
+                         {:name "王护士" :username "wanghs" :role "护士" :signature nil}])
+     db)))
+
+(rf/reg-event-db ::set-active-tab
+                 (fn [db [_ tab]]
+                   (assoc db :active-tab tab)))
+
+(rf/reg-event-db
+ ::open-doctor-modal
+ (fn [db [_ doctor-data]]
+   (assoc db
+          :doctor-modal-visible? true
+          :editing-doctor (or doctor-data {})))) ; Initialize with empty map if new doctor
+
+(rf/reg-event-db
+ ::close-doctor-modal
+ (fn [db _]
+   (assoc db
+          :doctor-modal-visible? false
+          :editing-doctor nil))) ; Clear editing doctor on close
+
+(rf/reg-event-db
+ ::update-editing-doctor-field
+ (fn [db [_ field value]]
+   (assoc-in db [:editing-doctor field] value)))
+
+(rf/reg-event-db
+ ::save-doctor
+ (fn [db [_ form-values]]
+   (let [editing-doctor (get db :editing-doctor {}) ; Default to empty map
+         doctors (get db :doctors [])
+         doctor-to-save (merge editing-doctor form-values)
+         is-editing (and (:username editing-doctor)
+                         (some #(= (:username editing-doctor) (:username %)) doctors))]
+     (if is-editing
+       (assoc db :doctors (mapv (fn [doc]
+                                  (if (= (:username doc) (:username doctor-to-save))
+                                    doctor-to-save
+                                    doc))
+                                doctors)
+              :doctor-modal-visible? false ::editing-doctor nil)
+       (-> db
+           (assoc :doctors (conj doctors doctor-to-save))
+           (assoc :doctor-modal-visible? false ::editing-doctor nil))))))
+
+
+(rf/reg-event-db
+ ::delete-doctor
+ (fn [db [_ username]]
+   (update db :doctors (fn [doctors] (vec (remove #(= username (:username %)) doctors))))))
