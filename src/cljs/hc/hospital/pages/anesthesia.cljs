@@ -291,7 +291,7 @@
 (defn- medical-summary []
   (let [summary-data @(rf/subscribe [::subs/medical-summary-data])] ; 假设订阅 medical-summary-data
     [:> Form {:layout "vertical" :initialValues summary-data}
-     [:> Descriptions {:bordered true :column 1 :labelStyle {:width "180px" :verticalAlign "top" :background "#fafafa"}}
+     [:> Descriptions {:bordered true :column 1 }
       ;; 第一部分：过敏史和生活习惯
       [:> Descriptions.Item {:label (r/as-element
                                      [:div {:style {:fontWeight "500"}}
@@ -408,7 +408,8 @@
                                    [:airway "3.15 气道"] [:teeth "3.16 牙齿"]
                                    [:spine-limbs "3.17 脊柱四肢"] [:neuro "3.18 神经"]]]
          (for [pair (partition 2 physical-exam-fields)]
-           [:> Descriptions {:bordered false :column 2 :style {:marginBottom "-1px"} :labelStyle {:width "100px"}} ; 内嵌 descriptions
+           ^{:key (first (first pair))}
+           [:> Descriptions {:bordered false :column 2 :style {:marginBottom "-1px"}} ; 内嵌 descriptions
             (physical-exam-item (first (first pair)) (second (first pair)))
             (physical-exam-item (first (second pair)) (second (second pair)))])))
 
