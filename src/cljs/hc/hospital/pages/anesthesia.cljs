@@ -6,6 +6,7 @@
             [hc.hospital.subs :as subs]
             [hc.hospital.components.antd :as antd]
             [taoensso.timbre :as timbre]
+            ["@ant-design/icons" :as icons]
             [hc.hospital.components.form-components :as form-comp]
             ["antd" :refer [Form]]))
 
@@ -24,7 +25,7 @@
                       :cursor "pointer"}
               :onClick #(rf/dispatch [::events/select-patient (:key item)])}
         [:div {:style {:display "flex" :alignItems "center"}}
-         [antd/user-outlined {:style {:marginRight "8px"}}]
+         [:> icons/UserOutlined {:style {:marginRight "8px"}}]
          [:div
           [:div {:style {:fontWeight "bold"}} (:name item)]
           [:div {:style {:fontSize "12px" :color "gray"}}
@@ -391,7 +392,7 @@
                           :onChange #(rf/dispatch [::events/update-search-term (.. % -target -value)])
                           :onSearch #(rf/dispatch [::events/search-patients %])
                           :style {:width 300 :marginRight 8}}]
-      [antd/button {:icon (r/as-element [antd/filter-outlined])}]]
+      [antd/button {:icon (r/as-element [:> icons/FilterOutlined])}]]
      [:div {:style {:display "flex" :alignItems "center"}}
       [antd/text {:style {:marginRight 8}} "患者登记:"]
       [antd/input {:placeholder "请输入患者住院号/门诊号或扫描登记患者"

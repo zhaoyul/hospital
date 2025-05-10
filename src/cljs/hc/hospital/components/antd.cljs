@@ -2,8 +2,7 @@
   (:require [reagent.core :as r]
             ["antd" :refer [Layout Menu DatePicker Input InputGroup Button
                             Switch Space Select Steps Alert Result Upload Avatar
-                            Tabs Row Col Card Form Radio Checkbox InputNumber Typography Tag Divider]]
-            ["@ant-design/icons" :as icons]))
+                            Tabs Row Col Card Form Radio Checkbox InputNumber Typography Tag Divider]]))
 
 ;; Layout Components
 (def layout (r/adapt-react-class Layout))
@@ -59,9 +58,3 @@
 ;; Grid Components
 (def row (r/adapt-react-class Row))
 (def col (r/adapt-react-class Col))
-
-;; Icons (Example - add more as needed)
-(def user-outlined (r/adapt-react-class icons/UserOutlined))
-(def laptop-outlined (r/adapt-react-class icons/LaptopOutlined))
-(def notification-outlined (r/adapt-react-class icons/NotificationOutlined))
-(def filter-outlined (r/adapt-react-class icons/FilterOutlined))
