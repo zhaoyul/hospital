@@ -507,16 +507,78 @@
                   :placeholder "如有特殊技术要求请在此注明"
                   :onChange #(rf/dispatch [::events/update-medical-summary-field :special-techniques (-> % .-target .-value)])}]]]]))
 
-;; 辅助函数，用于显示术前麻醉医嘱
+;; 辅助函数，用于显示术前麻醉医嘱（可编辑表单）
 (defn- preoperative-orders []
   (let [plan-details @(rf/subscribe [::subs/anesthesia-plan-details])]
-    (if (seq plan-details)
-      [:> Descriptions {:bordered true :column 1 :size "small"}
-       [:> Descriptions.Item {:label "术前用药医嘱"} (utils/display-list (get-in plan-details [:medications :premedication]))]
-       [:> Descriptions.Item {:label "术日晨继续应用药物"} (utils/display-value (get-in plan-details [:medications :continue-on-surgery-day]))] ; 需要添加
-       [:> Descriptions.Item {:label "需进一步检查"} (utils/display-value (get-in plan-details [:further-checks-needed]))] ; 需要添加
-       [:> Descriptions.Item {:label "术时麻醉注意事项"} (utils/display-value (get-in plan-details [:intraoperative-notes]))]] ; 需要添加
-      [:> Empty {:description "暂无术前麻醉医嘱"}])))
+    [:> Form {:layout "vertical"}
+     [:div {:style {:display "grid"
+                    :gridTemplateColumns "repeat(4, 1fr)"
+                    :gap "16px"}}
+
+      ;; 术前麻醉医嘱（跨两列）
+      [:> Form.Item {:label "术前麻醉医嘱"
+                     :name [:medications :premedication]
+                     :style {:gridColumn "span 2"}}
+       [:> Input.TextArea {:value (get-in plan-details [:medications :premedication])
+                           :rows 2
+                           :placeholder "请输入术前用药医嘱"
+                           :onChange #(rf/dispatch [::events/update-anesthesia-plan-field
+                                                    [:medications :premedication]
+                                                    (-> % .-target .-value)])}]]
+
+      ;; 术前时间和禁食（一行两列）
+      [:> Form.Item {:label "术前"
+                     :name [:fasting_time :hours]
+                     :style {:marginBottom "8px"}}
+       [:> InputNumber {:value (get-in plan-details [:fasting_time :hours])
+                        :min 0
+                        :addonAfter "小时"
+                        :style {:width "100%"}
+                        :onChange #(rf/dispatch [::events/update-anesthesia-plan-field
+                                                 [:fasting_time :hours] %])}]]
+
+      [:> Form.Item {:label "小时禁食"
+                     :name [:fasting :description]
+                     :style {:marginBottom "8px"}}
+       [:> Input {:value (get-in plan-details [:fasting :description])
+                  :placeholder "禁食说明"
+                  :onChange #(rf/dispatch [::events/update-anesthesia-plan-field
+                                           [:fasting :description]
+                                           (-> % .-target .-value)])}]]
+
+      ;; 术日晨继续应用药物（跨两列）
+      [:> Form.Item {:label "术日晨继续应用药物"
+                     :name [:medications :continue-on-surgery-day]
+                     :style {:gridColumn "span 2"}}
+       [:> Input.TextArea {:value (get-in plan-details [:medications :continue-on-surgery-day])
+                           :rows 2
+                           :placeholder "请输入术日晨继续应用药物"
+                           :onChange #(rf/dispatch [::events/update-anesthesia-plan-field
+                                                    [:medications :continue-on-surgery-day]
+                                                    (-> % .-target .-value)])}]]
+
+      ;; 需进一步检查（跨两列）
+      [:> Form.Item {:label "需进一步检查"
+                     :name [:further-checks-needed]
+                     :style {:gridColumn "span 2"}}
+       [:> Input.TextArea {:value (get-in plan-details [:further-checks-needed])
+                           :rows 2
+                           :placeholder "请输入需要进一步检查的项目"
+                           :onChange #(rf/dispatch [::events/update-anesthesia-plan-field
+                                                    [:further-checks-needed]
+                                                    (-> % .-target .-value)])}]]
+
+      ;; 术时麻醉注意事项（跨两列）
+      [:> Form.Item {:label "术时麻醉注意事项"
+                     :name [:intraoperative-notes]
+                     :style {:gridColumn "span 2"}}
+       [:> Input.TextArea {:value (get-in plan-details [:intraoperative-notes])
+                           :rows 2
+                           :placeholder "请输入术时麻醉注意事项"
+                           :onChange #(rf/dispatch [::events/update-anesthesia-plan-field
+                                                    [:intraoperative-notes]
+                                                    (-> % .-target .-value)])}]]]
+     ]))
 
 ;; 辅助函数，用于显示签名和日期
 (defn- signature-and-date []
