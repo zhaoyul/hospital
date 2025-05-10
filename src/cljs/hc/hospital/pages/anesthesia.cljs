@@ -10,8 +10,7 @@
             [clojure.string :as str]
             ["@ant-design/icons" :as icons :refer [SyncOutlined QrcodeOutlined]]
             [hc.hospital.components.form-components :as form-comp]
-            ["antd" :refer [Collapse
-                            Form  Descriptions Empty Affix Tooltip Button Input Select]]))
+            ["antd" :refer [Collapse Descriptions Empty Button]]))
 
 
 (defn patient-list-filters []
@@ -169,46 +168,55 @@
 
 (defn assessment-result []
   (let [current-patient-id @(rf/subscribe [::subs/current-patient-id])]
-    [antd/card {:title "麻醉评估总览"
-                :variant "borderless"
-                :style {
-                        :overflowY "auto"
-                        :padding "0 8px"}}
-     (if current-patient-id
-       [:div {:style {:overflowY "auto" :height "100%"}}
-        [antd/card {:title (r/as-element [:span [:> icons/UserOutlined {:style {:marginRight "8px"}}] "患者信息"])
-                    :type "inner" :style {:marginBottom "12px"}}
-         [patient-info-display]]
+    (if current-patient-id
+      ;; 有选择患者时的视图
+      [:div {:style {:height "calc(100vh - 64px)" :display "flex" :flexDirection "column"}}
+       ;; 评估内容区域 - 可滚动
+       [:div {:style {:flexGrow 1 :overflowY "auto" :padding "0 8px"}}
+        [antd/card {:title "麻醉评估总览"
+                    :variant "borderless"
+                    :style {:marginBottom "12px"}}
+         [:div
+          [antd/card {:title (r/as-element [:span [:> icons/UserOutlined {:style {:marginRight "8px"}}] "患者信息"])
+                      :type "inner" :style {:marginBottom "12px"}}
+           [patient-info-display]]
 
-        [antd/card {:title (r/as-element [:span [:> icons/HeartOutlined {:style {:marginRight "8px"}}] "一般情况"])
-                    :type "inner" :style {:marginBottom "12px"}}
-         [general-condition-display]]
+          [antd/card {:title (r/as-element [:span [:> icons/HeartOutlined {:style {:marginRight "8px"}}] "一般情况"])
+                      :type "inner" :style {:marginBottom "12px"}}
+           [general-condition-display]]
 
-        [antd/card {:title (r/as-element [:span [:> icons/FileTextOutlined {:style {:marginRight "8px"}}] "病情摘要（病史、体检及辅助检查）"])
-                    :type "inner" :style {:marginBottom "12px"}}
-         [medical-summary-display]]
+          [antd/card {:title (r/as-element [:span [:> icons/FileTextOutlined {:style {:marginRight "8px"}}] "病情摘要（病史、体检及辅助检查）"])
+                      :type "inner" :style {:marginBottom "12px"}}
+           [medical-summary-display]]
 
-        [antd/card {:title (r/as-element [:span [:> icons/ExperimentOutlined {:style {:marginRight "8px"}}] "术前麻醉医嘱"])
-                    :type "inner" :style {:marginBottom "12px"}}
-         [preoperative-orders-display]]
+          [antd/card {:title (r/as-element [:span [:> icons/ExperimentOutlined {:style {:marginRight "8px"}}] "术前麻醉医嘱"])
+                      :type "inner" :style {:marginBottom "12px"}}
+           [preoperative-orders-display]]
 
-        [antd/card {:title (r/as-element [:span [:> icons/EditOutlined {:style {:marginRight "8px"}}] "麻醉医师签名及日期"])
-                    :type "inner" :style {:marginBottom "12px"}}
-         [signature-and-date-display]]
+          [antd/card {:title (r/as-element [:span [:> icons/EditOutlined {:style {:marginRight "8px"}}] "麻醉医师签名及日期"])
+                      :type "inner" :style {:marginBottom "12px"}}
+           [signature-and-date-display]]
 
-        [antd/card {:title (r/as-element [:span [:> icons/MessageOutlined {:style {:marginRight "8px"}}] "备注信息"])
-                    :type "inner" :style {:marginBottom "12px"}}
-         [remarks-display]]
+          [antd/card {:title (r/as-element [:span [:> icons/MessageOutlined {:style {:marginRight "8px"}}] "备注信息"])
+                      :type "inner" :style {:marginBottom "44px"}}
+           [remarks-display]]]]]
 
-        [:> Affix {:offsetBottom 10 :style {:textAlign "center" :padding "10px 0" :background "white" :borderTop "1px solid #f0f0f0"}}
-         [:> Button {:type "primary"
-                     :size "large"
-                     :icon (r/as-element [:> icons/SaveOutlined])
-                     :on-click #(rf/dispatch [::events/save-final-assessment])}
-          "保存评估结果"]]]
-       [:div {:style {:display "flex" :justifyContent "center" :alignItems "center" :height "100%"}}
-        [:> Empty {:description "请从左侧选择一位患者开始评估" :imageStyle {:height 80}}]])]))
+       ;; 固定在底部的保存按钮区域
+       [:div {:style {:padding "10px 0"
+                      :background "white"
+                      :borderTop "1px solid #f0f0f0"
+                      :textAlign "center"
+                      :position "sticky"
+                      :bottom 0}}
+        [:> Button {:type "primary"
+                    :size "large"
+                    :icon (r/as-element [:> icons/SaveOutlined])
+                    :on-click #(rf/dispatch [::events/save-final-assessment])}
+         "保存评估结果"]]]
 
+      ;; 无选择患者时的空状态
+      [:div {:style {:display "flex" :justifyContent "center" :alignItems "center" :height "100%"}}
+       [:> Empty {:description "请从左侧选择一位患者开始评估" :imageStyle {:height 80}}]])))
 
 (defn anesthesia-content []
   [antd/content {:style {:padding "0" :margin 0 :minHeight 280 :overflow "hidden" :display "flex" :flexDirection "row"}}
@@ -227,5 +235,5 @@
      [patient-list-panel]]]
 
    ;; 右侧评估详情区域
-   [:div {:style {:flexGrow 1 :background "#f0f2f5" :padding "10px"}}
+   [:div {:style {:flexGrow 1 :background "#f0f2f5" :overflow "hidden"}}
     [assessment-result]]])
