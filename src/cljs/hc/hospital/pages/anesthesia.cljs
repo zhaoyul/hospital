@@ -1,17 +1,22 @@
 (ns hc.hospital.pages.anesthesia
   "麻醉管理, 医生补充患者自己填写的评估报告, 最终评估患者的情况, 判断是否可以麻醉"
-  (:require [reagent.core :as r]
-            [re-frame.core :as rf]
-            [hc.hospital.events :as events]
-            [hc.hospital.subs :as subs]
-            [hc.hospital.utils :as utils]
-            [taoensso.timbre :as timbre]
-            ["@ant-design/icons" :as icons :refer [SyncOutlined QrcodeOutlined SaveOutlined UserOutlined HeartOutlined
-                                                   DeleteOutlined EyeOutlined PaperClipOutlined UploadOutlined
-                                                   FileTextOutlined ExperimentOutlined EditOutlined MessageOutlined]] ; Added more icons
-            [hc.hospital.components.form-components :as form-comp]
-            ;; 确保 antd/Form 等组件已引入
-            ["antd" :refer [Card Content Collapse Space Text Col Radio Row DatePicker Tag  Descriptions Empty Button Input InputNumber Select Form Layout Tooltip Upload]]))
+  (:require
+   ["antd" :refer [Button Card Col DatePicker Descriptions Empty Form Input
+                   InputNumber Layout Radio Row Select Space Tag Tooltip
+                   Upload]] ; Added more icons
+   ;; 确保 antd/Form 等组件已引入
+   ["@ant-design/icons" :as icons :refer [DeleteOutlined EditOutlined
+                                          ExperimentOutlined EyeOutlined
+                                          FileTextOutlined HeartOutlined
+                                          MessageOutlined PaperClipOutlined
+                                          QrcodeOutlined SaveOutlined
+                                          SyncOutlined UploadOutlined
+                                          UserOutlined]] ; Added more icons
+   [hc.hospital.events :as events]
+   [hc.hospital.subs :as subs]
+   [hc.hospital.utils :as utils]
+   [re-frame.core :as rf]
+   [reagent.core :as r]))
 
 
 (defn patient-list-filters []

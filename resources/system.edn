@@ -23,7 +23,7 @@
                                    :cookie-attrs {:max-age 86400
                                                   :http-only true
                                                   :same-site :strict}}
-                         :security {:anti-forgery false
+                         :security {:anti-forgery true
                                     :xss-protection {:enable? true,
                                                      :mode :block}
                                     :frame-options :sameorigin
@@ -46,6 +46,7 @@
  {:routes #ig/ref :router/routes
   :env #ig/ref :system/env}
  :reitit.routes/pages {:base-path "",
+                       :query-fn #ig/ref :db.sql/query-fn
                        :env #ig/ref :system/env}
 
  ;; 添加新路由集
