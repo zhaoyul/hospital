@@ -27,7 +27,7 @@
 ;; Routes
 (defn page-routes [opts]
   [["/" {:get home
-         u
+         ;;:middleware [wrap-restricted]
          }] ; Protect the home page
    ["/login" {:get auth/login-page
               :post #(auth/handle-login! (assoc % :integrant-deps opts))}]

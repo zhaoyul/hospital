@@ -23,7 +23,7 @@
                                    :cookie-attrs {:max-age 86400
                                                   :http-only true
                                                   :same-site :strict}}
-                         :security {:anti-forgery true
+                         :security {:anti-forgery false
                                     :xss-protection {:enable? true,
                                                      :mode :block}
                                     :frame-options :sameorigin
