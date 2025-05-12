@@ -296,7 +296,9 @@
 (defn- medical-history-summary-card []
   (let [summary-data @(rf/subscribe [::subs/medical-summary-data])]
     [:> Card {:title (r/as-element [:span [:> FileTextOutlined {:style {:marginRight "8px"}}] "病情摘要"])
-              :type "inner" :style {:marginBottom "12px" :background "#fff7e6"}}
+              :headStyle {:background "#fff7e6"} ; Apply background to header only
+              :bodyStyle {:background "#ffffff"} ; Content background to white
+              :type "inner" :style {:marginBottom "12px"}}
      [:> Form {:layout "vertical" :initialValues summary-data}
       ;; 过敏史
       [:div {:style {:marginBottom "16px"}}
@@ -377,7 +379,9 @@
                                             :style {:marginTop "8px"}
                                             :onChange #(rf/dispatch [::events/update-medical-summary-field details-path (-> % .-target .-value)])}])]]))]
     [:> Card {:title (r/as-element [:span [:> MedicineBoxOutlined {:style {:marginRight "8px"}}] "并存疾病"])
-              :type "inner" :style {:marginBottom "12px" :background "#f9f0ff"}}
+              :headStyle {:background "#f9f0ff"} ; Apply background to header only
+              :bodyStyle {:background "#ffffff"} ; Content background to white
+              :type "inner" :style {:marginBottom "12px"}}
      [:> Form {:layout "vertical" :initialValues (:comorbidities summary-data)}
       [:> Row {:gutter [16 0]} ; Horizontal gutter 16, vertical 0
        (comorbidity-item :respiratory "呼吸系统疾病" [:respiratory :has])
@@ -435,7 +439,9 @@
                                      :style {:marginTop "8px"}
                                      :onChange #(rf/dispatch [::events/update-medical-summary-field notes-path (-> % .-target .-value)])}])]]))]
     [:> Card {:title (r/as-element [:span [:> ProfileOutlined {:style {:marginRight "8px"}}] "体格检查"])
-              :type "inner" :style {:marginBottom "12px" :background "#e6f7ff"}}
+              :headStyle {:background "#e6f7ff"} ; Apply background to header only
+              :bodyStyle {:background "#ffffff"} ; Content background to white
+              :type "inner" :style {:marginBottom "12px"}}
      [:> Form {:layout "vertical" :initialValues (:physical-exam summary-data)}
       [:> Row {:gutter [16 0]}
        (exam-item :heart "心脏" [:heart :status])
@@ -514,7 +520,9 @@
                                                                files (range)))]
                              (upload-button field-key))]))]
     [:> Card {:title (r/as-element [:span [:> SolutionOutlined {:style {:marginRight "8px"}}] "相关辅助检查检验结果"])
-              :type "inner" :style {:marginBottom "12px" :background "#fffbe6"}}
+              :headStyle {:background "#fffbe6"} ; Apply background to header only
+              :bodyStyle {:background "#ffffff"} ; Content background to white
+              :type "inner" :style {:marginBottom "12px"}}
      [:> Form {:layout "vertical"}
       [:> Row {:gutter [16 16]}
        [:> Col {:span 12}
