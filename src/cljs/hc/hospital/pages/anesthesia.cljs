@@ -612,6 +612,20 @@
                  :style {:background "#1890ff" :borderColor "#1890ff" :color "white"}} ; Added styling
       "打印表单"])])
 
+(defn save-button []
+  [:div {:style {:padding "10px 0"
+                 :background "white"
+                 :borderTop "1px solid #f0f0f0"
+                 :textAlign "center"
+                 :position "sticky"
+                 :bottom 0
+                 :zIndex 10}} ; Ensure it's above scrolled content
+   [:> Button {:type "primary"
+               :size "large"
+               :icon (r/as-element [:> icons/SaveOutlined])
+               :onClick #(rf/dispatch [::events/save-final-assessment])}
+    "保存评估结果"]])
+
 (defn- assessment []
   (let [current-patient-id @(rf/subscribe [::subs/current-patient-id])
         patient-details @(rf/subscribe [::subs/selected-patient-raw-details])
@@ -645,7 +659,8 @@
         ;; ASA评分和麻醉计划 - Consider if this needs its own card or is part of preoperative-orders
         [preoperative-orders-card]
         [remarks-card]
-        [signature-and-date-card]]]
+        [signature-and-date-card]
+        [save-button]]]
 
       ;; 无选择患者时的空状态
       [:div {:style {:display "flex" :justifyContent "center" :alignItems "center" :height "100%"}}
