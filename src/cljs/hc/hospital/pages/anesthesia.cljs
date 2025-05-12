@@ -8,10 +8,10 @@
                                           ProfileOutlined QrcodeOutlined
                                           SaveOutlined SolutionOutlined
                                           SyncOutlined UploadOutlined
-                                          UserOutlined]] ; Added new icons
+                                          UserOutlined CheckCircleOutlined ClockCircleOutlined CloseCircleOutlined PrinterOutlined]]
    ["antd" :refer [Button Card Col DatePicker Descriptions Empty Form Image
                    Input InputNumber Layout Modal Radio Row Select Space Tag
-                   Upload]] ; Added Image, Modal
+                   Upload]] ; Removed Tooltip as it's not used
    [hc.hospital.events :as events]
    [hc.hospital.subs :as subs]
    [hc.hospital.utils :as utils]
@@ -806,16 +806,53 @@
                         :placeholder "备注信息（如有特殊情况请在此注明）"
                         :onChange (fn [e] (rf/dispatch [::events/update-assessment-notes (.. e -target -value)]))}]))
 
+(defn- assessment-action-buttons [patient-status]
+  [:> Space {} ; Removed marginBottom, parent will handle layout
+   [:> Button {:type "primary" :icon (r/as-element [:> icons/CheckCircleOutlined])
+               :on-click #(rf/dispatch [::events/approve-patient])
+               :style {:background "#52c41a" :borderColor "#52c41a"}}
+    "批准"]
+   [:> Button {:type "primary" :icon (r/as-element [:> icons/ClockCircleOutlined])
+               :on-click #(rf/dispatch [::events/postpone-patient])
+               :style {:background "#faad14" :borderColor "#faad14"}}
+    "暂缓"]
+   [:> Button {:type "primary" :icon (r/as-element [:> icons/CloseCircleOutlined])
+               :on-click #(rf/dispatch [::events/reject-patient])
+               :danger true}
+    "驳回"]
+   (when (= patient-status "已批准") ; Check for the correct status string
+     [:> Button {:icon (r/as-element [:> icons/PrinterOutlined])
+                 :on-click #(js/window.print)
+                 :style {:background "#1890ff" :borderColor "#1890ff" :color "white"}} ; Added styling
+      "打印表单"])])
+
 (defn- assessment []
-  (let [current-patient-id @(rf/subscribe [::subs/current-patient-id])]
+  (let [current-patient-id @(rf/subscribe [::subs/current-patient-id])
+        patient-details @(rf/subscribe [::subs/selected-patient-raw-details])
+        patient-name (if patient-details
+                       (or (get-in patient-details [:assessment_data :basic-info :name])
+                           (str "患者: " (:name patient-details)) ; Fallback
+                           "未知患者")
+                       "未知患者")
+        patient-status (when patient-details (get patient-details :status "待评估"))] ; Default to "待评估" if status is nil
     (if current-patient-id
       ;; 有选择患者时的视图
       [:div {:style {:height "calc(100vh - 64px)" :display "flex" :flexDirection "column"}}
+       ;; Top bar with Patient Name and Action Buttons
+       [:div {:style {:padding "12px 16px"
+                      :background "white"
+                      :borderBottom "1px solid #f0f0f0"
+                      :display "flex"
+                      :justifyContent "space-between"
+                      :alignItems "center"}}
+        [:h2 {:style {:margin 0 :fontSize "18px" :fontWeight "bold"}}
+         patient-name]
+        [assessment-action-buttons patient-status]]
        ;; 评估内容区域 - 可滚动
        [:div {:style {:flexGrow 1 :overflowY "auto" :padding "0 8px"}}
         [:div ; Removed the outer "麻醉评估总览" Card to place new cards directly
          [:> Card {:title (r/as-element [:span [:> icons/UserOutlined {:style {:marginRight "8px"}}] "患者信息"])
-                   :type "inner" :style {:marginBottom "12px"}}
+                   :type "inner" :style {:marginTop "12px" :marginBottom "12px"}} ; Added marginTop
           [patient-info]]
 
          [:> Card {:title (r/as-element [:span [:> icons/HeartOutlined {:style {:marginRight "8px"}}] "一般情况"])
@@ -881,3 +918,4 @@
    ;; 右侧评估详情区域
    [:div {:style {:flexGrow 1 :background "#f0f2f5" :overflow "hidden"}}
     [assessment]]])
+
