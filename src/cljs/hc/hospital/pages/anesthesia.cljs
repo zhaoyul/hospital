@@ -2,6 +2,7 @@
   "麻醉管理, 医生补充患者自己填写的评估报告, 最终评估患者的情况, 判断是否可以麻醉"
   (:require ; Added Image, Modal
    ;; 确保 antd/Form 等组件已引入
+   [taoensso.timbre :as timbre]
    ["@ant-design/icons" :as icons :refer [FileTextOutlined MedicineBoxOutlined
                                           ProfileOutlined QrcodeOutlined
                                           SolutionOutlined SyncOutlined
@@ -63,7 +64,7 @@
   (let [patients @(rf/subscribe [::subs/filtered-patients])
         current-patient-id @(rf/subscribe [::subs/current-patient-id])]
     [:div {:style {:height "100%" :overflowY "auto"}} ; Outer :div vector starts
-     (if (seq patients)
+     (if (seq (timbre/spy :info  patients))
        (for [item patients]
          ^{:key (:key item)}
          [:div {:style {:padding "10px 12px"
@@ -77,7 +78,7 @@
           [:div {:style {:display "flex" :alignItems "center"}}
            [:> icons/UserOutlined {:style {:marginRight "8px" :fontSize "16px"}}]
            [:div
-            [:div {:style {:fontWeight "500"}} (:name item)]
+            [:div {:style {:fontWeight "500"}} (:name (timbre/spy :info  item))]
             [:div {:style {:fontSize "12px" :color "gray"}}
              (str (:sex item) " " (:age item) " " (:anesthesia-type item))]]]
           [:div {:style {:textAlign "right"}}
