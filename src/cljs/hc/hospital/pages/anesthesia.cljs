@@ -2,14 +2,10 @@
   "麻醉管理, 医生补充患者自己填写的评估报告, 最终评估患者的情况, 判断是否可以麻醉"
   (:require ; Added Image, Modal
    ;; 确保 antd/Form 等组件已引入
-   ["@ant-design/icons" :as icons :refer [EditOutlined ExperimentOutlined
-                                          FileTextOutlined HeartOutlined
-                                          MedicineBoxOutlined MessageOutlined
+   ["@ant-design/icons" :as icons :refer [FileTextOutlined MedicineBoxOutlined
                                           ProfileOutlined QrcodeOutlined
-                                          SaveOutlined SolutionOutlined
-                                          SyncOutlined UploadOutlined
-                                          UserOutlined CheckCircleOutlined ClockCircleOutlined CloseCircleOutlined PrinterOutlined]]
-   ["antd" :refer [Button Card Col DatePicker Descriptions Empty Form Image
+                                          SolutionOutlined SyncOutlined]]
+   ["antd" :refer [Button Card Col DatePicker Descriptions Empty Form
                    Input InputNumber Layout Modal Radio Row Select Space Tag
                    Upload]] ; Removed Tooltip as it's not used
    [hc.hospital.events :as events]
@@ -169,6 +165,15 @@
                              :onChange #(rf/dispatch [::events/update-patient-form-field :planned-surgery (-> % .-target .-value)])}]]]]
       [:> Empty {:description "请先选择患者或患者无基本信息可编辑"}])))
 
+;; 新的辅助函数，用于创建统一样式的卡片
+(defn- custom-styled-card [icon title-text header-bg-color content]
+  [:> Card {:title (r/as-element [:span icon  title-text])
+            :headStyle {:background header-bg-color}
+            :bodyStyle {:background "#ffffff"} ; 确保内容区域背景为白色
+            :type "inner"
+            :style {:marginBottom "12px"}}
+   content])
+
 ;; 辅助函数，用于显示一般情况
 (defn- general-condition []
   (let [exam-data @(rf/subscribe [::subs/doctor-form-physical-examination])
@@ -295,10 +300,10 @@
 
 (defn- medical-history-summary-card []
   (let [summary-data @(rf/subscribe [::subs/medical-summary-data])]
-    [:> Card {:title (r/as-element [:span [:> FileTextOutlined {:style {:marginRight "8px"}}] "病情摘要"])
-              :headStyle {:background "#fff7e6"} ; Apply background to header only
-              :bodyStyle {:background "#ffffff"} ; Content background to white
-              :type "inner" :style {:marginBottom "12px"}}
+    [custom-styled-card
+     [:> FileTextOutlined {:style {:marginRight "8px"}}]
+     "病情摘要"
+     "#fff7e6" ; Header background color
      [:> Form {:layout "vertical" :initialValues summary-data}
       ;; 过敏史
       [:div {:style {:marginBottom "16px"}}
@@ -378,10 +383,10 @@
                                             :placeholder "请填写具体内容"
                                             :style {:marginTop "8px"}
                                             :onChange #(rf/dispatch [::events/update-medical-summary-field details-path (-> % .-target .-value)])}])]]))]
-    [:> Card {:title (r/as-element [:span [:> MedicineBoxOutlined {:style {:marginRight "8px"}}] "并存疾病"])
-              :headStyle {:background "#f9f0ff"} ; Apply background to header only
-              :bodyStyle {:background "#ffffff"} ; Content background to white
-              :type "inner" :style {:marginBottom "12px"}}
+    [custom-styled-card
+     [:> MedicineBoxOutlined]
+     "并存疾病"
+     "#f9f0ff" ; Header background color
      [:> Form {:layout "vertical" :initialValues (:comorbidities summary-data)}
       [:> Row {:gutter [16 0]} ; Horizontal gutter 16, vertical 0
        (comorbidity-item :respiratory "呼吸系统疾病" [:respiratory :has])
@@ -408,17 +413,17 @@
             [:> Radio {:value "no"} "无"]]
            (when (= current-has "yes")
              [:div {:style {:marginTop "8px"}}
-              [:> Form.Item {:name [:special-medications :details] :noStyle true} ; Use Form.Item for name binding
+              [:> Form.Item {:name [:special-medications :details] :label "药物名称及剂量" :noStyle true} ; noStyle for inline display
                [:> Input {:value (get-in summary-data details-path)
-                          :placeholder "请填写药物名称及说明"
+                          :placeholder "药物名称及剂量"
                           :style {:marginBottom "8px"}
                           :onChange #(rf/dispatch [::events/update-medical-summary-field details-path (-> % .-target .-value)])}]]
-              [:> Form.Item {:label "最后一次用药时间" :name [:special-medications :last-dose-time] :labelCol {:span 24} :wrapperCol {:span 24}}
+              [:> Form.Item {:name [:special-medications :last-dose-time] :label "最近用药时间" :noStyle true}
                [:> DatePicker {:value (utils/to-moment (get-in summary-data last-dose-time-path))
                                :showTime true
+                               :placeholder "选择日期和时间"
                                :style {:width "100%"}
-                               :placeholder "请选择日期和时间"
-                               :onChange #(rf/dispatch [::events/update-medical-summary-field last-dose-time-path (utils/format-datetime-for-input % "datetime-local")])}]]])]])]]]))
+                               :onChange #(rf/dispatch [::events/update-medical-summary-field last-dose-time-path (utils/date->iso-string %)])}]]])]])]]]))
 
 (defn- physical-examination-card []
   (let [summary-data @(rf/subscribe [::subs/medical-summary-data])
@@ -426,22 +431,22 @@
                     (let [path [:physical-exam field-key]
                           status-path (conj path :status)
                           notes-path (conj path :notes)
-                          current-status (get-in summary-data status-path "normal")]
+                          current-status (get-in summary-data status-path "normal")] ; Default to "normal"
                       [:> Col {:span 12}
                        [:> Form.Item {:label label-text :name form-item-name}
                         [:> Radio.Group {:value current-status
                                          :onChange #(rf/dispatch [::events/update-medical-summary-field status-path (-> % .-target .-value)])}
-                         [:> Radio {:value "normal"} "正常"]
+                         [:> Radio {:value "normal"} "正常"] ; Added "normal" option
                          [:> Radio {:value "abnormal"} "异常"]]
                         (when (= current-status "abnormal")
                           [:> Input {:value (get-in summary-data notes-path)
-                                     :placeholder "请补充异常描述"
+                                     :placeholder "请描述异常情况"
                                      :style {:marginTop "8px"}
                                      :onChange #(rf/dispatch [::events/update-medical-summary-field notes-path (-> % .-target .-value)])}])]]))]
-    [:> Card {:title (r/as-element [:span [:> ProfileOutlined {:style {:marginRight "8px"}}] "体格检查"])
-              :headStyle {:background "#e6f7ff"} ; Apply background to header only
-              :bodyStyle {:background "#ffffff"} ; Content background to white
-              :type "inner" :style {:marginBottom "12px"}}
+    [custom-styled-card
+     [:> ProfileOutlined]
+     "体格检查"
+     "#e6f7ff" ; Header background color
      [:> Form {:layout "vertical" :initialValues (:physical-exam summary-data)}
       [:> Row {:gutter [16 0]}
        (exam-item :heart "心脏" [:heart :status])
@@ -458,19 +463,19 @@
 
 (defn- auxiliary-tests-card []
   (let [summary-data @(rf/subscribe [::subs/medical-summary-data])
-        modal-open? (r/atom false) ; Renamed from modal-visible?
+        modal-open? (r/atom false)
         preview-image-url (r/atom "")
         handle-preview (fn [file-or-url]
-                         (if (string? file-or-url) ; If it's already a URL
+                         (if (string? file-or-url)
                            (do
                              (reset! preview-image-url file-or-url)
-                             (reset! modal-open? true)) ; Use new atom
-                           ;; If it's a file object from Upload
+                             (reset! modal-open? true))
                            (when-let [origin-file (.-originFileObj file-or-url)]
                              (let [reader (js/FileReader.)]
                                (set! (.-onload reader)
-                                     #(do (reset! preview-image-url (-> % .-target .-result))
-                                          (reset! modal-open? true))) ; Use new atom
+                                     (fn []
+                                       (reset! preview-image-url (.-result reader))
+                                       (reset! modal-open? true)))
                                (.readAsDataURL reader origin-file)))))
         upload-props (fn [field-key]
                        {:name field-key
@@ -478,77 +483,61 @@
                         :fileList (let [files (get-in summary-data [:aux-exams field-key] [])]
                                     (mapv (fn [file-url idx]
                                             {:uid (str field-key "-" idx)
-                                             :name (str "Image " idx)
+                                             :name (str "文件" (inc idx))
                                              :status "done"
                                              :url file-url})
-                                          files (range)))
+                                          files
+                                          (range)))
                         :onPreview handle-preview
                         :onChange (fn [info]
                                     (let [file (.-file info)
-                                          file-list (.-fileList info)]
-                                      (cond
-                                        (= (.-status file) "done")
-                                        (let [new-file-list (mapv #(or (-> % .-response .-url) (.-url %)) file-list)]
-                                          (rf/dispatch [::events/update-medical-summary-field [:aux-exams field-key] new-file-list]))
-
-                                        (= (.-status file) "removed")
-                                        (let [remaining-files (filterv #(not= (.-uid %) (.-uid file)) file-list)
-                                              new-file-list (mapv #(or (-> % .-response .-url) (.-url %)) remaining-files)]
-                                          (rf/dispatch [::events/update-medical-summary-field [:aux-exams field-key] new-file-list])))))
+                                          file-list (-> info .-fileList js->clj (vec))
+                                          event-type (cond
+                                                       (= (.-status file) "removed") ::events/remove-aux-exam-file
+                                                       (or (= (.-status file) "done") (= (.-status file) "uploading")) ::events/upload-aux-exam-file
+                                                       :else nil)]
+                                      (when event-type
+                                        (rf/dispatch [event-type field-key file file-list]))))
                         :beforeUpload (fn [file]
-                                        (rf/dispatch [::events/upload-aux-exam-image file field-key])
-                                        false) ; Prevent default upload behavior
-                        :showUploadList {:showPreviewIcon true
-                                         :showRemoveIcon true}})
-
+                                        (rf/dispatch [::events/before-upload-aux-exam-file field-key file])
+                                        false) ; Prevent auto-upload, handle in event
+                        })
         upload-button (fn [field-key]
                         [:> Upload (upload-props field-key)
                          [:div
-                          [:> icons/PlusOutlined]
+                          [:> icons/UploadOutlined]
                           [:div {:style {:marginTop 8}} "上传"]]])
-
         image-display (fn [field-key label]
                         (let [files (get-in summary-data [:aux-exams field-key] [])]
                           [:> Form.Item {:label label}
                            (if (seq files)
-                             [:> Upload (assoc (upload-props field-key)
-                                               :fileList (mapv (fn [file-url idx]
-                                                                 {:uid (str field-key "-" idx)
-                                                                  :name (str "Image " idx)
-                                                                  :status "done"
-                                                                  :url file-url})
-                                                               files (range)))]
-                             (upload-button field-key))]))]
-    [:> Card {:title (r/as-element [:span [:> SolutionOutlined {:style {:marginRight "8px"}}] "相关辅助检查检验结果"])
-              :headStyle {:background "#fffbe6"} ; Apply background to header only
-              :bodyStyle {:background "#ffffff"} ; Content background to white
-              :type "inner" :style {:marginBottom "12px"}}
+                             (upload-props field-key) ; Show Upload component with existing files
+                             (upload-button field-key))]))] ; Show Upload button if no files
+    [custom-styled-card
+     [:> SolutionOutlined]
+     "相关辅助检查检验结果"
+     "#fffbe6" ; Header background color
      [:> Form {:layout "vertical"}
       [:> Row {:gutter [16 16]}
        [:> Col {:span 12}
-        (image-display :ecg "心电图")]
+        (image-display :ecg "心电图 (ECG)")]
        [:> Col {:span 12}
-        (image-display :chest-xray "胸片")]
+        (image-display :chest-xray "胸部X光")]
        [:> Col {:span 12}
-        (image-display :ct-mri "CT/MRI")]
+        (image-display :blood-tests "血常规/生化")]
        [:> Col {:span 12}
-        (image-display :ultrasound "超声")]
-       [:> Col {:span 12}
-        (image-display :pulmonary-function "肺功能")]
-       [:> Col {:span 12}
-        (image-display :blood-gas-analysis "血气分析")]
+        (image-display :coagulation "凝血功能")]
        [:> Col {:span 24}
-        [:> Form.Item {:label "其他检查"}
-         [:> Input.TextArea {:value (get-in summary-data [:aux-exams :other])
-                             :placeholder "请填写其他检查结果"
+        [:> Form.Item {:label "其他检查结果" :name [:aux-exams :other-tests :notes]}
+         [:> Input.TextArea {:value (get-in summary-data [:aux-exams :other-tests :notes])
+                             :placeholder "请在此记录其他重要检查结果的文字描述"
                              :rows 3
-                             :onChange #(rf/dispatch [::events/update-medical-summary-field [:aux-exams :other] (-> % .-target .-value)])}]]]]]
-     (when @modal-open? ; Use new atom
-       [:> Modal {:open @modal-open? ; Changed from visible to open
-                  :title "预览图片"
-                  :footer nil
-                  :onCancel #(reset! modal-open? false)} ; Use new atom
-        [:img {:alt "预览" :style {:width "100%"} :src @preview-image-url}]])]))
+                             :onChange #(rf/dispatch [::events/update-medical-summary-field [:aux-exams :other-tests :notes] (-> % .-target .-value)])}]]]]
+      (when @modal-open?
+        [:> Modal {:visible @modal-open?
+                   :footer nil
+                   :onCancel #(reset! modal-open? false)}
+         [:img {:alt "预览" :style {:width "100%"} :src @preview-image-url}]])]]))
 
 ;; This function is no longer used directly in `assessment` if it was the one for the large card.
 ;; It's being replaced by the four new card functions.
