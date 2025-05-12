@@ -414,7 +414,7 @@
                                :showTime true
                                :style {:width "100%"}
                                :placeholder "请选择日期和时间"
-                               :onChange #(rf/dispatch [::events/update-medical-summary-field last-dose-time-path (utils/datetime->iso-string %)])}]]])]])]]]))
+                               :onChange #(rf/dispatch [::events/update-medical-summary-field last-dose-time-path (utils/format-datetime-for-input % "datetime-local")])}]]])]])]]]))
 
 (defn- physical-examination-card []
   (let [summary-data @(rf/subscribe [::subs/medical-summary-data])
@@ -452,64 +452,95 @@
 
 (defn- auxiliary-tests-card []
   (let [summary-data @(rf/subscribe [::subs/medical-summary-data])
-        modal-visible? (r/atom false)
+        modal-open? (r/atom false) ; Renamed from modal-visible?
         preview-image-url (r/atom "")
         handle-preview (fn [file-or-url]
                          (if (string? file-or-url) ; If it's already a URL
-                           (do (reset! preview-image-url file-or-url)
-                               (reset! modal-visible? true))
-                           (when-let [url (or (.-url file-or-url) (.-thumbUrl file-or-url))] ; Ant Upload file object
-                             (reset! preview-image-url url)
-                             (reset! modal-visible? true))))
+                           (do
+                             (reset! preview-image-url file-or-url)
+                             (reset! modal-open? true)) ; Use new atom
+                           ;; If it's a file object from Upload
+                           (when-let [origin-file (.-originFileObj file-or-url)]
+                             (let [reader (js/FileReader.)]
+                               (set! (.-onload reader)
+                                     #(do (reset! preview-image-url (-> % .-target .-result))
+                                          (reset! modal-open? true))) ; Use new atom
+                               (.readAsDataURL reader origin-file)))))
+        upload-props (fn [field-key]
+                       {:name field-key
+                        :listType "picture-card"
+                        :fileList (let [files (get-in summary-data [:aux-exams field-key] [])]
+                                    (mapv (fn [file-url idx]
+                                            {:uid (str field-key "-" idx)
+                                             :name (str "Image " idx)
+                                             :status "done"
+                                             :url file-url})
+                                          files (range)))
+                        :onPreview handle-preview
+                        :onChange (fn [info]
+                                    (let [file (.-file info)
+                                          file-list (.-fileList info)]
+                                      (cond
+                                        (= (.-status file) "done")
+                                        (let [new-file-list (mapv #(or (-> % .-response .-url) (.-url %)) file-list)]
+                                          (rf/dispatch [::events/update-medical-summary-field [:aux-exams field-key] new-file-list]))
+
+                                        (= (.-status file) "removed")
+                                        (let [remaining-files (filterv #(not= (.-uid %) (.-uid file)) file-list)
+                                              new-file-list (mapv #(or (-> % .-response .-url) (.-url %)) remaining-files)]
+                                          (rf/dispatch [::events/update-medical-summary-field [:aux-exams field-key] new-file-list])))))
+                        :beforeUpload (fn [file]
+                                        (rf/dispatch [::events/upload-aux-exam-image file field-key])
+                                        false) ; Prevent default upload behavior
+                        :showUploadList {:showPreviewIcon true
+                                         :showRemoveIcon true}})
+
         upload-button (fn [field-key]
-                        [:> Upload {:name field-key
-                                    ;; listType "picture-card" ; Alternative display
-                                    :fileList (get-in summary-data [:aux-exams field-key] [])
-                                    :beforeUpload (fn [_file] false) ; Manual upload
-                                    :onPreview handle-preview
-                                    :onChange (fn [info]
-                                                ;; Here, you'd typically dispatch an event to handle the file list update
-                                                ;; For now, just updating the local state for display
-                                                (rf/dispatch [::events/handle-aux-exam-files-change field-key (:fileList info)]))
-                                    :onRemove (fn [file] (rf/dispatch [::events/remove-aux-exam-file field-key (:uid file)]))}
-                         [:> Button {:icon (r/as-element [:> UploadOutlined])} "选择文件"]])
+                        [:> Upload (upload-props field-key)
+                         [:div
+                          [:> icons/PlusOutlined]
+                          [:div {:style {:marginTop 8}} "上传"]]])
 
         image-display (fn [field-key label]
                         (let [files (get-in summary-data [:aux-exams field-key] [])]
-                          [:div {:style {:marginBottom "16px"}}
-                           [:span {:style {:marginRight "8px"}} label ":"]
+                          [:> Form.Item {:label label}
                            (if (seq files)
-                             (into [:div {:style {:display "flex" :flexWrap "wrap" :gap "8px"}}]
-                                   (for [file files :let [url (or (:url file) (:thumbUrl file) "placeholder.png")]] ; Use placeholder if no URL
-                                     ^{:key (:uid file)}
-                                     [:div {:style {:textAlign "center"}}
-                                      [:> Image {:width 100 :height 100 :src url :preview {:visible false}
-                                                 :style {:objectFit "cover" :border "1px solid #eee" :cursor "pointer"}
-                                                 :onClick #(handle-preview url)}]
-                                      [:div {:style {:fontSize "12px" :maxWidth "100px" :overflow "hidden" :textOverflow "ellipsis" :whiteSpace "nowrap"}} (:name file)]
-                                      [:> Button {:type "link" :danger true :size "small"
-                                                  :onClick #(rf/dispatch [::events/remove-aux-exam-file field-key (:uid file)])} "删除"]]))
-                             [:span "未上传"])
-                           [upload-button field-key]])) ]
+                             [:> Upload (assoc (upload-props field-key)
+                                               :fileList (mapv (fn [file-url idx]
+                                                                 {:uid (str field-key "-" idx)
+                                                                  :name (str "Image " idx)
+                                                                  :status "done"
+                                                                  :url file-url})
+                                                               files (range)))]
+                             (upload-button field-key))]))]
     [:> Card {:title (r/as-element [:span [:> SolutionOutlined {:style {:marginRight "8px"}}] "相关辅助检查检验结果"])
               :type "inner" :style {:marginBottom "12px" :background "#fffbe6"}}
      [:> Form {:layout "vertical"}
-      (image-display :chest-xray "胸片")
-      (image-display :pulmonary-function "肺功能")
-      (image-display :cardiac-echo "心脏彩超")
-      (image-display :ecg "心电图")
-
-      [:> Form.Item {:label "其他" :name [:aux-exams :other-results]}
-       [:> Input.TextArea {:value (get-in summary-data [:aux-exams :other-results])
-                           :placeholder "其他检查结果说明"
-                           :rows 2
-                           :onChange #(rf/dispatch [::events/update-medical-summary-field [:aux-exams :other-results] (-> % .-target .-value)])}]]]
-     [:> Modal {:visible @modal-visible?
-                :title "图片预览"
-                :footer nil
-                :onCancel #(reset! modal-visible? false)}
-      [:img {:alt "预览" :style {:width "100%"} :src @preview-image-url}]]]))
-
+      [:> Row {:gutter [16 16]}
+       [:> Col {:span 12}
+        (image-display :ecg "心电图")]
+       [:> Col {:span 12}
+        (image-display :chest-xray "胸片")]
+       [:> Col {:span 12}
+        (image-display :ct-mri "CT/MRI")]
+       [:> Col {:span 12}
+        (image-display :ultrasound "超声")]
+       [:> Col {:span 12}
+        (image-display :pulmonary-function "肺功能")]
+       [:> Col {:span 12}
+        (image-display :blood-gas-analysis "血气分析")]
+       [:> Col {:span 24}
+        [:> Form.Item {:label "其他检查"}
+         [:> Input.TextArea {:value (get-in summary-data [:aux-exams :other])
+                             :placeholder "请填写其他检查结果"
+                             :rows 3
+                             :onChange #(rf/dispatch [::events/update-medical-summary-field [:aux-exams :other] (-> % .-target .-value)])}]]]]]
+     (when @modal-open? ; Use new atom
+       [:> Modal {:open @modal-open? ; Changed from visible to open
+                  :title "预览图片"
+                  :footer nil
+                  :onCancel #(reset! modal-open? false)} ; Use new atom
+        [:img {:alt "预览" :style {:width "100%"} :src @preview-image-url}]])]))
 
 ;; This function is no longer used directly in `assessment` if it was the one for the large card.
 ;; It's being replaced by the four new card functions.
@@ -850,4 +881,3 @@
    ;; 右侧评估详情区域
    [:div {:style {:flexGrow 1 :background "#f0f2f5" :overflow "hidden"}}
     [assessment]]])
-

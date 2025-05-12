@@ -10,7 +10,7 @@
 
 (defn system-settings-content []
   (let [doctors @(rf/subscribe [::subs/doctors])
-        modal-visible? @(rf/subscribe [::subs/doctor-modal-visible?])
+        modal-open? @(rf/subscribe [::subs/doctor-modal-visible?]) ; Consider renaming sub for consistency if it's reused elsewhere or refers to this state.
         editing-doctor @(rf/subscribe [::subs/editing-doctor])
         [form] (Form.useForm)]
 
@@ -85,21 +85,19 @@
                                                      :size "small"
                                                      :icon (r/as-element [:> icons/EditOutlined])
                                                      :on-click (fn []
-                                                                 (.setFieldsValue form (clj->js {:name (:name doc)
-                                                                                                 :username (:username doc)
-                                                                                                 :role (:role doc)}))
-                                                                 (rf/dispatch [::events/open-doctor-modal doc]))}
+                                                                 (rf/dispatch [::events/open-doctor-modal doc])
+                                                                 (.setFieldsValue form (clj->js (select-keys doc [:name :username :role]))))}
                                           "编辑"]
                                          [:> Button {:danger true
                                                      :ghost true
                                                      :size "small"
                                                      :icon (r/as-element [:> icons/DeleteOutlined])
-                                                     :on-click #(rf/dispatch [::events/delete-doctor (:username doc)])}
+                                                     :on-click #(rf/dispatch [::events/delete-doctor (:username doc)])} ; Added delete functionality
                                           "删除"]])))}]}]
 
-     (when modal-visible?
+     (when modal-open?
        [:> Modal {:title (if (:username editing-doctor) "编辑医生" "新增医生")
-                  :visible modal-visible?
+                  :open modal-open? ; Changed from visible to open
                   :okText "保存"
                   :cancelText "取消"
                   :onOk (fn [] (.submit form))
@@ -145,7 +143,7 @@
                                               #(rf/dispatch [::events/update-editing-doctor-field :signature (.. % -target -result)]))
                                         (.readAsDataURL reader file))
                                       false)}
-           (if (and editing-doctor (:signature editing-doctor) (not (object? (:signature editing-doctor))))
+           (if (and editing-doctor (:signature editing-doctor) (not (object? (:signature editing-doctor)))) ; Check if signature is a base64 string
              [:img {:src (:signature editing-doctor) :alt "签名" :style {:width "100%"}}]
              [:div
               [:> icons/PlusOutlined]
