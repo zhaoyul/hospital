@@ -121,7 +121,7 @@
      "患者基本信息"
      "#e6fffb"                          ; Header background color
      (if (seq editable-info)
-       [:> Form {:layout "vertical"
+       [:> Form {:layout "horizontal" :labelCol {:span 8} :wrapperCol {:span 16} :labelAlign "left"
                  :initialValues editable-info}
         [:div {:style {:display "grid"
                        :gridTemplateColumns "repeat(4, 1fr)" ; 4 列
@@ -203,7 +203,7 @@
      "一般情况"
      "#f6ffed" ; Header background color
      (if (some? exam-data) ; 确保 exam-data 不是 nil，空 map {} 也是有效的
-       [:> Form {:layout "vertical" :initialValues exam-data} ; Bind initialValues to the form
+       [:> Form {:layout "horizontal" :labelCol {:sm {:span 24} :md {:span 10}} :wrapperCol {:sm {:span 24} :md {:span 14}} :labelAlign "left" :initialValues exam-data} ; Bind initialValues to the form
         ;; 第一部分：身高、体重、精神状态、活动能力
         [:div {:key "vital-signs-group-1"}
          [:div {:style {:display "grid"
@@ -307,10 +307,9 @@
      [:> FileTextOutlined {:style {:marginRight "8px"}}]
      "病情摘要"
      "#fff7e6" ; Header background color
-     [:> Form {:layout "vertical" :initialValues summary-data}
+     [:> Form {:layout "horizontal" :labelCol {:span 6} :wrapperCol {:span 18} :labelAlign "left" :initialValues summary-data}
       ;; 过敏史
       [:div {:style {:marginBottom "16px"}}
-       [:h4 {:style {:marginBottom "8px" :fontSize "14px"}} "过敏史"]
        [:> Form.Item {:name [:allergy :has] :label "过敏史" :colon false}
         [:> Radio.Group {:value (get-in summary-data [:allergy :has])
                          :onChange #(rf/dispatch [::events/update-medical-summary-field [:allergy :has] (-> % .-target .-value)])}
@@ -330,7 +329,6 @@
 
       ;; 生活习惯
       [:div
-       [:h4 {:style {:marginBottom "8px" :fontSize "14px"}} "生活习惯"]
        ;; 吸烟史
        [:> Form.Item {:name [:habits :smoking :has] :label "吸烟史" :colon false}
         [:> Radio.Group {:value (get-in summary-data [:habits :smoking :has])
@@ -390,7 +388,7 @@
      [:> MedicineBoxOutlined]
      "并存疾病"
      "#f9f0ff" ; Header background color
-     [:> Form {:layout "vertical" :initialValues (:comorbidities summary-data)}
+     [:> Form {:layout "horizontal" :labelCol {:span 10} :wrapperCol {:span 14} :labelAlign "left" :initialValues (:comorbidities summary-data)}
       [:> Row {:gutter [16 0]} ; Horizontal gutter 16, vertical 0
        (comorbidity-item :respiratory "呼吸系统疾病" [:respiratory :has])
        (comorbidity-item :cardiovascular "心血管疾病" [:cardiovascular :has])
@@ -450,7 +448,7 @@
      [:> ProfileOutlined]
      "体格检查"
      "#e6f7ff" ; Header background color
-     [:> Form {:layout "vertical" :initialValues (:physical-exam summary-data)}
+     [:> Form {:layout "horizontal" :labelCol {:span 8} :wrapperCol {:span 16} :labelAlign "left" :initialValues (:physical-exam summary-data)}
       [:> Row {:gutter [16 0]}
        (exam-item :heart "心脏" [:heart :status])
        (exam-item :lungs "肺脏" [:lungs :status])
@@ -520,7 +518,7 @@
      [:> SolutionOutlined]
      "相关辅助检查检验结果"
      "#fffbe6" ; Header background color
-     [:> Form {:layout "vertical"}
+     [:> Form {:layout "horizontal" :labelCol {:span 6} :wrapperCol {:span 18} :labelAlign "left"}
       [:> Row {:gutter [16 16]}
        [:> Col {:span 12}
         (image-display :ecg "心电图 (ECG)")]
@@ -549,7 +547,7 @@
      [:> icons/EditOutlined {:style {:marginRight "8px"}}]
      "术前麻醉医嘱"
      "#fff1f0" ; Header background color
-     [:> Form {:layout "vertical"}
+     [:> Form {:layout "horizontal" :labelCol {:span 6} :wrapperCol {:span 18} :labelAlign "left"}
       [:div {:style {:display "grid"
                      :gridTemplateColumns "repeat(4, 1fr)"
                      :gap "0px 16px"}}
@@ -671,4 +669,3 @@
    ;; 右侧评估详情区域
    [:div {:style {:flexGrow 1 :background "#f0f2f5" :overflow "hidden"}}
     [assessment]]])
-
