@@ -1,14 +1,13 @@
 (ns hc.hospital.db)
 
 (def default-db
-  {:anesthesia
+  { ;; Root map for the entire default database state
+   :anesthesia
    {:active-tab "patients"  ;; 当前选中的主标签页：patients, assessment, history
     :current-patient-id nil ;; 当前选中的患者ID
     :search-term ""         ;; 患者搜索词
     :date-range nil         ;; 日期过滤范围
-
     :assessment-status-filter "all"
-
     :patients               ;; 患者列表示例数据
     [{:key "P001" :name "张三" :age 45 :gender "男" :type "择期手术" :status "待评估"
       :department "骨科" :diagnosis "股骨颈骨折" :doctor "李医生" :date "2025-04-28"
@@ -27,65 +26,43 @@
     :all-patient-assessments []
     :fetch-assessments-error nil
 
-    :assessment
-    {:brief-medical-history     ;; 简要病史
-     {;; Fields based on anesthesia_home.cljs and structured for antd-form
-      :past-history {:yes-no nil :description ""} ;; from form-comp/yes-no-with-description
-      :allergic-history {:yes-no nil :description ""}
-      :surgery-anesthesia-history {:yes-no nil :description ""}
-      :pregnancy {:yes-no nil :description ""}
-      :blood-transfusion-history {:yes-no nil :description ""}
-      :menstrual-period {:yes-no nil :description ""}
-      :personal-history []      ;; from antd/checkbox-group, name :personal-history e.g. ["smoke", "drink"]
-      :other {:checkbox false :description ""} ;; from form-comp/checkbox-with-conditional-input
-      }
+    :assessment ;; This level holds both form-data and anesthesia-plan
+    {;; New structure for the four cards under :form-data
+     :form-data
+     {:allergy {:has "no" :allergen "" :last-reaction-date nil}
+      :habits {:smoking {:has "no" :years nil :per-day nil}
+               :drinking {:has "no" :years nil :per-day nil}}
+      :comorbidities
+      {:respiratory {:has "no" :details ""}
+       :cardiovascular {:has "no" :details ""}
+       :endocrine {:has "no" :details ""}
+       :neuro-psychiatric {:has "no" :details ""}
+       :neuromuscular {:has "no" :details ""}
+       :hepatic {:has "no" :details ""}
+       :renal {:has "no" :details ""}
+       :musculoskeletal {:has "no" :details ""}
+       :malignant-hyperthermia {:has "no" :details ""}
+       :anesthesia-surgery-history {:has "no" :details ""}
+       :special-medications {:has "no" :details "" :last-dose-time nil}}
+      :physical-exam
+      {:heart {:status "normal" :notes ""}
+       :lungs {:status "normal" :notes ""}
+       :airway {:status "normal" :notes ""}
+       :teeth {:status "normal" :notes ""}
+       :spine-limbs {:status "normal" :notes ""}
+       :neuro {:status "normal" :notes ""}
+       :other {:notes ""}} ; For the "其它" textarea in physical exam
+      :aux-exams ; For "相关辅助检查检验结果"
+      {;; Each key will store a list of Ant Design file objects
+       ;; e.g., [{:uid "-1" :name "image.png" :status "done" :url "..."}]
+       :chest-xray []
+       :pulmonary-function []
+       :cardiac-echo []
+       :ecg []
+       :other-results ""}} ; Textarea for "其他" in auxiliary exams
 
-     :physical-examination   ;; 体格检查
-     {;; Fields based on anesthesia_home.cljs and structured for antd-form
-      :general-condition nil  ;; radio: "bad", "fair", "average", "good"
-      :height nil             ;; number input
-      :weight nil             ;; number input
-      :bp {:systolic nil :diastolic nil} ;; number inputs
-      :heart-rate nil         ;; number input
-      :respiratory-rate nil   ;; number input
-      :temperature nil        ;; number input
-      :mental-state nil       ;; radio: "normal", "drowsy", etc.
-      :head-neck nil          ;; radio: "normal", "scar", etc.
-      :mouth-opening nil      ;; number input
-      :mallampati-score nil   ;; radio: "I", "II", "III", "IV"
-      :thyromental-distance nil ;; number input
-      :related-history {      ;; antd/form-item names like [:related-history :difficult-airway]
-                        :difficult-airway false
-                        :postoperative-nausea false
-                        :malignant-hyperthermia false
-                        :other-checkbox false
-                        :other ""
-                        }
-      :chest nil              ;; radio: "normal", "barrel", etc.
-      }
-
-     :lab-tests              ;; 实验室检查
-     {;; Fields based on anesthesia_home.cljs and structured for antd-form
-      :complete-blood-count { ;; names like [:complete-blood-count :hemoglobin]
-                             :hemoglobin nil       ;; was "RBC" in old label, but seems to be hemoglobin value
-                             :hematocrit nil       ;; was "Hct"
-                             :platelets nil        ;; was "PLT"
-                             :wbc nil              ;; was "WBC"
-                             }
-      :blood-type nil         ;; radio: "A", "B", "AB", "O"
-      :rh nil                 ;; radio: "negative", "positive"
-      :coagulation nil        ;; radio: "normal", "abnormal"
-      :biochemistry {         ;; names like [:biochemistry :glucose]
-                     :glucose nil
-                     :alt nil
-                     :ast nil
-                     :sodium nil
-                     :potassium nil
-                     }
-      :ecg ""                 ;; text input
-      :chest-xray ""          ;; text input
-      }
-     ;; Preserving :anesthesia-plan from the original db.cljs structure
+     ;; Preserving :anesthesia-plan from the original db.cljs structure,
+     ;; as it seems separate from the four new cards.
      :anesthesia-plan
      {:anesthesia-type "全身麻醉"
       :risk-assessment
@@ -103,5 +80,10 @@
        :invasive-bp false
        :central-venous false
        :others []}
-      :notes ""}
-     }}})
+      :notes ""} ; This is likely the overall assessment notes/remarks
+     }}
+   ;; Root level keys for doctor management etc.
+   :doctors []
+   :doctor-modal-visible? false
+   :editing-doctor nil
+   })
