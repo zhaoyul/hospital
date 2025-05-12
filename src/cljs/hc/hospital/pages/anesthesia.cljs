@@ -835,8 +835,7 @@
                      :borderRight "1px solid #f0f0f0"
                      :display "flex"
                      :flexDirection "column"
-                     :padding "0"}
-             }
+                     :padding "0"}}
 
     ;; 患者列表主体
     [:div {:style {:flexGrow 1 :overflowY "auto"}}

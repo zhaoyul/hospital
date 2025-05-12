@@ -20,7 +20,7 @@
 
 (defn sider-bar [active-tab]
   (let [sidebar-collapsed? (r/atom true)]
-    (fn []
+    (fn [active-tab]
       [:> Layout.Sider {:theme "light"
                         :collapsed @sidebar-collapsed?
                         :trigger nil

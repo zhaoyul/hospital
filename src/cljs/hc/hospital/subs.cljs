@@ -4,43 +4,35 @@
             [hc.hospital.utils :as utils]
             [dayjs :as dayjs])) ; 确保引入 dayjs
 
-(rf/reg-sub
- ::all-patient-assessments
- (fn [db _]
-   (:all-patient-assessments db)))
+(rf/reg-sub ::all-patient-assessments
+  (fn [db _]
+    (:all-patient-assessments db)))
 
-(rf/reg-sub
- ::current-patient-id
- (fn [db _]
-   (get-in db [:anesthesia :current-patient-id]))) ; 从 :anesthesia 模块获取
+(rf/reg-sub ::current-patient-id
+  (fn [db _]
+    (get-in db [:anesthesia :current-patient-id]))) ; 从 :anesthesia 模块获取
 
-(rf/reg-sub
- ::active-tab
- (fn [db _]
-   (get-in db [:active-tab] "patients")))
+(rf/reg-sub ::active-tab
+  (fn [db _]
+    (get-in db [:anesthesia :active-tab] "patients")))
 
-(rf/reg-sub
- ::search-term
- (fn [db _]
-   (get-in db [:anesthesia :search-term])))
+(rf/reg-sub ::search-term
+  (fn [db _]
+    (get-in db [:anesthesia :search-term])))
 
-(rf/reg-sub
- ::date-range
- (fn [db _]
-   (get-in db [:anesthesia :date-range])))
+(rf/reg-sub ::date-range
+  (fn [db _]
+    (get-in db [:anesthesia :date-range])))
 
-(rf/reg-sub
- ::assessment-status-filter
- (fn [db _]
-   (get-in db [:anesthesia :assessment-status-filter] "all")))
+(rf/reg-sub ::assessment-status-filter
+  (fn [db _]
+    (get-in db [:anesthesia :assessment-status-filter] "all")))
 
-(rf/reg-sub
- ::anesthesia-example-patients
- (fn [db _]
-   (get-in db [:anesthesia :patients])))
+(rf/reg-sub ::anesthesia-example-patients
+  (fn [db _]
+    (get-in db [:anesthesia :patients])))
 
-(rf/reg-sub
-  ::filtered-patients
+(rf/reg-sub ::filtered-patients
   :<- [::all-patient-assessments] ; This should ideally be the source of truth
   :<- [::search-term]
   :<- [::date-range]
@@ -102,53 +94,45 @@
 
 
 ;; ---- 评估表单相关订阅 ----
-(rf/reg-sub
-  ::selected-patient-assessment-forms-data
+(rf/reg-sub ::selected-patient-assessment-forms-data
   (fn [db _]
     (get-in db [:anesthesia :assessment])))
 
-(rf/reg-sub
- ::medical-summary-data ;; This now points to the new :form-data structure
- (fn [db _]
-   (get-in db [:anesthesia :assessment :form-data])))
+(rf/reg-sub ::medical-summary-data ;; This now points to the new :form-data structure
+  (fn [db _]
+    (get-in db [:anesthesia :assessment :form-data])))
 
-(rf/reg-sub
- ::selected-patient-raw-details
- :<- [::current-patient-id]
- :<- [::all-patient-assessments]
- :<- [::anesthesia-example-patients] ; Fallback for example data
- (fn [[patient-key api-assessments example-patients] _]
-   (let [find-in-api (when patient-key (first (filter #(= (:patient_id %) patient-key) api-assessments)))
-         find-in-examples (when (and patient-key (not find-in-api))
-                            (first (filter #(= (:key %) patient-key) example-patients)))]
-     (cond
-       find-in-api find-in-api ; Return the full assessment object from API
-       find-in-examples find-in-examples ; Return the example patient object
-       :else nil))))
+(rf/reg-sub ::selected-patient-raw-details
+  :<- [::current-patient-id]
+  :<- [::all-patient-assessments]
+  :<- [::anesthesia-example-patients] ; Fallback for example data
+  (fn [[patient-key api-assessments example-patients] _]
+    (let [find-in-api (when patient-key (first (filter #(= (:patient_id %) patient-key) api-assessments)))
+          find-in-examples (when (and patient-key (not find-in-api))
+                             (first (filter #(= (:key %) patient-key) example-patients)))]
+      (cond
+        find-in-api find-in-api ; Return the full assessment object from API
+        find-in-examples find-in-examples ; Return the example patient object
+        :else nil))))
 
-(rf/reg-sub
- ::anesthesia-plan-details ;; This remains as it targets a separate part of the assessment
- (fn [db _]
-   (get-in db [:anesthesia :assessment :anesthesia-plan])))
+(rf/reg-sub ::anesthesia-plan-details ;; This remains as it targets a separate part of the assessment
+  (fn [db _]
+    (get-in db [:anesthesia :assessment :anesthesia-plan])))
 
-(rf/reg-sub
- ::assessment-notes
- :<- [::anesthesia-plan-details]
- (fn [anesthesia-plan _]
-   (when anesthesia-plan
-     (:notes anesthesia-plan))))
+(rf/reg-sub ::assessment-notes
+  :<- [::anesthesia-plan-details]
+  (fn [anesthesia-plan _]
+    (when anesthesia-plan
+      (:notes anesthesia-plan))))
 
-(rf/reg-sub
- ::doctors
- (fn [db _]
-   (get db :doctors []))) ; Default to empty vector if not present
+(rf/reg-sub ::doctors
+  (fn [db _]
+    (get db :doctors []))) ; Default to empty vector if not present
 
-(rf/reg-sub
- ::doctor-modal-visible?
- (fn [db _]
-   (get db :doctor-modal-visible? false))) ; Default to false
+(rf/reg-sub ::doctor-modal-visible?
+  (fn [db _]
+    (get db :doctor-modal-visible? false))) ; Default to false
 
-(rf/reg-sub
- ::editing-doctor
- (fn [db _]
-   (get db :editing-doctor {}))) ; Default to empty map
+(rf/reg-sub ::editing-doctor
+  (fn [db _]
+    (get db :editing-doctor {}))) ; Default to empty map
