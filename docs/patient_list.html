@@ -552,671 +552,450 @@
                                 <button class="ant-btn ant-btn-danger" style="background: #ff4d4f; border-color: #ff4d4f; color: #fff;">
                                     <i class="fas fa-times-circle" style="margin-right: 4px;"></i> 驳回
                                 </button>
+                                <!-- 打印报告单按钮，仅在已批准状态显示 -->
+                                <button id="printReportBtn" class="ant-btn" style="background: #1890ff; border-color: #1890ff; color: #fff; display: none;">
+                                    <i class="fas fa-print" style="margin-right: 4px;"></i> 打印报告单
+                                </button>
                             </div>
                         </div>
                     </div>
                     
                     <div class="detail-content">
-                        <!-- 评估表单 - 与患者问卷保持一致 -->
                         <form class="ant-form ant-form-vertical">
-                            <!-- 第一部分：患者信息 -->
+                            <!-- 一、项目详细信息 -->
                             <div class="ant-card ant-card-bordered">
                                 <div class="ant-card-head" style="background-color: #f0f7ff;">
-                                    <div class="ant-card-head-wrapper">
-                                        <div class="ant-card-head-title" style="font-size: 16px; font-weight: bold;">
-                                            <i class="fas fa-user-circle" style="margin-right: 6px;"></i>患者信息
-                                        </div>
+                                    <div class="ant-card-head-title" style="font-size: 16px; font-weight: bold;">
+                                        <i class="fas fa-user-circle" style="margin-right: 6px;"></i>项目详细信息
                                     </div>
                                 </div>
                                 <div class="ant-card-body" style="padding: 12px;">
                                     <table class="ant-table" style="width: 100%; border-collapse: collapse;">
                                         <tbody>
-                                            <tr style="border: 1px solid #e8e8e8;">
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">门诊号</td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">
-                                                    <input class="ant-input" type="text" value="A">
-                                                </td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8; width: 80px;">姓名</td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">
-                                                    <input class="ant-input" type="text" value="AAA">
-                                                </td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8; width: 80px;">性别</td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">
-                                                    <input class="ant-input" type="text" value="女">
-                                                </td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8; width: 80px;">年龄</td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">
-                                                    <input class="ant-input" type="text" value="男">
-                                                </td>
+                                            <tr>
+                                                <td>门诊号</td>
+                                                <td><input class="ant-input" type="text" required></td>
+                                                <td>姓名</td>
+                                                <td><input class="ant-input" type="text" required></td>
+                                                <td>性别</td>
+                                                <td><input class="ant-input" type="text" required></td>
+                                                <td>年龄</td>
+                                                <td><input class="ant-input" type="text" required></td>
                                             </tr>
-                                            <tr style="border: 1px solid #e8e8e8;">
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">病区</td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;" colspan="3">
-                                                    <input class="ant-input" type="text" value="">
-                                                </td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">电子健康卡号</td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;" colspan="3">
-                                                    <input class="ant-input" type="text" value="">
-                                                </td>
+                                            <tr>
+                                                <td>病区</td>
+                                                <td colspan="3"><input class="ant-input" type="text" required></td>
+                                                <td>电子健康卡号</td>
+                                                <td colspan="3"><input class="ant-input" type="text" required></td>
                                             </tr>
-                                            <tr style="border: 1px solid #e8e8e8;">
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">术前诊断</td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;" colspan="7">
-                                                    <input class="ant-input" type="text" value="">
-                                                </td>
+                                            <tr>
+                                                <td>术前诊断</td>
+                                                <td colspan="7"><input class="ant-input" type="text" required></td>
                                             </tr>
-                                            <tr style="border: 1px solid #e8e8e8;">
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">拟施手术</td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;" colspan="7">
-                                                    <input class="ant-input" type="text" value="">
-                                                </td>
+                                            <tr>
+                                                <td>拟施手术</td>
+                                                <td colspan="7"><input class="ant-input" type="text" required></td>
                                             </tr>
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
-                            
-                            <!-- 第二部分：一般情况 -->
+
+                            <!-- 二、一般情况 -->
                             <div class="ant-card ant-card-bordered" style="margin-top: 8px;">
                                 <div class="ant-card-head" style="background-color: #f6ffed;">
-                                    <div class="ant-card-head-wrapper">
-                                        <div class="ant-card-head-title" style="font-size: 16px; font-weight: bold;">
-                                            <i class="fas fa-heartbeat" style="margin-right: 6px;"></i>一般情况
-                                        </div>
+                                    <div class="ant-card-head-title" style="font-size: 16px; font-weight: bold;">
+                                        <i class="fas fa-heartbeat" style="margin-right: 6px;"></i>一般情况
                                     </div>
                                 </div>
                                 <div class="ant-card-body" style="padding: 12px;">
-                                    <div style="margin-bottom: 8px; font-weight: 500; color: #1890ff;">
-                                        <i class="fas fa-heartbeat" style="margin-right: 4px;"></i>生命体征
+                                    <div style="display: flex; flex-wrap: wrap; gap: 16px;">
+                                        <div>身高（cm）：<input class="ant-input" type="number" required style="width: 80px;"></div>
+                                        <div>体重（kg）：<input class="ant-input" type="number" required style="width: 80px;"></div>
+                                        <div>精神状态：<input class="ant-input" type="text" required style="width: 120px;"></div>
+                                        <div>活动能力：<input class="ant-input" type="text" required style="width: 120px;"></div>
                                     </div>
-                                    <div style="display: flex; flex-wrap: wrap;">
-                                        <div style="display: flex; align-items: center; margin-right: 16px;">
-                                            <span>身高：</span>
-                                            <div class="ant-input-number" style="width: 80px;">
-                                                <div class="ant-input-number-handler-wrap">
-                                                    <span class="ant-input-number-handler ant-input-number-handler-up">
-                                                        <i class="fas fa-chevron-up ant-input-number-handler-up-inner"></i>
-                                                    </span>
-                                                    <span class="ant-input-number-handler ant-input-number-handler-down">
-                                                        <i class="fas fa-chevron-down ant-input-number-handler-down-inner"></i>
-                                                    </span>
-                                                </div>
-                                                <div class="ant-input-number-input-wrap">
-                                                    <input class="ant-input-number-input" type="number" value="" placeholder="cm">
-                                                </div>
-                                            </div>
-                                            <span style="margin-left: 8px;">cm</span>
-                                        </div>
-                                        <div style="display: flex; align-items: center; margin-right: 16px;">
-                                            <span>体重：</span>
-                                            <div class="ant-input-number" style="width: 80px;">
-                                                <div class="ant-input-number-handler-wrap">
-                                                    <span class="ant-input-number-handler ant-input-number-handler-up">
-                                                        <i class="fas fa-chevron-up ant-input-number-handler-up-inner"></i>
-                                                    </span>
-                                                    <span class="ant-input-number-handler ant-input-number-handler-down">
-                                                        <i class="fas fa-chevron-down ant-input-number-handler-down-inner"></i>
-                                                    </span>
-                                                </div>
-                                                <div class="ant-input-number-input-wrap">
-                                                    <input class="ant-input-number-input" type="number" value="" placeholder="kg">
-                                                </div>
-                                            </div>
-                                            <span style="margin-left: 8px;">kg</span>
-                                        </div>
-                                        <div style="display: flex; align-items: center; margin-right: 16px;">
-                                            <span>精神状态：</span>
-                                            <div class="ant-select ant-select-single" style="width: 120px;">
-                                                <div class="ant-select-selector">
-                                                    <span class="ant-select-selection-search">
-                                                        <input type="search" class="ant-select-selection-search-input" style="opacity: 0;">
-                                                    </span>
-                                                    <span class="ant-select-selection-placeholder">请选择</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                        <div style="display: flex; align-items: center;">
-                                            <span>活动能力：</span>
-                                            <div class="ant-select ant-select-single" style="width: 120px;">
-                                                <div class="ant-select-selector">
-                                                    <span class="ant-select-selection-search">
-                                                        <input type="search" class="ant-select-selection-search-input" style="opacity: 0;">
-                                                    </span>
-                                                    <span class="ant-select-selection-placeholder">请选择</span>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div style="margin: 12px 0; border-top: 1px dashed #e8e8e8;"></div>
-                                    <div style="margin-bottom: 8px; font-weight: 500; color: #1890ff;">
-                                        <i class="fas fa-heartbeat" style="margin-right: 4px;"></i>生命体征
-                                    </div>
-                                    <div style="display: flex; flex-wrap: wrap;">
-                                        <div style="display: flex; align-items: center; margin-right: 16px;">
-                                            <span>血压：</span>
-                                            <div class="ant-input-number" style="width: 60px;">
-                                                <div class="ant-input-number-input-wrap">
-                                                    <input class="ant-input-number-input" type="number" value="" placeholder="">
-                                                </div>
-                                            </div>
-                                            <span style="margin: 0 4px;">/</span>
-                                            <div class="ant-input-number" style="width: 60px;">
-                                                <div class="ant-input-number-input-wrap">
-                                                    <input class="ant-input-number-input" type="number" value="" placeholder="">
-                                                </div>
-                                            </div>
-                                            <span style="margin-left: 8px;">mmHg</span>
-                                        </div>
-                                        <div style="display: flex; align-items: center; margin-right: 16px;">
-                                            <span>脉搏：</span>
-                                            <div class="ant-input-number" style="width: 60px;">
-                                                <div class="ant-input-number-input-wrap">
-                                                    <input class="ant-input-number-input" type="number" value="" placeholder="">
-                                                </div>
-                                            </div>
-                                            <span style="margin-left: 8px;">次/分</span>
-                                        </div>
-                                        <div style="display: flex; align-items: center; margin-right: 16px;">
-                                            <span>呼吸：</span>
-                                            <div class="ant-input-number" style="width: 60px;">
-                                                <div class="ant-input-number-input-wrap">
-                                                    <input class="ant-input-number-input" type="number" value="" placeholder="">
-                                                </div>
-                                            </div>
-                                            <span style="margin-left: 8px;">次/分</span>
-                                        </div>
-                                        <div style="display: flex; align-items: center; margin-right: 16px;">
-                                            <span>体温：</span>
-                                            <div class="ant-input-number" style="width: 60px;">
-                                                <div class="ant-input-number-input-wrap">
-                                                    <input class="ant-input-number-input" type="number" value="" placeholder="">
-                                                </div>
-                                            </div>
-                                            <span style="margin-left: 8px;">℃</span>
-                                        </div>
-                                        <div style="display: flex; align-items: center;">
-                                            <span>SpO2：</span>
-                                            <div class="ant-input-number" style="width: 60px;">
-                                                <div class="ant-input-number-input-wrap">
-                                                    <input class="ant-input-number-input" type="number" value="" placeholder="">
-                                                </div>
-                                            </div>
-                                            <span style="margin-left: 8px;">%</span>
-                                        </div>
+                                    <div style="margin-top: 12px; display: flex; flex-wrap: wrap; gap: 16px;">
+                                        <div>血压（mmHg）：<input class="ant-input" type="text" required style="width: 100px;"></div>
+                                        <div>脉搏（次/分）：<input class="ant-input" type="number" required style="width: 80px;"></div>
+                                        <div>呼吸（次/分）：<input class="ant-input" type="number" required style="width: 80px;"></div>
+                                        <div>体温（℃）：<input class="ant-input" type="number" required style="width: 80px;"></div>
+                                        <div>SpO2（%）：<input class="ant-input" type="number" required style="width: 80px;"></div>
                                     </div>
                                 </div>
                             </div>
-                            
-                            <!-- 第三部分：病情摘要 -->
+
+                            <!-- 三、病情摘要 -->
                             <div class="ant-card ant-card-bordered" style="margin-top: 8px;">
                                 <div class="ant-card-head" style="background-color: #fff7e6;">
-                                    <div class="ant-card-head-wrapper">
-                                        <div class="ant-card-head-title" style="font-size: 16px; font-weight: bold;">
-                                            <i class="fas fa-file-medical-alt" style="margin-right: 6px;"></i>病情摘要（病史、体检及辅助检查）
-                                        </div>
+                                    <div class="ant-card-head-title" style="font-size: 16px; font-weight: bold;">
+                                        <i class="fas fa-file-medical-alt" style="margin-right: 6px;"></i>病情摘要
+                                    </div>
+                                </div>
+                                <div class="ant-card-body" style="padding: 12px;">
+                                    <div style="margin-bottom: 8px;">
+                                        <span>过敏史：</span>
+                                        <label><input type="radio" name="allergy" value="无" required>无</label>
+                                        <label style="margin-left: 8px;"><input type="radio" name="allergy" value="有" required>有</label>
+                                        <span style="margin-left: 8px;">过敏源头：</span>
+                                        <input class="ant-input" type="text" style="width: 120px;" required>
+                                        <span style="margin-left: 8px;">最近发生过敏时间：</span>
+                                        <input class="ant-input" type="date" style="width: 160px;" required>
+                                    </div>
+                                    <div style="margin-bottom: 8px;">
+                                        <span>吸烟史：</span>
+                                        <label><input type="radio" name="smoking" value="无" required>无</label>
+                                        <label style="margin-left: 8px;"><input type="radio" name="smoking" value="有" required>有</label>
+                                        <span style="margin-left: 8px;">吸烟年数：</span>
+                                        <input class="ant-input" type="number" style="width: 60px;" required>
+                                        <span>年</span>
+                                        <span style="margin-left: 8px;">每天吸烟支数：</span>
+                                        <input class="ant-input" type="number" style="width: 60px;" required>
+                                        <span>支</span>
+                                    </div>
+                                    <div>
+                                        <span>饮酒史：</span>
+                                        <label><input type="radio" name="drinking" value="无" required>无</label>
+                                        <label style="margin-left: 8px;"><input type="radio" name="drinking" value="有" required>有</label>
+                                        <span style="margin-left: 8px;">饮酒年数：</span>
+                                        <input class="ant-input" type="number" style="width: 60px;" required>
+                                        <span>年</span>
+                                        <span style="margin-left: 8px;">每天饮酒量：</span>
+                                        <input class="ant-input" type="number" style="width: 60px;" required>
+                                        <span>ml</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 四、并存疾病 -->
+                            <div class="ant-card ant-card-bordered" style="margin-top: 8px;">
+                                <div class="ant-card-head" style="background-color: #f9f0ff;">
+                                    <div class="ant-card-head-title" style="font-size: 16px; font-weight: bold;">
+                                        <i class="fas fa-stethoscope" style="margin-right: 6px;"></i>并存疾病
+                                    </div>
+                                </div>
+                                <div class="ant-card-body" style="padding: 12px;">
+                                    <table class="ant-table" style="width: 100%; border-collapse: separate; border-spacing: 0 10px;">
+                                        <tbody>
+                                            <tr>
+                                                <td style="width: 10%;">呼吸系统疾病</td>
+                                                <td style="width: 40%;">
+                                                    <label><input type="radio" name="respiratoryDiseaseOption" value="有">有</label>
+                                                    <label style="margin-left:8px;"><input type="radio" name="respiratoryDiseaseOption" value="无" checked>无</label>
+                                                    <input class="ant-input comorbidity-input" type="text" style="margin-left:8px; display:none; width:70%; vertical-align:middle;" placeholder="请填写具体内容">
+                                                </td>
+                                                <td style="width: 10%;">心血管疾病</td>
+                                                <td style="width: 40%;">
+                                                    <label><input type="radio" name="cardiovascularDiseaseOption" value="有">有</label>
+                                                    <label style="margin-left:8px;"><input type="radio" name="cardiovascularDiseaseOption" value="无" checked>无</label>
+                                                    <input class="ant-input comorbidity-input" type="text" style="margin-left:8px; display:none; width:70%; vertical-align:middle;" placeholder="请填写具体内容">
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>内分泌疾病</td>
+                                                <td>
+                                                    <label><input type="radio" name="endocrineDiseaseOption" value="有">有</label>
+                                                    <label style="margin-left:8px;"><input type="radio" name="endocrineDiseaseOption" value="无" checked>无</label>
+                                                    <input class="ant-input comorbidity-input" type="text" style="margin-left:8px; display:none; width:70%; vertical-align:middle;" placeholder="请填写具体内容">
+                                                </td>
+                                                <td>神经精神疾病</td>
+                                                <td>
+                                                    <label><input type="radio" name="neuropsychiatricDiseaseOption" value="有">有</label>
+                                                    <label style="margin-left:8px;"><input type="radio" name="neuropsychiatricDiseaseOption" value="无" checked>无</label>
+                                                    <input class="ant-input comorbidity-input" type="text" style="margin-left:8px; display:none; width:70%; vertical-align:middle;" placeholder="请填写具体内容">
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>神经肌肉疾病</td>
+                                                <td>
+                                                    <label><input type="radio" name="neuromuscularDiseaseOption" value="有">有</label>
+                                                    <label style="margin-left:8px;"><input type="radio" name="neuromuscularDiseaseOption" value="无" checked>无</label>
+                                                    <input class="ant-input comorbidity-input" type="text" style="margin-left:8px; display:none; width:70%; vertical-align:middle;" placeholder="请填写具体内容">
+                                                </td>
+                                                <td>肝脏疾病</td>
+                                                <td>
+                                                    <label><input type="radio" name="liverDiseaseOption" value="有">有</label>
+                                                    <label style="margin-left:8px;"><input type="radio" name="liverDiseaseOption" value="无" checked>无</label>
+                                                    <input class="ant-input comorbidity-input" type="text" style="margin-left:8px; display:none; width:70%; vertical-align:middle;" placeholder="请填写具体内容">
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>肾脏疾病</td>
+                                                <td>
+                                                    <label><input type="radio" name="renalDiseaseOption" value="有">有</label>
+                                                    <label style="margin-left:8px;"><input type="radio" name="renalDiseaseOption" value="无" checked>无</label>
+                                                    <input class="ant-input comorbidity-input" type="text" style="margin-left:8px; display:none; width:70%; vertical-align:middle;" placeholder="请填写具体内容">
+                                                </td>
+                                                <td>关节骨骼系统</td>
+                                                <td>
+                                                    <label><input type="radio" name="musculoskeletalDiseaseOption" value="有">有</label>
+                                                    <label style="margin-left:8px;"><input type="radio" name="musculoskeletalDiseaseOption" value="无" checked>无</label>
+                                                    <input class="ant-input comorbidity-input" type="text" style="margin-left:8px; display:none; width:70%; vertical-align:middle;" placeholder="请填写具体内容">
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>家族恶性高热史</td>
+                                                <td>
+                                                    <label><input type="radio" name="malignantHyperthermiaOption" value="有">有</label>
+                                                    <label style="margin-left:8px;"><input type="radio" name="malignantHyperthermiaOption" value="无" checked>无</label>
+                                                    <input class="ant-input comorbidity-input" type="text" style="margin-left:8px; display:none; width:70%; vertical-align:middle;" placeholder="请填写具体内容">
+                                                </td>
+                                                <td>既往麻醉、手术史</td>
+                                                <td>
+                                                    <label><input type="radio" name="anesthesiaHistoryOption" value="有">有</label>
+                                                    <label style="margin-left:8px;"><input type="radio" name="anesthesiaHistoryOption" value="无" checked>无</label>
+                                                    <input class="ant-input comorbidity-input" type="text" style="margin-left:8px; display:none; width:70%; vertical-align:middle;" placeholder="请填写具体内容">
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td>使用的特殊药物</td>
+                                                <td colspan="3">
+                                                    <label><input type="radio" name="specialDrugsOption" value="有">有</label>
+                                                    <label style="margin-left:8px;"><input type="radio" name="specialDrugsOption" value="无" checked>无</label>
+                                                    <input class="ant-input comorbidity-input" type="text" style="margin-left:8px; display:none; width:70%; vertical-align:middle;" placeholder="请填写具体内容">
+                                                </td>
+                                            </tr>
+                                            <tr id="lastMedicationTimeRow" style="display:none;">
+                                                <td>最后一次用药时间</td>
+                                                <td colspan="3"><input class="ant-input" type="datetime-local" style="width: 250px;"></td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <script>
+                            // 控制并存疾病输入框显示/隐藏
+                            (function() {
+                                function toggleComorbidityInput(radio) {
+                                    var input = radio.closest('td').querySelector('.comorbidity-input');
+                                    if (!input) return;
+                                    if (radio.value === '有') {
+                                        input.style.display = '';
+                                    } else {
+                                        input.style.display = 'none';
+                                        input.value = '';
+                                    }
+                                }
+                                document.querySelectorAll('.ant-card-head-title').forEach(function(cardTitle) {
+                                    if(cardTitle.textContent.indexOf('并存疾病') === -1) return;
+                                    var card = cardTitle.closest('.ant-card');
+                                    card.querySelectorAll('input[type=radio]').forEach(function(radio) {
+                                        radio.addEventListener('change', function() {
+                                            toggleComorbidityInput(this);
+                                        });
+                                        // 初始化
+                                        if (radio.checked) {
+                                            toggleComorbidityInput(radio);
+                                        }
+                                    });
+                                });
+                            })();
+
+                            // 特殊药物用药时间显示逻辑
+                            (function() {
+                                var specialDrugsRadios = document.getElementsByName('specialDrugsOption');
+                                var lastMedicationTimeRow = document.getElementById('lastMedicationTimeRow');
+                                specialDrugsRadios.forEach(function(radio) {
+                                    radio.addEventListener('change', function() {
+                                        if (this.value === '有' && this.checked) {
+                                            lastMedicationTimeRow.style.display = '';
+                                        } else if (this.value === '无' && this.checked) {
+                                            lastMedicationTimeRow.style.display = 'none';
+                                        }
+                                    });
+                                    // 初始化
+                                    if (radio.checked && radio.value === '有') {
+                                        lastMedicationTimeRow.style.display = '';
+                                    }
+                                });
+                            })();
+                            </script>
+
+                            <!-- 五、体格检查 -->
+                            <div class="ant-card ant-card-bordered" style="margin-top: 8px;">
+                                <div class="ant-card-head" style="background-color: #e6f7ff;">
+                                    <div class="ant-card-head-title" style="font-size: 16px; font-weight: bold;">
+                                        <i class="fas fa-user-md" style="margin-right: 6px;"></i>体格检查
                                     </div>
                                 </div>
                                 <div class="ant-card-body" style="padding: 12px;">
                                     <table class="ant-table" style="width: 100%; border-collapse: collapse;">
                                         <tbody>
-                                            <tr style="border: 1px solid #e8e8e8;">
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8; width: 100px; background-color: #fafafa; font-weight: 500;">病情摘要<br>(病史、体检及<br>辅助检查)</td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;" colspan="7">
-                                                    <div style="margin-bottom: 8px; font-weight: 500; color: #fa8c16;">
-                                                        <i class="fas fa-allergies" style="margin-right: 4px;"></i>过敏史
-                                                    </div>
-                                                    <div style="display: flex; flex-wrap: wrap;">
-                                                        <div style="display: flex; align-items: center; margin-right: 16px;">
-                                                            <span>过敏史：</span>
-                                                            <div class="ant-radio-group">
-                                                                <label class="ant-radio-wrapper">
-                                                                    <span class="ant-radio">
-                                                                        <input type="radio" class="ant-radio-input" name="allergy" checked>
-                                                                        <span class="ant-radio-inner"></span>
-                                                                    </span>
-                                                                    <span>无</span>
-                                                                </label>
-                                                                <label class="ant-radio-wrapper" style="margin-left: 8px;">
-                                                                    <span class="ant-radio">
-                                                                        <input type="radio" class="ant-radio-input" name="allergy">
-                                                                        <span class="ant-radio-inner"></span>
-                                                                    </span>
-                                                                    <span>有</span>
-                                                                </label>
-                                                            </div>
-                                                            <span style="margin-left: 8px;">过敏原：</span>
-                                                            <input class="ant-input" type="text" style="width: 100px;" value="">
-                                                        </div>
-                                                        <div style="display: flex; align-items: center;">
-                                                            <span>最近发生过敏时间：</span>
-                                                            <div class="ant-picker" style="width: 140px;">
-                                                                <div class="ant-picker-input">
-                                                                    <input type="text" value="2025-04-23" placeholder="请选择日期" readonly>
-                                                                    <span class="ant-picker-suffix">
-                                                                        <i class="fas fa-calendar-alt"></i>
-                                                                    </span>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    <div style="margin: 12px 0; border-top: 1px dashed #e8e8e8;"></div>
-                                                    <div style="margin-bottom: 8px; font-weight: 500; color: #722ed1;">
-                                                        <i class="fas fa-smoking" style="margin-right: 4px;"></i>生活习惯
-                                                    </div>
-                                                    
-                                                    <div style="display: flex; flex-wrap: wrap;">
-                                                        <div style="display: flex; align-items: center; margin-right: 16px;">
-                                                            <span>吸烟史：</span>
-                                                            <div class="ant-radio-group">
-                                                                <label class="ant-radio-wrapper">
-                                                                    <span class="ant-radio">
-                                                                        <input type="radio" class="ant-radio-input" name="smoking" checked>
-                                                                        <span class="ant-radio-inner"></span>
-                                                                    </span>
-                                                                    <span>无</span>
-                                                                </label>
-                                                                <label class="ant-radio-wrapper" style="margin-left: 8px;">
-                                                                    <span class="ant-radio">
-                                                                        <input type="radio" class="ant-radio-input" name="smoking">
-                                                                        <span class="ant-radio-inner"></span>
-                                                                    </span>
-                                                                    <span>有</span>
-                                                                </label>
-                                                            </div>
-                                                            <span style="margin-left: 8px;">吸烟</span>
-                                                            <div class="ant-input-number" style="width: 60px;">
-                                                                <div class="ant-input-number-input-wrap">
-                                                                    <input class="ant-input-number-input" type="number" value="" placeholder="">
-                                                                </div>
-                                                            </div>
-                                                            <span>年</span>
-                                                            <span style="margin-left: 8px;">每天</span>
-                                                            <div class="ant-input-number" style="width: 60px;">
-                                                                <div class="ant-input-number-input-wrap">
-                                                                    <input class="ant-input-number-input" type="number" value="" placeholder="">
-                                                                </div>
-                                                            </div>
-                                                            <span>支</span>
-                                                        </div>
-                                                        <div style="display: flex; align-items: center;">
-                                                            <span>饮酒史：</span>
-                                                            <div class="ant-radio-group">
-                                                                <label class="ant-radio-wrapper">
-                                                                    <span class="ant-radio">
-                                                                        <input type="radio" class="ant-radio-input" name="drinking" checked>
-                                                                        <span class="ant-radio-inner"></span>
-                                                                    </span>
-                                                                    <span>无</span>
-                                                                </label>
-                                                                <label class="ant-radio-wrapper" style="margin-left: 8px;">
-                                                                    <span class="ant-radio">
-                                                                        <input type="radio" class="ant-radio-input" name="drinking">
-                                                                        <span class="ant-radio-inner"></span>
-                                                                    </span>
-                                                                    <span>有</span>
-                                                                </label>
-                                                            </div>
-                                                            <span style="margin-left: 8px;">饮酒</span>
-                                                            <div class="ant-input-number" style="width: 60px;">
-                                                                <div class="ant-input-number-input-wrap">
-                                                                    <input class="ant-input-number-input" type="number" value="" placeholder="">
-                                                                </div>
-                                                            </div>
-                                                            <span>年</span>
-                                                            <span style="margin-left: 8px;">每天</span>
-                                                            <div class="ant-input-number" style="width: 60px;">
-                                                                <div class="ant-input-number-input-wrap">
-                                                                    <input class="ant-input-number-input" type="number" value="" placeholder="">
-                                                                </div>
-                                                            </div>
-                                                            <span>ml</span>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                            <tr style="border: 1px solid #e8e8e8;">
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">3.13 心脏</td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">
-                                                    <div class="ant-radio-group">
-                                                        <label class="ant-radio-wrapper">
-                                                            <span class="ant-radio">
-                                                                <input type="radio" class="ant-radio-input" name="heart_status" value="normal" checked>
-                                                                <span class="ant-radio-inner"></span>
-                                                            </span>
-                                                            <span>正常</span>
-                                                        </label>
-                                                        <label class="ant-radio-wrapper" style="margin-left: 8px;">
-                                                            <span class="ant-radio">
-                                                                <input type="radio" class="ant-radio-input" name="heart_status" value="abnormal">
-                                                                <span class="ant-radio-inner"></span>
-                                                            </span>
-                                                            <span>异常</span>
-                                                        </label>
-                                                    </div>
+                                            <tr>
+                                                <td>心脏</td>
+                                                <td>
+                                                    <label><input type="radio" name="heart_status" value="normal" checked> 正常</label>
+                                                    <label style="margin-left:8px;"><input type="radio" name="heart_status" value="abnormal"> 异常</label>
                                                     <input class="ant-input" type="text" id="heart_abnormal" style="display:none;margin-top:6px;" placeholder="请补充异常描述">
                                                 </td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">3.14 肺脏</td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">
-                                                    <div class="ant-radio-group">
-                                                        <label class="ant-radio-wrapper">
-                                                            <span class="ant-radio">
-                                                                <input type="radio" class="ant-radio-input" name="lung_status" value="normal" checked>
-                                                                <span class="ant-radio-inner"></span>
-                                                            </span>
-                                                            <span>正常</span>
-                                                        </label>
-                                                        <label class="ant-radio-wrapper" style="margin-left: 8px;">
-                                                            <span class="ant-radio">
-                                                                <input type="radio" class="ant-radio-input" name="lung_status" value="abnormal">
-                                                                <span class="ant-radio-inner"></span>
-                                                            </span>
-                                                            <span>异常</span>
-                                                        </label>
-                                                    </div>
+                                                <td>肺脏</td>
+                                                <td>
+                                                    <label><input type="radio" name="lung_status" value="normal" checked> 正常</label>
+                                                    <label style="margin-left:8px;"><input type="radio" name="lung_status" value="abnormal"> 异常</label>
                                                     <input class="ant-input" type="text" id="lung_abnormal" style="display:none;margin-top:6px;" placeholder="请补充异常描述">
                                                 </td>
                                             </tr>
-                                            <tr style="border: 1px solid #e8e8e8;">
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">3.15 气道</td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">
-                                                    <div class="ant-radio-group">
-                                                        <label class="ant-radio-wrapper">
-                                                            <span class="ant-radio">
-                                                                <input type="radio" class="ant-radio-input" name="airway_status" value="normal" checked>
-                                                                <span class="ant-radio-inner"></span>
-                                                            </span>
-                                                            <span>正常</span>
-                                                        </label>
-                                                        <label class="ant-radio-wrapper" style="margin-left: 8px;">
-                                                            <span class="ant-radio">
-                                                                <input type="radio" class="ant-radio-input" name="airway_status" value="abnormal">
-                                                                <span class="ant-radio-inner"></span>
-                                                            </span>
-                                                            <span>异常</span>
-                                                        </label>
-                                                    </div>
+                                            <tr>
+                                                <td>气道</td>
+                                                <td>
+                                                    <label><input type="radio" name="airway_status" value="normal" checked> 正常</label>
+                                                    <label style="margin-left:8px;"><input type="radio" name="airway_status" value="abnormal"> 异常</label>
                                                     <input class="ant-input" type="text" id="airway_abnormal" style="display:none;margin-top:6px;" placeholder="请补充异常描述">
                                                 </td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">3.16 牙齿</td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">
-                                                    <div class="ant-radio-group">
-                                                        <label class="ant-radio-wrapper">
-                                                            <span class="ant-radio">
-                                                                <input type="radio" class="ant-radio-input" name="teeth_status" value="normal" checked>
-                                                                <span class="ant-radio-inner"></span>
-                                                            </span>
-                                                            <span>正常</span>
-                                                        </label>
-                                                        <label class="ant-radio-wrapper" style="margin-left: 8px;">
-                                                            <span class="ant-radio">
-                                                                <input type="radio" class="ant-radio-input" name="teeth_status" value="abnormal">
-                                                                <span class="ant-radio-inner"></span>
-                                                            </span>
-                                                            <span>异常</span>
-                                                        </label>
-                                                    </div>
+                                                <td>牙齿</td>
+                                                <td>
+                                                    <label><input type="radio" name="teeth_status" value="normal" checked> 正常</label>
+                                                    <label style="margin-left:8px;"><input type="radio" name="teeth_status" value="abnormal"> 异常</label>
                                                     <input class="ant-input" type="text" id="teeth_abnormal" style="display:none;margin-top:6px;" placeholder="请补充异常描述">
                                                 </td>
                                             </tr>
-                                            <tr style="border: 1px solid #e8e8e8;">
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">3.17 脊柱四肢</td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">
-                                                    <div class="ant-radio-group">
-                                                        <label class="ant-radio-wrapper">
-                                                            <span class="ant-radio">
-                                                                <input type="radio" class="ant-radio-input" name="spine_status" value="normal" checked>
-                                                                <span class="ant-radio-inner"></span>
-                                                            </span>
-                                                            <span>正常</span>
-                                                        </label>
-                                                        <label class="ant-radio-wrapper" style="margin-left: 8px;">
-                                                            <span class="ant-radio">
-                                                                <input type="radio" class="ant-radio-input" name="spine_status" value="abnormal">
-                                                                <span class="ant-radio-inner"></span>
-                                                            </span>
-                                                            <span>异常</span>
-                                                        </label>
-                                                    </div>
+                                            <tr>
+                                                <td>脊柱四肢</td>
+                                                <td>
+                                                    <label><input type="radio" name="spine_status" value="normal" checked> 正常</label>
+                                                    <label style="margin-left:8px;"><input type="radio" name="spine_status" value="abnormal"> 异常</label>
                                                     <input class="ant-input" type="text" id="spine_abnormal" style="display:none;margin-top:6px;" placeholder="请补充异常描述">
                                                 </td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">3.18 神经</td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">
-                                                    <div class="ant-radio-group">
-                                                        <label class="ant-radio-wrapper">
-                                                            <span class="ant-radio">
-                                                                <input type="radio" class="ant-radio-input" name="nerve_status" value="normal" checked>
-                                                                <span class="ant-radio-inner"></span>
-                                                            </span>
-                                                            <span>正常</span>
-                                                        </label>
-                                                        <label class="ant-radio-wrapper" style="margin-left: 8px;">
-                                                            <span class="ant-radio">
-                                                                <input type="radio" class="ant-radio-input" name="nerve_status" value="abnormal">
-                                                                <span class="ant-radio-inner"></span>
-                                                            </span>
-                                                            <span>异常</span>
-                                                        </label>
-                                                    </div>
+                                                <td>其它</td>
+                                                <td><input class="ant-input" type="text"></td>
+                                            </tr>
+                                            <tr>
+                                                <td>神经</td>
+                                                <td>
+                                                    <label><input type="radio" name="nerve_status" value="normal" checked> 正常</label>
+                                                    <label style="margin-left:8px;"><input type="radio" name="nerve_status" value="abnormal"> 异常</label>
                                                     <input class="ant-input" type="text" id="nerve_abnormal" style="display:none;margin-top:6px;" placeholder="请补充异常描述">
                                                 </td>
-                                            </tr>
-                                            <tr style="border: 1px solid #e8e8e8;">
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">相关辅助检查检验结果</td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;" colspan="3">
-                                                    <div style="margin-bottom: 8px; font-weight: 500; color: #1890ff;">
-                                                        <i class="fas fa-file-medical" style="margin-right: 4px;"></i>检查报告
-                                                    </div>
-                                                    <div style="display: flex; align-items: center; justify-content: flex-start; flex-wrap: wrap;">
-                                                        <div style="display: flex; align-items: center; margin-right: 16px; margin-bottom: 8px;">
-                                                            <span>肺功能：</span>
-                                                            <div class="ant-upload ant-upload-select">
-                                                                <button type="button" class="ant-btn ant-btn-default">
-                                                                    <i class="fas fa-upload" style="margin-right: 4px;"></i>
-                                                                    <span>上传附件</span>
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                        <div style="display: flex; align-items: center; margin-right: 16px; margin-bottom: 8px;">
-                                                            <span>心脏彩超：</span>
-                                                            <div class="ant-upload ant-upload-select">
-                                                                <button type="button" class="ant-btn ant-btn-default">
-                                                                    <i class="fas fa-upload" style="margin-right: 4px;"></i>
-                                                                    <span>上传附件</span>
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                        <div style="display: flex; align-items: center; margin-bottom: 8px;">
-                                                            <span>心电图：</span>
-                                                            <div class="ant-upload ant-upload-select">
-                                                                <button type="button" class="ant-btn ant-btn-default">
-                                                                    <i class="fas fa-upload" style="margin-right: 4px;"></i>
-                                                                    <span>上传附件</span>
-                                                                </button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    <div class="ant-upload-list ant-upload-list-text">
-                                                        <div class="ant-upload-list-item ant-upload-list-item-done">
-                                                            <div class="ant-upload-list-item-info">
-                                                                <span class="ant-upload-span">
-                                                                    <i class="fas fa-paperclip" style="margin-right: 8px; color: #1890ff;"></i>
-                                                                    <span class="ant-upload-list-item-name" title="心电图检查.pdf">心电图检查.pdf</span>
-                                                                    <span class="ant-upload-list-item-card-actions">
-                                                                        <button title="预览文件" type="button" class="ant-btn ant-btn-text ant-btn-sm ant-btn-icon-only">
-                                                                            <i class="fas fa-eye"></i>
-                                                                        </button>
-                                                                        <button title="删除文件" type="button" class="ant-btn ant-btn-text ant-btn-sm ant-btn-icon-only">
-                                                                            <i class="fas fa-trash"></i>
-                                                                        </button>
-                                                                    </span>
-                                                                </span>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                            <tr style="border: 1px solid #e8e8e8;">
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">ASA分级</td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">
-                                                    <div class="ant-select ant-select-single" style="width: 100%;">
-                                                        <div class="ant-select-selector" style="padding: 0 12px; border: 1px solid #d9d9d9; border-radius: 2px;">
-                                                            <span class="ant-select-selection-item">ASA II级</span>
-                                                            <span class="ant-select-arrow">
-                                                                <i class="fas fa-chevron-down"></i>
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">心功能分级(NYHA)</td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">
-                                                    <div class="ant-select ant-select-single" style="width: 100%;">
-                                                        <div class="ant-select-selector" style="padding: 0 12px; border: 1px solid #d9d9d9; border-radius: 2px;">
-                                                            <span class="ant-select-selection-item">NYHA II级</span>
-                                                            <span class="ant-select-arrow">
-                                                                <i class="fas fa-chevron-down"></i>
-                                                            </span>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                            <tr style="border: 1px solid #e8e8e8;">
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">拟行麻醉方案</td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">
-                                                    <div class="ant-select ant-select-multiple" style="width: 100%;">
-                                                        <div class="ant-select-selector">
-                                                            <div class="ant-select-selection-overflow">
-                                                                <div class="ant-select-selection-overflow-item">
-                                                                    <span class="ant-select-selection-item">
-                                                                        <span class="ant-select-selection-item-content">全身麻醉</span>
-                                                                        <span class="ant-select-selection-item-remove">
-                                                                            <i class="fas fa-times"></i>
-                                                                        </span>
-                                                                    </span>
-                                                                </div>
-                                                                <div class="ant-select-selection-overflow-item">
-                                                                    <span class="ant-select-selection-item">
-                                                                        <span class="ant-select-selection-item-content">气管插管</span>
-                                                                        <span class="ant-select-selection-item-remove">
-                                                                            <i class="fas fa-times"></i>
-                                                                        </span>
-                                                                    </span>
-                                                                </div>
-                                                                <div class="ant-select-selection-overflow-item">
-                                                                    <div class="ant-select-selection-search">
-                                                                        <input type="search" class="ant-select-selection-search-input" style="opacity: 0;" placeholder="请选择或输入">
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">监测项目</td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">
-                                                    <div class="ant-select ant-select-multiple" style="width: 100%;">
-                                                        <div class="ant-select-selector">
-                                                            <div class="ant-select-selection-overflow">
-                                                                <div class="ant-select-selection-overflow-item">
-                                                                    <span class="ant-select-selection-item">
-                                                                        <span class="ant-select-selection-item-content">常规监测</span>
-                                                                        <span class="ant-select-selection-item-remove">
-                                                                            <i class="fas fa-times"></i>
-                                                                        </span>
-                                                                    </span>
-                                                                </div>
-                                                                <div class="ant-select-selection-overflow-item">
-                                                                    <div class="ant-select-selection-search">
-                                                                        <input type="search" class="ant-select-selection-search-input" style="opacity: 0;" placeholder="请选择或输入">
-                                                                    </div>
-                                                                </div>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                            <tr style="border: 1px solid #e8e8e8;">
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">特殊技术</td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;" colspan="3">
-                                                    <input class="ant-input" type="text" value="">
-                                                </td>
+                                                <td></td>
+                                                <td></td>
                                             </tr>
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
-                            
-                            <!-- 第五部分：术前麻醉医嘱 -->
+                            <script>
+                            // 体格检查异常项显示逻辑
+                            (function() {
+                                const items = [
+                                    {name: 'heart', input: 'heart_abnormal'},
+                                    {name: 'lung', input: 'lung_abnormal'},
+                                    {name: 'airway', input: 'airway_abnormal'},
+                                    {name: 'teeth', input: 'teeth_abnormal'},
+                                    {name: 'spine', input: 'spine_abnormal'},
+                                    {name: 'nerve', input: 'nerve_abnormal'}
+                                ];
+                                items.forEach(item => {
+                                    const radios = document.getElementsByName(item.name + '_status');
+                                    const input = document.getElementById(item.input);
+                                    radios.forEach(radio => {
+                                        radio.addEventListener('change', function() {
+                                            if (this.value === 'abnormal' && this.checked) {
+                                                input.style.display = '';
+                                            } else if (this.value === 'normal' && this.checked) {
+                                                input.style.display = 'none';
+                                                input.value = '';
+                                            }
+                                        });
+                                        // 初始化
+                                        if (radio.checked && radio.value === 'abnormal') {
+                                            input.style.display = '';
+                                        }
+                                    });
+                                });
+                            })();
+                            </script>
+
+                            <!-- 六、相关辅助检查检验结果 -->
+                            <div class="ant-card ant-card-bordered" style="margin-top: 8px;">
+                                <div class="ant-card-head" style="background-color: #fffbe6;">
+                                    <div class="ant-card-head-title" style="font-size: 16px; font-weight: bold;">
+                                        <i class="fas fa-vials" style="margin-right: 6px;"></i>相关辅助检查检验结果
+                                    </div>
+                                </div>
+                                <div class="ant-card-body" style="padding: 12px;">
+                                    <div style="display: flex; flex-wrap: wrap; gap: 16px;">
+                                        <div>胸片：<input class="ant-input" type="text" required style="width: 120px;">
+                                            <input type="file" accept=".jpg,.jpeg,.png,.pdf" style="margin-left:8px;" onchange="showFileName(this, 'chest_xray_file')">
+                                            <span id="chest_xray_file" style="font-size:12px;color:#888;margin-left:4px;"></span>
+                                        </div>
+                                        <div>肺功能：<input class="ant-input" type="text" required style="width: 120px;">
+                                            <input type="file" accept=".jpg,.jpeg,.png,.pdf" style="margin-left:8px;" onchange="showFileName(this, 'lung_function_file')">
+                                            <span id="lung_function_file" style="font-size:12px;color:#888;margin-left:4px;"></span>
+                                        </div>
+                                        <div>心脏彩超：<input class="ant-input" type="text" required style="width: 120px;">
+                                            <input type="file" accept=".jpg,.jpeg,.png,.pdf" style="margin-left:8px;" onchange="showFileName(this, 'echo_file')">
+                                            <span id="echo_file" style="font-size:12px;color:#888;margin-left:4px;"></span>
+                                        </div>
+                                        <div>心电图：<input class="ant-input" type="text" required style="width: 120px;">
+                                            <input type="file" accept=".jpg,.jpeg,.png,.pdf" style="margin-left:8px;" onchange="showFileName(this, 'ecg_file')">
+                                            <span id="ecg_file" style="font-size:12px;color:#888;margin-left:4px;"></span>
+                                        </div>
+                                    </div>
+                                    <div style="margin-top: 16px;">
+                                        <div>其他：<input class="ant-input" type="text" style="width: 120px;"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 七、麻醉评估与医嘱 -->
                             <div class="ant-card ant-card-bordered" style="margin-top: 8px;">
                                 <div class="ant-card-head" style="background-color: #e6fffb;">
-                                    <div class="ant-card-head-wrapper">
-                                        <div class="ant-card-head-title" style="font-size: 16px; font-weight: bold;">
-                                            <i class="fas fa-prescription" style="margin-right: 6px;"></i>术前麻醉医嘱
-                                        </div>
+                                    <div class="ant-card-head-title" style="font-size: 16px; font-weight: bold;">
+                                        <i class="fas fa-prescription" style="margin-right: 6px;"></i>麻醉评估与医嘱
                                     </div>
                                 </div>
                                 <div class="ant-card-body" style="padding: 12px;">
                                     <table class="ant-table" style="width: 100%; border-collapse: collapse;">
                                         <tbody>
-                                            <tr style="border: 1px solid #e8e8e8;">
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8; width: 16.6%;">术前麻醉医嘱</td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8; width: 33.3%;">
-                                                    <input class="ant-input" type="text" value="术前">
-                                                </td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8; width: 16.6%;">术时麻醉</td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8; width: 33.3%;">
-                                                    <input class="ant-input" type="text" value="小时禁食">
-                                                </td>
+                                            <tr>
+                                                <td>ASA分级</td>
+                                                <td><input class="ant-input" type="text" required></td>
+                                                <td>心功能分级(NYHA)</td>
+                                                <td><input class="ant-input" type="text" required></td>
                                             </tr>
-                                            <tr style="border: 1px solid #e8e8e8;">
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">术日晨继续应用药物</td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">
-                                                    <input class="ant-input" type="text" value="">
-                                                </td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">需进一步检查</td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">
-                                                    <input class="ant-input" type="text" value="">
-                                                </td>
+                                            <tr>
+                                                <td>拟行麻醉方式</td>
+                                                <td><input class="ant-input" type="text" required></td>
+                                                <td>监测项目</td>
+                                                <td><input class="ant-input" type="text" required></td>
                                             </tr>
-                                            <tr style="border: 1px solid #e8e8e8;">
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">术日晨停用药物</td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">
-                                                    <input class="ant-input" type="text" value="">
-                                                </td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">需进一步会诊</td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">
-                                                    <input class="ant-input" type="text" value="">
-                                                </td>
+                                            <tr>
+                                                <td>特殊技术</td>
+                                                <td><input class="ant-input" type="text" required></td>
+                                                <td>其他</td>
+                                                <td><input class="ant-input" type="text"></td>
                                             </tr>
-                                            <tr style="border: 1px solid #e8e8e8;">
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">麻醉前用药</td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;" colspan="3">
-                                                    <input class="ant-input" type="text" value="">
-                                                </td>
+                                            <tr>
+                                                <td>术前麻醉医嘱</td>
+                                                <td><input class="ant-input" type="text" required></td>
+                                                <td>术日晨继续应用药物</td>
+                                                <td><input class="ant-input" type="text" required></td>
                                             </tr>
-                                            <tr style="border: 1px solid #e8e8e8;">
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;">麻醉中需注意的问题</td>
-                                                <td style="padding: 8px; border: 1px solid #e8e8e8;" colspan="3">
-                                                    <input class="ant-input" type="text" value="">
-                                                </td>
+                                            <tr>
+                                                <td>术日晨停用药物</td>
+                                                <td><input class="ant-input" type="text" required></td>
+                                                <td>麻醉前用药</td>
+                                                <td><input class="ant-input" type="text" required></td>
+                                            </tr>
+                                            <tr>
+                                                <td>麻醉中需注意的问题</td>
+                                                <td colspan="3"><input class="ant-input" type="text" required></td>
                                             </tr>
                                         </tbody>
                                     </table>
                                 </div>
                             </div>
-                            
-                            <!-- 签名部分 -->
+
+                            <!-- 八、签名与时间 -->
                             <div class="ant-card ant-card-bordered" style="margin-top: 8px;">
-                                <div class="ant-card-body" style="padding: 12px;">
-                                    <div style="display: flex; justify-content: space-between;">
-                                        <div style="display: flex; align-items: center;">
-                                            <span>麻醉医师签名：</span>
-                                            <input class="ant-input" type="text" style="width: 120px;" value="马志明">
-                                        </div>
-                                        <div style="display: flex; align-items: center;">
-                                            <span>评估日期：</span>
-                                            <input class="ant-input" type="text" style="width: 200px;" value="2025-04-23 09:50">
-                                        </div>
+                                <div class="ant-card-body" style="padding: 12px; display: flex; justify-content: space-between;">
+                                    <div style="display: flex; align-items: center;">
+                                        <span>麻醉医师签名：</span>
+                                        <input class="ant-input" type="text" style="width: 120px;" required>
+                                    </div>
+                                    <div style="display: flex; align-items: center;">
+                                        <span>评估日期时间：</span>
+                                        <input class="ant-input" type="datetime-local" style="width: 200px;" required>
                                     </div>
                                 </div>
                             </div>
@@ -1415,36 +1194,131 @@
             });
         });
 
-        // 体格检查异常项显示逻辑
-        function bindPhysicalExamAbnormal() {
-            const items = [
-                {name: 'heart', input: 'heart_abnormal'},
-                {name: 'lung', input: 'lung_abnormal'},
-                {name: 'airway', input: 'airway_abnormal'},
-                {name: 'teeth', input: 'teeth_abnormal'},
-                {name: 'spine', input: 'spine_abnormal'},
-                {name: 'nerve', input: 'nerve_abnormal'}
-            ];
-            items.forEach(item => {
-                const radios = document.getElementsByName(item.name + '_status');
-                const input = document.getElementById(item.input);
-                radios.forEach(radio => {
-                    radio.addEventListener('change', function() {
-                        if (this.value === 'abnormal' && this.checked) {
-                            input.style.display = '';
-                        } else if (this.value === 'normal' && this.checked) {
-                            input.style.display = 'none';
-                            input.value = '';
-                        }
-                    });
-                });
-            });
-        }
-        document.addEventListener('DOMContentLoaded', bindPhysicalExamAbnormal);
-
         function saveForm() {
             alert('保存成功！');
         }
+
+        function showFileName(input, spanId) {
+            var span = document.getElementById(spanId);
+            if (input.files && input.files.length > 0) {
+                span.textContent = input.files[0].name;
+            } else {
+                span.textContent = '';
+            }
+        }
+    </script>
+    <!-- 添加打印功能的JavaScript代码 -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // 模拟患者状态切换（实际应用中应该根据后端数据判断）
+            const statusToggleBtn = document.querySelector('.ant-btn-success');
+            const printReportBtn = document.getElementById('printReportBtn');
+            
+            // 模拟批准按钮点击事件
+            statusToggleBtn.addEventListener('click', function() {
+                // 显示打印报告单按钮
+                printReportBtn.style.display = 'flex';
+                
+                // 这里可以添加状态变更的其他逻辑
+                const statusTag = document.querySelector('.patient-item.active .ant-tag');
+                if (statusTag) {
+                    statusTag.className = 'ant-tag ant-tag-success';
+                    statusTag.textContent = '已批准';
+                }
+            });
+            
+            // 打印报告单按钮点击事件
+            printReportBtn.addEventListener('click', function() {
+                const activePatient = document.querySelector('.patient-item.active');
+                if (!activePatient) {
+                    alert('请先选择一个患者。');
+                    return;
+                }
+
+                const patientNameElement = activePatient.querySelector('.patient-name span');
+                const patientName = patientNameElement ? patientNameElement.textContent.trim() : '';
+                
+                const patientInfos = activePatient.querySelectorAll('.patient-info');
+                const patientIdText = patientInfos[0] ? patientInfos[0].textContent : '';
+                const genderAgeText = patientInfos[1] ? patientInfos[1].textContent : '';
+
+                const patientId = patientIdText ? patientIdText.split(' | ')[0].trim() : '';
+                const genderAgeArray = genderAgeText ? genderAgeText.split(' | ') : ['', ''];
+                const gender = genderAgeArray[0] ? genderAgeArray[0].trim() : '';
+                const age = genderAgeArray[1] ? genderAgeArray[1].replace('岁', '').trim() : '';
+
+                const patientData = {
+                    id: patientId,
+                    name: patientName,
+                    gender: gender,
+                    age: age
+                };
+
+                // 尝试从患者详情区域获取数据，假设其ID为 'detailContent'
+                // 您可能需要根据实际的HTML结构调整选择器
+                const detailContainer = document.getElementById('detailContent'); 
+
+                function getValueFromDetail(key) {
+                    let element;
+                    if (detailContainer) {
+                        // 优先尝试通过ID获取
+                        element = detailContainer.querySelector(`#${key}`);
+                        // 如果ID找不到，尝试通过name属性获取 (通常用于表单元素)
+                        if (!element) element = detailContainer.querySelector(`[name="${key}"]`);
+                        // 如果也找不到，尝试通过class获取 (作为备选)
+                        if (!element) element = detailContainer.querySelector(`.${key}`);
+                    }
+                    
+                    // 如果在detailContainer中找不到，尝试全局查找 (作为最后的备选方案)
+                    if (!element) element = document.getElementById(key);
+                    if (!element) element = document.querySelector(`[name="${key}"]`);
+                    if (!element) element = document.querySelector(`.${key}`);
+
+                    if (element) {
+                        // 检查 input, select, textarea 的 value
+                        if (element.value !== undefined && element.value !== null) {
+                            return element.value.trim();
+                        }
+                        // 检查其他元素的 textContent
+                        if (element.textContent !== undefined && element.textContent !== null) {
+                            return element.textContent.trim();
+                        }
+                    }
+                    return ''; // 如果找不到元素或元素没有值/文本内容，则返回空字符串
+                }
+
+                const fieldsToFetch = [
+                    'ward', 'healthCardId', 'preoperativeDiagnosis', 'plannedOperation', 'height', 
+                    'weight', 'mentalState', 'activityLevel', 'bloodPressure', 'pulse', 'respiration', 
+                    'temperature', 'spo2', 'recentAllergy', 'allergyHistory', 'smokingHistoryText', 
+                    'drinkingHistoryText', 'previousAnesthesiaSurgery', 'respiratoryDisease', 
+                    'cardiovascularDisease', 'endocrineDisease', 'hepatobiliaryDisease', 
+                    'neuropsychiatricDisease', 'renalDisease', 'familyMalignantHyperthermia', 
+                    'otherDiseases', 'cardiopulmonaryExam', 'lungsExam', 'airwayExam', 'teethExam', 
+                    'spineLimbsExam', 'neurologicalExam', 'chestExam', 'auxiliaryExamResults', 
+                    'asaClassification', 'nyhaClassification', 'ecgResults', 'pulmonaryFunction', 
+                    'plannedAnesthesiaMethod', 'monitoringItems', 'specialTechniques', 
+                    'preoperativeAnesthesiaOrders', 'preoperativePreparation', 'preoperativeFasting', 
+                    'morningMedicationOnSurgeryDay', 'highRiskFurtherExamination', 
+                    'medicationToStopOnSurgeryDay', 'highRiskFurtherConsultation', 
+                    'anesthesiaAttentionPoints', 'anesthetistSignature', 'assessmentDate'
+                ];
+
+                fieldsToFetch.forEach(field => {
+                    patientData[field] = getValueFromDetail(field);
+                });
+                
+                const urlParams = new URLSearchParams();
+                for (const key in patientData) {
+                    if (patientData.hasOwnProperty(key) && patientData[key] !== null && patientData[key] !== undefined) {
+                        urlParams.set(key, patientData[key]);
+                    }
+                }
+                
+                const printUrl = `print_preview.html?${urlParams.toString()}`;
+                window.open(printUrl, '_blank', 'width=1000,height=800,scrollbars=yes');
+            });
+        });
     </script>
 </body>
 </html>
