@@ -51,17 +51,12 @@
      [:> Select
       {:style {:width "100%" :marginBottom "16px"}
        :placeholder "评估状态: 请选择"
-       :value (if (= assessment-status "all") nil assessment-status) ; "all" 时显示 placeholder
-       :allowClear true
-       :onChange #(rf/dispatch [::events/set-assessment-status-filter (or % "all")])
        :options assessment-status-options}]
 
      ;; 搜索框
      [:> Input.Search
       {:placeholder "请输入患者姓名/门诊号"
        :allowClear true
-       :value search-term
-       :onChange #(rf/dispatch [::events/update-search-term (-> % .-target .-value)])
        :onSearch #(rf/dispatch [::events/search-patients %])}]]))
 
 (defn patient-list []
@@ -105,9 +100,9 @@
 
 ;; 新的辅助函数，用于创建统一样式的卡片
 (defn- custom-styled-card [icon title-text header-bg-color content]
-  [:> Card {:title (r/as-element [:span icon  title-text])
-            :headStyle {:background header-bg-color}
-            :bodyStyle {:background "#ffffff"} ; 确保内容区域背景为白色
+  [:> Card {:title (r/as-element [:span icon title-text])
+            :styles {:header {:background header-bg-color}
+                     :body {:background "#ffffff"}} ; 确保内容区域背景为白色
             :type "inner"
             :style {:marginBottom "12px"}}
    content])
