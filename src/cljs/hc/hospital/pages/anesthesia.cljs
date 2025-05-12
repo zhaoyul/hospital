@@ -4,8 +4,11 @@
    ;; 确保 antd/Form 等组件已引入
    ["@ant-design/icons" :as icons :refer [FileTextOutlined MedicineBoxOutlined
                                           ProfileOutlined QrcodeOutlined
-                                          SolutionOutlined SyncOutlined]]
-   ["antd" :refer [Button Card Col DatePicker Descriptions Empty Form
+                                          SolutionOutlined SyncOutlined
+                                          UserOutlined HeartOutlined EditOutlined
+                                          SaveOutlined MessageOutlined
+                                          UploadOutlined CheckCircleOutlined ClockCircleOutlined CloseCircleOutlined PrinterOutlined]]
+   ["antd" :refer [Button Card Col DatePicker Descriptions Empty Form Image
                    Input InputNumber Layout Modal Radio Row Select Space Tag
                    Upload]] ; Removed Tooltip as it's not used
    [hc.hospital.events :as events]
@@ -100,71 +103,6 @@
    [patient-list-filters]
    [patient-list]])
 
-
-;; 辅助函数，用于显示患者基本信息
-(defn- patient-info []
-  (let [editable-info @(rf/subscribe [::subs/selected-patient-assessment-forms-data])]
-    (if (seq editable-info)
-      [:> Form {:layout "vertical"
-                :initialValues editable-info}
-       [:div {:style {:display "grid"
-                      :gridTemplateColumns "repeat(4, 1fr)" ; 4 列
-                      :gap "0px 16px"}} ; 列间距
-
-        [:> Form.Item {:label "门诊号" :name :outpatient-number ; :name 用于 Form 自动关联
-                       :rules [{:required true :message "请输入门诊号!"}]} ; 示例：添加校验规则
-         [:> Input {:value (:outpatient-number editable-info) ; 显式绑定 value
-                    :placeholder "请输入门诊号"
-                    :onChange #(rf/dispatch [::events/update-patient-form-field :outpatient-number (-> % .-target .-value)])}]]
-
-        [:> Form.Item {:label "姓名" :name :name}
-         [:> Input {:value (:name editable-info)
-                    :placeholder "请输入姓名"
-                    :onChange #(rf/dispatch [::events/update-patient-form-field :name (-> % .-target .-value)])}]]
-
-        [:> Form.Item {:label "性别" :name :sex}
-         [:> Select {:value (:sex editable-info)
-                     :placeholder "请选择性别"
-                     :onChange #(rf/dispatch [::events/update-patient-form-field :sex %])
-                     :options [{:value "男" :label "男"}
-                               {:value "女" :label "女"}
-                               {:value "其他" :label "其他"}]}]]
-
-        [:> Form.Item {:label "年龄" :name :age}
-         [:> InputNumber {:value (:age editable-info)
-                          :placeholder "岁"
-                          :min 0
-                          :style {:width "100%"}
-                          :addonAfter "岁"
-                          :onChange #(rf/dispatch [::events/update-patient-form-field :age %])}]]
-
-        [:> Form.Item {:label "病区" :name :department
-                       :style {:gridColumn "span 2"}} ; 占据两列
-         [:> Input {:value (:department editable-info)
-                    :placeholder "请输入病区"
-                    :onChange #(rf/dispatch [::events/update-patient-form-field :department (-> % .-target .-value)])}]]
-
-        [:> Form.Item {:label "电子健康卡号" :name :health-card-number
-                       :style {:gridColumn "span 2"}} ; 占据两列
-         [:> Input {:value (:health-card-number editable-info)
-                    :placeholder "请输入电子健康卡号 (可选)"
-                    :onChange #(rf/dispatch [::events/update-patient-form-field :health-card-number (-> % .-target .-value)])}]]
-
-        [:> Form.Item {:label "术前诊断" :name :diagnosis
-                       :style {:gridColumn "span 4"}} ; 占据四列
-         [:> Input.TextArea {:value (:diagnosis editable-info)
-                             :placeholder "请输入术前诊断"
-                             :rows 2
-                             :onChange #(rf/dispatch [::events/update-patient-form-field :diagnosis (-> % .-target .-value)])}]]
-
-        [:> Form.Item {:label "拟施手术" :name :planned-surgery ; 假设API返回的字段是 :planned-surgery
-                       :style {:gridColumn "span 4"}} ; 占据四列
-         [:> Input.TextArea {:value (:planned-surgery editable-info) ; 或者 (:type editable-info) 取决于你的数据结构
-                             :placeholder "请输入拟施手术"
-                             :rows 2
-                             :onChange #(rf/dispatch [::events/update-patient-form-field :planned-surgery (-> % .-target .-value)])}]]]]
-      [:> Empty {:description "请先选择患者或患者无基本信息可编辑"}])))
-
 ;; 新的辅助函数，用于创建统一样式的卡片
 (defn- custom-styled-card [icon title-text header-bg-color content]
   [:> Card {:title (r/as-element [:span icon  title-text])
@@ -174,8 +112,77 @@
             :style {:marginBottom "12px"}}
    content])
 
+
+;; 辅助函数，用于显示患者基本信息
+(defn- patient-info-card []
+  (let [editable-info @(rf/subscribe [::subs/selected-patient-assessment-forms-data])]
+    [custom-styled-card
+     [:> icons/UserOutlined {:style {:marginRight "8px"}}]
+     "患者基本信息"
+     "#e6fffb"                          ; Header background color
+     (if (seq editable-info)
+       [:> Form {:layout "vertical"
+                 :initialValues editable-info}
+        [:div {:style {:display "grid"
+                       :gridTemplateColumns "repeat(4, 1fr)" ; 4 列
+                       :gap "0px 16px"}}                     ; 列间距
+
+         [:> Form.Item {:label "门诊号" :name :outpatient-number ; :name 用于 Form 自动关联
+                        :rules [{:required true :message "请输入门诊号!"}]} ; 示例：添加校验规则
+          [:> Input {:value (:outpatient-number editable-info) ; 显式绑定 value
+                     :placeholder "请输入门诊号"
+                     :onChange #(rf/dispatch [::events/update-patient-form-field :outpatient-number (-> % .-target .-value)])}]]
+
+         [:> Form.Item {:label "姓名" :name :name}
+          [:> Input {:value (:name editable-info)
+                     :placeholder "请输入姓名"
+                     :onChange #(rf/dispatch [::events/update-patient-form-field :name (-> % .-target .-value)])}]]
+
+         [:> Form.Item {:label "性别" :name :sex}
+          [:> Select {:value (:sex editable-info)
+                      :placeholder "请选择性别"
+                      :onChange #(rf/dispatch [::events/update-patient-form-field :sex %])
+                      :options [{:value "男" :label "男"}
+                                {:value "女" :label "女"}
+                                {:value "其他" :label "其他"}]}]]
+
+         [:> Form.Item {:label "年龄" :name :age}
+          [:> InputNumber {:value (:age editable-info)
+                           :placeholder "岁"
+                           :min 0
+                           :style {:width "100%"}
+                           :addonAfter "岁"
+                           :onChange #(rf/dispatch [::events/update-patient-form-field :age %])}]]
+
+         [:> Form.Item {:label "病区" :name :department
+                        :style {:gridColumn "span 2"}} ; 占据两列
+          [:> Input {:value (:department editable-info)
+                     :placeholder "请输入病区"
+                     :onChange #(rf/dispatch [::events/update-patient-form-field :department (-> % .-target .-value)])}]]
+
+         [:> Form.Item {:label "电子健康卡号" :name :health-card-number
+                        :style {:gridColumn "span 2"}} ; 占据两列
+          [:> Input {:value (:health-card-number editable-info)
+                     :placeholder "请输入电子健康卡号 (可选)"
+                     :onChange #(rf/dispatch [::events/update-patient-form-field :health-card-number (-> % .-target .-value)])}]]
+
+         [:> Form.Item {:label "术前诊断" :name :diagnosis
+                        :style {:gridColumn "span 4"}} ; 占据四列
+          [:> Input.TextArea {:value (:diagnosis editable-info)
+                              :placeholder "请输入术前诊断"
+                              :rows 2
+                              :onChange #(rf/dispatch [::events/update-patient-form-field :diagnosis (-> % .-target .-value)])}]]
+
+         [:> Form.Item {:label "拟施手术" :name :planned-surgery ; 假设API返回的字段是 :planned-surgery
+                        :style {:gridColumn "span 4"}}           ; 占据四列
+          [:> Input.TextArea {:value (:planned-surgery editable-info) ; 或者 (:type editable-info) 取决于你的数据结构
+                              :placeholder "请输入拟施手术"
+                              :rows 2
+                              :onChange #(rf/dispatch [::events/update-patient-form-field :planned-surgery (-> % .-target .-value)])}]]]]
+       [:> Empty {:description "请先选择患者或患者无基本信息可编辑"}])]))
+
 ;; 辅助函数，用于显示一般情况
-(defn- general-condition []
+(defn- general-condition-card []
   (let [exam-data @(rf/subscribe [::subs/doctor-form-physical-examination])
         ;; 定义选项数据
         mental-status-options [{:value "清醒" :label "清醒"}
@@ -191,112 +198,108 @@
                                 {:value "重度受限" :label "重度受限"}
                                 {:value "卧床" :label "卧床"}
                                 {:value "其他" :label "其他"}]]
-    (if (some? exam-data) ; 确保 exam-data 不是 nil，空 map {} 也是有效的
-      [:> Form {:layout "vertical" :initialValues exam-data} ; Bind initialValues to the form
-       ;; 第一部分：身高、体重、精神状态、活动能力
-       [:div {:key "vital-signs-group-1"}
-        ;; [:h4 {:style {:marginBottom "12px" :fontSize "14px" :fontWeight "bold"}}
-        ;;  (r/as-element [:> HeartOutlined {:style {:marginRight "8px" :color "#1890ff"}}])
-        ;;  "生命体征"]
-        [:div {:style {:display "grid"
-                       :gridTemplateColumns "repeat(4, 1fr)"
-                       :gap "0px 16px"
-                       :marginBottom "16px"}}
-         [:> Form.Item {:label "身高" :name :height}
-          [:> InputNumber {:value (:height exam-data)
-                           :placeholder "cm"
-                           :addonAfter "cm"
-                           :style {:width "100%"}
-                           :min 0
-                           :onChange #(rf/dispatch [::events/update-doctor-form-physical-examination-field :height %])}]]
-         [:> Form.Item {:label "体重" :name :weight}
-          [:> InputNumber {:value (:weight exam-data)
-                           :placeholder "kg"
-                           :addonAfter "kg"
-                           :style {:width "100%"}
-                           :min 0
-                           :onChange #(rf/dispatch [::events/update-doctor-form-physical-examination-field :weight %])}]]
-         [:> Form.Item {:label "精神状态" :name :mental-state}
-          [:> Select {:value (:mental-state exam-data)
-                      :placeholder "请选择"
-                      :style {:width "100%"}
-                      :allowClear true
-                      :options mental-status-options
-                      :onChange #(rf/dispatch [::events/update-doctor-form-physical-examination-field :mental-state %])}]]
-         [:> Form.Item {:label "活动能力" :name :activity-level}
-          [:> Select {:value (:activity-level exam-data)
-                      :placeholder "请选择"
-                      :style {:width "100%"}
-                      :allowClear true
-                      :options activity-level-options
-                      :onChange #(rf/dispatch [::events/update-doctor-form-physical-examination-field :activity-level %])}]]]]
+    [custom-styled-card
+     [:> icons/HeartOutlined {:style {:marginRight "8px"}}]
+     "一般情况"
+     "#f6ffed" ; Header background color
+     (if (some? exam-data) ; 确保 exam-data 不是 nil，空 map {} 也是有效的
+       [:> Form {:layout "vertical" :initialValues exam-data} ; Bind initialValues to the form
+        ;; 第一部分：身高、体重、精神状态、活动能力
+        [:div {:key "vital-signs-group-1"}
+         [:div {:style {:display "grid"
+                        :gridTemplateColumns "repeat(4, 1fr)"
+                        :gap "0px 16px"
+                        :marginBottom "16px"}}
+          [:> Form.Item {:label "身高" :name :height}
+           [:> InputNumber {:value (:height exam-data)
+                            :placeholder "cm"
+                            :addonAfter "cm"
+                            :style {:width "100%"}
+                            :min 0
+                            :onChange #(rf/dispatch [::events/update-doctor-form-physical-examination-field :height %])}]]
+          [:> Form.Item {:label "体重" :name :weight}
+           [:> InputNumber {:value (:weight exam-data)
+                            :placeholder "kg"
+                            :addonAfter "kg"
+                            :style {:width "100%"}
+                            :min 0
+                            :onChange #(rf/dispatch [::events/update-doctor-form-physical-examination-field :weight %])}]]
+          [:> Form.Item {:label "精神状态" :name :mental-state}
+           [:> Select {:value (:mental-state exam-data)
+                       :placeholder "请选择"
+                       :style {:width "100%"}
+                       :allowClear true
+                       :options mental-status-options
+                       :onChange #(rf/dispatch [::events/update-doctor-form-physical-examination-field :mental-state %])}]]
+          [:> Form.Item {:label "活动能力" :name :activity-level}
+           [:> Select {:value (:activity-level exam-data)
+                       :placeholder "请选择"
+                       :style {:width "100%"}
+                       :allowClear true
+                       :options activity-level-options
+                       :onChange #(rf/dispatch [::events/update-doctor-form-physical-examination-field :activity-level %])}]]]]
 
-       ;; 分隔线 (可选，如果视觉上需要)
-       ;; [:> Divider {:style {:margin "0 0 16px 0"}}]
+        ;; 分隔线 (可选，如果视觉上需要)
+        ;; [:> Divider {:style {:margin "0 0 16px 0"}}]
 
-       ;; 第二部分：血压、脉搏、呼吸、体温、SpO2
-       [:div {:key "vital-signs-group-2"}
-        ;; [:h4 {:style {:marginBottom "12px" :fontSize "14px" :fontWeight "bold"}}
-        ;;  (r/as-element [:> HeartOutlined {:style {:marginRight "8px" :color "#1890ff"}}])
-        ;;  "生命体征"]
-        [:div {:style {:display "flex" :flexWrap "wrap" :gap "8px 24px"}} ; 增大列间距
-         ;; 血压
-         [:> Form.Item {:label "血压"}
-          [:div {:style {:display "flex" :alignItems "center"}}
-           [:> Form.Item {:name [:bp :systolic] :noStyle true}
-            [:> InputNumber {:value (get-in exam-data [:bp :systolic])
-                             :placeholder "收缩压"
-                             :min 0
-                             :style {:width "70px"}
-                             :onChange #(rf/dispatch [::events/update-doctor-form-physical-examination-field [:bp :systolic] %])}]]
-           [:span {:style {:margin "0 4px"}} "/"]
-           [:> Form.Item {:name [:bp :diastolic] :noStyle true}
-            [:> InputNumber {:value (get-in exam-data [:bp :diastolic])
-                             :placeholder "舒张压"
-                             :min 0
-                             :style {:width "70px"}
-                             :onChange #(rf/dispatch [::events/update-doctor-form-physical-examination-field [:bp :diastolic] %])}]]
-           [:span {:style {:marginLeft "8px"}} "mmHg"]]]
+        ;; 第二部分：血压、脉搏、呼吸、体温、SpO2
+        [:div {:key "vital-signs-group-2"}
+         [:div {:style {:display "flex" :flexWrap "wrap" :gap "8px 24px"}} ; 增大列间距
+          ;; 血压
+          [:> Form.Item {:label "血压"}
+           [:div {:style {:display "flex" :alignItems "center"}}
+            [:> Form.Item {:name [:bp :systolic] :noStyle true}
+             [:> InputNumber {:value (get-in exam-data [:bp :systolic])
+                              :placeholder "收缩压"
+                              :min 0
+                              :style {:width "70px"}
+                              :onChange #(rf/dispatch [::events/update-doctor-form-physical-examination-field [:bp :systolic] %])}]]
+            [:span {:style {:margin "0 4px"}} "/"]
+            [:> Form.Item {:name [:bp :diastolic] :noStyle true}
+             [:> InputNumber {:value (get-in exam-data [:bp :diastolic])
+                              :placeholder "舒张压"
+                              :min 0
+                              :style {:width "70px"}
+                              :onChange #(rf/dispatch [::events/update-doctor-form-physical-examination-field [:bp :diastolic] %])}]]
+            [:span {:style {:marginLeft "8px"}} "mmHg"]]]
 
-         ;; 脉搏
-         [:> Form.Item {:label "脉搏" :name :heart-rate}
-          [:> InputNumber {:value (:heart-rate exam-data)
-                           :placeholder "次/分"
-                           :addonAfter "次/分"
-                           :min 0
-                           :style {:width "130px"}
-                           :onChange #(rf/dispatch [::events/update-doctor-form-physical-examination-field :heart-rate %])}]]
+          ;; 脉搏
+          [:> Form.Item {:label "脉搏" :name :heart-rate}
+           [:> InputNumber {:value (:heart-rate exam-data)
+                            :placeholder "次/分"
+                            :addonAfter "次/分"
+                            :min 0
+                            :style {:width "130px"}
+                            :onChange #(rf/dispatch [::events/update-doctor-form-physical-examination-field :heart-rate %])}]]
 
-         ;; 呼吸
-         [:> Form.Item {:label "呼吸" :name :respiratory-rate}
-          [:> InputNumber {:value (:respiratory-rate exam-data)
-                           :placeholder "次/分"
-                           :addonAfter "次/分"
-                           :min 0
-                           :style {:width "130px"}
-                           :onChange #(rf/dispatch [::events/update-doctor-form-physical-examination-field :respiratory-rate %])}]]
+          ;; 呼吸
+          [:> Form.Item {:label "呼吸" :name :respiratory-rate}
+           [:> InputNumber {:value (:respiratory-rate exam-data)
+                            :placeholder "次/分"
+                            :addonAfter "次/分"
+                            :min 0
+                            :style {:width "130px"}
+                            :onChange #(rf/dispatch [::events/update-doctor-form-physical-examination-field :respiratory-rate %])}]]
 
-         ;; 体温
-         [:> Form.Item {:label "体温" :name :temperature}
-          [:> InputNumber {:value (:temperature exam-data)
-                           :placeholder "°C"
-                           :addonAfter "°C"
-                           :precision 1 ; 体温通常一位小数
-                           :step 0.1
-                           :style {:width "110px"}
-                           :onChange #(rf/dispatch [::events/update-doctor-form-physical-examination-field :temperature %])}]]
+          ;; 体温
+          [:> Form.Item {:label "体温" :name :temperature}
+           [:> InputNumber {:value (:temperature exam-data)
+                            :placeholder "°C"
+                            :addonAfter "°C"
+                            :precision 1 ; 体温通常一位小数
+                            :step 0.1
+                            :style {:width "110px"}
+                            :onChange #(rf/dispatch [::events/update-doctor-form-physical-examination-field :temperature %])}]]
 
-         ;; SpO2
-         [:> Form.Item {:label "SpO2" :name :spo2}
-          [:> InputNumber {:value (:spo2 exam-data)
-                           :placeholder "%"
-                           :addonAfter "%"
-                           :min 0 :max 100
-                           :style {:width "100px"}
-                           :onChange #(rf/dispatch [::events/update-doctor-form-physical-examination-field :spo2 %])}]]]]]
-
-      [:> Empty {:description "暂无一般情况信息或未选择患者"}])))
-
+          ;; SpO2
+          [:> Form.Item {:label "SpO2" :name :spo2}
+           [:> InputNumber {:value (:spo2 exam-data)
+                            :placeholder "%"
+                            :addonAfter "%"
+                            :min 0 :max 100
+                            :style {:width "100px"}
+                            :onChange #(rf/dispatch [::events/update-doctor-form-physical-examination-field :spo2 %])}]]]]])
+     [:> Empty {:description "暂无一般情况信息或未选择患者"}]]))
 
 (defn- medical-history-summary-card []
   (let [summary-data @(rf/subscribe [::subs/medical-summary-data])]
@@ -613,8 +616,8 @@
             [:> Form.Item {:name [:habits :drinking :has] :label "饮酒史：" :label-col {:span 24} :wrapper-col {:span 24} :style {:marginBottom "8px"}}
              [:> Radio.Group {:value (get-in summary-data [:habits :drinking :has])
                               :onChange #(rf/dispatch [::events/update-medical-summary-field [:habits :drinking :has] (-> % .-target .-value)])}
-              [:> Radio {:value "no"} "无"]
-              [:> Radio {:value "yes"} "有"]]]]
+               [:> Radio {:value "no"} "无"]
+               [:> Radio {:value "yes"} "有"]]]]
            (when (= (get-in summary-data [:habits :drinking :has]) "yes")
              [:<>
               [:> Col
@@ -713,112 +716,73 @@
 
 
 ;; 辅助函数，用于显示术前麻醉医嘱（可编辑表单）
-(defn- preoperative-orders []
+(defn- preoperative-orders-card []
   (let [plan-details @(rf/subscribe [::subs/anesthesia-plan-details])]
-    [:> Form {:layout "vertical"}
-     [:div {:style {:display "grid"
-                    :gridTemplateColumns "repeat(4, 1fr)"
-                    :gap "16px"}}
-
-      ;; 术前麻醉医嘱（跨两列）
-      [:> Form.Item {:label "术前麻醉医嘱"
-                     :name [:medications :premedication]
-                     :style {:gridColumn "span 2"}}
-       [:> Input.TextArea {:value (get-in plan-details [:medications :premedication])
-                           :rows 2
-                           :placeholder "请输入术前用药医嘱"
-                           :onChange #(rf/dispatch [::events/update-anesthesia-plan-field
-                                                    [:medications :premedication]
-                                                    (-> % .-target .-value)])}]]
-
-      ;; 术前时间和禁食（一行两列）
-      [:> Form.Item {:label "术前"
-                     :name [:fasting_time :hours]
-                     :style {:marginBottom "8px"}}
-       [:> InputNumber {:value (get-in plan-details [:fasting_time :hours])
-                        :min 0
-                        :addonAfter "小时"
-                        :style {:width "100%"}
-                        :onChange #(rf/dispatch [::events/update-anesthesia-plan-field
-                                                 [:fasting_time :hours] %])}]]
-
-      [:> Form.Item {:label "小时禁食"
-                     :name [:fasting :description]
-                     :style {:marginBottom "8px"}}
-       [:> Input {:value (get-in plan-details [:fasting :description])
-                  :placeholder "禁食说明"
-                  :onChange #(rf/dispatch [::events/update-anesthesia-plan-field
-                                           [:fasting :description]
-                                           (-> % .-target .-value)])}]]
-
-      ;; 术日晨继续应用药物（跨两列）
-      [:> Form.Item {:label "术日晨继续应用药物"
-                     :name [:medications :continue-on-surgery-day]
-                     :style {:gridColumn "span 2"}}
-       [:> Input.TextArea {:value (get-in plan-details [:medications :continue-on-surgery-day])
-                           :rows 2
-                           :placeholder "请输入术日晨继续应用药物"
-                           :onChange #(rf/dispatch [::events/update-anesthesia-plan-field
-                                                    [:medications :continue-on-surgery-day]
-                                                    (-> % .-target .-value)])}]]
-
-      ;; 需进一步检查（跨两列）
-      [:> Form.Item {:label "需进一步检查"
-                     :name [:further-checks-needed]
-                     :style {:gridColumn "span 2"}}
-       [:> Input.TextArea {:value (get-in plan-details [:further-checks-needed])
-                           :rows 2
-                           :placeholder "请输入需要进一步检查的项目"
-                           :onChange #(rf/dispatch [::events/update-anesthesia-plan-field
-                                                    [:further-checks-needed]
-                                                    (-> % .-target .-value)])}]]
-
-      ;; 术时麻醉注意事项（跨两列）
-      [:> Form.Item {:label "术时麻醉注意事项"
-                     :name [:intraoperative-notes]
-                     :style {:gridColumn "span 2"}}
-       [:> Input.TextArea {:value (get-in plan-details [:intraoperative-notes])
-                           :rows 2
-                           :placeholder "请输入术时麻醉注意事项"
-                           :onChange #(rf/dispatch [::events/update-anesthesia-plan-field
-                                                    [:intraoperative-notes]
-                                                    (-> % .-target .-value)])}]]]
-     ]))
+    [custom-styled-card
+     [:> icons/EditOutlined {:style {:marginRight "8px"}}]
+     "术前麻醉医嘱"
+     "#fff1f0" ; Header background color
+     [:> Form {:layout "vertical"}
+      [:div {:style {:display "grid"
+                     :gridTemplateColumns "repeat(4, 1fr)"
+                     :gap "0px 16px"}}
+       [:> Form.Item {:label "ASA分级" :name :asa-rating :style {:gridColumn "span 1"}}
+        [:> Select {:value (:asa-rating plan-details)
+                    :placeholder "请选择ASA分级"
+                    :onChange #(rf/dispatch [::events/update-anesthesia-plan-field :asa-rating %])
+                    :options (mapv (fn [i] {:value (str "ASA " i) :label (str "ASA " i)}) (range 1 7))}]]
+       [:> Form.Item {:label "麻醉方式" :name :anesthesia-type :style {:gridColumn "span 3"}}
+        [:> Input {:value (:anesthesia-type plan-details)
+                   :placeholder "请输入麻醉方式"
+                   :onChange #(rf/dispatch [::events/update-anesthesia-plan-field :anesthesia-type (-> % .-target .-value)])}]]
+       [:> Form.Item {:label "术前医嘱" :name :preoperative-instructions :style {:gridColumn "span 4"}}
+        [:> Input.TextArea {:value (:preoperative-instructions plan-details)
+                            :rows 3
+                            :placeholder "请输入术前医嘱，例如禁食水时间、特殊准备等"
+                            :onChange #(rf/dispatch [::events/update-anesthesia-plan-field :preoperative-instructions (-> % .-target .-value)])}]]]]]))
 
 ;; 辅助函数，用于显示签名和日期
-(defn- signature-and-date []
+(defn- signature-and-date-card []
   (let [patient-details @(rf/subscribe [::subs/selected-patient-raw-details])
         assessment-date (or (get-in patient-details [:assessment_data :assessment-date]) ; 尝试从评估数据中获取
                             (:updated_at patient-details) ; API 患者对象的更新时间
                             (js/Date.now))] ; 最后回退到当前时间
-    [:> Descriptions {:bordered true :column 2 :size "small"}
-     [:> Descriptions.Item {:label "麻醉医师签名"} [:input {:type "text" :class "ant-input ant-input-sm" :placeholder "在此签名或记录医师姓名"}]]
-     [:> Descriptions.Item {:label "评估日期"} (utils/format-date assessment-date "YYYY-MM-DD HH:mm")]]))
+    [custom-styled-card
+     [:> icons/SaveOutlined {:style {:marginRight "8px"}}]
+     "麻醉医师签名及日期"
+     "#fff0f6" ; Header background color
+     [:> Descriptions {:bordered true :column 2 :size "small"}
+      [:> Descriptions.Item {:label "麻醉医师签名"} [:input {:type "text" :class "ant-input ant-input-sm" :placeholder "在此签名或记录医师姓名"}]]
+      [:> Descriptions.Item {:label "评估日期"} (utils/format-date assessment-date "YYYY-MM-DD HH:mm")]]]))
 
 ;; 辅助函数，用于显示备注信息
-(defn- remarks []
+(defn- remarks-card []
   (let [notes @(rf/subscribe [::subs/assessment-notes])]
-    [:> Input.TextArea {:rows 3
-                        :value (or notes "")
-                        :placeholder "备注信息（如有特殊情况请在此注明）"
-                        :onChange (fn [e] (rf/dispatch [::events/update-assessment-notes (.. e -target -value)]))}]))
+    [custom-styled-card
+     [:> icons/MessageOutlined {:style {:marginRight "8px"}}]
+     "备注信息"
+     "#fffaf0" ; Header background color
+     [:> Input.TextArea {:rows 3
+                         :value (or notes "")
+                         :placeholder "备注信息（如有特殊情况请在此注明）"
+                         :onChange (fn [e] (rf/dispatch [::events/update-assessment-notes (.. e -target -value)]))}]]))
 
 (defn- assessment-action-buttons [patient-status]
   [:> Space {} ; Removed marginBottom, parent will handle layout
-   [:> Button {:type "primary" :icon (r/as-element [:> icons/CheckCircleOutlined])
+   [:> Button {:type "primary" :icon (r/as-element [:> CheckCircleOutlined])
                :on-click #(rf/dispatch [::events/approve-patient])
                :style {:background "#52c41a" :borderColor "#52c41a"}}
     "批准"]
-   [:> Button {:type "primary" :icon (r/as-element [:> icons/ClockCircleOutlined])
+   [:> Button {:type "primary" :icon (r/as-element [:> ClockCircleOutlined])
                :on-click #(rf/dispatch [::events/postpone-patient])
                :style {:background "#faad14" :borderColor "#faad14"}}
     "暂缓"]
-   [:> Button {:type "primary" :icon (r/as-element [:> icons/CloseCircleOutlined])
+   [:> Button {:type "primary" :icon (r/as-element [:> CloseCircleOutlined])
                :on-click #(rf/dispatch [::events/reject-patient])
                :danger true}
     "驳回"]
    (when (= patient-status "已批准") ; Check for the correct status string
-     [:> Button {:icon (r/as-element [:> icons/PrinterOutlined])
+     [:> Button {:icon (r/as-element [:> PrinterOutlined])
                  :on-click #(js/window.print)
                  :style {:background "#1890ff" :borderColor "#1890ff" :color "white"}} ; Added styling
       "打印表单"])])
@@ -828,7 +792,7 @@
         patient-details @(rf/subscribe [::subs/selected-patient-raw-details])
         patient-name (if patient-details
                        (or (get-in patient-details [:assessment_data :basic-info :name])
-                           (str "患者: " (:name patient-details)) ; Fallback
+                           (:name patient-details) ; Fallback to root name if basic_info name is not there
                            "未知患者")
                        "未知患者")
         patient-status (when patient-details (get patient-details :status "待评估"))] ; Default to "待评估" if status is nil
@@ -836,61 +800,27 @@
       ;; 有选择患者时的视图
       [:div {:style {:height "calc(100vh - 64px)" :display "flex" :flexDirection "column"}}
        ;; Top bar with Patient Name and Action Buttons
-       [:div {:style {:padding "12px 16px"
-                      :background "white"
-                      :borderBottom "1px solid #f0f0f0"
-                      :display "flex"
+       [:div {:style {:display "flex"
                       :justifyContent "space-between"
-                      :alignItems "center"}}
-        [:h2 {:style {:margin 0 :fontSize "18px" :fontWeight "bold"}}
-         patient-name]
+                      :alignItems "center"
+                      :padding "12px 16px"
+                      :borderBottom "1px solid #f0f0f0"
+                      :background "#fff"}}
+        [:h3 {:style {:margin 0 :fontSize "16px" :fontWeight "500"}} patient-name]
         [assessment-action-buttons patient-status]]
-       ;; 评估内容区域 - 可滚动
-       [:div {:style {:flexGrow 1 :overflowY "auto" :padding "0 8px"}}
-        [:div ; Removed the outer "麻醉评估总览" Card to place new cards directly
-         [:> Card {:title (r/as-element [:span [:> icons/UserOutlined {:style {:marginRight "8px"}}] "患者信息"])
-                   :type "inner" :style {:marginTop "12px" :marginBottom "12px"}} ; Added marginTop
-          [patient-info]]
 
-         [:> Card {:title (r/as-element [:span [:> icons/HeartOutlined {:style {:marginRight "8px"}}] "一般情况"])
-                   :type "inner" :style {:marginBottom "12px"}}
-          [general-condition]]
-
-         ;; New refactored cards
-         [medical-history-summary-card]
-         [comorbidities-card]
-         [physical-examination-card]
-         [auxiliary-tests-card]
-
-         ;; Old card that contained medical-summary is removed.
-         ;; The content of the old medical-summary (ASA, Plan, etc.) is not included here yet.
-         ;; If those sections are still needed, they should be added as separate cards or integrated elsewhere.
-
-         [:> Card {:title (r/as-element [:span [:> icons/ExperimentOutlined {:style {:marginRight "8px"}}] "术前麻醉医嘱"])
-                   :type "inner" :style {:marginBottom "12px"}}
-          [preoperative-orders]]
-
-         [:> Card {:title (r/as-element [:span [:> icons/EditOutlined {:style {:marginRight "8px"}}] "麻醉医师签名及日期"])
-                   :type "inner" :style {:marginBottom "12px"}}
-          [signature-and-date]]
-
-         [:> Card {:title (r/as-element [:span [:> icons/MessageOutlined {:style {:marginRight "8px"}}] "备注信息"])
-                   :type "inner" :style {:marginBottom "44px"}} ; Keep bottom margin for save button
-          [remarks]]]]
-
-       ;; 固定在底部的保存按钮区域
-       [:div {:style {:padding "10px 0"
-                      :background "white"
-                      :borderTop "1px solid #f0f0f0"
-                      :textAlign "center"
-                      :position "sticky"
-                      :bottom 0
-                      :zIndex 10}} ; Ensure it's above scrolled content
-        [:> Button {:type "primary"
-                    :size "large"
-                    :icon (r/as-element [:> icons/SaveOutlined])
-                    :onClick #(rf/dispatch [::events/save-final-assessment])}
-         "保存评估结果"]]]
+       ;; Main scrollable content area for cards
+       [:div {:style {:padding "16px" :overflowY "auto" :flexGrow 1 :background "#f0f2f5"}}
+        [patient-info-card]
+        [general-condition-card]
+        [medical-history-summary-card]
+        [comorbidities-card]
+        [physical-examination-card]
+        [auxiliary-tests-card]
+        ;; ASA评分和麻醉计划 - Consider if this needs its own card or is part of preoperative-orders
+        [preoperative-orders-card]
+        [remarks-card]
+        [signature-and-date-card]]]
 
       ;; 无选择患者时的空状态
       [:div {:style {:display "flex" :justifyContent "center" :alignItems "center" :height "100%"}}
