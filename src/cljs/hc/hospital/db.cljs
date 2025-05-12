@@ -4,6 +4,7 @@
   { ;; Root map for the entire default database state
    :anesthesia
    {:active-tab "patients"  ;; 当前选中的主标签页：patients, assessment, history
+    :all-patient-assessments []
     :current-patient-id nil ;; 当前选中的患者ID
     :search-term ""         ;; 患者搜索词
     :date-range nil         ;; 日期过滤范围
@@ -23,7 +24,6 @@
     {:active-assessment-tab "brief-history"  ;; 评估页面的标签：brief-history, physical-exam, lab-tests
      :show-advanced-options false}           ;; 是否显示高级选项
 
-    :all-patient-assessments []
     :fetch-assessments-error nil
 
     :assessment ;; This level holds both form-data and anesthesia-plan

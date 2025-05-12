@@ -22,7 +22,7 @@
 (rf/reg-event-db ::set-all-assessments
   (fn [db [_ assessments]]
     (-> db
-        (assoc :all-patient-assessments assessments)
+        (assoc-in [:anesthesia :all-patient-assessments] assessments)
         (assoc-in [:anesthesia :current-patient-id] nil) ; Corrected path
         (assoc :fetch-assessments-error nil))))
 
@@ -35,14 +35,10 @@
 (rf/reg-event-db ::select-patient
   (fn [db [_ patient-key]]
     (let [selected-assessment (first (filter #(= (:patient_id %) patient-key) (:all-patient-assessments db)))
-          ;; Assuming the API response for an individual assessment contains a field like :assessment_form_data
-          ;; that matches the structure in default-db.
-          ;; If not, this part needs transformation or the API needs to align.
           form-data-from-api (when selected-assessment (get selected-assessment :assessment_form_data {}))
           default-form-data (get-in app-db/default-db [:anesthesia :assessment :form-data])]
       (-> db
           (assoc-in [:anesthesia :current-patient-id] patient-key)
-          ;; Populate :anesthesia :assessment :form-data
           (assoc-in [:anesthesia :assessment :form-data]
                     (if (seq form-data-from-api) ; Check if API data is not empty
                       form-data-from-api

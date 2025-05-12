@@ -2,11 +2,12 @@
   (:require [re-frame.core :as rf]
             [clojure.string :as str]
             [hc.hospital.utils :as utils]
+            [taoensso.timbre :as timbre :refer [spy]]
             [dayjs :as dayjs])) ; 确保引入 dayjs
 
 (rf/reg-sub ::all-patient-assessments
   (fn [db _]
-    (:all-patient-assessments db)))
+    (get-in db [:anesthesia :all-patient-assessments])))
 
 (rf/reg-sub ::current-patient-id
   (fn [db _]
@@ -33,20 +34,17 @@
     (get-in db [:anesthesia :patients])))
 
 (rf/reg-sub ::filtered-patients
-  :<- [::all-patient-assessments] ; This should ideally be the source of truth
+  :<- [::all-patient-assessments]
   :<- [::search-term]
   :<- [::date-range]
   :<- [::assessment-status-filter]
-  :<- [::anesthesia-example-patients] ; Keep as fallback or for initial dev
+  :<- [::anesthesia-example-patients]
   (fn [[api-assessments search-term date-range-moments status-filter example-patients] _]
     (letfn [(format-gender [g] (case g "male" "男" "female" "女" "未知"))
             (format-date-str [d] (when d (utils/format-date d "YYYY-MM-DD")))
             (patient-from-api-assessment [assessment]
-              ;; Adapt this to your actual API assessment structure
-              ;; Assuming the API returns a structure that includes basic patient info
-              ;; and the status/date for the list.
-              (let [patient-info (get-in assessment [:assessment_form_data :basic_info] {}) ; Or wherever basic info is
-                    anesthesia-plan (get-in assessment [:assessment_form_data :anesthesia_plan] {})]
+              (let [patient-info (get-in assessment [:assessment_data :basic-info] {})
+                    anesthesia-plan (get-in assessment [:assessment_data :anesthesia_plan] {})]
                 {:key (:patient_id assessment) ; Assuming patient_id is at the root of the assessment object
                  :name (or (:name patient-info) "未知姓名")
                  :patient-id-display (or (:outpatient_number patient-info) (:patient_id assessment))

@@ -64,7 +64,7 @@
   (let [patients @(rf/subscribe [::subs/filtered-patients])
         current-patient-id @(rf/subscribe [::subs/current-patient-id])]
     [:div {:style {:height "100%" :overflowY "auto"}} ; Outer :div vector starts
-     (if (seq (timbre/spy :info  patients))
+     (if (seq patients)
        (for [item patients]
          ^{:key (:key item)}
          [:div {:style {:padding "10px 12px"
@@ -78,7 +78,7 @@
           [:div {:style {:display "flex" :alignItems "center"}}
            [:> icons/UserOutlined {:style {:marginRight "8px" :fontSize "16px"}}]
            [:div
-            [:div {:style {:fontWeight "500"}} (:name (timbre/spy :info  item))]
+            [:div {:style {:fontWeight "500"}} (:name item)]
             [:div {:style {:fontSize "12px" :color "gray"}}
              (str (:sex item) " " (:age item) " " (:anesthesia-type item))]]]
           [:div {:style {:textAlign "right"}}
