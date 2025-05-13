@@ -11,11 +11,30 @@
 (def patient-form-total-steps 3)
 (def patient-form-max-step-idx (dec patient-form-total-steps))
 
+;; 新增:基本信息验证函数
+(defn- validate-basic-info [basic-info]
+  (let [errors (atom {})]
+    (when (str/blank? (:outpatient-number basic-info))
+      (swap! errors assoc-in [:basic-info :outpatient-number] "门诊号不能为空"))
+    (when (str/blank? (:name basic-info))
+      (swap! errors assoc-in [:basic-info :name] "姓名不能为空"))
+    (when (str/blank? (:id-number basic-info))
+      (swap! errors assoc-in [:basic-info :id-number] "身份证号不能为空"))
+    (when (str/blank? (:phone basic-info))
+      (swap! errors assoc-in [:basic-info :phone] "手机号不能为空"))
+    (when (nil? (:gender basic-info))
+      (swap! errors assoc-in [:basic-info :gender] "性别不能为空"))
+    (when (nil? (:age basic-info))
+      (swap! errors assoc-in [:basic-info :age] "年龄不能为空"))
+    (when (or (nil? (:hospital-district basic-info)) (str/blank? (:hospital-district basic-info)))
+      (swap! errors assoc-in [:basic-info :hospital-district] "院区不能为空"))
+    @errors))
+
 ;; 初始化数据库
 (rf/reg-event-db
- ::initialize-db
- (fn [_ _]
-   db/default-db)) ;; Use the new default_db
+  ::initialize-db
+  (fn [_ _]
+    db/default-db)) ;; Use the new default_db
 
 ;; 更新表单字段
 (rf/reg-event-db
@@ -24,13 +43,24 @@
    (assoc-in db (into [:patient-form] path) value)))
 
 ;; 下一步
-(rf/reg-event-db
- ::next-step
- (fn [db _]
-   (let [current-step (get-in db [:patient-form :current-step])]
-     (if (< current-step patient-form-max-step-idx)
-       (update-in db [:patient-form :current-step] inc)
-       db))))
+(rf/reg-event-fx ;; 确保是 -fx 因为它可能更新错误状态
+  ::next-step
+  (fn [{:keys [db]} _]
+    (let [current-step (get-in db [:patient-form :current-step])]
+      (if (= current-step 0) ; 如果是基本信息步骤 (步骤0)
+        (let [basic-info-data (get-in db [:patient-form :basic-info])
+              validation-errors (validate-basic-info basic-info-data)]
+          (if (empty? validation-errors)
+            {:db (-> db
+                     (update-in [:patient-form :current-step] inc)
+                     (assoc-in [:patient-form :form-errors] {}))} ; 验证通过.清空错误并进入下一步
+            {:db (assoc-in db [:patient-form :form-errors] validation-errors)})) ; 验证失败.更新错误状态
+        ;; 其他步骤的逻辑 (如果不是最后一步.则进入下一步)
+        (if (< current-step patient-form-max-step-idx)
+          {:db (-> db
+                   (update-in [:patient-form :current-step] inc)
+                   (assoc-in [:patient-form :form-errors] {}))} ; 进入下一步时清空错误
+          {:db db})))))
 
 ;; 上一步
 (rf/reg-event-db
@@ -98,45 +128,20 @@
                    :on-failure      [::submit-failure]}})))
 
 ;; 提交成功
-(rf/reg-event-fx ; Changed from reg-event-db
- ::submit-success
- (fn [{:keys [db]} [_ response]]
-   (timbre/debug "表单提交成功:" response)
-   {:db (-> db
-            (assoc-in [:patient-form :submitting?] false)
-            (assoc-in [:patient-form :submit-success?] true))
-    :dispatch-later [{:ms 3000 :dispatch [::reset-patient-form-success]}]}))
+(rf/reg-event-db
+  ::submit-success
+  (fn [db [_ response]]
+    (timbre/debug "表单提交成功:" response)
+    (-> db
+        (assoc-in [:patient-form :submitting?] false)
+        (assoc-in [:patient-form :submit-success?] true))))
 
 ;; 提交失败
 (rf/reg-event-db
- ::submit-failure
- (fn [db [_ response]]
-   (timbre/error "表单提交失败:" response)
-   (-> db
-       (assoc-in [:patient-form :submitting?] false)
-       (assoc-in [:patient-form :submit-success?] false)
-       (assoc-in [:patient-form :submit-error] (or (:message (:response response)) "提交失败，请稍后再试")))))
-
-;; 新增事件：重置表单提交成功状态
-(rf/reg-event-db
- ::reset-patient-form-success
- (fn [db _]
-   (assoc-in db [:patient-form :submit-success?] false)))
-
-;; 如果 hc.hospital.patient.events/toggle-boolean-field 仍在使用，它应该可以正常工作
-(rf/reg-event-db
-  ::toggle-boolean-field
-  (fn [db [_ path]]
-    (let [full-path (into [:patient-form] path)
-          current-value (get-in db full-path)]
-      (assoc-in db full-path (not current-value)))))
-
-;; 如果 hc.hospital.patient.events/set-assessment-date-today 仍需要，
-;; 它需要一个在当前表单结构中有效的目标路径。
-;; 当前 patient-form 视图未包含评估日期字段。
-;; (rf/reg-event-db
-;;  ::set-assessment-date-today
-;;  (fn [db _]
-;;    (let [today (.toISOString (js/Date.))]
-;;      ;; 修改路径以匹配新的DB结构 (如果需要此功能)
-;;      (assoc-in db [:patient-form :some-new-date-field] (subs today 0 10)))))
+  ::submit-failure
+  (fn [db [_ response]]
+    (timbre/error "表单提交失败:" response)
+    (-> db
+        (assoc-in [:patient-form :submitting?] false)
+        (assoc-in [:patient-form :submit-success?] false)
+        (assoc-in [:patient-form :submit-error] (or (:message (:response response)) "提交失败，请稍后再试")))))
