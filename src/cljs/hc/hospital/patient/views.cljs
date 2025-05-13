@@ -313,9 +313,9 @@
     [:<>
      [ui-conditional-group {:label "过敏史" :bool-value (:allergy-history summary) :errors errors
                             :data-path [:medical-summary] :field-key :allergy-history :data-index "2.1"}
-      [ui-input-item {:label "过敏原" :value (:allergen summary) :errors errors
+      [ui-input-item {:label "过敏源" :value (:allergen summary) :errors errors
                       :data-path [:medical-summary] :field-key :allergen
-                      :placeholder "请输入过敏原"}] ; data-index for sub-items if needed, or rely on parent
+                      :placeholder "请输入过敏源"}] ; data-index for sub-items if needed, or rely on parent
       [ui-date-picker-item {:label "过敏时间" :value (:allergy-date summary) :errors errors
                             :data-path [:medical-summary] :field-key :allergy-date
                             :placeholder "请选择过敏时间"}]]
