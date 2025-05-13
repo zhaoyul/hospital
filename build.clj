@@ -4,7 +4,7 @@
     [babashka.fs :refer [copy-tree]]
     [babashka.process :refer [shell]]))
 
- (defn build-cljs [] (println "npx shadow-cljs release app...") (let [{:keys [exit], :as s} (shell "npx shadow-cljs release app")] (when-not (zero? exit) (throw (ex-info "could not compile cljs" s))) (copy-tree "target/classes/cljsbuild/public" "target/classes/public")))
+ (defn build-cljs [] (println "npx shadow-cljs release app patient-app...") (let [{:keys [exit], :as s} (shell "npx shadow-cljs release app patient-app")] (when-not (zero? exit) (throw (ex-info "could not compile cljs" s))) (copy-tree "target/classes/cljsbuild/public" "target/classes/public")))
 
 (def lib 'hc/hospital)
 (def main-cls (string/join "." (filter some? [(namespace lib) (name lib) "core"])))

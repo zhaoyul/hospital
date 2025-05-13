@@ -370,7 +370,17 @@ ENTRYPOINT exec java $JAVA_OPTS -jar /hospital/hospital-standalone.jar
     #+end_src
 
 
-
+* 打包&部署
+- 打包
+ #+begin_src shell :results pp :exports both
+ clj -Sforce -T:build all
+ #+end_src
+- 部署
+ #+begin_src shell :results pp :exports both
+ export JDBC_URL="jdbc:sqlite:hospital.db"
+ export PORT="4500"
+ /usr/lib/jvm/java-1.21.0-openjdk-amd64/bin/java -jar hospital-standalone.jar
+ #+end_src
 * gptel
 #+begin_src elisp :results silent
   (let* ((prompt-file "code-prompt.md")
