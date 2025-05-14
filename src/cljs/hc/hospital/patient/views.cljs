@@ -27,7 +27,8 @@
 
 ;; --- Form Navigation ---
 (defn form-navigation [current-step total-steps submitting?] ; total-steps is count
-  (let [max-step-idx (dec total-steps)]
+  (let [max-step-idx (dec total-steps)
+        required-fields-filled? @(rf/subscribe [::subs/current-step-required-fields-filled?])]
     [:div.nav-buttons
      (when (pos? current-step)
        [:button#prevBtn.btn-secondary
@@ -37,7 +38,7 @@
      [:button#nextBtn.btn-primary
       {:type "button"
        :style {:width (if (= current-step 0) "100%" "48%")}
-       :disabled submitting?
+       :disabled (or submitting? (not required-fields-filled?))
        :onClick (if (< current-step max-step-idx)
                   #(rf/dispatch [::events/next-step])
                   #(rf/dispatch [::events/validate-and-submit]))}
@@ -46,14 +47,15 @@
         (if submitting? "提交中..." "提交"))]]))
 
 ;; --- UI Components ---
-(defn ui-input-item [{:keys [label value placeholder errors field-key data-path type unit data-index extra]
-                      :or {type "text"}}]
+(defn ui-input-item [{:keys [label value placeholder errors field-key data-path type unit data-index extra required?]
+                      :or {type "text" required? false}}]
   (let [full-path (conj data-path field-key)
         error-msg (get-in errors full-path)
         field-id (str (name field-key) "-" (hash data-path))]
     [:div {:class (if error-msg "form-group error" "form-group")}
      [:label.form-label {:for field-id :data-index data-index}
       label
+      (when required? [:span {:style {:color "red" :margin-left "2px"}} "*"])
       (when unit [:span.unit (str " " unit)])]
      [:div {:style {:display "flex" :gap "8px"}}
       [:input.form-input {:type type
@@ -65,13 +67,15 @@
      (when error-msg
        [:div.error-message error-msg])]))
 
-(defn ui-input-number-item [{:keys [label value placeholder errors field-key data-path min max step unit data-index]}]
+(defn ui-input-number-item [{:keys [label value placeholder errors field-key data-path min max step unit data-index required?]
+                            :or {required? false}}]
   (let [full-path (conj data-path field-key)
         error-msg (get-in errors full-path)
         field-id (str (name field-key) "-" (hash data-path))]
     [:div {:class (if error-msg "form-group error" "form-group")}
      [:label.form-label {:for field-id :data-index data-index}
       label
+      (when required? [:span {:style {:color "red" :margin-left "2px"}} "*"])
       (when unit [:span.unit (str " " unit)])]
      [:input.form-input
       {:type "number"
@@ -89,12 +93,15 @@
      (when error-msg
        [:div.error-message error-msg])]))
 
-(defn ui-radio-group-item [{:keys [label value errors field-key data-path options data-index]}]
+(defn ui-radio-group-item [{:keys [label value errors field-key data-path options data-index required?]
+                           :or {required? false}}]
   (let [full-path (conj data-path field-key)
         error-msg (get-in errors full-path)
         group-name (str (name field-key) "-" (hash data-path))]
     [:div {:class (if error-msg "form-group error" "form-group")}
-     [:label.form-label {:data-index data-index} label]
+     [:label.form-label {:data-index data-index} 
+      label
+      (when required? [:span {:style {:color "red" :margin-left "2px"}} "*"])]
      [:div.radio-group
       (for [{opt-val :value opt-label :label} options]
         ^{:key (str opt-val opt-label)}
@@ -197,12 +204,15 @@
      (when error-msg
        [:div.error-message error-msg])]))
 
-(defn ui-select-item [{:keys [label value placeholder errors field-key data-path options data-index]}]
+(defn ui-select-item [{:keys [label value placeholder errors field-key data-path options data-index required?]
+                     :or {required? false}}]
   (let [full-path (conj data-path field-key)
         error-msg (get-in errors full-path)
         field-id (str (name field-key) "-" (hash data-path))]
     [:div {:class (if error-msg "form-group error" "form-group")}
-     [:label.form-label {:for field-id :data-index data-index} label]
+     [:label.form-label {:for field-id :data-index data-index} 
+      label
+      (when required? [:span {:style {:color "red" :margin-left "2px"}} "*"])]
      [:select.form-input {:id field-id
                           :value (or value "")
                           :onChange #(rf/dispatch [::events/update-form-field full-path (-> % .-target .-value)])}
@@ -268,27 +278,34 @@
                                                  (rf/dispatch [::events/update-form-field outpatient-number-path scanned-value])
                                                  (set! (.-onScanSuccessCallback js/window) nil)))
                                          (js/startScan))}
-                             [:i {:class "fas fa-qrcode"}]]}]
+                             [:i {:class "fas fa-qrcode"}]]
+                     :required? true}]
      [ui-input-item {:label "姓名" :value (:name basic-info) :errors errors
                      :data-path [:basic-info] :field-key :name
-                     :placeholder "请输入姓名" :data-index "1.2"}]
+                     :placeholder "请输入姓名" :data-index "1.2"
+                     :required? true}]
      [ui-input-item {:label "身份证号" :value (:id-number basic-info) :errors errors
                      :data-path [:basic-info] :field-key :id-number
-                     :placeholder "请输入身份证号" :data-index "1.3"}]
+                     :placeholder "请输入身份证号" :data-index "1.3"
+                     :required? true}]
      [ui-input-item {:label "手机号" :value (:phone basic-info) :errors errors
                      :data-path [:basic-info] :field-key :phone
-                     :placeholder "请输入手机号" :data-index "1.4"}]
+                     :placeholder "请输入手机号" :data-index "1.4"
+                     :required? true}]
      [ui-radio-group-item {:label "性别" :value (:gender basic-info) :errors errors
                            :data-path [:basic-info] :field-key :gender
                            :options [{:label "男" :value "male"} {:label "女" :value "female"}]
-                           :data-index "1.5"}]
+                           :data-index "1.5"
+                           :required? true}]
      [ui-input-number-item {:label "年龄" :value (:age basic-info) :errors errors
                             :data-path [:basic-info] :field-key :age
-                            :placeholder "请输入年龄" :data-index "1.6"}]
+                            :placeholder "请输入年龄" :data-index "1.6"
+                            :required? true}]
      [ui-select-item {:label "院区" :value (:hospital-district basic-info) :errors errors
                       :data-path [:basic-info] :field-key :hospital-district
                       :options [{:label "总院" :value "main"} {:label "积水潭院区" :value "jst"}]
-                      :placeholder "请选择院区" :data-index "1.7"}]]))
+                      :placeholder "请选择院区" :data-index "1.7"
+                      :required? true}]]))
 
 (defn medical-summary-step "病情摘要步骤" []
   (let [summary @(rf/subscribe [::subs/medical-summary])
