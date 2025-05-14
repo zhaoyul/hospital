@@ -101,30 +101,6 @@
    (:submit-error form)))
 
 (rf/reg-sub
- ::patient-form-submit-success?
- (fn [db _]
-   (get-in db [:patient-form :submit-success?])))
-
-;; 添加一个新的订阅函数来检查当前步骤必填字段是否完成
-(rf/reg-sub
- ::current-step-required-fields-filled?
- :<- [::current-step]
- :<- [::basic-info]
- :<- [::medical-summary]
- :<- [::comorbidities]
- (fn [[current-step basic-info medical-summary comorbidities] _]
-   (case current-step
-     ;; 第一步：基本信息
-     0 (and (not (str/blank? (:outpatient-number basic-info)))
-            (not (str/blank? (:name basic-info)))
-            (not (str/blank? (:id-number basic-info)))
-            (not (str/blank? (:phone basic-info)))
-            (not (nil? (:gender basic-info)))
-            (not (nil? (:age basic-info)))
-            (not (or (nil? (:hospital-district basic-info)) 
-                     (str/blank? (:hospital-district basic-info)))))
-     ;; 其他步骤可以在这里添加必填字段检查逻辑
-     ;; 1 (and ...)
-     ;; 2 (and ...)
-     ;; 如果没有必填字段或不需要验证，返回true
-     true)))
+  ::patient-form-submit-success?
+  (fn [db _]
+    (get-in db [:patient-form :submit-success?])))

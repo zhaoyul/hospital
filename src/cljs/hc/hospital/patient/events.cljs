@@ -13,15 +13,18 @@
 
 ;; 新增:基本信息验证函数
 (defn- validate-basic-info [basic-info]
-  (let [errors (atom {})]
+  (let [errors (atom {})
+        phone (:phone basic-info)
+        phone-regex #"^1[0-9]{10}$"] ;; 中国手机号码格式：1开头的11位数字
     (when (str/blank? (:outpatient-number basic-info))
       (swap! errors assoc-in [:basic-info :outpatient-number] "门诊号不能为空"))
     (when (str/blank? (:name basic-info))
       (swap! errors assoc-in [:basic-info :name] "姓名不能为空"))
     (when (str/blank? (:id-number basic-info))
       (swap! errors assoc-in [:basic-info :id-number] "身份证号不能为空"))
-    (when (str/blank? (:phone basic-info))
-      (swap! errors assoc-in [:basic-info :phone] "手机号不能为空"))
+    (cond 
+      (str/blank? phone) (swap! errors assoc-in [:basic-info :phone] "手机号不能为空")
+      (not (re-matches phone-regex phone)) (swap! errors assoc-in [:basic-info :phone] "请输入正确的手机号（1开头的11位数字）"))
     (when (nil? (:gender basic-info))
       (swap! errors assoc-in [:basic-info :gender] "性别不能为空"))
     (when (nil? (:age basic-info))

@@ -27,8 +27,7 @@
 
 ;; --- Form Navigation ---
 (defn form-navigation [current-step total-steps submitting?] ; total-steps is count
-  (let [max-step-idx (dec total-steps)
-        required-fields-filled? @(rf/subscribe [::subs/current-step-required-fields-filled?])]
+  (let [max-step-idx (dec total-steps)]
     [:div.nav-buttons
      (when (pos? current-step)
        [:button#prevBtn.btn-secondary
@@ -38,7 +37,7 @@
      [:button#nextBtn.btn-primary
       {:type "button"
        :style {:width (if (= current-step 0) "100%" "48%")}
-       :disabled (or submitting? (not required-fields-filled?))
+       :disabled submitting?
        :onClick (if (< current-step max-step-idx)
                   #(rf/dispatch [::events/next-step])
                   #(rf/dispatch [::events/validate-and-submit]))}
@@ -47,7 +46,7 @@
         (if submitting? "提交中..." "提交"))]]))
 
 ;; --- UI Components ---
-(defn ui-input-item [{:keys [label value placeholder errors field-key data-path type unit data-index extra required?]
+(defn ui-input-item [{:keys [label value placeholder errors field-key data-path type unit data-index extra required? pattern]
                       :or {type "text" required? false}}]
   (let [full-path (conj data-path field-key)
         error-msg (get-in errors full-path)
@@ -58,11 +57,14 @@
       (when required? [:span {:style {:color "red" :margin-left "2px"}} "*"])
       (when unit [:span.unit (str " " unit)])]
      [:div {:style {:display "flex" :gap "8px"}}
-      [:input.form-input {:type type
-                          :id field-id
-                          :value (if (nil? value) "" value)
-                          :placeholder (or placeholder (str "请输入" (if (string? label) label "")))
-                          :onChange #(rf/dispatch [::events/update-form-field full-path (-> % .-target .-value)])}]
+      [:input.form-input (merge 
+                          {:type type
+                           :id field-id
+                           :value (if (nil? value) "" value)
+                           :placeholder (or placeholder (str "请输入" (if (string? label) label "")))
+                           :onChange #(rf/dispatch [::events/update-form-field full-path (-> % .-target .-value)])}
+                          ;; 有pattern时添加模式验证
+                          (when pattern {:pattern pattern}))]
       (when extra extra)]
      (when error-msg
        [:div.error-message error-msg])]))
@@ -290,7 +292,9 @@
                      :required? true}]
      [ui-input-item {:label "手机号" :value (:phone basic-info) :errors errors
                      :data-path [:basic-info] :field-key :phone
-                     :placeholder "请输入手机号" :data-index "1.4"
+                     :placeholder "请输入手机号（1开头的11位数字）" :data-index "1.4"
+                     :type "tel" ;; 使用tel类型以便在移动设备上调出数字键盘
+                     :pattern "^1[0-9]{10}$" ;; HTML5模式验证
                      :required? true}]
      [ui-radio-group-item {:label "性别" :value (:gender basic-info) :errors errors
                            :data-path [:basic-info] :field-key :gender
