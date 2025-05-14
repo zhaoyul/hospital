@@ -10,15 +10,13 @@
   [:div.progress-bar
    [:div.progress-steps
     (for [i (range total-steps)]
-      [:div {:class (str "progress-step" (if (= i current-step) " active" "")) ; current-step is 0-indexed
+      [:div {:class (str "progress-step" (if (= i current-step) " active" ""))
              :key (str "step-" i)
              :id (str "step" (inc i))
              :data-title (nth step-titles i nil)}
        (inc i)])]
    [:div#progress.progress-bar-fill
-    {:style {:width (str (* (/ (inc current-step) total-steps) 100) "%")}
-     ;; Removed inline styles for height, background-color, border-radius
-     }]])
+    {:style {:width (str (* (/ (inc current-step) total-steps) 100) "%")}}]])
 
 ;; --- Step Section Wrapper ---
 (defn step-section-wrapper [title current-step step-index & children]
@@ -66,21 +64,6 @@
       (when extra extra)]
      (when error-msg
        [:div.error-message error-msg])]))
-
-(defn ui-text-area-item [{:keys [label value placeholder errors field-key data-path rows data-index]
-                          :or {rows 3}}]
-  (let [full-path (conj data-path field-key)
-        error-msg (get-in errors full-path)
-        field-id (str (name field-key) "-" (hash data-path))]
-    [:div {:class (if error-msg "form-group error" "form-group")}
-     [:label.form-label {:for field-id :data-index data-index} label]
-     [:textarea.form-input {:id field-id
-                            :value (if (nil? value) "" value)
-                            :rows rows
-                            :placeholder (or placeholder (str "请输入" (if (string? label) label "")))
-                            :onChange #(rf/dispatch [::events/update-form-field full-path (-> % .-target .-value)])}]
-     (when error-msg
-       [:div.error-message  error-msg])]))
 
 (defn ui-input-number-item [{:keys [label value placeholder errors field-key data-path min max step unit data-index]}]
   (let [full-path (conj data-path field-key)
@@ -285,7 +268,7 @@
                                                  (rf/dispatch [::events/update-form-field outpatient-number-path scanned-value])
                                                  (set! (.-onScanSuccessCallback js/window) nil)))
                                          (js/startScan))}
-                             "扫码"]}]
+                             [:i {:class "fas fa-qrcode"}]]}]
      [ui-input-item {:label "姓名" :value (:name basic-info) :errors errors
                      :data-path [:basic-info] :field-key :name
                      :placeholder "请输入姓名" :data-index "1.2"}]
