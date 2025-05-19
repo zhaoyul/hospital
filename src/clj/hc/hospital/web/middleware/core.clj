@@ -7,9 +7,10 @@
 
 (defn wrap-base
   [{:keys [metrics site-defaults-config cookie-secret] :as opts}]
-  (let [cookie-store (cookie/cookie-store {:key (.getBytes ^String cookie-secret)})]
+  (let [cookie-store (cookie/cookie-store {:key (.getBytes ^String cookie-secret)})
+        env-defaults-fn (:middleware env/defaults)]
     (fn [handler]
-      (cond-> ((:middleware env/defaults) handler opts)
-        true (defaults/wrap-defaults
-              (assoc-in site-defaults-config [:session :store] cookie-store))
-        true (auth-mw/wrap-auth)))))
+      (-> handler
+          (env-defaults-fn opts)
+          (auth-mw/wrap-auth)
+          (defaults/wrap-defaults (assoc-in site-defaults-config [:session :store] cookie-store))))))

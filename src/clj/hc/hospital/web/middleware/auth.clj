@@ -8,10 +8,6 @@
    [ring.util.http-response :as http-response])) ; Added for redirect
 
 (defn on-error [request _response]
-  (log/info "--- Auth on-error triggered ---") ; <-- 日志标记
-  (log/info "Request URI:" (:uri request))
-  (log/info "Session in on-error:" (:session request)) ; <-- 打印 :session
-  (log/info "Identity in on-error:" (:identity request)) ; <-- 打印 :identity
   (-> (http-response/found "/login")
       (assoc :flash {:error (str "Access to " (:uri request) " is not authorized. Please log in.")})))
 
@@ -22,5 +18,5 @@
 (defn wrap-auth [handler]
   (let [backend (session/session-backend)]
     (-> handler
-        (auth-middleware/wrap-authentication backend)
-        (auth-middleware/wrap-authorization backend))))
+        (auth-middleware/wrap-authorization backend)
+        (auth-middleware/wrap-authentication backend))))
