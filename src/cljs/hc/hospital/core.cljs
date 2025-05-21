@@ -56,10 +56,17 @@
 
 (defn ^:export ^:dev/once init! []
   ;; 初始化日志系统
-  (timbre/info "初始化应用")
-  (timbre/debug "DEBUG模式已启用")
+  (timbre/info "Initializing application...")
+  (timbre/debug "DEBUG mode enabled.")
 
-  ;; 初始化 re-frame 应用状态
-  (rf/dispatch-sync [::events/initialize-db])
-  (rf/dispatch [::events/check-session]) ; Dispatch session check
+  (if (identical? "true" (js/localStorage.getItem "justLoggedIn"))
+    (do
+      (timbre/info "Initializing after login: clearing flag and dispatching handle-just-logged-in.")
+      (js/localStorage.removeItem "justLoggedIn")
+      (rf/dispatch [::events/handle-just-logged-in]))
+    (do
+      (timbre/info "Normal application initialization: dispatching initialize-db and check-session.")
+      (rf/dispatch-sync [::events/initialize-db])
+      (rf/dispatch [::events/check-session])))
+
   (mount-root))

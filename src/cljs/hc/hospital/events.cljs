@@ -151,6 +151,7 @@
 ;; Helper to set doctor from session and ensure session check pending is false
 (rf/reg-event-db ::set-current-doctor-from-session
   (fn [db [_ {:keys [doctor]}]]
+    (timbre/info "Session check success. Doctor:" doctor ", Logged in:" (some? doctor))
     (assoc db
            :current-doctor doctor
            :is-logged-in (some? doctor)
@@ -164,6 +165,7 @@
     ;; For other errors, it's unexpected, but we still clear session.
     (when-not (or (= 401 (:status error-details)) (= 404 (:status error-details)))
       (timbre/error "Unexpected error during session check:" error-details))
+    (timbre/info "Redirecting to /login due to session check failure.")
     (js/window.location.assign "/login") ; Redirect to /login
     {:dispatch [::clear-current-doctor]})) ; clear-current-doctor now also sets session-check-pending? to false
 
@@ -171,6 +173,7 @@
 ;; --- Login Events ---
 (rf/reg-event-db ::set-current-doctor
   (fn [db [_ doctor-data]]
+    (timbre/info "Setting current doctor. Doctor data available:" (some? doctor-data) ", Is logged in set to true.")
     (assoc db
            :current-doctor doctor-data
            :is-logged-in true
@@ -199,18 +202,31 @@
 ;; Helper event for login success to handle multiple dispatches
 (rf/reg-event-fx ::login-success
   (fn [{:keys [db]} [_ response-data]]
-    (timbre/info "Login successful:" response-data)
+    (timbre/info "Login successful. Setting justLoggedIn flag. Response:" response-data ". Navigating to / shortly.")
     ;; Assuming the server returns {:message "登录成功" :doctor {...}}
-    ;; If navigation is handled by a specific re-frame fx, replace js/window.location.href
-    (js/window.location.assign "/") ;; More standard way to navigate
+    ;; Navigation is now handled by ::navigate-to-app-root
     ;; ::set-current-doctor will handle setting session-check-pending to false
+    (js/localStorage.setItem "justLoggedIn" "true")
     {:dispatch [::set-current-doctor (:doctor response-data)]
-     ;; :dispatch-later [{:ms 100 :dispatch [::navigate "/"]}] ; Example if navigation needs delay or is an effect
+     :dispatch-later [{:ms 30 :dispatch [::navigate-to-app-root]}]
      }))
+
+;; --- Navigation Events ---
+(rf/reg-event-fx ::navigate-to-app-root
+  (fn [_ _]
+    (js/window.location.assign "/")
+    {})) ; No change to db
+
+;; Event to handle post-login initialization
+(rf/reg-event-db ::handle-just-logged-in
+  (fn [db _]
+    (timbre/info "Handling post-login navigation: session-check-pending? set to false.")
+    (assoc db :session-check-pending? false)))
 
 ;; --- Logout Events ---
 (rf/reg-event-db ::clear-current-doctor
   (fn [db _]
+    (timbre/info "Clearing current doctor. Is logged in set to false. Session check pending set to false.")
     (assoc db
            :current-doctor nil
            :is-logged-in false
