@@ -44,31 +44,40 @@
 
 ;; 新增顶部导航栏组件
 (defn app-header []
-  [:> Layout.Header
-   {:style {:background "#fff"
-            :padding "0 24px" ; Adjusted padding
-            :display "flex"
-            :alignItems "center"
-            :justifyContent "space-between"
-            :borderBottom "1px solid #f0f0f0"
-            :height "64px"}}
-   [:div {:style {:display "flex" :alignItems "center"}}
-    ;; Using ApartmentOutlined as a placeholder for fas fa-hospital-user
-    [:> icons/ApartmentOutlined {:style {:fontSize "24px" :color "#1890ff" :marginRight "10px"}}]
-    [:> Typography.Title {:level 4 :style {:margin 0 :fontSize "18px"}} "麻醉信息管理平台"]]
+  (let [current-doctor @(rf/subscribe [::subs/current-doctor])
+        is-logged-in? @(rf/subscribe [::subs/is-logged-in])]
+    [:> Layout.Header
+     {:style {:background "#fff"
+              :padding "0 24px" ; Adjusted padding
+              :display "flex"
+              :alignItems "center"
+              :justifyContent "space-between"
+              :borderBottom "1px solid #f0f0f0"
+              :height "64px"}}
+     [:div {:style {:display "flex" :alignItems "center"}}
+      ;; Using ApartmentOutlined as a placeholder for fas fa-hospital-user
+      [:> icons/ApartmentOutlined {:style {:fontSize "24px" :color "#1890ff" :marginRight "10px"}}]
+      [:> Typography.Title {:level 4 :style {:margin 0 :fontSize "18px"}} "麻醉信息管理平台"]]
 
-   ;; 右侧：用户信息
-   [:div {:style {:display "flex" :alignItems "center" :cursor "pointer"}
-          ;; :on-click #(rf/dispatch [::events/toggle-user-dropdown]) ; 稍后可以为用户下拉菜单添加事件
-          }
-    [:> Avatar {:icon (r/as-element [:> icons/UserOutlined])
-                :style {:marginRight "8px" :backgroundColor "#1890ff"}}] ; Added background color
-    ;; 地点标签 - 根据图片硬编码
-    [:> Tag {:color "processing" :style {:marginRight "8px"}} "聊城市人民医院"]
-    [:> Typography.Text {:style {:marginRight "8px"}} "张医生"]
-    [:> icons/DownOutlined {:style {:color "rgba(0, 0, 0, 0.45)" :marginLeft "8px"}}] ; Added margin-left
-    ;; 用户下拉菜单可以根据需要在此处条件渲染
-    ]])
+     ;; 右侧：用户信息
+     (when is-logged-in?
+       [:div {:style {:display "flex" :alignItems "center" :cursor "pointer"}
+              ;; :on-click #(rf/dispatch [::events/toggle-user-dropdown]) ; 稍后可以为用户下拉菜单添加事件
+              }
+        [:> Avatar {:icon (r/as-element [:> icons/UserOutlined])
+                    :style {:marginRight "8px" :backgroundColor "#1890ff"}}] ; Added background color
+        ;; 地点标签 - 根据图片硬编码
+        [:> Tag {:color "processing" :style {:marginRight "8px"}} "聊城市人民医院"]
+        [:> Typography.Text {:style {:marginRight "8px"}} (or (:name current-doctor) "医生")]
+        [:> icons/DownOutlined {:style {:color "rgba(0, 0, 0, 0.45)" :marginLeft "8px" :marginRight "16px"}}] ; Added margin-left and right for spacing
+        [:> Button {:type "default"
+                    :icon (r/as-element [:> icons/LogoutOutlined])
+                    :on-click #(rf/dispatch [::events/handle-logout])}
+         "退出登录"]
+        ;; 用户下拉菜单可以根据需要在此处条件渲染
+        ])
+     ;; If not logged in, this space will be empty or you can add a Login button here later
+     ]))
 
 (defn right-side "患者麻醉管理\"patients\", 问卷列表\"assessment\", 系统设置\"settings\"" [active-tab]
   [:> Layout {:style {:height "calc(100vh - 64px)"

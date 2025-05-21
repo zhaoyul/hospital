@@ -86,4 +86,7 @@
    :doctors []
    :doctor-modal-visible? false
    :editing-doctor nil
+   :current-doctor nil
+   :is-logged-in false
+   :login-error nil
    })

@@ -134,3 +134,11 @@
 (rf/reg-sub ::editing-doctor
   (fn [db _]
     (get db :editing-doctor {}))) ; Default to empty map
+
+(rf/reg-sub ::current-doctor
+  (fn [db _]
+    (get db :current-doctor)))
+
+(rf/reg-sub ::is-logged-in
+  (fn [db _]
+    (get db :is-logged-in false)))

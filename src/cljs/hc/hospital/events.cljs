@@ -139,6 +139,66 @@
   (fn [db [_ field-path new-value]]
     (assoc-in db [:editing-patient-info field-path] new-value)))
 
+;; --- Login Events ---
+(rf/reg-event-db ::set-current-doctor
+  (fn [db [_ doctor-data]]
+    (assoc db
+           :current-doctor doctor-data
+           :is-logged-in true
+           :login-error nil))) ; Clear any previous login error
+
+(rf/reg-event-db ::login-failure
+  (fn [db [_ error-details]]
+    (timbre/error "Login failed:" error-details)
+    (assoc db
+           :current-doctor nil
+           :is-logged-in false
+           :login-error (or (:error (:response error-details)) (:message error-details) "Login failed"))))
+
+(rf/reg-event-fx ::handle-login
+  (fn [{:keys [db]} [_ {:keys [username password]}]]
+    {:http-xhrio {:method          :post
+                  :uri             "/api/users/login"
+                  :params          {:username username :password password}
+                  :response-format (ajax/json-response-format {:keywords? true})
+                  :on-success      [::login-success]
+                  :on-failure      [::login-failure]}}))
+
+;; Helper event for login success to handle multiple dispatches
+(rf/reg-event-fx ::login-success
+  (fn [{:keys [db]} [_ response-data]]
+    (timbre/info "Login successful:" response-data)
+    ;; Assuming the server returns {:message "登录成功" :doctor {...}}
+    ;; If navigation is handled by a specific re-frame fx, replace js/window.location.href
+    (js/window.location.assign "/") ;; More standard way to navigate
+    {:dispatch [::set-current-doctor (:doctor response-data)]
+     ;; :dispatch-later [{:ms 100 :dispatch [::navigate "/"]}] ; Example if navigation needs delay or is an effect
+     }))
+
+;; --- Logout Events ---
+(rf/reg-event-db ::clear-current-doctor
+  (fn [db _]
+    (assoc db
+           :current-doctor nil
+           :is-logged-in false
+           :login-error nil)))
+
+(rf/reg-event-fx ::handle-logout
+  (fn [{:keys [db]} _]
+    {:http-xhrio {:method          :post
+                  :uri             "/api/users/logout"
+                  :response-format (ajax/json-response-format {:keywords? true})
+                  :on-success      [::logout-finished]
+                  :on-failure      [::logout-finished]} ; Always proceed to clear client session
+     }))
+
+(rf/reg-event-fx ::logout-finished
+  (fn [{:keys [db]} [_ response-data]]
+    (timbre/info "Logout processed. Response (if any):" response-data)
+    (js/window.location.assign "/login") ; Redirect to login page
+    {:dispatch [::clear-current-doctor]}))
+
+
 ;; Doctor management events - seem unrelated to patient assessment form changes, so keep them.
 (rf/reg-event-db ::initialize-doctors
   (fn [db _]
