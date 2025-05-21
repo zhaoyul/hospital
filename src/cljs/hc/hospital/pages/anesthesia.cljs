@@ -369,21 +369,23 @@
   (let [form-data @(rf/subscribe [::subs/medical-summary-data])
         comorbidity-data (get-in form-data [:comorbidities])
         comorbidity-item (fn [field-key label-text form-item-name]
-                           (let [path [:comorbidities field-key]
-                                 has-path (conj path :has)
-                                 details-path (conj path :details)
-                                 current-has (get-in comorbidity-data has-path "no")]
+                           (let [;; Path for dispatching updates, relative to form-data (which is root assessment_data)
+                                 dispatch-has-path [:comorbidities field-key :has]
+                                 dispatch-details-path [:comorbidities field-key :details]
+                                 ;; Values for display, read directly from comorbidity-data using field-key
+                                 current-has (get-in comorbidity-data [field-key :has] "no")
+                                 current-details (get-in comorbidity-data [field-key :details])]
                              [:> Col {:span 12}
-                              [:> Form.Item {:label label-text :name form-item-name}
-                               [:> Radio.Group {:value current-has
-                                                :onChange #(rf/dispatch [::events/update-medical-summary-field has-path (-> % .-target .-value)])}
+                              [:> Form.Item {:label label-text :name form-item-name} ; Antd Form uses this with initialValues for display
+                               [:> Radio.Group {:value current-has ; Explicit value binding
+                                                :onChange #(rf/dispatch [::events/update-medical-summary-field dispatch-has-path (-> % .-target .-value)])}
                                 [:> Radio {:value "yes"} "有"]
                                 [:> Radio {:value "no"} "无"]]
                                (when (= current-has "yes")
-                                 [:> Input {:value (get-in comorbidity-data details-path)
+                                 [:> Input {:value current-details ; Explicit value binding
                                             :placeholder "请填写具体内容"
                                             :style {:marginTop "8px"}
-                                            :onChange #(rf/dispatch [::events/update-medical-summary-field details-path (-> % .-target .-value)])}])]]))]
+                                            :onChange #(rf/dispatch [::events/update-medical-summary-field dispatch-details-path (-> % .-target .-value)])}])]]))]
     [custom-styled-card
      [:> MedicineBoxOutlined]
      "并存疾病"
@@ -428,23 +430,25 @@
 
 (defn- physical-examination-card []
   (let [raw @(rf/subscribe [::subs/selected-patient-raw-details])
-        phys-data (get-in raw [:assessment_data :physical-examination] {})
+        phys-data (get-in raw [:assessment_data :physical-examination] {}) ; This is the map e.g. {:heart {...}, :lungs {...}}
         exam-item (fn [field-key label-text form-item-name]
-                    (let [path [:physical-exam field-key]
-                          status-path (conj path :status)
-                          notes-path (conj path :notes)
-                          current-status (get-in phys-data status-path "normal")] ; Default to "normal"
+                    (let [;; Correct paths for dispatching updates to form-data (root assessment_data)
+                          dispatch-status-path [:physical-examination field-key :status]
+                          dispatch-notes-path [:physical-examination field-key :notes]
+                          ;; Values for display, read directly from phys-data (which is raw[:assessment_data :physical-examination])
+                          current-status-val (get-in phys-data [field-key :status] "normal")
+                          current-notes-val (get-in phys-data [field-key :notes])]
                       [:> Col {:span 12}
-                       [:> Form.Item {:label label-text :name form-item-name}
-                        [:> Radio.Group {:value current-status
-                                         :onChange #(rf/dispatch [::events/update-medical-summary-field status-path (-> % .-target .-value)])}
-                         [:> Radio {:value "normal"} "正常"] ; Added "normal" option
+                       [:> Form.Item {:label label-text :name form-item-name} ; Antd Form uses this with initialValues for display
+                        [:> Radio.Group {:value current-status-val ; Explicit value binding
+                                         :onChange #(rf/dispatch [::events/update-medical-summary-field dispatch-status-path (-> % .-target .-value)])}
+                         [:> Radio {:value "normal"} "正常"]
                          [:> Radio {:value "abnormal"} "异常"]]
-                        (when (= current-status "abnormal")
-                          [:> Input {:value (get-in phys-data notes-path)
+                        (when (= current-status-val "abnormal")
+                          [:> Input {:value current-notes-val ; Explicit value binding
                                      :placeholder "请描述异常情况"
                                      :style {:marginTop "8px"}
-                                     :onChange #(rf/dispatch [::events/update-medical-summary-field notes-path (-> % .-target .-value)])}])]]))]
+                                     :onChange #(rf/dispatch [::events/update-medical-summary-field dispatch-notes-path (-> % .-target .-value)])}])]]))]
     [custom-styled-card
      [:> ProfileOutlined]
      "体格检查"
@@ -457,15 +461,15 @@
        (exam-item :teeth "牙齿" [:teeth :status])
        (exam-item :spine-limbs "脊柱四肢" [:spine-limbs :status])
        (exam-item :neuro "神经" [:neuro :status])]
-      [:> Form.Item {:label "其它" :name [:other :notes]}
-       [:> Input.TextArea {:value (get-in phys-data [:other :notes])
+      [:> Form.Item {:label "其它" :name [:other :notes]} ; Antd Form uses this with initialValues for display
+       [:> Input.TextArea {:value (get-in phys-data [:other :notes]) ; Explicit value binding
                            :placeholder "如有其他体格检查发现请在此注明"
                            :rows 2
-                           :onChange #(rf/dispatch [::events/update-medical-summary-field [:physical-exam :other :notes] (-> % .-target .-value)])}]]]]))
+                           :onChange #(rf/dispatch [::events/update-medical-summary-field [:physical-examination :other :notes] (-> % .-target .-value)])}]]]]))
 
 (defn- auxiliary-tests-card []
-  (let [raw @(rf/subscribe [::subs/selected-patient-raw-details])
-        aux-data     (get-in raw [:assessment_data :auxiliary-examination] {})
+  (let [form-data @(rf/subscribe [::subs/medical-summary-data]) ; ::subs/medical-summary-data points to the root of form-data
+        aux-data (get-in form-data [:aux-exams] {}) ; Access :aux-exams from form-data
         modal-open? (r/atom false)
         preview-image-url (r/atom "")
         handle-preview (fn [file-or-url]

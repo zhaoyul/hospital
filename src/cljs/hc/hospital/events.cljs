@@ -35,14 +35,50 @@
 (rf/reg-event-db ::select-patient
   (fn [db [_ patient-key]]
     (let [selected-assessment (first (filter #(= (:patient_id %) patient-key) (:all-patient-assessments db)))
-          form-data-from-api (when selected-assessment (get selected-assessment :assessment_form_data {}))
+          raw-assessment-data (when selected-assessment (get selected-assessment :assessment_data {}))
           default-form-data (get-in app-db/default-db [:anesthesia :assessment :form-data])]
-      (-> db
-          (assoc-in [:anesthesia :current-patient-id] patient-key)
-          (assoc-in [:anesthesia :assessment :form-data]
-                    (if (seq form-data-from-api) ; Check if API data is not empty
-                      form-data-from-api
-                      default-form-data))))))
+      (if (seq raw-assessment-data)
+        (let [;; Helper to access potentially nil medical-summary
+              med-summary (:medical-summary raw-assessment-data)
+              ;; Data for physical-examination from patient form
+              patient-physical-exam (:physical-examination raw-assessment-data)
+              ;; Data for auxiliary-examination from patient form
+              patient-aux-exam (:auxiliary-examination raw-assessment-data)
+
+              transformed-data (cond-> {}
+                                 ;; Carry over basic-info and comorbidities as is
+                                 (:basic-info raw-assessment-data) (assoc :basic-info (:basic-info raw-assessment-data))
+                                 (:comorbidities raw-assessment-data) (assoc :comorbidities (:comorbidities raw-assessment-data))
+
+                                 ;; Transform medical-summary from patient form's structure
+                                 med-summary ; Check if med-summary (the map) exists
+                                 (assoc :allergy {:has (if (:allergy-history med-summary) "yes" "no")
+                                                   :allergen (:allergen med-summary)
+                                                   :last-reaction-date (:allergy-date med-summary)}
+                                        :habits {:smoking {:has (if (:smoking-history med-summary) "yes" "no")
+                                                           :years (:smoking-years med-summary)
+                                                           :per-day (:cigarettes-per-day med-summary)}
+                                                 :drinking {:has (if (:drinking-history med-summary) "yes" "no")
+                                                            :years (:drinking-years med-summary)
+                                                            :per-day (:alcohol-per-day med-summary)}})
+                                 
+                                 ;; Transform physical-examination to :physical-exam
+                                 patient-physical-exam ; Check if patient-physical-exam data exists
+                                 (assoc :physical-exam patient-physical-exam)
+
+                                 ;; Transform auxiliary-examination to :aux-exams
+                                 patient-aux-exam ; Check if patient-aux-exam data exists
+                                 (assoc :aux-exams patient-aux-exam))
+
+              ;; Merge with defaults to ensure all expected keys for form-data are present
+              final-form-data (merge default-form-data transformed-data)]
+          (-> db
+              (assoc-in [:anesthesia :current-patient-id] patient-key)
+              (assoc-in [:anesthesia :assessment :form-data] final-form-data)))
+        ;; If no raw_assessment_data, use defaults
+        (-> db
+            (assoc-in [:anesthesia :current-patient-id] patient-key)
+            (assoc-in [:anesthesia :assessment :form-data] default-form-data))))))
 
 
 ;; --- Updating Assessment Data from Doctor's Forms ---
