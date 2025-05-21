@@ -164,7 +164,7 @@
     ;; For other errors, it's unexpected, but we still clear session.
     (when-not (or (= 401 (:status error-details)) (= 404 (:status error-details)))
       (timbre/error "Unexpected error during session check:" error-details))
-    (js/window.location.assign "/login.html") ; Redirect to login
+    (js/window.location.assign "/login") ; Redirect to /login
     {:dispatch [::clear-current-doctor]})) ; clear-current-doctor now also sets session-check-pending? to false
 
 
@@ -229,7 +229,7 @@
 (rf/reg-event-fx ::logout-finished
   (fn [{:keys [db]} [_ response-data]]
     (timbre/info "Logout processed. Response (if any):" response-data)
-    (js/window.location.assign "/login.html") ; Redirect to login.html page
+    (js/window.location.assign "/login") ; Redirect to /login page
     {:dispatch [::clear-current-doctor]}))
 
 

@@ -8,7 +8,7 @@
    [hc.hospital.subs :as subs]
    [taoensso.timbre :as timbre]
    [hc.hospital.pages.anesthesia-home :refer [anesthesia-home-page]]
-   [hc.hospital.pages.login :refer [login-page]] ; Added login page
+   ;; Removed login page require: [hc.hospital.pages.login :refer [login-page]]
    ["antd" :as antd :refer [Button Spin]])) ; Added Spin for loading indicator
 
 ;; Import Ant Design CSS
@@ -28,6 +28,9 @@
        [:> antd/Spin {:tip "Loading session..." :size "large"}]]
       (if is-logged-in?
         (do
+          ;; If logged in, but somehow on /login or /login.html, redirect to main app page.
+          ;; This is an edge case, as /login should be a backend-rendered page.
+          ;; However, if the user manually navigates or state gets inconsistent, this handles it.
           (when (or (= current-path "/login") (= current-path "/login.html"))
             (timbre/info "Logged in, but on login page. Redirecting to /")
             (js/window.location.assign "/"))
@@ -36,16 +39,12 @@
            #(rf/dispatch-sync [::events/fetch-all-assessments])
            #js [])
           [anesthesia-home-page]) ; Render main application page
-        (if (or (= current-path "/login") (= current-path "/login.html"))
-          [login-page] ; Render login page if already on login path
-          (do
-            ;; This case should ideally be handled by the redirect in ::session-check-failed
-            ;; or ::login-failure. If reached, it implies a state inconsistency or direct navigation
-            ;; to a protected route without a session.
-            (timbre/warn (str "Not logged in, not on login path (" current-path "). Session check should have redirected. Forcing /login."))
-            (js/window.location.assign "/login.html") ; Ensure redirect to login.html
-            ;; Render login page while redirecting
-            [login-page]))))))
+        ;; If not logged in (and session check is complete):
+        ;; The ::session-check-failed event should have already initiated a redirect to /login.
+        ;; This part of app-root will briefly render while the browser navigates.
+        ;; No need to render [login-page] here as the /login path is handled by the backend.
+        [:div {:style {:textAlign "center" :paddingTop "50px"}}
+         "Redirecting to login..."]))))
 
 
 ;; -------------------------
