@@ -22,6 +22,9 @@
         is-logged-in? @(rf/subscribe [::subs/is-logged-in])
         current-path (.-pathname js/window.location)]
     (timbre/info (str "App root: Session pending? " session-check-pending? ", Logged in? " is-logged-in? ", Current path: " current-path))
+    (react/useEffect
+     #(rf/dispatch-sync [::events/fetch-all-assessments])
+     #js [])
 
     (if session-check-pending?
       [:div {:style {:display "flex" :justifyContent "center" :alignItems "center" :height "100vh"}}
@@ -35,9 +38,7 @@
             (timbre/info "Logged in, but on login page. Redirecting to /")
             (js/window.location.assign "/"))
           ;; Fetch assessments only when logged in and viewing main app
-          (react/useEffect
-           #(rf/dispatch-sync [::events/fetch-all-assessments])
-           #js [])
+
           [anesthesia-home-page]) ; Render main application page
         ;; If not logged in (and session check is complete):
         ;; The ::session-check-failed event should have already initiated a redirect to /login.

@@ -163,6 +163,7 @@
     (timbre/warn "Session check failed or no active session:" error-details)
     ;; For 401 or 404 (no user /me), it's an expected "not logged in" state.
     ;; For other errors, it's unexpected, but we still clear session.
+    ;;(js-debugger)
     (when-not (or (= 401 (:status error-details)) (= 404 (:status error-details)))
       (timbre/error "Unexpected error during session check:" error-details))
     (timbre/info "Redirecting to /login due to session check failure.")

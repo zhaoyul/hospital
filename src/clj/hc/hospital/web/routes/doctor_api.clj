@@ -45,7 +45,9 @@
             :middleware [wrap-restricted]}}]
    ["/me" ; Changed from "/user/me"
     {:get {:summary "获取当前登录医生的信息 (需要认证)"
-           :handler doctor-api/get-current-doctor-profile
+           :handler #(doctor-api/get-current-doctor-profile
+                      {:integrant-deps opts
+                       :identity (-> % :identity :id)})
            :tags ["医生用户"]
            :middleware [wrap-restricted]}}]
    ["/user/:id"
