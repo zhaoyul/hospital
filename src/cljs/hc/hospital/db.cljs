@@ -89,4 +89,5 @@
    :current-doctor nil
    :is-logged-in false
    :login-error nil
+   :session-check-pending? true
    })

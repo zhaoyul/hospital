@@ -142,3 +142,7 @@
 (rf/reg-sub ::is-logged-in
   (fn [db _]
     (get db :is-logged-in false)))
+
+(rf/reg-sub ::session-check-pending?
+  (fn [db _]
+    (get db :session-check-pending? true))) ; Default to true if not found, matches db.cljs

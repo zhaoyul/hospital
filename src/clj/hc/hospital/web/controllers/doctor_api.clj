@@ -39,6 +39,15 @@
   (-> (http-response/ok {:message "登出成功"})
       (assoc :session nil))) ; 清除 session 中的 :identity
 
+(defn get-current-doctor-profile
+  [{{:keys [query-fn]} :integrant-deps
+    authenticated-doctor-id :identity}] ; :identity is injected by Buddy auth
+  (if authenticated-doctor-id
+    (if-let [doctor (doctor.db/get-doctor-by-id query-fn authenticated-doctor-id)]
+      (http-response/ok {:doctor (dissoc doctor :password_hash)}) ; Return doctor details
+      (http-response/not-found {:error "Logged-in doctor data not found in DB."})) ; Should be rare if ID is from session
+    (http-response/unauthorized {:error "Not authenticated"})))
+
 (defn list-doctors
   "获取医生列表 API (需要认证)"
   [{{:keys [query-fn]} :integrant-deps}]

@@ -43,6 +43,11 @@
             :tags ["医生用户"]
             :handler doctor-api/logout-doctor!
             :middleware [wrap-restricted]}}]
+   ["/user/me"
+    {:get {:summary "获取当前登录医生的信息 (需要认证)"
+           :handler doctor-api/get-current-doctor-profile
+           :tags ["医生用户"]
+           :middleware [wrap-restricted]}}]
    ["/user/:id"
     {:get {:summary "根据ID获取医生信息 (需要认证)"
            :tags ["医生用户"]

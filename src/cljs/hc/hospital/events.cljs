@@ -139,13 +139,43 @@
   (fn [db [_ field-path new-value]]
     (assoc-in db [:editing-patient-info field-path] new-value)))
 
+;; --- Session Check Events ---
+(rf/reg-event-fx ::check-session
+  (fn [_ _]
+    {:http-xhrio {:method          :get
+                  :uri             "/api/user/me"
+                  :response-format (ajax/json-response-format {:keywords? true})
+                  :on-success      [::set-current-doctor-from-session] ; New event to handle session data
+                  :on-failure      [::session-check-failed]}}))
+
+;; Helper to set doctor from session and ensure session check pending is false
+(rf/reg-event-db ::set-current-doctor-from-session
+  (fn [db [_ {:keys [doctor]}]]
+    (assoc db
+           :current-doctor doctor
+           :is-logged-in (some? doctor)
+           :login-error nil
+           :session-check-pending? false)))
+
+(rf/reg-event-fx ::session-check-failed
+  (fn [{:keys [db]} [_ error-details]]
+    (timbre/warn "Session check failed or no active session:" error-details)
+    ;; For 401 or 404 (no user /me), it's an expected "not logged in" state.
+    ;; For other errors, it's unexpected, but we still clear session.
+    (when-not (or (= 401 (:status error-details)) (= 404 (:status error-details)))
+      (timbre/error "Unexpected error during session check:" error-details))
+    (js/window.location.assign "/login.html") ; Redirect to login
+    {:dispatch [::clear-current-doctor]})) ; clear-current-doctor now also sets session-check-pending? to false
+
+
 ;; --- Login Events ---
 (rf/reg-event-db ::set-current-doctor
   (fn [db [_ doctor-data]]
     (assoc db
            :current-doctor doctor-data
            :is-logged-in true
-           :login-error nil))) ; Clear any previous login error
+           :login-error nil
+           :session-check-pending? false))) ; Ensure session check is marked complete
 
 (rf/reg-event-db ::login-failure
   (fn [db [_ error-details]]
@@ -153,7 +183,9 @@
     (assoc db
            :current-doctor nil
            :is-logged-in false
-           :login-error (or (:error (:response error-details)) (:message error-details) "Login failed"))))
+           :login-error (or (:error (:response error-details)) (:message error-details) "Login failed")
+           ;; Do not set session-check-pending here, as login might fail and we'd want to stay on login page
+           )))
 
 (rf/reg-event-fx ::handle-login
   (fn [{:keys [db]} [_ {:keys [username password]}]]
@@ -171,6 +203,7 @@
     ;; Assuming the server returns {:message "登录成功" :doctor {...}}
     ;; If navigation is handled by a specific re-frame fx, replace js/window.location.href
     (js/window.location.assign "/") ;; More standard way to navigate
+    ;; ::set-current-doctor will handle setting session-check-pending to false
     {:dispatch [::set-current-doctor (:doctor response-data)]
      ;; :dispatch-later [{:ms 100 :dispatch [::navigate "/"]}] ; Example if navigation needs delay or is an effect
      }))
@@ -181,7 +214,8 @@
     (assoc db
            :current-doctor nil
            :is-logged-in false
-           :login-error nil)))
+           :login-error nil
+           :session-check-pending? false))) ; Ensure session check is marked complete
 
 (rf/reg-event-fx ::handle-logout
   (fn [{:keys [db]} _]
@@ -195,7 +229,7 @@
 (rf/reg-event-fx ::logout-finished
   (fn [{:keys [db]} [_ response-data]]
     (timbre/info "Logout processed. Response (if any):" response-data)
-    (js/window.location.assign "/login") ; Redirect to login page
+    (js/window.location.assign "/login.html") ; Redirect to login.html page
     {:dispatch [::clear-current-doctor]}))
 
 
