@@ -35,7 +35,7 @@
 (rf/reg-event-db ::select-patient
   (fn [db [_ patient-key]]
     (let [selected-assessment (first (filter #(= (:patient_id %) patient-key) (:all-patient-assessments db)))
-          form-data-from-api (when selected-assessment (get selected-assessment :assessment_form_data {}))
+          form-data-from-api (when selected-assessment (get selected-assessment :assessment_data {}))
           default-form-data (get-in app-db/default-db [:anesthesia :assessment :form-data])]
       (-> db
           (assoc-in [:anesthesia :current-patient-id] patient-key)
