@@ -143,7 +143,7 @@
 (rf/reg-event-fx ::check-session
   (fn [_ _]
     {:http-xhrio {:method          :get
-                  :uri             "/api/user/me"
+                  :uri             "/api/me" ; Changed from /api/user/me
                   :response-format (ajax/json-response-format {:keywords? true})
                   :on-success      [::set-current-doctor-from-session] ; New event to handle session data
                   :on-failure      [::session-check-failed]}}))
