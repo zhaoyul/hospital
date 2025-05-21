@@ -309,61 +309,61 @@
      [:> Form {:layout "horizontal" :labelCol {:span 6} :wrapperCol {:span 18} :labelAlign "left" :initialValues summary-data}
       ;; 过敏史
       [:div {:style {:marginBottom "16px"}}
-       [:> Form.Item {:name [:allergy :has] :label "过敏史" :colon false}
-        [:> Radio.Group {:value (get-in summary-data [:allergy :has])
-                         :onChange #(rf/dispatch [::events/update-medical-summary-field [:allergy :has] (-> % .-target .-value)])}
+       [:> Form.Item {:name [:medical-summary :allergy-history] :label "过敏史" :colon false}
+        [:> Radio.Group {:value (get-in summary-data [:medical-summary :allergy-history])
+                         :onChange #(rf/dispatch [::events/update-medical-summary-field [:medical-summary :allergy-history] (-> % .-target .-value)])}
          [:> Radio {:value "no"} "无"]
          [:> Radio {:value "yes"} "有"]]]
-       (when (= (get-in summary-data [:allergy :has]) "yes")
+       (when (= (get-in summary-data [:medical-summary :allergy-history]) "yes")
          [:<>
-          [:> Form.Item {:name [:allergy :allergen] :label "过敏源头"}
-           [:> Input {:value (get-in summary-data [:allergy :allergen])
+          [:> Form.Item {:name [:medical-summary :allergen] :label "过敏源头"}
+           [:> Input {:value (get-in summary-data [:medical-summary :allergen])
                       :placeholder "请输入过敏源"
-                      :onChange #(rf/dispatch [::events/update-medical-summary-field [:allergy :allergen] (-> % .-target .-value)])}]]
-          [:> Form.Item {:name [:allergy :last-reaction-date] :label "最近发生过敏时间"}
-           [:> DatePicker {:value (utils/to-moment (get-in summary-data [:allergy :last-reaction-date]))
+                      :onChange #(rf/dispatch [::events/update-medical-summary-field [:medical-summary :allergen] (-> % .-target .-value)])}]]
+          [:> Form.Item {:name [:medical-summary :allergy-date] :label "最近发生过敏时间"}
+           [:> DatePicker {:value (utils/to-moment (get-in summary-data [:medical-summary :allergy-date]))
                            :style {:width "100%"}
                            :placeholder "请选择日期"
-                           :onChange #(rf/dispatch [::events/update-medical-summary-field [:allergy :last-reaction-date] (utils/date->iso-string %)])}]]])]
+                           :onChange #(rf/dispatch [::events/update-medical-summary-field [:medical-summary :allergy-date] (utils/date->iso-string %)])}]]])]
 
       ;; 生活习惯
       [:div
        ;; 吸烟史
-       [:> Form.Item {:name [:habits :smoking :has] :label "吸烟史" :colon false}
-        [:> Radio.Group {:value (get-in summary-data [:habits :smoking :has])
-                         :onChange #(rf/dispatch [::events/update-medical-summary-field [:habits :smoking :has] (-> % .-target .-value)])}
+       [:> Form.Item {:name [:medical-summary :smoking-history] :label "吸烟史" :colon false}
+        [:> Radio.Group {:value (get-in summary-data [:medical-summary :smoking-history])
+                         :onChange #(rf/dispatch [::events/update-medical-summary-field [:medical-summary :smoking-history] (-> % .-target .-value)])}
          [:> Radio {:value "no"} "无"]
          [:> Radio {:value "yes"} "有"]]]
-       (when (= (get-in summary-data [:habits :smoking :has]) "yes")
+       (when (= (get-in summary-data [:medical-summary :smoking-history]) "yes")
          [:> Row {:gutter 16}
           [:> Col {:span 12}
-           [:> Form.Item {:name [:habits :smoking :years] :label "吸烟年数"}
-            [:> InputNumber {:value (get-in summary-data [:habits :smoking :years])
+           [:> Form.Item {:name [:medical-summary :smoking-years] :label "吸烟年数"}
+            [:> InputNumber {:value (get-in summary-data [:medical-summary :smoking-years])
                              :min 0 :addonAfter "年" :style {:width "100%"}
-                             :onChange #(rf/dispatch [::events/update-medical-summary-field [:habits :smoking :years] %])}]]]
+                             :onChange #(rf/dispatch [::events/update-medical-summary-field [:medical-summary :smoking-years] %])}]]]
           [:> Col {:span 12}
-           [:> Form.Item {:name [:habits :smoking :per-day] :label "每天吸烟支数"}
-            [:> InputNumber {:value (get-in summary-data [:habits :smoking :per-day])
+           [:> Form.Item {:name [:medical-summary :cigarettes-per-day] :label "每天吸烟支数"}
+            [:> InputNumber {:value (get-in summary-data [:medical-summary :cigarettes-per-day])
                              :min 0 :addonAfter "支" :style {:width "100%"}
-                             :onChange #(rf/dispatch [::events/update-medical-summary-field [:habits :smoking :per-day] %])}]]]])
+                             :onChange #(rf/dispatch [::events/update-medical-summary-field [:medical-summary :cigarettes-per-day] %])}]]]])
        ;; 饮酒史
-       [:> Form.Item {:name [:habits :drinking :has] :label "饮酒史" :colon false :style {:marginTop "8px"}}
-        [:> Radio.Group {:value (get-in summary-data [:habits :drinking :has])
-                         :onChange #(rf/dispatch [::events/update-medical-summary-field [:habits :drinking :has] (-> % .-target .-value)])}
+       [:> Form.Item {:name [:medical-summary :drinking-history] :label "饮酒史" :colon false :style {:marginTop "8px"}}
+        [:> Radio.Group {:value (get-in summary-data [:medical-summary :drinking-history])
+                         :onChange #(rf/dispatch [::events/update-medical-summary-field [:medical-summary :drinking-history] (-> % .-target .-value)])}
          [:> Radio {:value "no"} "无"]
          [:> Radio {:value "yes"} "有"]]]
-       (when (= (get-in summary-data [:habits :drinking :has]) "yes")
+       (when (= (get-in summary-data [:medical-summary :drinking-history]) "yes")
          [:> Row {:gutter 16}
           [:> Col {:span 12}
-           [:> Form.Item {:name [:habits :drinking :years] :label "饮酒年数"}
-            [:> InputNumber {:value (get-in summary-data [:habits :drinking :years])
+           [:> Form.Item {:name [:medical-summary :drinking-years] :label "饮酒年数"}
+            [:> InputNumber {:value (get-in summary-data [:medical-summary :drinking-years])
                              :min 0 :addonAfter "年" :style {:width "100%"}
-                             :onChange #(rf/dispatch [::events/update-medical-summary-field [:habits :drinking :years] %])}]]]
+                             :onChange #(rf/dispatch [::events/update-medical-summary-field [:medical-summary :drinking-years] %])}]]]
           [:> Col {:span 12}
-           [:> Form.Item {:name [:habits :drinking :per-day] :label "每天饮酒量"}
-            [:> InputNumber {:value (get-in summary-data [:habits :drinking :per-day])
+           [:> Form.Item {:name [:medical-summary :alcohol-per-day] :label "每天饮酒量"}
+            [:> InputNumber {:value (get-in summary-data [:medical-summary :alcohol-per-day])
                              :min 0 :addonAfter "ml" :style {:width "100%"}
-                             :onChange #(rf/dispatch [::events/update-medical-summary-field [:habits :drinking :per-day] %])}]]]])]]]))
+                             :onChange #(rf/dispatch [::events/update-medical-summary-field [:medical-summary :alcohol-per-day] %])}]]]])]]]))
 
 (defn- comorbidities-card []
   (let [form-data @(rf/subscribe [::subs/medical-summary-data])
@@ -390,24 +390,25 @@
      "#f9f0ff" ; Header background color
      [:> Form {:layout "horizontal" :labelCol {:span 10} :wrapperCol {:span 14} :labelAlign "left" :initialValues comorbidity-data}
       [:> Row {:gutter [16 0]} ; Horizontal gutter 16, vertical 0
-       (comorbidity-item :respiratory "呼吸系统疾病" [:respiratory :has])
-       (comorbidity-item :cardiovascular "心血管疾病" [:cardiovascular :has])
-       (comorbidity-item :endocrine "内分泌疾病" [:endocrine :has])
-       (comorbidity-item :neuro-psychiatric "神经精神疾病" [:neuro-psychiatric :has])
-       (comorbidity-item :neuromuscular "神经肌肉疾病" [:neuromuscular :has])
-       (comorbidity-item :hepatic "肝脏疾病" [:hepatic :has])
-       (comorbidity-item :renal "肾脏疾病" [:renal :has])
-       (comorbidity-item :musculoskeletal "关节骨骼系统" [:musculoskeletal :has])
-       (comorbidity-item :malignant-hyperthermia "家族恶性高热史" [:malignant-hyperthermia :has])
-       (comorbidity-item :anesthesia-surgery-history "既往麻醉、手术史" [:anesthesia-surgery-history :has])
+       (comorbidity-item :respiratory-disease "呼吸系统疾病" [:respiratory-disease :has])
+       (comorbidity-item :cardiovascular-disease "心血管疾病" [:cardiovascular-disease :has])
+       (comorbidity-item :endocrine-disease "内分泌疾病" [:endocrine-disease :has])
+       (comorbidity-item :neuropsychiatric-disease "神经精神疾病" [:neuropsychiatric-disease :has])
+       (comorbidity-item :neuromuscular-disease "神经肌肉疾病" [:neuromuscular-disease :has])
+       (comorbidity-item :liver-disease "肝脏疾病" [:liver-disease :has])
+       (comorbidity-item :kidney-disease "肾脏疾病" [:kidney-disease :has])
+       (comorbidity-item :skeletal-system-disease "关节骨骼系统" [:skeletal-system-disease :has])
+       (comorbidity-item :family-malignant-hyperthermia "家族恶性高热史" [:family-malignant-hyperthermia :has])
+       (comorbidity-item :past-anesthesia-surgery "既往麻醉、手术史" [:past-anesthesia-surgery :has])
        ;; 使用的特殊药物 - 单独处理，因为它可能需要不同的输入字段
-       (let [path [:comorbidities :special-medications]
-             has-path (conj path :has)
+       (let [path [:comorbidities :special-medications] ; This path is for rf/dispatch, relative to form_data
+             has-path (conj path :used)
              details-path (conj path :details)
-             last-dose-time-path (conj path :last-dose-time)
-             current-has (get-in comorbidity-data has-path "no")]
+             last-dose-time-path (conj path :last-time)
+             ;; get-in uses comorbidity-data, which is already form_data.comorbidities
+             current-has (get-in comorbidity-data [:special-medications :used] "no")]
          [:> Col {:span 24} ; 占据整行
-          [:> Form.Item {:label "使用的特殊药物" :name [:special-medications :has]}
+          [:> Form.Item {:label "使用的特殊药物" :name [:special-medications :used]}
            [:> Radio.Group {:value current-has
                             :onChange #(rf/dispatch [::events/update-medical-summary-field has-path (-> % .-target .-value)])}
             [:> Radio {:value "yes"} "有"]
@@ -415,12 +416,12 @@
            (when (= current-has "yes")
              [:div {:style {:marginTop "8px"}}
               [:> Form.Item {:name [:special-medications :details] :label "药物名称及剂量" :noStyle true} ; noStyle for inline display
-               [:> Input {:value (get-in comorbidity-data details-path)
+               [:> Input {:value (get-in comorbidity-data [:special-medications :details])
                           :placeholder "药物名称及剂量"
                           :style {:marginBottom "8px"}
                           :onChange #(rf/dispatch [::events/update-medical-summary-field details-path (-> % .-target .-value)])}]]
-              [:> Form.Item {:name [:special-medications :last-dose-time] :label "最近用药时间" :noStyle true}
-               [:> DatePicker {:value (utils/to-moment (get-in comorbidity-data last-dose-time-path))
+              [:> Form.Item {:name [:special-medications :last-time] :label "最近用药时间" :noStyle true}
+               [:> DatePicker {:value (utils/to-moment (get-in comorbidity-data [:special-medications :last-time]))
                                :showTime true
                                :placeholder "选择日期和时间"
                                :style {:width "100%"}
@@ -429,39 +430,40 @@
 (defn- physical-examination-card []
   (let [raw @(rf/subscribe [::subs/selected-patient-raw-details])
         phys-data (get-in raw [:assessment_data :physical-examination] {})
-        exam-item (fn [field-key label-text form-item-name]
-                    (let [path [:physical-exam field-key]
-                          status-path (conj path :status)
-                          notes-path (conj path :notes)
-                          current-status (get-in phys-data status-path "normal")] ; Default to "normal"
+        exam-item (fn [field-key label-text _form-item-name] ; _form-item-name is no longer used directly for name prop
+                    (let [current-status (get-in phys-data [field-key] "normal") ; Default to "normal"
+                          detail-key (keyword (str (name field-key) "-detail"))
+                          notes-value (get-in phys-data [detail-key])]
                       [:> Col {:span 12}
-                       [:> Form.Item {:label label-text :name form-item-name}
+                       [:> Form.Item {:label label-text :name field-key}
                         [:> Radio.Group {:value current-status
-                                         :onChange #(rf/dispatch [::events/update-medical-summary-field status-path (-> % .-target .-value)])}
-                         [:> Radio {:value "normal"} "正常"] ; Added "normal" option
+                                         :onChange #(rf/dispatch [::events/update-medical-summary-field [:physical-examination field-key] (-> % .-target .-value)])}
+                         [:> Radio {:value "normal"} "正常"]
                          [:> Radio {:value "abnormal"} "异常"]]
                         (when (= current-status "abnormal")
-                          [:> Input {:value (get-in phys-data notes-path)
-                                     :placeholder "请描述异常情况"
-                                     :style {:marginTop "8px"}
-                                     :onChange #(rf/dispatch [::events/update-medical-summary-field notes-path (-> % .-target .-value)])}])]]))]
+                          [:> Form.Item {:name detail-key :noStyle true} ; Nested Form.Item for detail to keep layout, or adjust styling
+                           [:> Input {:value notes-value
+                                      :placeholder "请描述异常情况"
+                                      :style {:marginTop "8px"}
+                                      :onChange #(rf/dispatch [::events/update-medical-summary-field [:physical-examination detail-key] (-> % .-target .-value)])}]])]]))]
     [custom-styled-card
      [:> ProfileOutlined]
      "体格检查"
      "#e6f7ff" ; Header background color
      [:> Form {:layout "horizontal" :labelCol {:span 8} :wrapperCol {:span 16} :labelAlign "left" :initialValues phys-data}
       [:> Row {:gutter [16 0]}
+       ;; Calls to exam-item remain the same, the internal logic of exam-item is changed
        (exam-item :heart "心脏" [:heart :status])
        (exam-item :lungs "肺脏" [:lungs :status])
        (exam-item :airway "气道" [:airway :status])
        (exam-item :teeth "牙齿" [:teeth :status])
        (exam-item :spine-limbs "脊柱四肢" [:spine-limbs :status])
        (exam-item :neuro "神经" [:neuro :status])]
-      [:> Form.Item {:label "其它" :name [:other :notes]}
-       [:> Input.TextArea {:value (get-in phys-data [:other :notes])
+      [:> Form.Item {:label "其它" :name :other} ; Changed name
+       [:> Input.TextArea {:value (get-in phys-data [:other]) ; Changed value path
                            :placeholder "如有其他体格检查发现请在此注明"
                            :rows 2
-                           :onChange #(rf/dispatch [::events/update-medical-summary-field [:physical-exam :other :notes] (-> % .-target .-value)])}]]]]))
+                           :onChange #(rf/dispatch [::events/update-medical-summary-field [:physical-examination :other] (-> % .-target .-value)])}]]]])) ; Changed dispatch path
 
 (defn- auxiliary-tests-card []
   (let [raw @(rf/subscribe [::subs/selected-patient-raw-details])
