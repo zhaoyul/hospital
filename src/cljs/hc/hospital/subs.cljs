@@ -90,6 +90,17 @@
   (fn [db _]
     (get-in db [:anesthesia :assessment :form-data])))
 
+(rf/reg-sub ::patient-basic-info-form-data
+  (fn [db _]
+    (get-in db [:anesthesia :assessment :form-data :basic-info] {})))
+
+(rf/reg-sub ::physical-examination-form-data
+  (fn [db _]
+    (get-in db [:anesthesia :assessment :form-data :physical-examination] {})))
+
+(rf/reg-sub ::auxiliary-examination-form-data
+  (fn [db _]
+    (get-in db [:anesthesia :assessment :form-data :aux-exams] {})))
 
 ;; ---- 评估表单相关订阅 ----
 (rf/reg-sub ::selected-patient-assessment-forms-data

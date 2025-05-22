@@ -107,12 +107,13 @@
    content])
 
 (defn- patient-info-card "显示患者基本信息" []
-  (let [raw @(rf/subscribe [::subs/selected-patient-raw-details])
-        basic-info (get-in raw [:assessment_data :basic-info] {})]
+  (let [basic-info @(rf/subscribe [::subs/patient-basic-info-form-data])]
     [custom-styled-card
      [:> icons/UserOutlined {:style {:marginRight "8px"}}]
      "患者基本信息"
      "#e6fffb"                          ; Header background color
+     ;; Use (some? basic-info) and (not-empty basic-info) if basic-info can be nil but shouldn't be empty
+     ;; For now, (seq basic-info) works if basic-info is always a map (even if empty)
      (if (seq basic-info)
        [:> Form {:layout "horizontal" :labelCol {:span 8} :wrapperCol {:span 16} :labelAlign "left"
                  :initialValues (clj->js basic-info)}
@@ -168,8 +169,7 @@
        [:> Empty {:description "请先选择患者或患者无基本信息可编辑"}])]))
 
 (defn- general-condition-card "显示一般情况" []
-  (let [raw @(rf/subscribe [::subs/selected-patient-raw-details])
-        exam-data (get-in raw [:assessment_data :physical-examination] {})
+  (let [exam-data @(rf/subscribe [::subs/physical-examination-form-data])
         ;; 定义选项数据
         mental-status-options [{:value "清醒" :label "清醒"}
                                {:value "嗜睡" :label "嗜睡"}
@@ -188,7 +188,9 @@
      [:> icons/HeartOutlined {:style {:marginRight "8px"}}]
      "一般情况"
      "#f6ffed" ; Header background color
-     (when (some? exam-data) ; 确保 exam-data 不是 nil，空 map {} 也是有效的
+     ;; Use (some? exam-data) and (not-empty exam-data) if exam-data can be nil but shouldn't be empty
+     ;; For now, (seq exam-data) works if exam-data is always a map (even if empty)
+     (if (seq exam-data)
        [:> Form {:layout "horizontal" :labelCol {:sm {:span 24} :md {:span 10}} :wrapperCol {:sm {:span 24} :md {:span 14}} :labelAlign "left"
                  :initialValues (clj->js exam-data)}
         ;; 第一部分：身高、体重、精神状态、活动能力
@@ -276,44 +278,45 @@
                             :min 0 :max 100
                             :style {:width "100px"}
                             :onChange #(rf/dispatch [::events/update-doctor-form-physical-examination-field :spo2 %])}]]]]])
-     [:> Empty {:description "暂无一般情况信息或未选择患者"}]]))
+     [:> Empty {:description "请先选择患者或患者无一般情况信息可编辑"}]]))
 
 (defn- medical-history-summary-card []
-  (let [raw @(rf/subscribe [::subs/selected-patient-raw-details])
-        summary-data (get-in raw [:assessment_data :medical-summary])]
+  (let [summary-data @(rf/subscribe [::subs/medical-summary-data])]
     [custom-styled-card
      [:> FileTextOutlined {:style {:marginRight "8px"}}]
      "病情摘要"
      "#fff7e6" ; Header background color
-     [:> Form {:layout "horizontal" :labelCol {:span 6} :wrapperCol {:span 18} :labelAlign "left" :initialValues (clj->js summary-data)}
-      ;; 过敏史
-      [:div {:style {:marginBottom "16px"}}
-       [:> Form.Item {:name :allergy-history :label "过敏史" :colon false}
-        [:> Radio.Group {:onChange #(rf/dispatch [::events/update-medical-summary-field [:allergy :has] (-> % .-target .-value)])}
-         [:> Radio {:value false} "无"]
-         [:> Radio {:value true} "有"]]]
-       (when (get-in summary-data [:allergy-history])
-         [:<>
-          [:> Form.Item {:name :allergen :label "过敏源"}
-           [:> Input {:placeholder "请输入过敏源"
-                      :onChange #(rf/dispatch [::events/update-medical-summary-field [:allergy :allergen] (-> % .-target .-value)])}]]
-          [:> Form.Item {:name :allergy-date :label "Date"
-                         :getValueFromEvent (fn [date _] (when date (.toISOString date)))
-                         :getValueProps (fn [value] (clj->js {:value (when value (dayjs value))}))}
-           [:> DatePicker {:style {:width "100%"}
-                           :format "YYYY-MM-DD"
-                           :placeholder "请选择日期"
-                           :onChange #(rf/dispatch [::events/update-medical-summary-field [:allergy :allergy-date] (utils/date->iso-string %)])}]]])]
+     ;; Ensure summary-data is not nil before rendering Form, to avoid errors with (clj->js nil)
+     (if (some? summary-data)
+       [:> Form {:layout "horizontal" :labelCol {:span 6} :wrapperCol {:span 18} :labelAlign "left" :initialValues (clj->js summary-data)}
+        ;; 过敏史
+        [:div {:style {:marginBottom "16px"}}
+         [:> Form.Item {:name [:allergy :has] :label "过敏史" :colon false} ; Changed name
+          [:> Radio.Group {:onChange #(rf/dispatch [::events/update-medical-summary-field [:allergy :has] (-> % .-target .-value)])}
+           [:> Radio {:value false} "无"] ; Form will handle boolean correctly
+           [:> Radio {:value true} "有"]]]
+         (when (get-in summary-data [:allergy :has]) ; Changed path for conditional rendering
+           [:<>
+            [:> Form.Item {:name [:allergy :allergen] :label "过敏源"} ; Changed name
+             [:> Input {:placeholder "请输入过敏源"
+                        :onChange #(rf/dispatch [::events/update-medical-summary-field [:allergy :allergen] (-> % .-target .-value)])}]]
+            [:> Form.Item {:name [:allergy :allergy-date] :label "Date" ; Changed name
+                           :getValueFromEvent (fn [date _] (when date (.toISOString date)))
+                           :getValueProps (fn [value] (clj->js {:value (when value (dayjs value))}))}
+             [:> DatePicker {:style {:width "100%"}
+                             :format "YYYY-MM-DD"
+                             :placeholder "请选择日期"
+                             :onChange #(rf/dispatch [::events/update-medical-summary-field [:allergy :allergy-date] (utils/date->iso-string %)])}]]])]
 
-      ;; 生活习惯
-      [:div
-       ;; 吸烟史
-       [:> Form.Item {:name :smoking-history :label "吸烟史" :colon false}
-        [:> Radio.Group {;:value (get-in summary-data [:habits :smoking :has])
-                         :onChange #(rf/dispatch [::events/update-medical-summary-field [:habits :smoking :has] (-> % .-target .-value)])}
-         [:> Radio {:value "no"} "无"]
-         [:> Radio {:value "yes"} "有"]]]
-       (when (= (get-in summary-data [:habits :smoking :has]) "yes")
+        ;; 生活习惯
+        [:div
+         ;; 吸烟史
+         [:> Form.Item {:name [:habits :smoking :has] :label "吸烟史" :colon false} ; Changed name
+          [:> Radio.Group {;:value (get-in summary-data [:habits :smoking :has]) ; Form handles this
+                           :onChange #(rf/dispatch [::events/update-medical-summary-field [:habits :smoking :has] (-> % .-target .-value)])}
+           [:> Radio {:value "no"} "无"]
+           [:> Radio {:value "yes"} "有"]]]
+         (when (= (get-in summary-data [:habits :smoking :has]) "yes")
          [:> Row {:gutter 16}
           [:> Col {:span 12}
            [:> Form.Item {:name [:habits :smoking :years] :label "吸烟年数"}
@@ -340,9 +343,10 @@
                              :onChange #(rf/dispatch [::events/update-medical-summary-field [:habits :drinking :years] %])}]]]
           [:> Col {:span 12}
            [:> Form.Item {:name [:habits :drinking :per-day] :label "每天饮酒量"}
-            [:> InputNumber {;:value (get-in summary-data [:habits :drinking :per-day])
+            [:> InputNumber {;:value (get-in summary-data [:habits :drinking :per-day]) ; Form handles this
                              :min 0 :addonAfter "ml" :style {:width "100%"}
-                             :onChange #(rf/dispatch [::events/update-medical-summary-field [:habits :drinking :per-day] %])}]]]])]]]))
+                             :onChange #(rf/dispatch [::events/update-medical-summary-field [:habits :drinking :per-day] %])}]]]])]]
+       [:> Empty {:description "请先选择患者或患者无病情摘要信息可编辑"}])])) ; Added Empty state
 
 (defn- comorbidities-card []
   (let [form-data @(rf/subscribe [::subs/medical-summary-data])
@@ -358,7 +362,8 @@
                                                 :onChange #(rf/dispatch [::events/update-medical-summary-field has-path (-> % .-target .-value)])}
                                 [:> Radio {:value "yes"} "有"]
                                 [:> Radio {:value "no"} "无"]]
-                               (when (= (get-in comorbidity-data has-path) "yes") ; Check actual data for conditional rendering
+                               ;; Corrected: Use form-item-name for direct lookup in comorbidity-data
+                               (when (= (get-in comorbidity-data form-item-name) "yes")
 
                                  [:> Form.Item {:name (into (vec (butlast form-item-name)) [:details]) ; e.g. [:respiratory :details]
                                                 :noStyle true ; To avoid extra label and layout changes
@@ -409,16 +414,15 @@
                                :onChange #(rf/dispatch [::events/update-medical-summary-field last-dose-time-path (utils/date->iso-string %)])}]]])]])]]]))
 
 (defn- physical-examination-card []
-  (let [raw @(rf/subscribe [::subs/selected-patient-raw-details])
-        phys-data (get-in raw [:assessment_data :physical-examination] {})
-        exam-item (fn [field-key label-text form-item-name] ; form-item-name is like [:heart :status]
-                    (let [status-path (into [:physical-exam field-key] [:status]) ; Path for dispatch
-                          notes-path (into [:physical-exam field-key] [:notes])   ; Path for dispatch
-                          current-status-val (get-in phys-data form-item-name "normal")] ; For conditional rendering
-                      [:> Col {:span 12}
-                       [:> Form.Item {:label label-text :name form-item-name}
-                        [:> Radio.Group {;:value current-status-val ; Let Form handle
-                                         :onChange #(rf/dispatch [::events/update-medical-summary-field status-path (-> % .-target .-value)])}
+  (let [phys-data @(rf/subscribe [::subs/physical-examination-form-data])]
+    (letfn [(exam-item [field-key label-text form-item-name] ; form-item-name is like [:heart :status]
+              (let [status-path (into [:physical-examination field-key] [:status]) ; Path for dispatch
+                    notes-path (into [:physical-examination field-key] [:notes])   ; Path for dispatch
+                    current-status-val (get-in phys-data form-item-name "normal")] ; For conditional rendering
+                [:> Col {:span 12}
+                 [:> Form.Item {:label label-text :name form-item-name}
+                  [:> Radio.Group {;:value current-status-val ; Let Form handle
+                                   :onChange #(rf/dispatch [::events/update-medical-summary-field status-path (-> % .-target .-value)])}
                          [:> Radio {:value "normal"} "正常"]
                          [:> Radio {:value "abnormal"} "异常"]]
                         (when (= current-status-val "abnormal") ; Conditional rendering based on actual data
@@ -428,30 +432,31 @@
                            [:> Input {;:value (get-in phys-data notes-path) ; Let Form handle
                                       :placeholder "请描述异常情况"
                                       :onChange #(rf/dispatch [::events/update-medical-summary-field notes-path (-> % .-target .-value)])}]])]]))]
-    [custom-styled-card
-     [:> ProfileOutlined]
-     "体格检查"
-     "#e6f7ff" ; Header background color
-     [:> Form {:layout "horizontal" :labelCol {:span 8} :wrapperCol {:span 16} :labelAlign "left" :initialValues phys-data}
-      [:> Row {:gutter [16 0]}
-       (exam-item :heart "心脏" [:heart :status])
-       (exam-item :lungs "肺脏" [:lungs :status])
-       (exam-item :airway "气道" [:airway :status])
-       (exam-item :teeth "牙齿" [:teeth :status])
-       (exam-item :spine-limbs "脊柱四肢" [:spine-limbs :status])
-       (exam-item :neuro "神经" [:neuro :status])]
-      [:> Form.Item {:label "其它" :name [:other :notes]} ; Assuming phys-data structure is {:other {:notes "..."}}
-       [:> Input.TextArea {;:value (get-in phys-data [:other :notes]) ; Let Form handle
-                           :placeholder "如有其他体格检查发现请在此注明"
-                           :rows 2
-                           :onChange #(rf/dispatch [::events/update-medical-summary-field [:physical-exam :other :notes] (-> % .-target .-value)])}]]]]))
+      [custom-styled-card
+       [:> ProfileOutlined]
+       "体格检查"
+       "#e6f7ff" ; Header background color
+       (if (some? phys-data)
+         [:> Form {:layout "horizontal" :labelCol {:span 8} :wrapperCol {:span 16} :labelAlign "left" :initialValues (clj->js phys-data)}
+          [:> Row {:gutter [16 0]}
+           (exam-item :heart "心脏" [:heart :status])
+           (exam-item :lungs "肺脏" [:lungs :status])
+           (exam-item :airway "气道" [:airway :status])
+           (exam-item :teeth "牙齿" [:teeth :status])
+           (exam-item :spine-limbs "脊柱四肢" [:spine-limbs :status])
+           (exam-item :neuro "神经" [:neuro :status])]
+          [:> Form.Item {:label "其它" :name [:other :notes]} ; Assuming phys-data structure is {:other {:notes "..."}}
+           [:> Input.TextArea {;:value (get-in phys-data [:other :notes]) ; Let Form handle
+                               :placeholder "如有其他体格检查发现请在此注明"
+                               :rows 2
+                               :onChange #(rf/dispatch [::events/update-medical-summary-field [:physical-examination :other :notes] (-> % .-target .-value)])}]]]
+         [:> Empty {:description "请先选择患者或患者无体格检查信息可编辑"}])])))
 
 (defn- auxiliary-tests-card []
-  (let [raw @(rf/subscribe [::subs/selected-patient-raw-details])
-        aux-data     (get-in raw [:assessment_data :auxiliary-examination] {})
-        modal-open? (r/atom false)
-        preview-image-url (r/atom "")
-        handle-preview (fn [file-or-url]
+  (let [aux-data @(rf/subscribe [::subs/auxiliary-examination-form-data])]
+    (let [modal-open? (r/atom false)
+          preview-image-url (r/atom "")
+          handle-preview (fn [file-or-url]
                          (if (string? file-or-url)
                            (do
                              (reset! preview-image-url file-or-url)
@@ -463,82 +468,68 @@
                                        (reset! preview-image-url (.-result reader))
                                        (reset! modal-open? true)))
                                (.readAsDataURL reader origin-file)))))
-        upload-props (fn [field-key] ; field-key here is like :ecg
-                       {:name (name field-key) ; Form.Item name for Upload should be a string if aux-data keys are strings, or match the key type
-                        :listType "picture-card"
-                        :fileList (let [files (get-in aux-data [field-key] [])] ; fileList is controlled by Form via name
-                                    (mapv (fn [file-url idx]
-                                            {:uid (str (name field-key) "-" idx) ; Ensure uid is unique
-                                             :name (str "文件" (inc idx))
-                                             :status "done"
-                                             :url file-url
-                                             ; For Form to control Upload, it might expect file objects, not just URLs.
-                                             ; This part might need adjustment based on how Form handles Upload component values.
-                                             ; Typically, value for Upload is an array of file objects.
-                                             })
-                                          files
-                                          (range)))
-                        :onPreview handle-preview
-                        :onChange (fn [info]
-                                    (let [file (.-file info)
-                                          file-list (-> info .-fileList js->clj (vec))
-                                          event-type (cond
-                                                       (= (.-status file) "removed") ::events/remove-aux-exam-file
-                                                       (or (= (.-status file) "done") (= (.-status file) "uploading")) ::events/upload-aux-exam-file
-                                                       :else nil)]
-                                      (when event-type
-                                        (rf/dispatch [event-type field-key file file-list]))
-                                      ; If Form is controlling this, onChange might need to call a form update function.
-                                      ; For now, assuming existing dispatch handles app-db update, which Form then reads.
-                                      ))
-                        :beforeUpload (fn [file]
-                                        (rf/dispatch [::events/before-upload-aux-exam-file field-key file])
-                                        false) ; Prevent auto-upload, handle in event
-                        })
-        upload-button (fn [field-key] ; field-key is a keyword e.g. :ecg
-                        [:> Upload #js {:name (name field-key)} ; Pass props as JS object
-                         [:div
-                          [:> icons/UploadOutlined]
-                          [:div {:style {:marginTop 8}} "上传"]]])
-        image-display (fn [field-key label] ; field-key is a keyword e.g. :ecg
-                        (let [files (get-in aux-data [field-key] [])] ; files from initialValues
+          upload-props (fn [field-key] ; field-key here is like :ecg
+                         {:name (name field-key)
+                          :listType "picture-card"
+                          :fileList (vec (get aux-data field-key [])) ; Changed: Directly use file list from aux-data
+                          :onPreview handle-preview
+                          :onChange (fn [info] ; `info` is the {file, fileList} object from Ant Design
+                                      (let [file (.-file info)
+                                            current-file-uid (get file :uid (.-uid file))] ; Safely get UID
+                                        (cond
+                                          (= (.-status file) "removed")
+                                          (rf/dispatch [::events/remove-aux-exam-file field-key current-file-uid])
+
+                                          (or (= (.-status file) "done") (= (.-status file) "uploading"))
+                                          (rf/dispatch [::events/handle-aux-exam-files-change field-key info])
+
+                                          :else nil)))
+                          :beforeUpload (fn [file]
+                                          ;; Potentially dispatch an event here if pre-upload processing is needed
+                                          ;; For now, directly returning false to prevent default upload
+                                          ;; and let onChange handle the file.
+                                          false) ; Prevent auto-upload, handle in event
+                          })
+          upload-button (fn [] ; Removed field-key as it's part of the closure for image-display
+                          [:div
+                           [:> icons/UploadOutlined]
+                           [:div {:style {:marginTop 8}} "上传"]])
+          image-display (fn [field-key label] ; field-key is a keyword e.g. :ecg
                           [:> Form.Item {:label label :name field-key :valuePropName "fileList"
-                                         ; :getValueFromEvent could be useful here if default handling is not enough
-                                         }
-                           ; The Upload component itself will be rendered by Form.Item based on its name
-                           ; We might not need to manually call (upload-props) or (upload-button) here
-                           ; if Form.Item directly manages the Upload component.
-                           ; Let's provide the Upload component directly.
+                                         :getValueFromEvent (fn [e] ; Ensure Form uses the fileList from onChange
+                                                              (if (js/Array.isArray (.-fileList e))
+                                                                (.-fileList e)
+                                                                (js->clj (.-fileList e))))}
                            [:> Upload (upload-props field-key)
-                            (when (empty? files) ; Show upload button only if no files initially
-                              [:div
-                               [:> icons/UploadOutlined]
-                               [:div {:style {:marginTop 8}} "上传"]])]]))]
-    [custom-styled-card
-     [:> SolutionOutlined]
-     "相关辅助检查检验结果"
-     "#fffbe6" ; Header background color
-     [:> Form {:layout "horizontal" :labelCol {:span 6} :wrapperCol {:span 18} :labelAlign "left" :initialValues aux-data}
-      [:> Row {:gutter [16 16]}
-       [:> Col {:span 12}
-        (image-display :ecg "心电图 (ECG)")]
-       [:> Col {:span 12}
-        (image-display :chest-xray "胸部X光")]
-       [:> Col {:span 12}
-        (image-display :blood-tests "血常规/生化")]
-       [:> Col {:span 12}
-        (image-display :coagulation "凝血功能")]
-       [:> Col {:span 24}
-        [:> Form.Item {:label "其他检查结果" :name [:other-tests :notes]} ; Assuming aux-data structure for this
-         [:> Input.TextArea {;:value (get-in aux-data [:other-tests :notes]) ; Let Form handle
-                             :placeholder "请在此记录其他重要检查结果的文字描述"
-                             :rows 3
-                             :onChange #(rf/dispatch [::events/update-medical-summary-field [:aux-exams :other-tests :notes] (-> % .-target .-value)])}]]]]
-      (when @modal-open?
-        [:> Modal {:visible @modal-open?
-                   :footer nil
-                   :onCancel #(reset! modal-open? false)}
-         [:img {:alt "预览" :style {:width "100%"} :src @preview-image-url}]])]]))
+                            (when (empty? (get aux-data field-key [])) ; Check if initial file list for this key is empty
+                              (upload-button))]])]
+      [custom-styled-card
+       [:> SolutionOutlined]
+       "相关辅助检查检验结果"
+       "#fffbe6" ; Header background color
+       (if (some? aux-data)
+         [:> Form {:layout "horizontal" :labelCol {:span 6} :wrapperCol {:span 18} :labelAlign "left" :initialValues (clj->js aux-data)}
+          [:> Row {:gutter [16 16]}
+           [:> Col {:span 12}
+            (image-display :ecg "心电图 (ECG)")]
+           [:> Col {:span 12}
+            (image-display :chest-xray "胸部X光")]
+           [:> Col {:span 12}
+            (image-display :blood-tests "血常规/生化")]
+           [:> Col {:span 12}
+            (image-display :coagulation "凝血功能")]
+           [:> Col {:span 24}
+            [:> Form.Item {:label "其他检查结果" :name [:other-tests :notes]} ; Path relative to :aux-exams
+             [:> Input.TextArea {;:value (get-in aux-data [:other-tests :notes]) ; Form handles this
+                                 :placeholder "请在此记录其他重要检查结果的文字描述"
+                                 :rows 3
+                                 :onChange #(rf/dispatch [::events/update-medical-summary-field [:aux-exams :other-tests :notes] (-> % .-target .-value)])}]]]]
+          (when @modal-open?
+            [:> Modal {:visible @modal-open?
+                       :footer nil
+                       :onCancel #(reset! modal-open? false)}
+             [:img {:alt "预览" :style {:width "100%"} :src @preview-image-url}]])]
+         [:> Empty {:description "请先选择患者或患者无相关辅助检查信息可编辑"}])]])))
 
 ;; 辅助函数，用于显示术前麻醉医嘱（可编辑表单）
 (defn- preoperative-orders-card []

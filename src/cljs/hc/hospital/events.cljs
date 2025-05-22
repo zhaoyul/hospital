@@ -34,16 +34,26 @@
 ;; --- Patient Selection ---
 (rf/reg-event-db ::select-patient
   (fn [db [_ patient-key]]
-    (let [selected-assessment (first (filter #(= (:patient_id %) patient-key) (:all-patient-assessments db)))
-          form-data-from-api (when selected-assessment (get selected-assessment :assessment_form_data {}))
-          default-form-data (get-in app-db/default-db [:anesthesia :assessment :form-data])]
+    (let [all-assessments (get-in db [:anesthesia :all-patient-assessments])
+          selected-assessment (first (filter #(= (:patient_id %) patient-key) all-assessments))
+
+          api-form-main-data (when selected-assessment (get selected-assessment :assessment_form_data {}))
+          default-form-main-data (get-in app-db/default-db [:anesthesia :assessment :form-data])
+
+          ;; Extract anesthesia plan data from the main API form data, or use default
+          ;; Assuming the plan data is nested under :anesthesia-plan key within assessment_form_data
+          api-anesthesia-plan-data (when (seq api-form-main-data) (get api-form-main-data :anesthesia-plan {}))
+          default-anesthesia-plan-data (get-in app-db/default-db [:anesthesia :assessment :anesthesia-plan])]
       (-> db
           (assoc-in [:anesthesia :current-patient-id] patient-key)
           (assoc-in [:anesthesia :assessment :form-data]
-                    (if (seq form-data-from-api) ; Check if API data is not empty
-                      form-data-from-api
-                      default-form-data))))))
-
+                    (if (seq api-form-main-data) ; Use main form data if available
+                      (dissoc api-form-main-data :anesthesia-plan) ; Remove plan from main form data if it was nested
+                      default-form-main-data)) 
+          (assoc-in [:anesthesia :assessment :anesthesia-plan]
+                    (if (seq api-anesthesia-plan-data)
+                      api-anesthesia-plan-data
+                      default-anesthesia-plan-data))))))
 
 ;; --- Updating Assessment Data from Doctor's Forms ---
 ;; Generic updater for the new form structure within :form-data
@@ -51,6 +61,11 @@
   (fn [db [_ field-path new-value]]
     ;; field-path is a vector, e.g., [:allergy :has] or [:comorbidities :respiratory :details]
     (assoc-in db (concat [:anesthesia :assessment :form-data] field-path) new-value)))
+
+(rf/reg-event-db ::update-doctor-form-physical-examination-field
+  (fn [db [_ field-path new-value]]
+    (let [path (if (vector? field-path) field-path [field-path])] ; Ensure path is a vector for assoc-in
+      (assoc-in db (into [:anesthesia :assessment :form-data :physical-examination] path) new-value))))
 
 ;; Specific handlers for auxiliary exam file list management
 (rf/reg-event-db ::handle-aux-exam-files-change
@@ -68,6 +83,10 @@
   (fn [db [_ notes-text]]
     (assoc-in db [:anesthesia :assessment :anesthesia-plan :notes] notes-text)))
 
+(rf/reg-event-db ::update-anesthesia-plan-field
+  (fn [db [_ field-key new-value]]
+    (timbre/info "Updating anesthesia plan field:" field-key "with value:" new-value) ; Optional logging
+    (assoc-in db [:anesthesia :assessment :anesthesia-plan field-key] new-value)))
 
 (rf/reg-event-db ::update-search-term
   (fn [db [_ term]]
@@ -136,8 +155,8 @@
 ;; If it's still used for a separate patient editing modal/form, it can remain.
 ;; Otherwise, if all patient data is part of the main assessment form, it might be redundant.
 (rf/reg-event-db ::update-patient-form-field
-  (fn [db [_ field-path new-value]]
-    (assoc-in db [:editing-patient-info field-path] new-value)))
+  (fn [db [_ field-key new-value]] ; Assuming field-key is a single keyword
+    (assoc-in db [:anesthesia :assessment :form-data :basic-info field-key] new-value)))
 
 ;; --- Session Check Events ---
 (rf/reg-event-fx ::check-session
