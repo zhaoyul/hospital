@@ -48,13 +48,13 @@
                 {:key (:patient_id assessment) ; Assuming patient_id is at the root of the assessment object
                  :name (or (:name patient-info) "未知姓名")
                  :patient-id-display (or (:outpatient_number patient-info) (:patient_id assessment))
-                 :sex (format-gender (:gender patient-info))
+                 :gender (format-gender (:gender patient-info))
                  :age (str (or (:age patient-info) "未知") "岁")
                  :anesthesia-type (or (:anesthesia_type anesthesia-plan) "未知麻醉方式")
                  :date (format-date-str (:updated_at assessment)) ; Or :created_at
                  :status (or (:doctor_status assessment) "待评估")}))
             (patient-from-example [ex-patient]
-              (merge {:sex (format-gender (:gender ex-patient))
+              (merge {:gender (format-gender (:gender ex-patient))
                       :age (str (:age ex-patient) "岁")}
                      ex-patient))]
 
