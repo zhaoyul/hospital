@@ -3,12 +3,47 @@
             [day8.re-frame.http-fx]
             [hc.hospital.db :as app-db]
             [ajax.core :as ajax]
+            [clojure.string :as str] ; Added for filename extraction if needed
             [taoensso.timbre :as timbre]))
+
+;; -- Default Canonical Assessment Structure --
+(def default-canonical-assessment
+  {:basic_info {:outpatient_number nil, :name nil, :gender nil, :age nil,
+                :department nil, :health_card_number nil, :diagnosis nil,
+                :planned_surgery nil, :height nil, :weight nil,
+                :patient_submitted_at nil, :assessment_updated_at nil,
+                :assessment_status "待评估", :doctor_name nil, :assessment_notes nil}
+   :medical_history {:allergy {:has_history false, :details nil, :last_reaction_date nil}
+                     :smoking {:has_history false, :years nil, :cigarettes_per_day nil}
+                     :drinking {:has_history false, :years nil, :alcohol_per_day nil}}
+   :physical_examination {:mental_state nil, :activity_level nil,
+                          :bp_systolic nil, :bp_diastolic nil, :heart_rate nil,
+                          :respiratory_rate nil, :temperature nil, :spo2 nil,
+                          :heart {:status nil, :notes nil}, :lungs {:status nil, :notes nil},
+                          :airway {:status nil, :notes nil}, :teeth {:status nil, :notes nil},
+                          :spine_limbs {:status nil, :notes nil}, :neuro {:status nil, :notes nil},
+                          :other_findings nil}
+   :comorbidities {:respiratory {:has false, :details nil}
+                   :cardiovascular {:has false, :details nil}
+                   :endocrine {:has false, :details nil}
+                   :neuro_psychiatric {:has false, :details nil}
+                   :neuromuscular {:has false, :details nil}
+                   :hepatic {:has false, :details nil}
+                   :renal {:has false, :details nil}
+                   :musculoskeletal {:has false, :details nil}
+                   :malignant_hyperthermia_fh {:has false, :details nil}
+                   :anesthesia_surgery_history {:has false, :details nil}
+                   :special_medications {:has_taken false, :details nil, :last_dose_time nil}}
+   :auxiliary_examinations []
+   :auxiliary_examinations_notes nil
+   :anesthesia_plan {:asa_rating nil, :anesthesia_type nil, :preoperative_instructions nil}})
+
 
 ;; -- Initialization
 (rf/reg-event-db ::initialize-db
   (fn [_ _]
-    app-db/default-db))
+    (assoc app-db/default-db :anesthesia {:current-assessment-canonical default-canonical-assessment})))
+
 
 ;; --- Fetching All Assessments ---
 (rf/reg-event-fx ::fetch-all-assessments
@@ -34,186 +69,55 @@
 ;; --- Patient Selection ---
 (rf/reg-event-db ::select-patient
   (fn [db [_ patient-key]]
-    (let [selected-assessment (first (filter #(= (:patient_id %) patient-key) (:all-patient-assessments db)))
-          assessment-data (when selected-assessment (get selected-assessment :assessment_data {}))
-          default-form-data (get-in app-db/default-db [:anesthesia :assessment :form-data])
-          
-          ;; 转换患者端数据结构到医生端期望的格式
-          converted-form-data (when (seq assessment-data)
-                                (-> default-form-data
-                                    ;; 基本信息映射
-                                    (assoc-in [:basic-info] (get assessment-data :basic-info {}))
-                                    
-                                    ;; 过敏史映射
-                                    (assoc-in [:allergy :has] (if (get-in assessment-data [:medical-summary :allergy-history]) "yes" "no"))
-                                    (assoc-in [:allergy :allergen] (get-in assessment-data [:medical-summary :allergen] ""))
-                                    (assoc-in [:allergy :last-reaction-date] (get-in assessment-data [:medical-summary :allergy-date]))
-                                    
-                                    ;; 生活习惯映射
-                                    (assoc-in [:habits :smoking :has] (if (get-in assessment-data [:medical-summary :smoking-history]) "yes" "no"))
-                                    (assoc-in [:habits :smoking :years] (get-in assessment-data [:medical-summary :smoking-years]))
-                                    (assoc-in [:habits :smoking :per-day] (get-in assessment-data [:medical-summary :cigarettes-per-day]))
-                                    (assoc-in [:habits :drinking :has] (if (get-in assessment-data [:medical-summary :drinking-history]) "yes" "no"))
-                                    (assoc-in [:habits :drinking :years] (get-in assessment-data [:medical-summary :drinking-years]))
-                                    (assoc-in [:habits :drinking :per-day] (get-in assessment-data [:medical-summary :alcohol-per-day]))
-                                    
-                                    ;; 并存疾病映射
-                                    (assoc-in [:comorbidities :respiratory] 
-                                              {:has (if (get-in assessment-data [:comorbidities :respiratory-disease :has]) "yes" "no")
-                                               :details (get-in assessment-data [:comorbidities :respiratory-disease :details] "")})
-                                    (assoc-in [:comorbidities :cardiovascular] 
-                                              {:has (if (get-in assessment-data [:comorbidities :cardiovascular-disease :has]) "yes" "no")
-                                               :details (get-in assessment-data [:comorbidities :cardiovascular-disease :details] "")})
-                                    (assoc-in [:comorbidities :endocrine] 
-                                              {:has (if (get-in assessment-data [:comorbidities :endocrine-disease :has]) "yes" "no")
-                                               :details (get-in assessment-data [:comorbidities :endocrine-disease :details] "")})
-                                    (assoc-in [:comorbidities :neuro-psychiatric] 
-                                              {:has (if (get-in assessment-data [:comorbidities :neuropsychiatric-disease :has]) "yes" "no")
-                                               :details (get-in assessment-data [:comorbidities :neuropsychiatric-disease :details] "")})
-                                    (assoc-in [:comorbidities :neuromuscular] 
-                                              {:has (if (get-in assessment-data [:comorbidities :neuromuscular-disease :has]) "yes" "no")
-                                               :details (get-in assessment-data [:comorbidities :neuromuscular-disease :details] "")})
-                                    (assoc-in [:comorbidities :hepatic] 
-                                              {:has (if (get-in assessment-data [:comorbidities :liver-disease :has]) "yes" "no")
-                                               :details (get-in assessment-data [:comorbidities :liver-disease :details] "")})
-                                    (assoc-in [:comorbidities :renal] 
-                                              {:has (if (get-in assessment-data [:comorbidities :kidney-disease :has]) "yes" "no")
-                                               :details (get-in assessment-data [:comorbidities :kidney-disease :details] "")})
-                                    (assoc-in [:comorbidities :musculoskeletal] 
-                                              {:has (if (get-in assessment-data [:comorbidities :skeletal-system :has]) "yes" "no")
-                                               :details (get-in assessment-data [:comorbidities :skeletal-system :details] "")})
-                                    (assoc-in [:comorbidities :malignant-hyperthermia] 
-                                              {:has (if (get-in assessment-data [:comorbidities :family-malignant-hyperthermia :has]) "yes" "no")
-                                               :details (get-in assessment-data [:comorbidities :family-malignant-hyperthermia :details] "")})
-                                    (assoc-in [:comorbidities :anesthesia-surgery-history] 
-                                              {:has (if (get-in assessment-data [:comorbidities :past-anesthesia-surgery :has]) "yes" "no")
-                                               :details (get-in assessment-data [:comorbidities :past-anesthesia-surgery :details] "")})
-                                    (assoc-in [:comorbidities :special-medications] 
-                                              {:has (if (get-in assessment-data [:comorbidities :special-medications :used]) "yes" "no")
-                                               :details (get-in assessment-data [:comorbidities :special-medications :details] "")
-                                               :last-dose-time (get-in assessment-data [:comorbidities :special-medications :last-time])})
-                                    
-                                    ;; 体格检查映射
-                                    (assoc-in [:physical-exam :heart] 
-                                              {:status (get-in assessment-data [:physical-examination :heart] "normal")
-                                               :notes (get-in assessment-data [:physical-examination :heart-detail] "")})
-                                    (assoc-in [:physical-exam :lungs] 
-                                              {:status (get-in assessment-data [:physical-examination :lungs] "normal")
-                                               :notes (get-in assessment-data [:physical-examination :lungs-detail] "")})
-                                    (assoc-in [:physical-exam :airway] 
-                                              {:status (get-in assessment-data [:physical-examination :airway] "normal")
-                                               :notes (get-in assessment-data [:physical-examination :airway-detail] "")})
-                                    (assoc-in [:physical-exam :teeth] 
-                                              {:status (get-in assessment-data [:physical-examination :teeth] "normal")
-                                               :notes (get-in assessment-data [:physical-examination :teeth-detail] "")})
-                                    (assoc-in [:physical-exam :spine-limbs] 
-                                              {:status (get-in assessment-data [:physical-examination :spine-limbs] "normal")
-                                               :notes (get-in assessment-data [:physical-examination :spine-limbs-detail] "")})
-                                    (assoc-in [:physical-exam :neuro] 
-                                              {:status (get-in assessment-data [:physical-examination :nervous] "normal")
-                                               :notes (get-in assessment-data [:physical-examination :nervous-detail] "")})
-                                    (assoc-in [:physical-exam :other :notes] (get-in assessment-data [:physical-examination :other] ""))
-                                    
-                                    ;; 辅助检查映射 (将文件路径转换为文件对象数组格式)
-                                    (assoc-in [:aux-exams :ecg] 
-                                              (when-let [file-path (get-in assessment-data [:auxiliary-examination :ecg])]
-                                                (if (string? file-path)
-                                                  [{:uid "ecg-1" :name "心电图" :status "done" :url file-path}]
-                                                  [])))
-                                    (assoc-in [:aux-exams :chest-xray] 
-                                              (when-let [file-path (get-in assessment-data [:auxiliary-examination :chest-radiography])]
-                                                (if (string? file-path)
-                                                  [{:uid "chest-xray-1" :name "胸片" :status "done" :url file-path}]
-                                                  [])))
-                                    (assoc-in [:aux-exams :other-results] (get-in assessment-data [:auxiliary-examination :other] ""))
-                                    ))]
+    (if (nil? patient-key) ;; Handle deselection
       (-> db
-          (assoc-in [:anesthesia :current-patient-id] patient-key)
-          (assoc-in [:anesthesia :assessment :form-data]
-                    (or converted-form-data default-form-data))))))
+          (assoc-in [:anesthesia :current-patient-id] nil)
+          (assoc-in [:anesthesia :current-assessment-canonical] default-canonical-assessment))
+      (let [all-assessments (get-in db [:anesthesia :all-patient-assessments])
+            selected-full-assessment (first (filter #(= (:patient_id %) patient-key) all-assessments))
+            canonical-assessment-data (when selected-full-assessment
+                                        (get selected-full-assessment :assessment_data {}))]
+        (-> db
+            (assoc-in [:anesthesia :current-patient-id] patient-key)
+            (assoc-in [:anesthesia :current-assessment-canonical]
+                      (if (seq canonical-assessment-data)
+                        canonical-assessment-data
+                        default-canonical-assessment)))))))
 
 
-;; --- Updating Assessment Data from Doctor's Forms ---
-;; 更新医疗摘要字段，并自动处理相关联的字段
-(rf/reg-event-db
- ::update-medical-summary-field
- (fn [db [_ field-path value]]
-   (let [current-patient-id (get-in db [:anesthesia :current-patient-id])
-         base-path [:anesthesia :all-patient-assessments]]
-     (if current-patient-id
-       ;; 找到当前患者并更新其数据
-       (let [assessments (get-in db base-path)
-             updated-assessments
-             (mapv
-               (fn [assessment]
-                 (if (= (:patient_id assessment) current-patient-id)
-                   (let [assessment-data (:assessment_data assessment)
-                         medical-summary (:medical-summary assessment-data)
-                         updated-summary
-                         (case field-path
-                           ;; 过敏史处理
-                           [:allergy :has]
-                           (if value
-                             (assoc medical-summary :allergy-history value)
-                             ;; 选择"无"时清空相关字段
-                             (assoc medical-summary
-                                    :allergy-history false
-                                    :allergen ""
-                                    :allergy-date nil))
+;; --- Updating Canonical Assessment Data ---
+(rf/reg-event-db ::update-canonical-assessment-field
+  (fn [db [_ path value]]
+    (assoc-in db (concat [:anesthesia :current-assessment-canonical] path) value)))
 
-                           ;; 吸烟史处理
-                           [:habits :smoking :has]
-                           (if value
-                             (assoc medical-summary :smoking-history value)
-                             ;; 选择"无"时清空相关字段
-                             (assoc medical-summary
-                                    :smoking-history false
-                                    :smoking-years nil
-                                    :cigarettes-per-day nil))
+;; Specific handlers for auxiliary exam file list management (canonical structure)
+(rf/reg-event-db ::add-aux-exam-file
+  (fn [db [_ file-map]]
+    ;; file-map should be {:type "...", :filename "...", :url "...", :uploaded_by "doctor/patient", :uploaded_at "timestamp", :uid "ant-design-uid"}
+    ;; For new uploads by doctor, :uploaded_by should be "doctor" and :uploaded_at should be current time.
+    ;; The actual file upload to server and getting the final URL is handled by upload-props' :customRequest
+    ;; This event primarily adds the file metadata to the list for display and later saving.
+    (update-in db [:anesthesia :current-assessment-canonical :auxiliary_examinations] conj file-map)))
 
-                           ;; 饮酒史处理
-                           [:habits :drinking :has]
-                           (if value
-                             (assoc medical-summary :drinking-history value)
-                             ;; 选择"无"时清空相关字段
-                             (assoc medical-summary
-                                    :drinking-history false
-                                    :drinking-years nil
-                                    :alcohol-per-day ""))
-
-                           ;; 其他字段的直接更新
-                           [:allergy :allergen] (assoc medical-summary :allergen value)
-                           [:allergy :allergy-date] (assoc medical-summary :allergy-date value)
-                           [:habits :smoking :years] (assoc medical-summary :smoking-years value)
-                           [:habits :smoking :per-day] (assoc medical-summary :cigarettes-per-day value)
-                           [:habits :drinking :years] (assoc medical-summary :drinking-years value)
-                           [:habits :drinking :per-day] (assoc medical-summary :alcohol-per-day value)
-
-                           ;; 默认情况 - 保持原有数据不变
-                           medical-summary)]
-                     (assoc-in assessment [:assessment_data :medical-summary] updated-summary))
-                   assessment))
-               assessments)]
-         (assoc-in db base-path updated-assessments))
-       ;; 如果没有选中患者，只更新form-data
-       (assoc-in db (concat [:anesthesia :assessment :form-data] field-path) value)))))
-
-;; Specific handlers for auxiliary exam file list management
-(rf/reg-event-db ::handle-aux-exam-files-change
-  (fn [db [_ exam-type file-list-info]]
-    ;; file-list-info is the {file: ..., fileList: ...} object from Ant Design's onChange
-    (assoc-in db [:anesthesia :assessment :form-data :aux-exams exam-type] (:fileList file-list-info))))
+(rf/reg-event-db ::update-aux-exam-file-list
+  (fn [db [_ file-list]]
+    ;; Used by Ant Design's Upload when fileList is managed externally.
+    ;; file-list is the full list of files from AntD, each needs to be in our canonical format.
+    ;; This event assumes that the items in file-list are already (or can be easily transformed into)
+    ;; our canonical map structure for auxiliary_examinations.
+    ;; For simplicity, this example assumes file-list items are compatible.
+    ;; A more robust version would transform each item.
+    (assoc-in db [:anesthesia :current-assessment-canonical :auxiliary_examinations] file-list)))
 
 (rf/reg-event-db ::remove-aux-exam-file
-  (fn [db [_ exam-type file-uid]]
-    (update-in db [:anesthesia :assessment :form-data :aux-exams exam-type]
-               (fn [files] (vec (remove #(= (:uid %) file-uid) files))))))
+  (fn [db [_ file-uid-or-url]]
+    ;; file-uid-or-url can be the :uid (for new files) or :url (for existing files from server)
+    (update-in db [:anesthesia :current-assessment-canonical :auxiliary_examinations]
+               (fn [files] (vec (remove #(or (= (:uid %) file-uid-or-url) (= (:url %) file-uid-or-url)) files))))))
 
-;; This event updates notes within :anesthesia-plan, which is separate from :form-data
-(rf/reg-event-db ::update-assessment-notes
-  (fn [db [_ notes-text]]
-    (assoc-in db [:anesthesia :assessment :anesthesia-plan :notes] notes-text)))
-
+;; Removed ::update-assessment-notes, use ::update-canonical-assessment-field for this.
+;; e.g. (rf/dispatch [::update-canonical-assessment-field [:anesthesia_plan :notes] new-notes-text])
+;; or (rf/dispatch [::update-canonical-assessment-field [:auxiliary_examinations_notes] new-notes-text])
 
 (rf/reg-event-db ::update-search-term
   (fn [db [_ term]]
@@ -251,39 +155,38 @@
 (rf/reg-event-fx ::save-final-assessment
   (fn [{:keys [db]} _]
     (let [current-patient-id (get-in db [:anesthesia :current-patient-id])
-          assessment-payload {;; Data from the four new cards
-                              :form_data (get-in db [:anesthesia :assessment :form-data])
-                              ;; Data from the separate anesthesia plan section
-                              :anesthesia_plan (get-in db [:anesthesia :assessment :anesthesia-plan])}]
+          ;; The entire canonical assessment is now the payload
+          assessment-payload (get-in db [:anesthesia :current-assessment-canonical])]
       (if current-patient-id
-        {:http-xhrio {:method          :put ; Or :post if creating a new assessment
-                      :uri             (str "/api/patient/assessments/" current-patient-id)
-                      :params          assessment-payload
-                      :response-format (ajax/json-response-format {:keywords? true})
-                      :on-success      [::save-assessment-success]
-                      :on-failure      [::save-assessment-failed]}}
+        (if assessment-payload
+          {:http-xhrio {:method          :put
+                        :uri             (str "/api/patient/assessments/" current-patient-id)
+                        :params          assessment-payload ;; Send the whole canonical structure
+                        :response-format (ajax/json-response-format {:keywords? true})
+                        :on-success      [::save-assessment-success]
+                        :on-failure      [::save-assessment-failed]}}
+          (do (timbre/warn "Assessment data is nil, cannot save.")
+              {}))
         (do (timbre/warn "No patient selected, cannot save assessment.")
             {})))))
 
 (rf/reg-event-db ::save-assessment-success
   (fn [db [_ response]]
     (timbre/info "评估保存成功:" response)
+    ;; Optionally, update the local canonical form with any response data if needed,
+    ;; e.g., if backend returns updated timestamps or generated IDs.
+    ;; For now, just refresh.
     (rf/dispatch [::fetch-all-assessments]) ; Refresh list after saving
     db))
 
 (rf/reg-event-db ::save-assessment-failed
   (fn [db [_ error]]
     (timbre/error "评估保存失败:" error)
-    (js/alert (str "保存失败: " (pr-str error)))
+    (js/alert (str "保存失败: " (pr-str (:response error) (:status error)))) ; Show more details
     db))
 
-
-;; This event seems to be for editing basic patient info, not the detailed assessment form.
-;; If it's still used for a separate patient editing modal/form, it can remain.
-;; Otherwise, if all patient data is part of the main assessment form, it might be redundant.
-(rf/reg-event-db ::update-patient-form-field
-  (fn [db [_ field-path new-value]]
-    (assoc-in db [:editing-patient-info field-path] new-value)))
+;; Removed ::update-patient-form-field as it's replaced by ::update-canonical-assessment-field
+;; Kept session, login, logout, doctor management events as they are unrelated to assessment structure.
 
 ;; --- Session Check Events ---
 (rf/reg-event-fx ::check-session

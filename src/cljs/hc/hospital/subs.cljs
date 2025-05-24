@@ -38,32 +38,29 @@
   :<- [::search-term]
   :<- [::date-range]
   :<- [::assessment-status-filter]
-  :<- [::anesthesia-example-patients]
-  (fn [[api-assessments search-term date-range-moments status-filter example-patients] _]
+  ;; Removed :<- [::anesthesia-example-patients]
+  (fn [[api-assessments search-term date-range-moments status-filter] _] ;; Removed example-patients
     (letfn [(format-gender [g] (case g "male" "男" "female" "女" "未知"))
             (format-date-str [d] (when d (utils/format-date d "YYYY-MM-DD")))
             (patient-from-api-assessment [assessment]
-              (let [patient-info (get-in assessment [:assessment_data :basic-info] {})
+              ;; Accessing canonical structure directly from :assessment_data
+              (let [basic-info (get-in assessment [:assessment_data :basic_info] {})
                     anesthesia-plan (get-in assessment [:assessment_data :anesthesia_plan] {})]
-                {:key (:patient_id assessment) ; Assuming patient_id is at the root of the assessment object
-                 :name (or (:name patient-info) "未知姓名")
-                 :patient-id-display (or (:outpatient_number patient-info) (:patient_id assessment))
-                 :gender (format-gender (:gender patient-info))
-                 :age (str (or (:age patient-info) "未知") "岁")
+                {:key (:patient_id assessment)
+                 :name (or (:name basic-info) "未知姓名")
+                 :patient-id-display (or (:outpatient_number basic-info) (:patient_id assessment))
+                 :gender (format-gender (:gender basic-info))
+                 :age (str (or (:age basic-info) "未知") "岁")
                  :anesthesia-type (or (:anesthesia_type anesthesia-plan) "未知麻醉方式")
-                 :date (format-date-str (:updated_at assessment)) ; Or :created_at
-                 :status (or (:doctor_status assessment) "待评估")}))
-            (patient-from-example [ex-patient]
-              (merge {:gender (format-gender (:gender ex-patient))
-                      :age (str (:age ex-patient) "岁")}
-                     ex-patient))]
+                 ;; Timestamps are now directly in basic_info according to canonical server structure
+                 :date (format-date-str (:assessment_updated_at basic-info)) ; Use assessment_updated_at
+                 :status (or (:assessment_status basic-info) "待评估")}))] ; Use assessment_status
 
       (let [patients-from-api (if (seq api-assessments)
                                 (mapv patient-from-api-assessment api-assessments)
                                 [])
-            display-patients (if (empty? patients-from-api)
-                               (mapv patient-from-example example-patients)
-                               patients-from-api)
+            ;; Removed example patients logic as primary display
+            display-patients patients-from-api
 
             [start-moment end-moment] date-range-moments
             start-date-str (when start-moment (.format start-moment "YYYY-MM-DD"))
@@ -91,37 +88,94 @@
     (get-in db [:anesthesia :assessment :form-data])))
 
 
-;; ---- 评估表单相关订阅 ----
-(rf/reg-sub ::selected-patient-assessment-forms-data
+;; ---- Canonical Assessment Subscriptions ----
+(rf/reg-sub ::current-canonical-assessment
   (fn [db _]
-    (get-in db [:anesthesia :assessment])))
+    (get-in db [:anesthesia :current-assessment-canonical])))
 
-(rf/reg-sub ::medical-summary-data ;; This now points to the new :form-data structure
-  (fn [db _]
-    (get-in db [:anesthesia :assessment :form-data])))
+;; Basic Info
+(rf/reg-sub ::canonical-basic-info
+  :<- [::current-canonical-assessment]
+  (fn [assessment _] (:basic_info assessment)))
 
-(rf/reg-sub ::selected-patient-raw-details
+(rf/reg-sub ::canonical-patient-name
+  :<- [::canonical-basic-info]
+  (fn [basic-info _] (:name basic-info)))
+  
+(rf/reg-sub ::canonical-patient-outpatient-number
+  :<- [::canonical-basic-info]
+  (fn [basic-info _] (:outpatient_number basic-info)))
+
+;; Medical History
+(rf/reg-sub ::canonical-medical-history
+  :<- [::current-canonical-assessment]
+  (fn [assessment _] (:medical_history assessment)))
+
+;; Physical Examination
+(rf/reg-sub ::canonical-physical-examination
+  :<- [::current-canonical-assessment]
+  (fn [assessment _] (:physical_examination assessment)))
+
+;; Comorbidities
+(rf/reg-sub ::canonical-comorbidities
+  :<- [::current-canonical-assessment]
+  (fn [assessment _] (:comorbidities assessment)))
+
+;; Auxiliary Examinations
+(rf/reg-sub ::canonical-auxiliary-examinations
+  :<- [::current-canonical-assessment]
+  (fn [assessment _] (:auxiliary_examinations assessment)))
+
+(rf/reg-sub ::canonical-auxiliary-examinations-notes
+  :<- [::current-canonical-assessment]
+  (fn [assessment _] (:auxiliary_examinations_notes assessment)))
+
+;; Anesthesia Plan
+(rf/reg-sub ::canonical-anesthesia-plan
+  :<- [::current-canonical-assessment]
+  (fn [assessment _] (:anesthesia_plan assessment)))
+
+;; ---- Existing subscriptions - Review/Refactor as needed ----
+;; DEPRECATED by ::canonical-basic-info, ::canonical-medical-history etc.
+;; (rf/reg-sub ::selected-patient-assessment-forms-data
+;;   (fn [db _]
+;;     (get-in db [:anesthesia :assessment])))
+
+;; DEPRECATED by ::canonical-medical-history etc.
+;; (rf/reg-sub ::medical-summary-data
+;;   (fn [db _]
+;;     (get-in db [:anesthesia :assessment :form-data])))
+
+;; DEPRECATED by ::canonical-physical-examination etc.
+;; (rf/reg-sub ::doctor-form-physical-examination
+;;   (fn [db _]
+;;     (get-in db [:anesthesia :assessment :form-data])))
+
+
+(rf/reg-sub ::selected-patient-raw-details ;; Provides the full canonical data for the selected patient
   :<- [::current-patient-id]
+  :<- [::current-canonical-assessment]
   :<- [::all-patient-assessments]
-  :<- [::anesthesia-example-patients] ; Fallback for example data
-  (fn [[patient-key api-assessments example-patients] _]
-    (let [find-in-api (when patient-key (first (filter #(= (:patient_id %) patient-key) api-assessments)))
-          find-in-examples (when (and patient-key (not find-in-api))
-                             (first (filter #(= (:key %) patient-key) example-patients)))]
-      (cond
-        find-in-api find-in-api ; Return the full assessment object from API
-        find-in-examples find-in-examples ; Return the example patient object
-        :else nil))))
+  (fn [[patient-key current-canonical-data all-assessments] _]
+    (if (and patient-key current-canonical-data 
+             (= patient-key (get-in current-canonical-data [:basic_info :outpatient_number])))
+      current-canonical-data ;; If current canonical matches selected ID, use it directly
+      (when patient-key ;; Otherwise, find in the main list and get its assessment_data
+        (some-> (filter #(= (:patient_id %) patient-key) all-assessments)
+                first
+                :assessment_data)))))
 
-(rf/reg-sub ::anesthesia-plan-details ;; This remains as it targets a separate part of the assessment
-  (fn [db _]
-    (get-in db [:anesthesia :assessment :anesthesia-plan])))
+;; DEPRECATED by ::canonical-anesthesia-plan
+;; (rf/reg-sub ::anesthesia-plan-details
+;;   (fn [db _]
+;;     (get-in db [:anesthesia :assessment :anesthesia-plan])))
 
-(rf/reg-sub ::assessment-notes
-  :<- [::anesthesia-plan-details]
-  (fn [anesthesia-plan _]
-    (when anesthesia-plan
-      (:notes anesthesia-plan))))
+;; DEPRECATED by ::canonical-anesthesia-plan or ::canonical-auxiliary-examinations-notes etc.
+;; (rf/reg-sub ::assessment-notes
+;;   :<- [::anesthesia-plan-details]
+;;   (fn [anesthesia-plan _]
+;;     (when anesthesia-plan
+;;       (:notes anesthesia-plan))))
 
 (rf/reg-sub ::doctors
   (fn [db _]
