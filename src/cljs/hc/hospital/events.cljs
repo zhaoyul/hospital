@@ -162,6 +162,7 @@
           {:http-xhrio {:method          :put
                         :uri             (str "/api/patient/assessments/" current-patient-id)
                         :params          assessment-payload ;; Send the whole canonical structure
+                        :format          (ajax/json-request-format) ;; <--- ADD THIS LINE
                         :response-format (ajax/json-response-format {:keywords? true})
                         :on-success      [::save-assessment-success]
                         :on-failure      [::save-assessment-failed]}}
