@@ -35,22 +35,168 @@
 (rf/reg-event-db ::select-patient
   (fn [db [_ patient-key]]
     (let [selected-assessment (first (filter #(= (:patient_id %) patient-key) (:all-patient-assessments db)))
-          form-data-from-api (when selected-assessment (get selected-assessment :assessment_form_data {}))
-          default-form-data (get-in app-db/default-db [:anesthesia :assessment :form-data])]
+          assessment-data (when selected-assessment (get selected-assessment :assessment_data {}))
+          default-form-data (get-in app-db/default-db [:anesthesia :assessment :form-data])
+          
+          ;; 转换患者端数据结构到医生端期望的格式
+          converted-form-data (when (seq assessment-data)
+                                (-> default-form-data
+                                    ;; 基本信息映射
+                                    (assoc-in [:basic-info] (get assessment-data :basic-info {}))
+                                    
+                                    ;; 过敏史映射
+                                    (assoc-in [:allergy :has] (if (get-in assessment-data [:medical-summary :allergy-history]) "yes" "no"))
+                                    (assoc-in [:allergy :allergen] (get-in assessment-data [:medical-summary :allergen] ""))
+                                    (assoc-in [:allergy :last-reaction-date] (get-in assessment-data [:medical-summary :allergy-date]))
+                                    
+                                    ;; 生活习惯映射
+                                    (assoc-in [:habits :smoking :has] (if (get-in assessment-data [:medical-summary :smoking-history]) "yes" "no"))
+                                    (assoc-in [:habits :smoking :years] (get-in assessment-data [:medical-summary :smoking-years]))
+                                    (assoc-in [:habits :smoking :per-day] (get-in assessment-data [:medical-summary :cigarettes-per-day]))
+                                    (assoc-in [:habits :drinking :has] (if (get-in assessment-data [:medical-summary :drinking-history]) "yes" "no"))
+                                    (assoc-in [:habits :drinking :years] (get-in assessment-data [:medical-summary :drinking-years]))
+                                    (assoc-in [:habits :drinking :per-day] (get-in assessment-data [:medical-summary :alcohol-per-day]))
+                                    
+                                    ;; 并存疾病映射
+                                    (assoc-in [:comorbidities :respiratory] 
+                                              {:has (if (get-in assessment-data [:comorbidities :respiratory-disease :has]) "yes" "no")
+                                               :details (get-in assessment-data [:comorbidities :respiratory-disease :details] "")})
+                                    (assoc-in [:comorbidities :cardiovascular] 
+                                              {:has (if (get-in assessment-data [:comorbidities :cardiovascular-disease :has]) "yes" "no")
+                                               :details (get-in assessment-data [:comorbidities :cardiovascular-disease :details] "")})
+                                    (assoc-in [:comorbidities :endocrine] 
+                                              {:has (if (get-in assessment-data [:comorbidities :endocrine-disease :has]) "yes" "no")
+                                               :details (get-in assessment-data [:comorbidities :endocrine-disease :details] "")})
+                                    (assoc-in [:comorbidities :neuro-psychiatric] 
+                                              {:has (if (get-in assessment-data [:comorbidities :neuropsychiatric-disease :has]) "yes" "no")
+                                               :details (get-in assessment-data [:comorbidities :neuropsychiatric-disease :details] "")})
+                                    (assoc-in [:comorbidities :neuromuscular] 
+                                              {:has (if (get-in assessment-data [:comorbidities :neuromuscular-disease :has]) "yes" "no")
+                                               :details (get-in assessment-data [:comorbidities :neuromuscular-disease :details] "")})
+                                    (assoc-in [:comorbidities :hepatic] 
+                                              {:has (if (get-in assessment-data [:comorbidities :liver-disease :has]) "yes" "no")
+                                               :details (get-in assessment-data [:comorbidities :liver-disease :details] "")})
+                                    (assoc-in [:comorbidities :renal] 
+                                              {:has (if (get-in assessment-data [:comorbidities :kidney-disease :has]) "yes" "no")
+                                               :details (get-in assessment-data [:comorbidities :kidney-disease :details] "")})
+                                    (assoc-in [:comorbidities :musculoskeletal] 
+                                              {:has (if (get-in assessment-data [:comorbidities :skeletal-system :has]) "yes" "no")
+                                               :details (get-in assessment-data [:comorbidities :skeletal-system :details] "")})
+                                    (assoc-in [:comorbidities :malignant-hyperthermia] 
+                                              {:has (if (get-in assessment-data [:comorbidities :family-malignant-hyperthermia :has]) "yes" "no")
+                                               :details (get-in assessment-data [:comorbidities :family-malignant-hyperthermia :details] "")})
+                                    (assoc-in [:comorbidities :anesthesia-surgery-history] 
+                                              {:has (if (get-in assessment-data [:comorbidities :past-anesthesia-surgery :has]) "yes" "no")
+                                               :details (get-in assessment-data [:comorbidities :past-anesthesia-surgery :details] "")})
+                                    (assoc-in [:comorbidities :special-medications] 
+                                              {:has (if (get-in assessment-data [:comorbidities :special-medications :used]) "yes" "no")
+                                               :details (get-in assessment-data [:comorbidities :special-medications :details] "")
+                                               :last-dose-time (get-in assessment-data [:comorbidities :special-medications :last-time])})
+                                    
+                                    ;; 体格检查映射
+                                    (assoc-in [:physical-exam :heart] 
+                                              {:status (get-in assessment-data [:physical-examination :heart] "normal")
+                                               :notes (get-in assessment-data [:physical-examination :heart-detail] "")})
+                                    (assoc-in [:physical-exam :lungs] 
+                                              {:status (get-in assessment-data [:physical-examination :lungs] "normal")
+                                               :notes (get-in assessment-data [:physical-examination :lungs-detail] "")})
+                                    (assoc-in [:physical-exam :airway] 
+                                              {:status (get-in assessment-data [:physical-examination :airway] "normal")
+                                               :notes (get-in assessment-data [:physical-examination :airway-detail] "")})
+                                    (assoc-in [:physical-exam :teeth] 
+                                              {:status (get-in assessment-data [:physical-examination :teeth] "normal")
+                                               :notes (get-in assessment-data [:physical-examination :teeth-detail] "")})
+                                    (assoc-in [:physical-exam :spine-limbs] 
+                                              {:status (get-in assessment-data [:physical-examination :spine-limbs] "normal")
+                                               :notes (get-in assessment-data [:physical-examination :spine-limbs-detail] "")})
+                                    (assoc-in [:physical-exam :neuro] 
+                                              {:status (get-in assessment-data [:physical-examination :nervous] "normal")
+                                               :notes (get-in assessment-data [:physical-examination :nervous-detail] "")})
+                                    (assoc-in [:physical-exam :other :notes] (get-in assessment-data [:physical-examination :other] ""))
+                                    
+                                    ;; 辅助检查映射 (将文件路径转换为文件对象数组格式)
+                                    (assoc-in [:aux-exams :ecg] 
+                                              (when-let [file-path (get-in assessment-data [:auxiliary-examination :ecg])]
+                                                (if (string? file-path)
+                                                  [{:uid "ecg-1" :name "心电图" :status "done" :url file-path}]
+                                                  [])))
+                                    (assoc-in [:aux-exams :chest-xray] 
+                                              (when-let [file-path (get-in assessment-data [:auxiliary-examination :chest-radiography])]
+                                                (if (string? file-path)
+                                                  [{:uid "chest-xray-1" :name "胸片" :status "done" :url file-path}]
+                                                  [])))
+                                    (assoc-in [:aux-exams :other-results] (get-in assessment-data [:auxiliary-examination :other] ""))
+                                    ))]
       (-> db
           (assoc-in [:anesthesia :current-patient-id] patient-key)
           (assoc-in [:anesthesia :assessment :form-data]
-                    (if (seq form-data-from-api) ; Check if API data is not empty
-                      form-data-from-api
-                      default-form-data))))))
+                    (or converted-form-data default-form-data))))))
 
 
 ;; --- Updating Assessment Data from Doctor's Forms ---
-;; Generic updater for the new form structure within :form-data
-(rf/reg-event-db ::update-medical-summary-field
-  (fn [db [_ field-path new-value]]
-    ;; field-path is a vector, e.g., [:allergy :has] or [:comorbidities :respiratory :details]
-    (assoc-in db (concat [:anesthesia :assessment :form-data] field-path) new-value)))
+;; 更新医疗摘要字段，并自动处理相关联的字段
+(rf/reg-event-db
+ ::update-medical-summary-field
+ (fn [db [_ field-path value]]
+   (let [current-patient-id (get-in db [:anesthesia :current-patient-id])
+         base-path [:anesthesia :all-patient-assessments]]
+     (if current-patient-id
+       ;; 找到当前患者并更新其数据
+       (let [assessments (get-in db base-path)
+             updated-assessments
+             (mapv
+               (fn [assessment]
+                 (if (= (:patient_id assessment) current-patient-id)
+                   (let [assessment-data (:assessment_data assessment)
+                         medical-summary (:medical-summary assessment-data)
+                         updated-summary
+                         (case field-path
+                           ;; 过敏史处理
+                           [:allergy :has]
+                           (if value
+                             (assoc medical-summary :allergy-history value)
+                             ;; 选择"无"时清空相关字段
+                             (assoc medical-summary
+                                    :allergy-history false
+                                    :allergen ""
+                                    :allergy-date nil))
+
+                           ;; 吸烟史处理
+                           [:habits :smoking :has]
+                           (if value
+                             (assoc medical-summary :smoking-history value)
+                             ;; 选择"无"时清空相关字段
+                             (assoc medical-summary
+                                    :smoking-history false
+                                    :smoking-years nil
+                                    :cigarettes-per-day nil))
+
+                           ;; 饮酒史处理
+                           [:habits :drinking :has]
+                           (if value
+                             (assoc medical-summary :drinking-history value)
+                             ;; 选择"无"时清空相关字段
+                             (assoc medical-summary
+                                    :drinking-history false
+                                    :drinking-years nil
+                                    :alcohol-per-day ""))
+
+                           ;; 其他字段的直接更新
+                           [:allergy :allergen] (assoc medical-summary :allergen value)
+                           [:allergy :allergy-date] (assoc medical-summary :allergy-date value)
+                           [:habits :smoking :years] (assoc medical-summary :smoking-years value)
+                           [:habits :smoking :per-day] (assoc medical-summary :cigarettes-per-day value)
+                           [:habits :drinking :years] (assoc medical-summary :drinking-years value)
+                           [:habits :drinking :per-day] (assoc medical-summary :alcohol-per-day value)
+
+                           ;; 默认情况 - 保持原有数据不变
+                           medical-summary)]
+                     (assoc-in assessment [:assessment_data :medical-summary] updated-summary))
+                   assessment))
+               assessments)]
+         (assoc-in db base-path updated-assessments))
+       ;; 如果没有选中患者，只更新form-data
+       (assoc-in db (concat [:anesthesia :assessment :form-data] field-path) value)))))
 
 ;; Specific handlers for auxiliary exam file list management
 (rf/reg-event-db ::handle-aux-exam-files-change

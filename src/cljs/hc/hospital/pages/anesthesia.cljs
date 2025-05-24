@@ -2,15 +2,12 @@
   "麻醉管理, 医生补充患者自己填写的评估报告, 最终评估患者的情况, 判断是否可以麻醉"
   (:require ; Added Image, Modal
    ;; 确保 antd/Form 等组件已引入
-   [taoensso.timbre :as timbre]
    ["dayjs" :as dayjs]
    ["@ant-design/icons" :as icons :refer [FileTextOutlined MedicineBoxOutlined
                                           ProfileOutlined QrcodeOutlined
                                           SolutionOutlined SyncOutlined
-                                          UserOutlined HeartOutlined EditOutlined
-                                          SaveOutlined MessageOutlined
-                                          UploadOutlined CheckCircleOutlined ClockCircleOutlined CloseCircleOutlined PrinterOutlined]]
-   ["antd" :refer [Button Card Col DatePicker Descriptions Empty Form Image
+                                          CheckCircleOutlined ClockCircleOutlined CloseCircleOutlined PrinterOutlined]]
+   ["antd" :refer [Button Card Col DatePicker Descriptions Empty Form
                    Input InputNumber Layout Modal Radio Row Select Space Tag
                    Upload]] ; Removed Tooltip as it's not used
    [hc.hospital.events :as events]
@@ -21,9 +18,7 @@
 
 
 (defn patient-list-filters []
-  (let [search-term @(rf/subscribe [::subs/search-term])
-        date-range @(rf/subscribe [::subs/date-range])
-        assessment-status @(rf/subscribe [::subs/assessment-status-filter])
+  (let [date-range @(rf/subscribe [::subs/date-range])
         assessment-status-options [{:value "all" :label "全部状态"}
                                    {:value "待评估" :label "待评估"}
                                    {:value "已批准" :label "已批准"}
@@ -285,92 +280,105 @@
      [:> FileTextOutlined {:style {:marginRight "8px"}}]
      "病情摘要"
      "#fff7e6" ; Header background color
-     [:> Form {:layout "horizontal" :labelCol {:span 6} :wrapperCol {:span 18} :labelAlign "left" :initialValues (clj->js summary-data)}
-      ;; 过敏史
-      [:div {:style {:marginBottom "16px"}}
-       [:> Form.Item {:name :allergy-history :label "过敏史" :colon false}
-        [:> Radio.Group {:onChange #(rf/dispatch [::events/update-medical-summary-field [:allergy :has] (-> % .-target .-value)])}
-         [:> Radio {:value false} "无"]
-         [:> Radio {:value true} "有"]]]
-       (when (get-in summary-data [:allergy-history])
-         [:<>
-          [:> Form.Item {:name :allergen :label "过敏源"}
-           [:> Input {:placeholder "请输入过敏源"
-                      :onChange #(rf/dispatch [::events/update-medical-summary-field [:allergy :allergen] (-> % .-target .-value)])}]]
-          [:> Form.Item {:name :allergy-date :label "Date"
-                         :getValueFromEvent (fn [date _] (when date (.toISOString date)))
-                         :getValueProps (fn [value] (clj->js {:value (when value (dayjs value))}))}
-           [:> DatePicker {:style {:width "100%"}
-                           :format "YYYY-MM-DD"
-                           :placeholder "请选择日期"
-                           :onChange #(rf/dispatch [::events/update-medical-summary-field [:allergy :allergy-date] (utils/date->iso-string %)])}]]])]
+     (if (and raw summary-data)
+       [:> Form {:layout "horizontal" :labelCol {:span 6} :wrapperCol {:span 18} :labelAlign "left"}
+        ;; 过敏史
+        [:div {:style {:marginBottom "16px"}}
+         [:> Form.Item {:label "过敏史" :colon false}
+          [:> Radio.Group {:value (get summary-data :allergy-history)
+                           :onChange #(rf/dispatch [::events/update-medical-summary-field [:allergy :has] (-> % .-target .-value)])}
+           [:> Radio {:value false} "无"]
+           [:> Radio {:value true} "有"]]]
+         (when (get summary-data :allergy-history)
+           [:<>
+            [:> Form.Item {:label "过敏源"}
+             [:> Input {:value (get summary-data :allergen "")
+                        :placeholder "请输入过敏源"
+                        :onChange #(rf/dispatch [::events/update-medical-summary-field [:allergy :allergen] (-> % .-target .-value)])}]]
+            [:> Form.Item {:label "过敏日期"}
+             [:> DatePicker {:value (when-let [date (get summary-data :allergy-date)] (dayjs date))
+                             :style {:width "100%"}
+                             :format "YYYY-MM-DD"
+                             :placeholder "请选择日期"
+                             :onChange #(rf/dispatch [::events/update-medical-summary-field [:allergy :allergy-date] (utils/date->iso-string %)])}]]])]
 
-      ;; 生活习惯
-      [:div
-       ;; 吸烟史
-       [:> Form.Item {:name :smoking-history :label "吸烟史" :colon false}
-        [:> Radio.Group {;:value (get-in summary-data [:habits :smoking :has])
-                         :onChange #(rf/dispatch [::events/update-medical-summary-field [:habits :smoking :has] (-> % .-target .-value)])}
-         [:> Radio {:value "no"} "无"]
-         [:> Radio {:value "yes"} "有"]]]
-       (when (= (get-in summary-data [:habits :smoking :has]) "yes")
-         [:> Row {:gutter 16}
-          [:> Col {:span 12}
-           [:> Form.Item {:name [:habits :smoking :years] :label "吸烟年数"}
-            [:> InputNumber {;:value (get-in summary-data [:habits :smoking :years])
-                             :min 0 :addonAfter "年" :style {:width "100%"}
-                             :onChange #(rf/dispatch [::events/update-medical-summary-field [:habits :smoking :years] %])}]]]
-          [:> Col {:span 12}
-           [:> Form.Item {:name [:habits :smoking :per-day] :label "每天吸烟支数"}
-            [:> InputNumber {;:value (get-in summary-data [:habits :smoking :per-day])
-                             :min 0 :addonAfter "支" :style {:width "100%"}
-                             :onChange #(rf/dispatch [::events/update-medical-summary-field [:habits :smoking :per-day] %])}]]]])
-       ;; 饮酒史
-       [:> Form.Item {:name [:habits :drinking :has] :label "饮酒史" :colon false :style {:marginTop "8px"}}
-        [:> Radio.Group {;:value (get-in summary-data [:habits :drinking :has])
-                         :onChange #(rf/dispatch [::events/update-medical-summary-field [:habits :drinking :has] (-> % .-target .-value)])}
-         [:> Radio {:value "no"} "无"]
-         [:> Radio {:value "yes"} "有"]]]
-       (when (= (get-in summary-data [:habits :drinking :has]) "yes")
-         [:> Row {:gutter 16}
-          [:> Col {:span 12}
-           [:> Form.Item {:name [:habits :drinking :years] :label "饮酒年数"}
-            [:> InputNumber {;:value (get-in summary-data [:habits :drinking :years])
-                             :min 0 :addonAfter "年" :style {:width "100%"}
-                             :onChange #(rf/dispatch [::events/update-medical-summary-field [:habits :drinking :years] %])}]]]
-          [:> Col {:span 12}
-           [:> Form.Item {:name [:habits :drinking :per-day] :label "每天饮酒量"}
-            [:> InputNumber {;:value (get-in summary-data [:habits :drinking :per-day])
-                             :min 0 :addonAfter "ml" :style {:width "100%"}
-                             :onChange #(rf/dispatch [::events/update-medical-summary-field [:habits :drinking :per-day] %])}]]]])]]]))
+        ;; 生活习惯
+        [:div
+         ;; 吸烟史
+         [:> Form.Item {:label "吸烟史" :colon false}
+          [:> Radio.Group {:value (get summary-data :smoking-history)
+                           :onChange #(rf/dispatch [::events/update-medical-summary-field [:habits :smoking :has] (-> % .-target .-value)])}
+           [:> Radio {:value false} "无"]
+           [:> Radio {:value true} "有"]]]
+         (when (get summary-data :smoking-history)
+           [:> Row {:gutter 16}
+            [:> Col {:span 12}
+             [:> Form.Item {:label "吸烟年数"}
+              [:> InputNumber {:value (get summary-data :smoking-years)
+                               :min 0 :addonAfter "年" :style {:width "100%"}
+                               :onChange #(rf/dispatch [::events/update-medical-summary-field [:habits :smoking :years] %])}]]]
+            [:> Col {:span 12}
+             [:> Form.Item {:label "每天吸烟支数"}
+              [:> InputNumber {:value (get summary-data :cigarettes-per-day)
+                               :min 0 :addonAfter "支" :style {:width "100%"}
+                               :onChange #(rf/dispatch [::events/update-medical-summary-field [:habits :smoking :per-day] %])}]]]])
+         
+         ;; 饮酒史
+         [:> Form.Item {:label "饮酒史" :colon false :style {:marginTop "8px"}}
+          [:> Radio.Group {:value (get summary-data :drinking-history)
+                           :onChange #(let [new-value (-> % .-target .-value)]
+                                        (if new-value
+                                          ;; 选择"有"时只更新饮酒史状态
+                                          (rf/dispatch [::events/update-medical-summary-field [:habits :drinking :has] new-value])
+                                          ;; 选择"无"时清空所有相关字段
+                                          (do
+                                            (rf/dispatch [::events/update-medical-summary-field [:habits :drinking :has] false])
+                                            (rf/dispatch [::events/update-medical-summary-field [:habits :drinking :years] nil])
+                                            (rf/dispatch [::events/update-medical-summary-field [:habits :drinking :per-day] ""]))))}
+           [:> Radio {:value false} "无"]
+           [:> Radio {:value true} "有"]]]
+         (when (get summary-data :drinking-history)
+           [:> Row {:gutter 16}
+            [:> Col {:span 12}
+             [:> Form.Item {:label "饮酒年数"}
+              [:> InputNumber {:value (get summary-data :drinking-years)
+                               :min 0 :addonAfter "年" :style {:width "100%"}
+                               :onChange #(rf/dispatch [::events/update-medical-summary-field [:habits :drinking :years] %])}]]]
+            [:> Col {:span 12}
+             [:> Form.Item {:label "每天饮酒量"}
+              [:> Input {:value (get summary-data :alcohol-per-day "")
+                         :placeholder "请输入饮酒量"
+                         :style {:width "100%"}
+                         :onChange #(rf/dispatch [::events/update-medical-summary-field [:habits :drinking :per-day] (-> % .-target .-value)])}]]]])]]
+       [:> Empty {:description "请先选择患者或患者无病情摘要信息"}])]))
 
 (defn- comorbidities-card []
-  (let [form-data @(rf/subscribe [::subs/medical-summary-data])
+  (let [form-data @(rf/subscribe [::subs/medical-summary-data]) ; medical-summary-data includes comorbidities
         comorbidity-data (get-in form-data [:comorbidities])
-        comorbidity-item (fn [field-key label-text form-item-name]
-                           (let [path [:comorbidities field-key]
-                                 has-path (conj path :has)
-                                 details-path (conj path :details)
-                                 current-has (get-in comorbidity-data has-path "no")] ; Let Form handle initial value
+        comorbidity-item (fn [field-key label-text form-item-name] ; form-item-name is like [:respiratory :has]
+                           (let [path-prefix [:comorbidities field-key] ; e.g., [:comorbidities :respiratory]
+                                 has-path (conj path-prefix :has)       ; e.g., [:comorbidities :respiratory :has]
+                                 details-path (conj path-prefix :details) ; e.g., [:comorbidities :respiratory :details]
+                                 current-has-val (get-in comorbidity-data [field-key :has] "no")] ; Get current value for conditional rendering
                              [:> Col {:span 12}
-                              [:> Form.Item {:label label-text :name form-item-name} ; form-item-name should be like [:respiratory :has]
-                               [:> Radio.Group {;:value current-has ; Let Form handle this via Form.Item name
-                                                :onChange #(rf/dispatch [::events/update-medical-summary-field has-path (-> % .-target .-value)])}
+                              [:> Form.Item {:label label-text :name (into [:comorbidities field-key :has] [])} ; Name for Form to manage state
+                               [:> Radio.Group {:value current-has-val ; Explicitly set value for Radio.Group
+                                                :onChange #(rf/dispatch [::events/update-comorbidities-field path-prefix (-> % .-target .-value)])}
                                 [:> Radio {:value "yes"} "有"]
                                 [:> Radio {:value "no"} "无"]]
-                               (when (= (get-in comorbidity-data has-path) "yes") ; Check actual data for conditional rendering
-
-                                 [:> Form.Item {:name (into (vec (butlast form-item-name)) [:details]) ; e.g. [:respiratory :details]
-                                                :noStyle true ; To avoid extra label and layout changes
+                               (when (= current-has-val "yes")
+                                 [:> Form.Item {:name (into [:comorbidities field-key :details] []) ; Name for Form
+                                                :noStyle true
                                                 :style {:marginTop "8px"}}
-                                  [:> Input {;:value (get-in comorbidity-data details-path) ; Let Form handle
+                                  [:> Input {:value (get-in comorbidity-data [field-key :details] "") ; Explicitly set value for Input
                                              :placeholder "请填写具体内容"
-                                             :onChange #(rf/dispatch [::events/update-medical-summary-field details-path (-> % .-target .-value)])}]])]]))]
-    [custom-styled-card
+                                             :onChange #(rf/dispatch [::events/update-comorbidities-field details-path (-> % .-target .-value)])}]])]]))]\n    [custom-styled-card
      [:> MedicineBoxOutlined]
      "并存疾病"
      "#f9f0ff" ; Header background color
-     [:> Form {:layout "horizontal" :labelCol {:span 10} :wrapperCol {:span 14} :labelAlign "left" :initialValues comorbidity-data}
+     [:> Form {:layout "horizontal" :labelCol {:span 10} :wrapperCol {:span 14} :labelAlign "left" 
+               :initialValues comorbidity-data ; Pass the comorbidities part of form-data
+               :key (str "comorbidities-form-" (hash comorbidity-data))} ; Add a key to force re-render when initialValues change
       [:> Row {:gutter [16 0]} ; Horizontal gutter 16, vertical 0
        (comorbidity-item :respiratory "呼吸系统疾病" [:respiratory :has])
        (comorbidity-item :cardiovascular "心血管疾病" [:cardiovascular :has])
@@ -383,68 +391,71 @@
        (comorbidity-item :malignant-hyperthermia "家族恶性高热史" [:malignant-hyperthermia :has])
        (comorbidity-item :anesthesia-surgery-history "既往麻醉、手术史" [:anesthesia-surgery-history :has])
        ;; 使用的特殊药物 - 单独处理
-       (let [path-base [:special-medications]
-             has-path (conj path-base :has)
-             details-path (conj path-base :details)
-             last-dose-time-path (conj path-base :last-dose-time)
-             current-has-val (get-in comorbidity-data has-path "no")] ; For conditional rendering
+       (let [path-base [:comorbidities :special-medications] ; Adjusted base path for dispatch
+             has-path-form-name [:comorbidities :special-medications :has] ; Form item name
+             details-path-form-name [:comorbidities :special-medications :details]
+             last-dose-time-path-form-name [:comorbidities :special-medications :last-dose-time]
+             
+             current-has-val (get-in comorbidity-data [:special-medications :has] "no")]
          [:> Col {:span 24} ; 占据整行
-          [:> Form.Item {:label "使用的特殊药物" :name has-path}
-           [:> Radio.Group {;:value current-has-val ; Let Form handle
-                            :onChange #(rf/dispatch [::events/update-medical-summary-field has-path (-> % .-target .-value)])}
+          [:> Form.Item {:label "使用的特殊药物" :name has-path-form-name}
+           [:> Radio.Group {:value current-has-val
+                            :onChange #(rf/dispatch [::events/update-comorbidities-field path-base (-> % .-target .-value)])}
             [:> Radio {:value "yes"} "有"]
             [:> Radio {:value "no"} "无"]]
-           (when (= current-has-val "yes") ; Conditional rendering based on actual data
+           (when (= current-has-val "yes")
              [:div {:style {:marginTop "8px"}}
-              [:> Form.Item {:name details-path :label "药物名称及剂量" :labelCol {:span 6} :wrapperCol {:span 18}} ; Adjusted labelCol/wrapperCol for nested item
-               [:> Input {;:value (get-in comorbidity-data details-path) ; Let Form handle
+              [:> Form.Item {:name details-path-form-name :label "药物名称及剂量" :labelCol {:span 6} :wrapperCol {:span 18}}
+               [:> Input {:value (get-in comorbidity-data [:special-medications :details] "")
                           :placeholder "药物名称及剂量"
                           :style {:marginBottom "8px"}
-                          :onChange #(rf/dispatch [::events/update-medical-summary-field details-path (-> % .-target .-value)])}]]
-              [:> Form.Item {:name last-dose-time-path :label "最近用药时间" :labelCol {:span 6} :wrapperCol {:span 18}}
-               [:> DatePicker {;:value (utils/to-moment (get-in comorbidity-data last-dose-time-path)) ; Let Form handle
+                          :onChange #(rf/dispatch [::events/update-comorbidities-field (conj path-base :details) (-> % .-target .-value)])}]]
+              [:> Form.Item {:name last-dose-time-path-form-name :label "最近用药时间" :labelCol {:span 6} :wrapperCol {:span 18}}
+               [:> DatePicker {:value (utils/to-moment (get-in comorbidity-data [:special-medications :last-dose-time]))
                                :showTime true
                                :placeholder "选择日期和时间"
                                :style {:width "100%"}
-                               :onChange #(rf/dispatch [::events/update-medical-summary-field last-dose-time-path (utils/date->iso-string %)])}]]])]])]]]))
+                               :onChange #(rf/dispatch [::events/update-comorbidities-field (conj path-base :last-dose-time) (utils/date->iso-string %)])}]]])]])]]]))
 
 (defn- physical-examination-card []
-  (let [raw @(rf/subscribe [::subs/selected-patient-raw-details])
-        phys-data (get-in raw [:assessment_data :physical-examination] {})
-        exam-item (fn [field-key label-text form-item-name] ; form-item-name is like [:heart :status]
-                    (let [status-path (into [:physical-exam field-key] [:status]) ; Path for dispatch
-                          notes-path (into [:physical-exam field-key] [:notes])   ; Path for dispatch
-                          current-status-val (get-in phys-data form-item-name "normal")] ; For conditional rendering
+  (let [form-data @(rf/subscribe [::subs/medical-summary-data]) ; medical-summary-data includes physical-exam
+        phys-data (get-in form-data [:physical-exam])
+        exam-item (fn [field-key label-text] ; field-key is like :heart
+                    (let [path-prefix [:physical-exam field-key] ; e.g. [:physical-exam :heart]
+                          status-path (conj path-prefix :status)  ; e.g. [:physical-exam :heart :status]
+                          notes-path (conj path-prefix :notes)    ; e.g. [:physical-exam :heart :notes]
+                          current-status-val (get-in phys-data [field-key :status] "normal")]
                       [:> Col {:span 12}
-                       [:> Form.Item {:label label-text :name form-item-name}
-                        [:> Radio.Group {;:value current-status-val ; Let Form handle
-                                         :onChange #(rf/dispatch [::events/update-medical-summary-field status-path (-> % .-target .-value)])}
+                       [:> Form.Item {:label label-text :name (into [:physical-exam field-key :status] [])} ; Name for Form
+                        [:> Radio.Group {:value current-status-val
+                                         :onChange #(rf/dispatch [::events/update-physical-exam-field status-path (-> % .-target .-value)])}
                          [:> Radio {:value "normal"} "正常"]
                          [:> Radio {:value "abnormal"} "异常"]]
-                        (when (= current-status-val "abnormal") ; Conditional rendering based on actual data
-                          [:> Form.Item {:name (into (vec (butlast form-item-name)) [:notes]) ; e.g. [:heart :notes]
+                        (when (= current-status-val "abnormal")
+                          [:> Form.Item {:name (into [:physical-exam field-key :notes] []) ; Name for Form
                                          :noStyle true
                                          :style {:marginTop "8px"}}
-                           [:> Input {;:value (get-in phys-data notes-path) ; Let Form handle
+                           [:> Input {:value (get-in phys-data [field-key :notes] "")
                                       :placeholder "请描述异常情况"
-                                      :onChange #(rf/dispatch [::events/update-medical-summary-field notes-path (-> % .-target .-value)])}]])]]))]
-    [custom-styled-card
+                                      :onChange #(rf/dispatch [::events/update-physical-exam-field notes-path (-> % .-target .-value)])}]])]]))]\n    [custom-styled-card
      [:> ProfileOutlined]
      "体格检查"
      "#e6f7ff" ; Header background color
-     [:> Form {:layout "horizontal" :labelCol {:span 8} :wrapperCol {:span 16} :labelAlign "left" :initialValues phys-data}
+     [:> Form {:layout "horizontal" :labelCol {:span 8} :wrapperCol {:span 16} :labelAlign "left" 
+               :initialValues phys-data
+               :key (str "physical-exam-form-" (hash phys-data))} ; Add a key to force re-render
       [:> Row {:gutter [16 0]}
-       (exam-item :heart "心脏" [:heart :status])
-       (exam-item :lungs "肺脏" [:lungs :status])
-       (exam-item :airway "气道" [:airway :status])
-       (exam-item :teeth "牙齿" [:teeth :status])
-       (exam-item :spine-limbs "脊柱四肢" [:spine-limbs :status])
-       (exam-item :neuro "神经" [:neuro :status])]
-      [:> Form.Item {:label "其它" :name [:other :notes]} ; Assuming phys-data structure is {:other {:notes "..."}}
-       [:> Input.TextArea {;:value (get-in phys-data [:other :notes]) ; Let Form handle
+       (exam-item :heart "心脏")
+       (exam-item :lungs "肺脏")
+       (exam-item :airway "气道")
+       (exam-item :teeth "牙齿")
+       (exam-item :spine-limbs "脊柱四肢")
+       (exam-item :neuro "神经")]
+      [:> Form.Item {:label "其它" :name [:physical-exam :other :notes]} ; Adjusted name to match form-data structure
+       [:> Input.TextArea {:value (get-in phys-data [:other :notes] "")
                            :placeholder "如有其他体格检查发现请在此注明"
                            :rows 2
-                           :onChange #(rf/dispatch [::events/update-medical-summary-field [:physical-exam :other :notes] (-> % .-target .-value)])}]]]]))
+                           :onChange #(rf/dispatch [::events/update-physical-exam-field [:physical-exam :other :notes] (-> % .-target .-value)])}]]]]))
 
 (defn- auxiliary-tests-card []
   (let [raw @(rf/subscribe [::subs/selected-patient-raw-details])
@@ -495,11 +506,7 @@
                                         (rf/dispatch [::events/before-upload-aux-exam-file field-key file])
                                         false) ; Prevent auto-upload, handle in event
                         })
-        upload-button (fn [field-key] ; field-key is a keyword e.g. :ecg
-                        [:> Upload #js {:name (name field-key)} ; Pass props as JS object
-                         [:div
-                          [:> icons/UploadOutlined]
-                          [:div {:style {:marginTop 8}} "上传"]]])
+
         image-display (fn [field-key label] ; field-key is a keyword e.g. :ecg
                         (let [files (get-in aux-data [field-key] [])] ; files from initialValues
                           [:> Form.Item {:label label :name field-key :valuePropName "fileList"
