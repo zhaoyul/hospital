@@ -51,14 +51,14 @@
                         :doctor_name nil
                         :assessment_notes nil}
            :medical_history {:allergy {:has_history (to-boolean (get raw-medical-summary :allergy-history))
-                                      :details (get raw-medical-summary :allergy-details)
-                                      :last_reaction_date (get raw-medical-summary :allergy-last-reaction-date)}
+                                       :details (get raw-medical-summary :allergy-details)
+                                       :last_reaction_date (get raw-medical-summary :allergy-last-reaction-date)}
                              :smoking {:has_history (to-boolean (get raw-medical-summary :smoking-history))
-                                      :years (try (some-> (get raw-medical-summary :smoking-years) str/trim Integer/parseInt) (catch Exception _ nil))
-                                      :cigarettes_per_day (try (some-> (get raw-medical-summary :smoking-cigarettes-per-day) str/trim Integer/parseInt) (catch Exception _ nil))}
+                                       :years (try (some-> (get raw-medical-summary :smoking-years) str/trim Integer/parseInt) (catch Exception _ nil))
+                                       :cigarettes_per_day (try (some-> (get raw-medical-summary :smoking-cigarettes-per-day) str/trim Integer/parseInt) (catch Exception _ nil))}
                              :drinking {:has_history (to-boolean (get raw-medical-summary :drinking-history))
-                                       :years (try (some-> (get raw-medical-summary :drinking-years) str/trim Integer/parseInt) (catch Exception _ nil))
-                                       :alcohol_per_day (get raw-medical-summary :drinking-alcohol-per-day)}}
+                                        :years (try (some-> (get raw-medical-summary :drinking-years) str/trim Integer/parseInt) (catch Exception _ nil))
+                                        :alcohol_per_day (get raw-medical-summary :drinking-alcohol-per-day)}}
            :physical_examination {:mental_state nil, :activity_level nil,
                                   :bp_systolic nil, :bp_diastolic nil, :heart_rate nil,
                                   :respiratory_rate nil, :temperature nil, :spo2 nil,

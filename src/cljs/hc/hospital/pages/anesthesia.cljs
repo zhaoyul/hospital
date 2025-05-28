@@ -11,6 +11,7 @@
                    Input InputNumber Layout Modal Radio Row Select Space Tag
                    Upload]] ; Removed Tooltip as it's not used
    [hc.hospital.events :as events]
+   [taoensso.timbre :as timbre]
    [hc.hospital.subs :as subs]
    [hc.hospital.utils :as utils]
    [re-frame.core :as rf]
@@ -133,8 +134,7 @@
                                 {:value "其他" :label "其他"}]}]]
 
          [:> Form.Item {:label "年龄" :name :age} ; Matches canonical
-          [:> InputNumber {
-                           :placeholder "岁"
+          [:> InputNumber {:placeholder "岁"
                            :min 0
                            :style {:width "100%"}
                            :addonAfter "岁"
@@ -272,7 +272,7 @@
                               :addonAfter "%"
                               :min 0 :max 100
                               :style {:width "100px"}
-                              :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:physical_examination :spo2] %])}]]]]]]
+                              :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:physical_examination :spo2] %])}]]]]]
          [:> Empty {:description "暂无一般情况信息或未选择患者"}])])))
 
 (defn- medical-history-summary-card []
@@ -435,8 +435,8 @@
                                    :format "YYYY-MM-DD HH:mm"
                                    :placeholder "选择日期和时间"
                                    :style {:width "100%"}
-                                   :onChange #(rf/dispatch [::events/update-canonical-assessment-field last-dose-time-path (utils/date->iso-string % "YYYY-MM-DD HH:mm")])}]]])]])]]
-         [:> Empty {:description "暂无并存疾病信息或未选择患者"}])]))
+                                   :onChange #(rf/dispatch [::events/update-canonical-assessment-field last-dose-time-path (utils/date->iso-string %)])}]]])]])]]
+         [:> Empty {:description "暂无并存疾病信息或未选择患者"}])])))
 
 (defn- physical-examination-card []
   (let [phys-exam-data @(rf/subscribe [::subs/canonical-physical-examination]) ; Use new subscription
@@ -461,7 +461,7 @@
                                    :style {:marginTop "8px"}}
                      [:> Input {;; :value (get-in phys-exam-data [field-key :notes]) ; Let Form handle
                                 :placeholder "请描述异常情况"
-                                :onChange #(rf/dispatch [::events/update-canonical-assessment-field (conj base-path :notes) (-> % .-target .-value)])}]])]])))]
+                                :onChange #(rf/dispatch [::events/update-canonical-assessment-field (conj base-path :notes) (-> % .-target .-value)])}]])]]))]
       [custom-styled-card
        [:> ProfileOutlined]
        "体格检查"
@@ -482,7 +482,7 @@
                                :placeholder "如有其他体格检查发现请在此注明"
                                :rows 2
                                :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:physical_examination :other_findings] (-> % .-target .-value)])}]]]
-         [:> Empty {:description "暂无体格检查信息或未选择患者"}])]))
+         [:> Empty {:description "暂无体格检查信息或未选择患者"}])])))
 
 (defn- auxiliary-tests-card []
   (let [aux-exams @(rf/subscribe [::subs/canonical-auxiliary-examinations]) ; List of file maps
@@ -496,38 +496,38 @@
                                (reset! preview-image-url url)
                                (reset! modal-open? true))))
           upload-props {;; :action "/api/files/upload" ; Replace with your actual upload endpoint or use customRequest
-                       ;; For this refactor, we assume :customRequest handles the upload and then dispatches an event to add the file meta to app-db.
-                       :customRequest (fn [req-info]
-                                        ;; Mocking successful upload and adding to list
-                                        ;; In a real app, this would involve actual AJAX call to upload req-info.file
-                                        ;; On success, server returns URL and other metadata.
-                                        (js/setTimeout
-                                         #(let [mock-url (str "/uploads/mock-" (.-name req-info.file))
-                                                new-file-map {:uid (.-uid req-info.file) ; AntD generated UID
-                                                              :type "other" ; Or determine from file type or UI
-                                                              :filename (.-name req-info.file)
-                                                              :url mock-url
-                                                              :uploaded_by "doctor"
-                                                              :uploaded_at (utils/date->iso-string (js/Date.now))}]
-                                            (rf/dispatch [::events/add-aux-exam-file new-file-map])
-                                            ((.-onSuccess req-info) {:status "done"} req-info.file))
-                                         1000))
-                       :listType "picture-card"
-                       :fileList (mapv (fn [file-map]
-                                         {:uid (or (:uid file-map) (:url file-map)) ; Ensure UID is present, use URL if no UID
-                                          :name (:filename file-map)
-                                          :status "done" ; Assuming all files from DB are "done"
-                                          :url (:url file-map)
-                                          ;; Store original canonical map for removal if needed
-                                          :canonicalData file-map})
-                                       aux-exams)
-                       :onPreview handle-preview
-                       :onRemove (fn [file]
-                                   ;; Remove by UID if present, otherwise by URL (from canonicalData if needed)
-                                   (let [uid-or-url (or (.-uid file) (get-in file [:canonicalData :url]))]
-                                     (rf/dispatch [::events/remove-aux-exam-file uid-or-url])
-                                     true)) ; Return true to confirm removal from UI
-                       :multiple true}]
+                        ;; For this refactor, we assume :customRequest handles the upload and then dispatches an event to add the file meta to app-db.
+                        :customRequest (fn [req-info]
+                                         ;; Mocking successful upload and adding to list
+                                         ;; In a real app, this would involve actual AJAX call to upload req-info.file
+                                         ;; On success, server returns URL and other metadata.
+                                         (js/setTimeout
+                                          #(let [mock-url (str "/uploads/mock-" (.-name req-info.file))
+                                                 new-file-map {:uid (.-uid req-info.file) ; AntD generated UID
+                                                               :type "other" ; Or determine from file type or UI
+                                                               :filename (.-name req-info.file)
+                                                               :url mock-url
+                                                               :uploaded_by "doctor"
+                                                               :uploaded_at (utils/date->iso-string (js/Date.now))}]
+                                             (rf/dispatch [::events/add-aux-exam-file new-file-map])
+                                             ((.-onSuccess req-info) {:status "done"} req-info.file))
+                                          1000))
+                        :listType "picture-card"
+                        :fileList (mapv (fn [file-map]
+                                          {:uid (or (:uid file-map) (:url file-map)) ; Ensure UID is present, use URL if no UID
+                                           :name (:filename file-map)
+                                           :status "done" ; Assuming all files from DB are "done"
+                                           :url (:url file-map)
+                                           ;; Store original canonical map for removal if needed
+                                           :canonicalData file-map})
+                                        aux-exams)
+                        :onPreview handle-preview
+                        :onRemove (fn [file]
+                                    ;; Remove by UID if present, otherwise by URL (from canonicalData if needed)
+                                    (let [uid-or-url (or (.-uid file) (get-in file [:canonicalData :url]))]
+                                      (rf/dispatch [::events/remove-aux-exam-file uid-or-url])
+                                      true)) ; Return true to confirm removal from UI
+                        :multiple true}]
       [custom-styled-card
        [:> SolutionOutlined]
        "相关辅助检查检验结果"
@@ -583,8 +583,8 @@
           [:> Input.TextArea {;; :value (:preoperative_instructions anesthesia-plan-data) ; Let Form handle
                               :rows 3
                               :placeholder "请输入术前医嘱，例如禁食水时间、特殊准备等"
-                              :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:anesthesia_plan :preoperative_instructions] (-> % .-target .-value)])}]]]]]
-       [:> Empty {:description "暂无术前麻醉医嘱信息或未选择患者"}])])) ; Added empty state
+                              :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:anesthesia_plan :preoperative_instructions] (-> % .-target .-value)])}]]]])
+     [:> Empty {:description "暂无术前麻醉医嘱信息或未选择患者"}]]))
 
 ;; 辅助函数，用于显示签名和日期
 (defn- signature-and-date-card []
@@ -600,7 +600,7 @@
        [:> Input {:placeholder "记录医师姓名"
                   :value doctor-name
                   :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:basic_info :doctor_name] (-> % .-target .-value)])}]]
-      [:> Descriptions.Item {:label "评估更新日期"} 
+      [:> Descriptions.Item {:label "评估更新日期"}
        (utils/format-date assessment-updated-at "YYYY-MM-DD HH:mm")]]]))
 
 ;; 辅助函数，用于显示备注信息 (now part of basic_info)
