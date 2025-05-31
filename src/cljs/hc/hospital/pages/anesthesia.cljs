@@ -403,14 +403,14 @@
            (comorbidity-item :musculoskeletal "关节骨骼系统")
            (comorbidity-item :malignant_hyperthermia_fh "家族恶性高热史") ; Canonical key
            (comorbidity-item :anesthesia_surgery_history "既往麻醉、手术史") ; Canonical key
-           
+
            ;; 使用的特殊药物 - canonical path is [:comorbidities :special_medications]
            (let [base-path [:comorbidities :special_medications] ; Path for dispatch
                  form-item-base [:special_medications] ; Path for Form.Item name relative to comorbidities_data
                  has-taken-path (conj base-path :has_taken)
                  details-path (conj base-path :details)
                  last-dose-time-path (conj base-path :last_dose_time)
-                 
+
                  has-taken-value (get-in comorbidities-data [:special_medications :has_taken])]
              [:> Col {:span 24} ; 占据整行
               [:> Form.Item {:label "使用的特殊药物" :name (conj form-item-base :has_taken)}

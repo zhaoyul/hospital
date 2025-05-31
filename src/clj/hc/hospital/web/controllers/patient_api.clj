@@ -1,11 +1,13 @@
 (ns hc.hospital.web.controllers.patient-api
   (:require
-   [clojure.tools.logging :as log]
-   [ring.util.http-response :as http-response]
    [cheshire.core :as cheshire]
-   [clojure.string :as str])
-  (:import [com.hankcs.hanlp HanLP] ; Import HanLP
-           [java.time Instant]))
+   [clojure.string :as str]
+   [clojure.tools.logging :as log]
+   [clojure.tools.logging :as ctl]
+   [ring.util.http-response :as http-response])
+  (:import
+   [com.hankcs.hanlp HanLP] ; Import HanLP
+   [java.time Instant]))
 
 (defn- get-pinyin-parts [name-str]
   (if (str/blank? name-str)
@@ -21,10 +23,11 @@
   (log/info "接收到患者评估数据:" body)
   (try
     (let [current-time (str (Instant/now))
-          raw-basic-info (get body :basic-info {})
-          raw-medical-summary (get body :medical-summary {})
-          raw-comorbidities (get body :comorbidities {})
-          raw-aux-exams (get body :auxiliary-examination {})
+          raw-basic-info (:basic-info body {})
+          raw-medical-summary (:medical-summary body {})
+          raw-comorbidities (:comorbidities body {})
+          raw-aux-exams (:auxiliary-examination body {})
+          raw-physical-exam (:physical-examination body {})
 
           to-boolean (fn [val]
                        (cond
@@ -34,53 +37,84 @@
                                                 (str/blank? val)))
                          :else false))
 
+          parse-int-safe (fn [val]
+                           (try (some-> val str str/trim Integer/parseInt) (catch Exception _ nil)))
+
           transformed-data
-          {:basic_info {:outpatient_number (get raw-basic-info :outpatient-number)
-                        :name (get raw-basic-info :name)
-                        :gender (get raw-basic-info :gender)
-                        :age (try (some-> (get raw-basic-info :age) str/trim Integer/parseInt) (catch Exception _ nil))
+          {:basic_info {:outpatient_number (:outpatient-number raw-basic-info)
+                        :name (:name raw-basic-info)
+                        :gender (:gender raw-basic-info)
+                        :age (parse-int-safe (:age raw-basic-info))
                         :department nil
-                        :health_card_number (get raw-basic-info :health-card-number)
+                        :health_card_number (:id-number raw-basic-info)
                         :diagnosis nil
                         :planned_surgery nil
-                        :height nil  ; Doctor-filled, nil on submission
-                        :weight nil  ; Doctor-filled, nil on submission
+                        :height nil
+                        :weight nil
                         :patient_submitted_at current-time
                         :assessment_updated_at current-time
                         :assessment_status "待评估"
                         :doctor_name nil
                         :assessment_notes nil}
-           :medical_history {:allergy {:has_history (to-boolean (get raw-medical-summary :allergy-history))
-                                       :details (get raw-medical-summary :allergy-details)
-                                       :last_reaction_date (get raw-medical-summary :allergy-last-reaction-date)}
-                             :smoking {:has_history (to-boolean (get raw-medical-summary :smoking-history))
-                                       :years (try (some-> (get raw-medical-summary :smoking-years) str/trim Integer/parseInt) (catch Exception _ nil))
-                                       :cigarettes_per_day (try (some-> (get raw-medical-summary :smoking-cigarettes-per-day) str/trim Integer/parseInt) (catch Exception _ nil))}
-                             :drinking {:has_history (to-boolean (get raw-medical-summary :drinking-history))
-                                        :years (try (some-> (get raw-medical-summary :drinking-years) str/trim Integer/parseInt) (catch Exception _ nil))
-                                        :alcohol_per_day (get raw-medical-summary :drinking-alcohol-per-day)}}
-           :physical_examination {:mental_state nil, :activity_level nil,
-                                  :bp_systolic nil, :bp_diastolic nil, :heart_rate nil,
-                                  :respiratory_rate nil, :temperature nil, :spo2 nil,
-                                  :heart {:status nil, :notes nil}, :lungs {:status nil, :notes nil},
-                                  :airway {:status nil, :notes nil}, :teeth {:status nil, :notes nil},
-                                  :spine_limbs {:status nil, :notes nil}, :neuro {:status nil, :notes nil},
-                                  :other_findings nil}
-           :comorbidities {:respiratory {:has (to-boolean (get raw-comorbidities :respiratory)) :details (get raw-comorbidities :respiratory_details)}
-                           :cardiovascular {:has (to-boolean (get raw-comorbidities :cardiovascular)) :details (get raw-comorbidities :cardiovascular_details)}
-                           :endocrine {:has (to-boolean (get raw-comorbidities :endocrine)) :details (get raw-comorbidities :endocrine_details)}
-                           :neuro_psychiatric {:has (to-boolean (get raw-comorbidities :neuro_psychiatric)) :details (get raw-comorbidities :neuro_psychiatric_details)}
-                           :neuromuscular {:has (to-boolean (get raw-comorbidities :neuromuscular)) :details (get raw-comorbidities :neuromuscular_details)}
-                           :hepatic {:has (to-boolean (get raw-comorbidities :hepatic)) :details (get raw-comorbidities :hepatic_details)}
-                           :renal {:has (to-boolean (get raw-comorbidities :renal)) :details (get raw-comorbidities :renal_details)}
-                           :musculoskeletal {:has (to-boolean (get raw-comorbidities :musculoskeletal)) :details (get raw-comorbidities :musculoskeletal_details)}
-                           :malignant_hyperthermia_fh {:has (to-boolean (get raw-comorbidities :malignant_hyperthermia_fh)) :details (get raw-comorbidities :malignant_hyperthermia_fh_details)}
-                           :anesthesia_surgery_history {:has (to-boolean (get raw-comorbidities :anesthesia_surgery_history)) :details (get raw-comorbidities :anesthesia_surgery_history_details)}
-                           :special_medications {:has_taken (to-boolean (get raw-comorbidities :special_medications_taken)) :details (get raw-comorbidities :special_medications_details) :last_dose_time (get raw-comorbidities :special_medications_last_dose)}}
+           :medical_history (ctl/spy :info {:allergy {:has_history (to-boolean (:allergy-history raw-medical-summary))
+                                                      :details (:allergen raw-medical-summary)
+                                                      :last_reaction_date (:allergy-date raw-medical-summary)}
+                                            :smoking {:has_history (to-boolean (:smoking-history raw-medical-summary))
+                                                      :years (parse-int-safe (:smoking-years raw-medical-summary))
+                                                      :cigarettes_per_day (parse-int-safe (:cigarettes-per-day raw-medical-summary))}
+                                            :drinking {:has_history (to-boolean (:drinking-history raw-medical-summary))
+                                                       :years (parse-int-safe (:drinking-years raw-medical-summary))
+                                                       :alcohol_per_day (:alcohol-per-day raw-medical-summary)}})
+           :physical_examination {:mental_state nil
+                                  :activity_level nil
+                                  :bp_systolic nil
+                                  :bp_diastolic nil
+                                  :heart_rate nil
+                                  :respiratory_rate nil
+                                  :temperature nil
+                                  :spo2 nil
+                                  :heart {:status (:heart raw-physical-exam)
+                                          :notes (:heart-detail raw-physical-exam)}
+                                  :lungs {:status (:lungs raw-physical-exam)
+                                          :notes (:lungs-detail raw-physical-exam)}
+                                  :airway {:status (:airway raw-physical-exam)
+                                           :notes (:airway-detail raw-physical-exam)}
+                                  :teeth {:status (:teeth raw-physical-exam)
+                                          :notes (:teeth-detail raw-physical-exam)}
+                                  :spine_limbs {:status (:spine-limbs raw-physical-exam)
+                                                :notes (:spine-limbs-detail raw-physical-exam)}
+                                  :neuro {:status (:nervous raw-physical-exam)
+                                          :notes (:nervous-detail raw-physical-exam)}
+                                  :other_findings (:other raw-physical-exam)}
+           :comorbidities (let [get-comorb-data (fn [comorb-map key-path] (get-in comorb-map key-path))
+                                spec-meds-info (:special-medications raw-comorbidities {})]
+                            {:respiratory {:has (to-boolean (get-comorb-data raw-comorbidities [:respiratory-disease :has]))
+                                           :details (get-comorb-data raw-comorbidities [:respiratory-disease :details])}
+                             :cardiovascular {:has (to-boolean (get-comorb-data raw-comorbidities [:cardiovascular-disease :has]))
+                                              :details (get-comorb-data raw-comorbidities [:cardiovascular-disease :details])}
+                             :endocrine {:has (to-boolean (get-comorb-data raw-comorbidities [:endocrine-disease :has]))
+                                         :details (get-comorb-data raw-comorbidities [:endocrine-disease :details])}
+                             :neuro_psychiatric {:has (to-boolean (get-comorb-data raw-comorbidities [:neuropsychiatric-disease :has]))
+                                                 :details (get-comorb-data raw-comorbidities [:neuropsychiatric-disease :details])}
+                             :neuromuscular {:has (to-boolean (get-comorb-data raw-comorbidities [:neuromuscular-disease :has]))
+                                             :details (get-comorb-data raw-comorbidities [:neuromuscular-disease :details])}
+                             :hepatic {:has (to-boolean (get-comorb-data raw-comorbidities [:liver-disease :has]))
+                                       :details (get-comorb-data raw-comorbidities [:liver-disease :details])}
+                             :renal {:has (to-boolean (get-comorb-data raw-comorbidities [:kidney-disease :has]))
+                                     :details (get-comorb-data raw-comorbidities [:kidney-disease :details])}
+                             :musculoskeletal {:has (to-boolean (get-comorb-data raw-comorbidities [:skeletal-system-disease :has]))
+                                               :details (get-comorb-data raw-comorbidities [:skeletal-system-disease :details])}
+                             :malignant_hyperthermia_fh {:has (to-boolean (get-comorb-data raw-comorbidities [:family-malignant-hyperthermia :has]))
+                                                         :details (get-comorb-data raw-comorbidities [:family-malignant-hyperthermia :details])}
+                             :anesthesia_surgery_history {:has (to-boolean (get-comorb-data raw-comorbidities [:past-anesthesia-surgery :has]))
+                                                          :details (get-comorb-data raw-comorbidities [:past-anesthesia-surgery :details])}
+                             :special_medications {:has_taken (to-boolean (:used spec-meds-info))
+                                                   :details (:details spec-meds-info)
+                                                   :last_dose_time (:last-time spec-meds-info)}})
            :auxiliary_examinations (if (seq raw-aux-exams)
                                      (mapv (fn [[exam-key exam-path]]
                                              {:type (name exam-key)
-                                              :filename (last (str/split exam-path #"/"))
+                                              :filename (some-> exam-path (str/split #"/") last)
                                               :url exam-path
                                               :uploaded_by "patient"
                                               :uploaded_at current-time})
@@ -91,9 +125,9 @@
 
           patient-id (get-in transformed-data [:basic_info :outpatient_number])
           patient-name (get-in transformed-data [:basic_info :name] "")
-          {:keys [pinyin initial]} (get-pinyin-parts patient-name)
+          {:keys [pinyin initial]} (get-pinyin-parts patient-name) ; Assuming get-pinyin-parts is available
           assessment-data-json (cheshire/generate-string transformed-data)]
-      (if (str/blank? patient-id)
+      (if (str/blank? (str patient-id)) ; Ensure patient-id is treated as string for blank? check
         (do
           (log/error "患者ID (outpatient_number) 未在 basic_info 中提供。")
           (http-response/bad-request {:message "提交失败，患者ID不能为空。"}))
@@ -118,6 +152,8 @@
     (catch Exception e
       (log/error e "提交/更新评估时出错" (ex-message e) (ex-data e))
       (http-response/internal-server-error {:message (str "提交/更新评估时出错: " (ex-message e))}))))
+
+
 
 (defn get-assessment-by-patient-id [{{{:keys [patient-id]} :path} :parameters :keys [query-fn] :as _request}]
   (log/info "查询患者评估数据，患者ID:" patient-id)
