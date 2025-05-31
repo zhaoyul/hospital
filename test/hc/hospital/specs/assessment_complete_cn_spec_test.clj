@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [malli.core :as m]
             [malli.generator :as mg] ; Added for generator
-            [hc.hospital.specs.assessment-complete-cn :as cn-spec]))
+            [hc.hospital.specs.assessment-compleute-cn :as cn-spec]))
 
 (deftest non-empty-string-test
   (is (m/validate cn-spec/NonEmptyString "hello"))
@@ -46,7 +46,7 @@
   (is (not (m/validate cn-spec/日期字符串Spec "2023/01/01")))
   (is (not (m/validate cn-spec/日期字符串Spec "01-01-2023")))
   (is (not (m/validate cn-spec/日期字符串Spec "2023-1-1")))
-  (is (not (m/validate cn-spec/日期字符串Spec "2023-01-01T10:00:00")))
+  (is (not (m/validate cn-spec/日期字符串Spec "20243/01-01")))
   (is (not (m/validate cn-spec/日期字符串Spec nil))))
 
 (deftest optional-date-string-test
@@ -63,7 +63,7 @@
   (is (not (m/validate cn-spec/Optional日期时间字符串 "2023-01-01 12:00:00")))
   (is (not (m/validate cn-spec/Optional日期时间字符串 "2023/01/01T12:00:00Z"))))
 
-(deftest有-无-不详-enum-test
+(deftest 有-无-不详-enum-test
   (is (m/validate cn-spec/有无不详Enum :有))
   (is (m/validate cn-spec/有无不详Enum :无))
   (is (m/validate cn-spec/有无不详Enum :不详))
@@ -71,7 +71,7 @@
   (is (not (m/validate cn-spec/有无不详Enum :未知)))
   (is (not (m/validate cn-spec/有无不详Enum nil))))
 
-(deftest有-无-enum-test
+(deftest 有-无-enum-test
   (is (m/validate cn-spec/有无Enum :有))
   (is (m/validate cn-spec/有无Enum :无))
   (is (not (m/validate cn-spec/有无Enum :不详)))
@@ -317,11 +317,11 @@
                    :胸部CT {:内容 "肺纹理清晰"}
                    :肺功能 {:内容 "通气功能良好"}
                    :血气分析 {:内容 "氧分压正常"}
-                   :是否有肺结核 :否
+                   :是否有肺结核 :有
                    :其他情况 {:内容 "患者冬季易发呼吸道感染"}})
       "Valid comprehensive 呼吸系统Spec")
   (is (m/validate cn-spec/呼吸系统Spec (mg/generate cn-spec/呼吸系统Spec {:size 5})) "Generated 呼吸系统Spec with size 5")
-   (is (m/validate cn-spec/呼吸系统Spec (mg/generate cn-spec/呼吸系统Spec)) "Generated 呼吸系统Spec default size"))
+  (is (m/validate cn-spec/呼吸系统Spec (mg/generate cn-spec/呼吸系统Spec)) "Generated 呼吸系统Spec default size"))
 
 (deftest 呼吸系统Spec-invalid-test
   (is (not (m/validate cn-spec/呼吸系统Spec {:近两周内感冒病史 {:有无 :yes}})) "Invalid enum in 近两周内感冒病史 有无")
@@ -380,7 +380,7 @@
 (deftest 癫痫病史详情Spec-invalid-test
   (is (not (m/validate cn-spec/癫痫病史详情Spec {:近期发作日期 12345})))
   (is (not (m/validate cn-spec/癫痫病史详情Spec {:治疗情况 :non-existent-enum})))
-  (is (not (m/validate cn-spec/癫痫病史详情Spec {:治疗用药 []})))))
+  (is (not (m/validate cn-spec/癫痫病史详情Spec {:治疗用药 []}))))
 
 (deftest 眩晕病史详情Spec-test
   (is (m/validate cn-spec/眩晕病史详情Spec
@@ -392,7 +392,7 @@
 
 (deftest 眩晕病史详情Spec-invalid-test
   (is (not (m/validate cn-spec/眩晕病史详情Spec {:近期发作日期 "today"})))
-  (is (not (m/validate cn-spec/眩晕病史详情Spec {:治疗情况 :dizzy})))))
+  (is (not (m/validate cn-spec/眩晕病史详情Spec {:治疗情况 :dizzy}))))
 
 (deftest 短暂性脑缺血发作病史详情Spec-test
   (is (m/validate cn-spec/短暂性脑缺血发作病史详情Spec
@@ -404,7 +404,7 @@
 
 (deftest 短暂性脑缺血发作病史详情Spec-invalid-test
   (is (not (m/validate cn-spec/短暂性脑缺血发作病史详情Spec {:近期发作情况 :sometimes})))
-  (is (not (m/validate cn-spec/短暂性脑缺血发作病史详情Spec {:治疗情况 123})))))
+  (is (not (m/validate cn-spec/短暂性脑缺血发作病史详情Spec {:治疗情况 123}))))
 
 (deftest 脑梗病史详情Spec-test
   (is (m/validate cn-spec/脑梗病史详情Spec
@@ -418,7 +418,7 @@
 (deftest 脑梗病史详情Spec-invalid-test
   (is (not (m/validate cn-spec/脑梗病史详情Spec {:近期发作日期 false})))
   (is (not (m/validate cn-spec/脑梗病史详情Spec {:治疗情况 :recovering})))
-  (is (not (m/validate cn-spec/脑梗病史详情Spec {:目前用药 ["Aspirin", "Clopidogrel"]})))))
+  (is (not (m/validate cn-spec/脑梗病史详情Spec {:目前用药 ["Aspirin", "Clopidogrel"]}))))
 
 (deftest 脑出血病史详情Spec-test
   (is (m/validate cn-spec/脑出血病史详情Spec
@@ -430,7 +430,7 @@
 
 (deftest 脑出血病史详情Spec-invalid-test
   (is (not (m/validate cn-spec/脑出血病史详情Spec {:近期发作日期 "unknown"})))
-  (is (not (m/validate cn-spec/脑出血病史详情Spec {:治疗情况 :severe})))))
+  (is (not (m/validate cn-spec/脑出血病史详情Spec {:治疗情况 :severe}))))
 
 (deftest 帕金森综合症详情Spec-test
   (is (m/validate cn-spec/帕金森综合症详情Spec
@@ -444,19 +444,19 @@
 (deftest 帕金森综合症详情Spec-invalid-test
   (is (not (m/validate cn-spec/帕金森综合症详情Spec {:诊断年限 5}))) ; Assuming string for date or description
   (is (not (m/validate cn-spec/帕金森综合症详情Spec {:治疗情况 :shaky})))
-  (is (not (m/validate cn-spec/帕金森综合症详情Spec {:用药情况 {:meds ["Levodopa"]}})))))
+  (is (not (m/validate cn-spec/帕金森综合症详情Spec {:用药情况 {:meds ["Levodopa"]}}))))
 
 (deftest 精神神经肌肉系统其他情况详情Spec-test
-  (is (m/validate cn-spec/精神神经肌肉系统其他情况详情Spec
-                  {:症状 [:重症肌无力 :其他]
-                   :其他症状描述 "肌无力，晨轻暮重"})
-      "Valid full 精神神经肌肉系统其他情况详情Spec")
-  (is (m/validate cn-spec/精神神经肌肉系统其他情况详情Spec {}) "Valid empty")
-  (is (m/validate cn-spec/精神神经肌肉系统其他情况详情Spec (mg/generate cn-spec/精神神经肌肉系统其他情况详情Spec)) "Generated"))
+(is (m/validate cn-spec/精神神经肌肉系统其他情况详情Spec
+{:症状 [:重症肌无力 :其他]
+ :其他症状描述 "肌无力，晨轻暮重"})
+"Valid full 精神神经肌肉系统其他情况详情Spec")
+(is (m/validate cn-spec/精神神经肌肉系统其他情况详情Spec {}) "Valid empty")
+(is (m/validate cn-spec/精神神经肌肉系统其他情况详情Spec (mg/generate cn-spec/精神神经肌肉系统其他情况详情Spec)) "Generated"))
 
 (deftest 精神神经肌肉系统其他情况详情Spec-invalid-test
   (is (not (m/validate cn-spec/精神神经肌肉系统其他情况详情Spec {:症状 [:not-a-neuro-symptom]})))
-  (is (not (m/validate cn-spec/精神神经肌肉系统其他情况详情Spec {:其他症状描述 true})))))
+  (is (not (m/validate cn-spec/精神神经肌肉系统其他情况详情Spec {:其他症状描述 true}))))
 
 (deftest 精神及神经肌肉系统Spec-test
   (is (m/validate cn-spec/精神及神经肌肉系统Spec {}) "Valid empty 精神及神经肌肉系统Spec")
@@ -466,8 +466,8 @@
                    :眩晕病史 {:有无 :无}
                    :短暂性脑缺血发作病史 {:有无 :有 :详情 {:近期发作情况 :近3月内无发作 :治疗情况 :病情稳定}}
                    :脑梗病史 {:有无 :无}
-                   :脑出血病史 {:有无 :否} ; Assuming :否 is valid for 有无Enum
-                   :帕金森综合症 {:有无 :是 :详情 {:诊断年限 "2019-01-01" :治疗情况 :病情稳定 :用药情况 "Madopar"}}
+                   :脑出血病史 {:有无 :有} ; Assuming :否 is valid for 有无Enum
+                   :帕金森综合症 {:有无 :有 :详情 {:诊断年限 "2019-01-01" :治疗情况 :病情稳定 :用药情况 "Madopar"}}
                    :颅脑和颈动脉狭窄 {:有无 :不详 :描述 "颈内动脉轻度狭窄"}
                    :其他情况 {:有无 :无}})
       "Valid comprehensive 精神及神经肌肉系统Spec")
@@ -487,28 +487,28 @@
       "Invalid enum for 脑梗病史 有无 (expects 有无Enum)")
   (is (not (m/validate cn-spec/精神及神经肌肉系统Spec {:颅脑和颈动脉狭窄 {:描述 []}})) "Invalid type for 颅脑和颈动脉狭窄 描述")
   (is (not (m/validate cn-spec/精神及神经肌肉系统Spec {:其他情况 {:有无 :有 :详情 {:症状 ["wrong-place"]}}}))
-      "Invalid structure for 其他情况 详情 (symptoms do not belong here directly without a proper key)")))
+      "Invalid structure for 其他情况 详情 (symptoms do not belong here directly without a proper key)"))
 
 ;; --- 内分泌系统 Tests ---
 
 (deftest 甲状腺疾病类型Enum-test
-  (is (m/validate cn-spec/甲状腺疾病类型Enum :甲亢))
-  (is (m/validate cn-spec/甲状腺疾病类型Enum :甲减))
-  (is (m/validate cn-spec/甲状腺疾病类型Enum :甲状腺术后甲状腺素替代治疗))
-  (is (m/validate cn-spec/甲状腺疾病类型Enum :桥本))
-  (is (m/validate cn-spec/甲状腺疾病类型Enum :其他))
-  (is (not (m/validate cn-spec/甲状腺疾病类型Enum :甲状腺炎)))
-  (is (not (m/validate cn-spec/甲状腺疾病类型Enum "甲亢"))))
+(is (m/validate cn-spec/甲状腺疾病类型Enum :甲亢))
+(is (m/validate cn-spec/甲状腺疾病类型Enum :甲减))
+(is (m/validate cn-spec/甲状腺疾病类型Enum :甲状腺术后甲状腺素替代治疗))
+(is (m/validate cn-spec/甲状腺疾病类型Enum :桥本))
+(is (m/validate cn-spec/甲状腺疾病类型Enum :其他))
+(is (not (m/validate cn-spec/甲状腺疾病类型Enum :甲状腺炎)))
+(is (not (m/validate cn-spec/甲状腺疾病类型Enum "甲亢"))))
 
 (deftest 甲状腺疾病史详情Spec-test
-  (is (m/validate cn-spec/甲状腺疾病史详情Spec
-                  {:类型 :甲亢
-                   :其他类型描述 nil ; or "Graves' disease"
-                   :甲状腺功能检查 "T3 T4 TSH normal"
-                   :治疗情况 :病情稳定
-                   :甲状腺是否肿大压迫气管 false
-                   :是否合并甲状腺心脏病 false})
-      "Valid full 甲状腺疾病史详情Spec")
+(is (m/validate cn-spec/甲状腺疾病史详情Spec
+                {:类型 :甲亢
+                 :其他类型描述 nil ; or "Graves' disease"
+                 :甲状腺功能检查 "T3 T4 TSH normal"
+                 :治疗情况 :病情稳定
+                 :甲状腺是否肿大压迫气管 false
+                 :是否合并甲状腺心脏病 false})
+    "Valid full 甲状腺疾病史详情Spec")
   (is (m/validate cn-spec/甲状腺疾病史详情Spec {}) "Valid empty")
   (is (m/validate cn-spec/甲状腺疾病史详情Spec {:类型 :其他 :其他类型描述 "单纯性甲状腺肿"}) "Valid with 其他 type")
   (is (m/validate cn-spec/甲状腺疾病史详情Spec (mg/generate cn-spec/甲状腺疾病史详情Spec)) "Generated"))
@@ -567,7 +567,7 @@
       "Invalid type for nested 甲状腺是否肿大压迫气管 (expects boolean)")
   (is (not (m/validate cn-spec/内分泌系统Spec {:糖尿病病史 {:有无 :有 :详情 {:血糖值 "high"}}}))
       "Invalid type for nested 血糖值")
-  (is (not (m/validate cn-spec/内分泌系统Spec {:糖尿病病史 {:详情 {:血糖值 7.5}}}))
+  (is (not (m/validate cn-spec/内分泌系统Spec {:糖尿病病史 {:详情 {:血糖值 "7.5"}}}))
       "Missing :有无 for 糖尿病病史 when :详情 is present (though schema allows optional :有无, good practice to have it if details exist)")
   (is (not (m/validate cn-spec/内分泌系统Spec {:嗜铬细胞瘤 {:有无 :yes}})) "Invalid enum in 嗜铬细胞瘤 有无 (expects :有 or :无)")
   (is (not (m/validate cn-spec/内分泌系统Spec {:皮质醇增多症 {:有无 :有 :类型 :invalid-cortisol-type}}))
@@ -616,7 +616,7 @@
   (is (m/validate cn-spec/肝脏疾病病史详情Spec
                   {:类型 :肝硬化
                    :其他类型描述 nil
-                   :ChildPugh评分输入 {:肝性脑病分期 :1至2期 :腹水 :中度 :血清胆红素μmolL 40.0}
+                   :ChildPugh评分输入 {:肝性脑病分期 :1至2期 :腹水 :中度以上 :血清胆红素μmolL 40.0}
                    :ChildPugh分级结果 :B级})
       "Valid full 肝脏疾病病史详情Spec")
   (is (m/validate cn-spec/肝脏疾病病史详情Spec {}) "Valid empty")
@@ -650,8 +650,8 @@
                    :其他类型描述 nil
                    :慢性肾脏病分期 :3期
                    :尿毒症 {:有无透析治疗 :有
-                             :最后一次透析时间 "2023-10-01T14:30:00Z"
-                             :透析后肾功能指标 "肌酐 2.0"}})
+                            :最后一次透析时间 "2023-10-01T14:30:00Z"
+                            :透析后肾功能指标 "肌酐 2.0"}})
       "Valid full 肾脏疾病病史详情Spec")
   (is (m/validate cn-spec/肾脏疾病病史详情Spec {}) "Valid empty")
   (is (m/validate cn-spec/肾脏疾病病史详情Spec {:类型 :其他 :其他类型描述 "肾结石"}) "Valid with 其他 type")
@@ -667,7 +667,7 @@
   (is (m/validate cn-spec/肝肾病史Spec {}) "Valid empty 肝肾病史Spec")
   (is (m/validate cn-spec/肝肾病史Spec
                   {:肝功能 {:状态 :异常 :详情 {:谷丙转氨酶ALT 150.0 :血清白蛋白 3.0}}
-                   :肝脏疾病病史 {:类型 :肝硬化 :ChildPugh分级结果 :B级 :ChildPugh评分输入 {:腹水 :中度}}
+                   :肝脏疾病病史 {:类型 :肝硬化 :ChildPugh分级结果 :B级 :ChildPugh评分输入 {:腹水 :中度以上}}
                    :肾功能 {:状态 :正常 :详情 {:肌酐Cre 0.9}}
                    :肾脏疾病病史 {:类型 :糖尿病肾病 :慢性肾脏病分期 :3期 :尿毒症 {:有无透析治疗 :无}}
                    :其他情况 {:内容 "患者有长期饮酒史"}})

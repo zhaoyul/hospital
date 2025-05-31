@@ -48,6 +48,8 @@
                                 ring/ring-mock                  {:mvn/version "0.4.0"}
                                 io.github.kit-clj/kit-generator {:mvn/version "0.2.5"}
                                 org.clojure/tools.namespace     {:mvn/version "1.4.4"}
+                                org.clojure/test.check          {:mvn/version "1.1.1"}
+                                com.gfredericks/test.chuck      {:mvn/version "0.2.15"}
                                 }
                   :extra-paths ["env/dev/clj" "env/dev/resources" "test/clj" "target/classes/cljsbuild"]}
            :nrepl {:extra-deps {nrepl/nrepl {:mvn/version "1.1.0"}}

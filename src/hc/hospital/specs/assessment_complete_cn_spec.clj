@@ -6,7 +6,7 @@
 (def NonEmptyString (m/schema [:string {:min 1}]))
 (def OptionalString (m/schema [:maybe :string]))
 (def OptionalPositiveInt (m/schema [:maybe [:int {:min 0}]])) ; 用于年龄、年数等
-(def OptionalNumber (m/schema [:maybe :double])) ; 用于带小数点的数值
+(def OptionalNumber (m/schema [:maybe [:or :int :double]])) ; 用于带小数点的数值
 (def OptionalBoolean (m/schema [:maybe :boolean]))
 
 ;; 日期和时间格式
@@ -760,7 +760,7 @@
 ;; --- 整体评估数据 Spec (使用中文关键字) ---
 (def 患者评估数据Spec
   (m/schema
-   [:map {:closed true} ; 推荐使用 closed，防止意外的键
+   [:map {:closed true}               ; 推荐使用 closed，防止意外的键
     ;; 基本信息部分 (可能由患者填写，医生补充)
     [:基本信息
      [:map
@@ -768,26 +768,26 @@
       [:姓名 NonEmptyString]
       [:身份证号 OptionalString]
       [:手机号 OptionalString]
-      [:性别 [:enum "男" "女" "其他"]] ; 必填
-      [:年龄 [:int {:min 0 :max 150}]] ; 必填
-      [:院区 OptionalString] ; 或使用枚举
+      [:性别 [:enum "男" "女" "其他"]]  ; 必填
+      [:年龄 [:int {:min 0 :max 150}]]  ; 必填
+      [:院区 OptionalString]            ; 或使用枚举
       ;; 以下可能由系统或医生填写/更新
       [:患者提交时间 {:optional true} Optional日期时间字符串]
       [:评估更新时间 {:optional true} Optional日期时间字符串]
       [:评估状态 {:optional true} [:enum "待评估" "已批准" "已驳回" "已暂缓" "评估中"]]
       [:医生姓名 {:optional true} OptionalString]
       [:评估备注 {:optional true} OptionalString]
-      [:身高cm {:optional true} OptionalNumber] ; 医生补充
-      [:体重kg {:optional true} OptionalNumber] ; 医生补充
-      [:精神状态 {:optional true} OptionalString] ; 医生补充
-      [:活动能力 {:optional true} OptionalString] ; 医生补充
-      [:血压mmHg {:optional true} OptionalString] ; 如 "120/80"，医生补充
+      [:身高cm {:optional true} OptionalNumber]          ; 医生补充
+      [:体重kg {:optional true} OptionalNumber]          ; 医生补充
+      [:精神状态 {:optional true} OptionalString]        ; 医生补充
+      [:活动能力 {:optional true} OptionalString]        ; 医生补充
+      [:血压mmHg {:optional true} OptionalString]        ; 如 "120/80"，医生补充
       [:脉搏次每分 {:optional true} OptionalPositiveInt] ; 医生补充
       [:呼吸次每分 {:optional true} OptionalPositiveInt] ; 医生补充
-      [:体温摄氏度 {:optional true} OptionalNumber] ; 医生补充
+      [:体温摄氏度 {:optional true} OptionalNumber]      ; 医生补充
       [:SpO2百分比 {:optional true} OptionalPositiveInt] ; 医生补充
-      [:术前诊断 {:optional true} OptionalString] ; 医生补充
-      [:拟施手术 {:optional true} OptionalString] ; 医生补充
+      [:术前诊断 {:optional true} OptionalString]        ; 医生补充
+      [:拟施手术 {:optional true} OptionalString]        ; 医生补充
       ]]
 
     ;; 各系统评估 (大部分由医生填写或确认)
@@ -834,9 +834,9 @@
       [:暂缓人 {:optional true} OptionalString]
       [:暂缓时间 {:optional true} Optional日期时间字符串]
       [:暂缓原因 {:optional true} OptionalString]]]
-    [:知情同意书 {:optional true} ; 根据需求文档添加
+    [:知情同意书 {:optional true}       ; 根据需求文档添加
      [:map
       [:状态 {:optional true} [:maybe [:enum :未签署 :已签署 :待签署]]]
       [:签署时间 {:optional true} Optional日期时间字符串]
       [:签署医生 {:optional true} OptionalString]
-      [:内容或模板引用 {:optional true} OptionalString]]] ; 指向模板或存储内容]))
+      [:内容或模板引用 {:optional true} OptionalString]]]]))
