@@ -27,7 +27,7 @@
   (dayjs))
 
 ;; 将日期转换为dayjs对象（与moment兼容的接口）
-(defn to-moment
+(defn to-dayjs
   "将日期字符串或普通JS日期对象转换为dayjs对象（用于日期选择器等组件）"
   [date]
   (when date
@@ -42,7 +42,16 @@
   (when date
     (if (string? date)
       date
-      (.format (dayjs date) "YYYY-MM-DD"))))
+      (if (instance? js/Object date) ; Check if it's a dayjs object
+        (.format date "YYYY-MM-DD")
+        (.format (dayjs date) "YYYY-MM-DD"))))) ; Fallback for other types, though dayjs objects should be passed
+
+(defn datetime->string
+  "Formats a dayjs object to a string using the provided format.
+   Returns nil if the input is not a valid dayjs object."
+  [d format-string]
+  (when (and d (instance? js/Object d) (.isValid (dayjs d))) ; Ensure d is a dayjs object and valid
+    (.format (dayjs d) format-string)))
 
 ;; 将数字转换为罗马数字
 (defn to-roman

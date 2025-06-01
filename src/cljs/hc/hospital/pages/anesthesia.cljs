@@ -17,6 +17,13 @@
    [re-frame.core :as rf]
    [reagent.core :as r]))
 
+;; Define common grid style maps and helper function
+(def ^:private grid-style-4-col
+  {:display "grid", :gridTemplateColumns "repeat(4, 1fr)", :gap "0px 16px"})
+
+(defn ^:private grid-col-span-style [span]
+  {:gridColumn (str "span " span)})
+
 
 (defn patient-list-filters []
   (let [date-range @(rf/subscribe [::subs/date-range])
@@ -113,9 +120,7 @@
                  :initialValues (clj->js basic-info)
                  ;; Add a key to force re-render when patient changes, ensuring initialValues are applied
                  :key (get basic-info :outpatient_number)}
-        [:div {:style {:display "grid"
-                       :gridTemplateColumns "repeat(4, 1fr)" ; 4 列
-                       :gap "0px 16px"}} ; 列间距
+        [:div {:style grid-style-4-col}
 
          [:> Form.Item {:label "门诊号" :name :outpatient_number ; Matches canonical
                         :rules [{:required true :message "请输入门诊号!"}]}
@@ -141,23 +146,23 @@
                            :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:basic_info :age] %])}]]
 
          [:> Form.Item {:label "病区" :name :department ; Matches canonical
-                        :style {:gridColumn "span 2"}}
+                        :style (grid-col-span-style 2)}
           [:> Input {:placeholder "请输入病区"
                      :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:basic_info :department] (-> % .-target .-value)])}]]
 
          [:> Form.Item {:label "电子健康卡号" :name :health_card_number ; Matches canonical
-                        :style {:gridColumn "span 2"}}
+                        :style (grid-col-span-style 2)}
           [:> Input {:placeholder "请输入电子健康卡号 (可选)"
                      :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:basic_info :health_card_number] (-> % .-target .-value)])}]]
 
          [:> Form.Item {:label "术前诊断" :name :diagnosis ; Matches canonical
-                        :style {:gridColumn "span 4"}}
+                        :style (grid-col-span-style 4)}
           [:> Input.TextArea {:placeholder "请输入术前诊断"
                               :rows 2
                               :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:basic_info :diagnosis] (-> % .-target .-value)])}]]
 
          [:> Form.Item {:label "拟施手术" :name :planned_surgery ; Matches canonical
-                        :style {:gridColumn "span 4"}}
+                        :style (grid-col-span-style 4)}
           [:> Input.TextArea {:placeholder "请输入拟施手术"
                               :rows 2
                               :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:basic_info :planned_surgery] (-> % .-target .-value)])}]]]]
@@ -190,10 +195,7 @@
                    :key patient-id} ; Key to re-initialize form when patient changes
           ;; 第一部分：身高、体重、精神状态、活动能力
           [:div {:key "vital-signs-group-1"}
-           [:div {:style {:display "grid"
-                          :gridTemplateColumns "repeat(4, 1fr)"
-                          :gap "0px 16px"
-                          :marginBottom "16px"}}
+            [:div {:style (assoc grid-style-4-col :marginBottom "16px")}
             [:> Form.Item {:label "身高" :name :height} ; Matches canonical
              [:> InputNumber {:placeholder "cm"
                               :addonAfter "cm"
@@ -275,6 +277,79 @@
                               :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:physical_examination :spo2] %])}]]]]]
          [:> Empty {:description "暂无一般情况信息或未选择患者"}])])))
 
+(defn- render-allergy-section [medical-history]
+  [:div {:style {:marginBottom "16px"}}
+   [:> Form.Item {:label "过敏史" :name [:allergy :has_history]} ; Path matches canonical
+    [:> Radio.Group {;; :value (get-in medical-history [:allergy :has_history]) ; Let Form handle
+                     :onChange #(let [val (-> % .-target .-value)]
+                                  (rf/dispatch [::events/update-canonical-assessment-field [:medical_history :allergy :has_history] val])
+                                  (when-not val ; If "no", clear details
+                                    (rf/dispatch [::events/update-canonical-assessment-field [:medical_history :allergy :details] nil])
+                                    (rf/dispatch [::events/update-canonical-assessment-field [:medical_history :allergy :last_reaction_date] nil])))}
+     [:> Radio {:value false} "无"]
+     [:> Radio {:value true} "有"]]]
+   (when (get-in medical-history [:allergy :has_history])
+     [:<>
+      [:> Form.Item {:label "过敏详情" :name [:allergy :details]} ; Path matches canonical
+       [:> Input {;; :value (get-in medical-history [:allergy :details]) ; Let Form handle
+                  :placeholder "请输入过敏源及症状"
+                  :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:medical_history :allergy :details] (-> % .-target .-value)])}]]
+      [:> Form.Item {:label "最近反应日期" :name [:allergy :last_reaction_date]} ; Path matches canonical
+       [:> DatePicker {;; :value (utils/to-dayjs (get-in medical-history [:allergy :last_reaction_date])) ; Let Form handle
+                       :style {:width "100%"}
+                       :format "YYYY-MM-DD"
+                       :placeholder "请选择日期"
+                       :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:medical_history :allergy :last_reaction_date] (utils/date->iso-string %)])}]]]))])
+
+(defn- render-lifestyle-section [medical-history]
+  [:div
+   ;; 吸烟史
+   [:> Form.Item {:label "吸烟史" :name [:smoking :has_history]} ; Path matches canonical
+    [:> Radio.Group {;; :value (get-in medical-history [:smoking :has_history]) ; Let Form handle
+                     :onChange #(let [val (-> % .-target .-value)]
+                                  (rf/dispatch [::events/update-canonical-assessment-field [:medical_history :smoking :has_history] val])
+                                  (when-not val ; If "no", clear details
+                                    (rf/dispatch [::events/update-canonical-assessment-field [:medical_history :smoking :years] nil])
+                                    (rf/dispatch [::events/update-canonical-assessment-field [:medical_history :smoking :cigarettes_per_day] nil])))}
+     [:> Radio {:value false} "无"]
+     [:> Radio {:value true} "有"]]]
+   (when (get-in medical-history [:smoking :has_history])
+     [:> Row {:gutter 16}
+      [:> Col {:span 12}
+       [:> Form.Item {:label "吸烟年数" :name [:smoking :years]} ; Path matches canonical
+        [:> InputNumber {;; :value (get-in medical-history [:smoking :years]) ; Let Form handle
+                         :min 0 :addonAfter "年" :style {:width "100%"}
+                         :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:medical_history :smoking :years] %])}]]]
+      [:> Col {:span 12}
+       [:> Form.Item {:label "每天吸烟支数" :name [:smoking :cigarettes_per_day]} ; Path matches canonical
+        [:> InputNumber {;; :value (get-in medical-history [:smoking :cigarettes_per_day]) ; Let Form handle
+                         :min 0 :addonAfter "支" :style {:width "100%"}
+                         :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:medical_history :smoking :cigarettes_per_day] %])}]]]])
+
+   ;; 饮酒史
+   [:> Form.Item {:label "饮酒史" :name [:drinking :has_history] :style {:marginTop "8px"}} ; Path matches canonical
+    [:> Radio.Group {;; :value (get-in medical-history [:drinking :has_history]) ; Let Form handle
+                     :onChange #(let [val (-> % .-target .-value)]
+                                  (rf/dispatch [::events/update-canonical-assessment-field [:medical_history :drinking :has_history] val])
+                                  (when-not val ; If "no", clear details
+                                    (rf/dispatch [::events/update-canonical-assessment-field [:medical_history :drinking :years] nil])
+                                    (rf/dispatch [::events/update-canonical-assessment-field [:medical_history :drinking :alcohol_per_day] nil])))}
+     [:> Radio {:value false} "无"]
+     [:> Radio {:value true} "有"]]]
+   (when (get-in medical-history [:drinking :has_history])
+     [:> Row {:gutter 16}
+      [:> Col {:span 12}
+       [:> Form.Item {:label "饮酒年数" :name [:drinking :years]} ; Path matches canonical
+        [:> InputNumber {;; :value (get-in medical-history [:drinking :years]) ; Let Form handle
+                         :min 0 :addonAfter "年" :style {:width "100%"}
+                         :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:medical_history :drinking :years] %])}]]]
+      [:> Col {:span 12}
+       [:> Form.Item {:label "每天饮酒量" :name [:drinking :alcohol_per_day]} ; Path matches canonical
+        [:> Input {;; :value (get-in medical-history [:drinking :alcohol_per_day]) ; Let Form handle
+                   :placeholder "请输入饮酒量"
+                   :style {:width "100%"}
+                   :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:medical_history :drinking :alcohol_per_day] (-> % .-target .-value)])}]]]]])
+
 (defn- medical-history-summary-card []
   (let [medical-history @(rf/subscribe [::subs/canonical-medical-history]) ; Use new subscription
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])] ; For Form key
@@ -286,78 +361,8 @@
        [:> Form {:layout "horizontal" :labelCol {:span 6} :wrapperCol {:span 18} :labelAlign "left"
                  :initialValues (clj->js medical-history)
                  :key patient-id} ; Key for re-initialization
-        ;; 过敏史
-        [:div {:style {:marginBottom "16px"}}
-         [:> Form.Item {:label "过敏史" :name [:allergy :has_history]} ; Path matches canonical
-          [:> Radio.Group {;; :value (get-in medical-history [:allergy :has_history]) ; Let Form handle
-                           :onChange #(let [val (-> % .-target .-value)]
-                                        (rf/dispatch [::events/update-canonical-assessment-field [:medical_history :allergy :has_history] val])
-                                        (when-not val ; If "no", clear details
-                                          (rf/dispatch [::events/update-canonical-assessment-field [:medical_history :allergy :details] nil])
-                                          (rf/dispatch [::events/update-canonical-assessment-field [:medical_history :allergy :last_reaction_date] nil])))}
-           [:> Radio {:value false} "无"]
-           [:> Radio {:value true} "有"]]]
-         (when (get-in medical-history [:allergy :has_history])
-           [:<>
-            [:> Form.Item {:label "过敏详情" :name [:allergy :details]} ; Path matches canonical
-             [:> Input {;; :value (get-in medical-history [:allergy :details]) ; Let Form handle
-                        :placeholder "请输入过敏源及症状"
-                        :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:medical_history :allergy :details] (-> % .-target .-value)])}]]
-            [:> Form.Item {:label "最近反应日期" :name [:allergy :last_reaction_date]} ; Path matches canonical
-             [:> DatePicker {;; :value (utils/to-moment (get-in medical-history [:allergy :last_reaction_date])) ; Let Form handle
-                             :style {:width "100%"}
-                             :format "YYYY-MM-DD"
-                             :placeholder "请选择日期"
-                             :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:medical_history :allergy :last_reaction_date] (utils/date->iso-string %)])}]]])]
-
-        ;; 生活习惯
-        [:div
-         ;; 吸烟史
-         [:> Form.Item {:label "吸烟史" :name [:smoking :has_history]} ; Path matches canonical
-          [:> Radio.Group {;; :value (get-in medical-history [:smoking :has_history]) ; Let Form handle
-                           :onChange #(let [val (-> % .-target .-value)]
-                                        (rf/dispatch [::events/update-canonical-assessment-field [:medical_history :smoking :has_history] val])
-                                        (when-not val ; If "no", clear details
-                                          (rf/dispatch [::events/update-canonical-assessment-field [:medical_history :smoking :years] nil])
-                                          (rf/dispatch [::events/update-canonical-assessment-field [:medical_history :smoking :cigarettes_per_day] nil])))}
-           [:> Radio {:value false} "无"]
-           [:> Radio {:value true} "有"]]]
-         (when (get-in medical-history [:smoking :has_history])
-           [:> Row {:gutter 16}
-            [:> Col {:span 12}
-             [:> Form.Item {:label "吸烟年数" :name [:smoking :years]} ; Path matches canonical
-              [:> InputNumber {;; :value (get-in medical-history [:smoking :years]) ; Let Form handle
-                               :min 0 :addonAfter "年" :style {:width "100%"}
-                               :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:medical_history :smoking :years] %])}]]]
-            [:> Col {:span 12}
-             [:> Form.Item {:label "每天吸烟支数" :name [:smoking :cigarettes_per_day]} ; Path matches canonical
-              [:> InputNumber {;; :value (get-in medical-history [:smoking :cigarettes_per_day]) ; Let Form handle
-                               :min 0 :addonAfter "支" :style {:width "100%"}
-                               :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:medical_history :smoking :cigarettes_per_day] %])}]]]])
-         
-         ;; 饮酒史
-         [:> Form.Item {:label "饮酒史" :name [:drinking :has_history] :style {:marginTop "8px"}} ; Path matches canonical
-          [:> Radio.Group {;; :value (get-in medical-history [:drinking :has_history]) ; Let Form handle
-                           :onChange #(let [val (-> % .-target .-value)]
-                                        (rf/dispatch [::events/update-canonical-assessment-field [:medical_history :drinking :has_history] val])
-                                        (when-not val ; If "no", clear details
-                                          (rf/dispatch [::events/update-canonical-assessment-field [:medical_history :drinking :years] nil])
-                                          (rf/dispatch [::events/update-canonical-assessment-field [:medical_history :drinking :alcohol_per_day] nil])))}
-           [:> Radio {:value false} "无"]
-           [:> Radio {:value true} "有"]]]
-         (when (get-in medical-history [:drinking :has_history])
-           [:> Row {:gutter 16}
-            [:> Col {:span 12}
-             [:> Form.Item {:label "饮酒年数" :name [:drinking :years]} ; Path matches canonical
-              [:> InputNumber {;; :value (get-in medical-history [:drinking :years]) ; Let Form handle
-                               :min 0 :addonAfter "年" :style {:width "100%"}
-                               :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:medical_history :drinking :years] %])}]]]
-            [:> Col {:span 12}
-             [:> Form.Item {:label "每天饮酒量" :name [:drinking :alcohol_per_day]} ; Path matches canonical
-              [:> Input {;; :value (get-in medical-history [:drinking :alcohol_per_day]) ; Let Form handle
-                         :placeholder "请输入饮酒量"
-                         :style {:width "100%"}
-                         :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:medical_history :drinking :alcohol_per_day] (-> % .-target .-value)])}]]]])]]
+        [render-allergy-section medical-history]
+        [render-lifestyle-section medical-history]]
        [:> Empty {:description "请先选择患者或患者无病情摘要信息"}])])) ; Message can be updated if needed
 
 (defn- comorbidities-card []
@@ -430,12 +435,12 @@
                               :style {:marginBottom "8px"}
                               :onChange #(rf/dispatch [::events/update-canonical-assessment-field details-path (-> % .-target .-value)])}]]
                   [:> Form.Item {:name (conj form-item-base :last_dose_time) :label "最近用药时间" :labelCol {:span 6} :wrapperCol {:span 18}}
-                   [:> DatePicker {;; :value (utils/to-moment (get-in comorbidities-data [:special_medications :last_dose_time])) ; Let Form handle
+                   [:> DatePicker {;; :value (utils/to-dayjs (get-in comorbidities-data [:special_medications :last_dose_time])) ; Let Form handle
                                    :showTime true
                                    :format "YYYY-MM-DD HH:mm"
                                    :placeholder "选择日期和时间"
                                    :style {:width "100%"}
-                                   :onChange #(rf/dispatch [::events/update-canonical-assessment-field last-dose-time-path (utils/date->iso-string %)])}]]])]])]]
+                                   :onChange #(rf/dispatch [::events/update-canonical-assessment-field last-dose-time-path (utils/datetime->string % "YYYY-MM-DD HH:mm")])}]]])]])]]
          [:> Empty {:description "暂无并存疾病信息或未选择患者"}])])))
 
 (defn- physical-examination-card []
@@ -567,19 +572,17 @@
        [:> Form {:layout "horizontal" :labelCol {:span 6} :wrapperCol {:span 18} :labelAlign "left"
                  :initialValues (clj->js anesthesia-plan-data)
                  :key patient-id} ; Key for re-initialization
-        [:div {:style {:display "grid"
-                       :gridTemplateColumns "repeat(4, 1fr)"
-                       :gap "0px 16px"}}
-         [:> Form.Item {:label "ASA分级" :name :asa_rating :style {:gridColumn "span 1"}} ; Matches canonical
+        [:div {:style grid-style-4-col}
+         [:> Form.Item {:label "ASA分级" :name :asa_rating :style (grid-col-span-style 1)} ; Matches canonical
           [:> Select {;; :value (:asa_rating anesthesia-plan-data) ; Let Form handle
                       :placeholder "请选择ASA分级"
                       :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:anesthesia_plan :asa_rating] %])
                       :options (mapv (fn [i] {:value (str "ASA " i) :label (str "ASA " i)}) (range 1 7))}]]
-         [:> Form.Item {:label "麻醉方式" :name :anesthesia_type :style {:gridColumn "span 3"}} ; Matches canonical
+         [:> Form.Item {:label "麻醉方式" :name :anesthesia_type :style (grid-col-span-style 3)} ; Matches canonical
           [:> Input {;; :value (:anesthesia_type anesthesia-plan-data) ; Let Form handle
                      :placeholder "请输入麻醉方式"
                      :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:anesthesia_plan :anesthesia_type] (-> % .-target .-value)])}]]
-         [:> Form.Item {:label "术前医嘱" :name :preoperative_instructions :style {:gridColumn "span 4"}} ; Matches canonical
+         [:> Form.Item {:label "术前医嘱" :name :preoperative_instructions :style (grid-col-span-style 4)} ; Matches canonical
           [:> Input.TextArea {;; :value (:preoperative_instructions anesthesia-plan-data) ; Let Form handle
                               :rows 3
                               :placeholder "请输入术前医嘱，例如禁食水时间、特殊准备等"
