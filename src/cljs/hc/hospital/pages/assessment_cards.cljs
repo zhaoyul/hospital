@@ -228,7 +228,7 @@
               [:<>
                [:> Form.Item {:label "上次发作日期"}
                 [:> DatePicker {:style {:width "100%"} :placeholder "选择日期"
-                                :value (utils/iso-string->dayjs (get-val [:cardiac_disease_history :congestive_heart_failure :last_episode_date]))
+                                :value (utils/parse-date (get-val [:cardiac_disease_history :congestive_heart_failure :last_episode_date]))
                                 :onChange #(dispatch-update [:cardiac_disease_history :congestive_heart_failure :last_episode_date] (if % (utils/date->iso-string %) nil))}]]
                [:> Form.Item {:label "治疗情况"}
                 [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
