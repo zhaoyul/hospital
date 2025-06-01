@@ -717,5 +717,3 @@
    ;; 右侧评估详情区域
    [:div {:style {:flexGrow 1 :background "#f0f2f5" :overflow "hidden"}}
     [assessment]]])
-
-[end of src/cljs/hc/hospital/pages/anesthesia.cljs]

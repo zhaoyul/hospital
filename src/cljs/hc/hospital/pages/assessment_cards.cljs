@@ -1,33 +1,26 @@
 (ns hc.hospital.pages.assessment-cards
-  (:require ["@ant-design/icons" :as icons :refer [FileTextOutlined MedicineBoxOutlined
-                                                  ProfileOutlined QrcodeOutlined SolutionOutlined
-                                                  SyncOutlined CheckCircleOutlined ClockCircleOutlined
-                                                  CloseCircleOutlined PrinterOutlined UserOutlined
-                                                  HeartOutlined CloudOutlined ExperimentOutlined
-                                                  ProjectOutlined CoffeeOutlined SecurityScanOutlined
-                                                  WarningOutlined AppleOutlined HistoryOutlined
-                                                  NodeIndexOutlined GatewayOutlined EditOutlined
-                                                  SaveOutlined MessageOutlined UploadOutlined
-                                                  ;; Additional icons identified from card implementations:
-                                                  WomanOutlined ]] ; Added WomanOutlined
-            ["antd" :refer [Button Card Col DatePicker Descriptions Empty Form Input
-                           InputNumber Layout Modal Radio Row Select Space Tag Upload Checkbox
-                           ;; Input.TextArea is part of Input, Form/Checkbox.Group is Form and Checkbox
-                           ]]
-            ["dayjs" :as dayjs]
-            [hc.hospital.events :as events]
-            [hc.hospital.subs :as subs]
-            [hc.hospital.utils :as utils]
-            [re-frame.core :as rf]
-            [reagent.core :as r]
-            [taoensso.timbre :as timbre]
-            [hc.hospital.ui-helpers :refer [custom-styled-card]]))
+  (:require
+   ["antd" :refer [Checkbox Col DatePicker Empty Form Input InputNumber Radio
+                   Row Select]]
+   ["dayjs" :as dayjs]
+   ["@ant-design/icons"  :refer [AppleOutlined CloudOutlined
+                                 CoffeeOutlined ExperimentOutlined
+                                 GatewayOutlined HeartOutlined
+                                 HistoryOutlined MedicineBoxOutlined
+                                 NodeIndexOutlined ProjectOutlined
+                                 SecurityScanOutlined UserOutlined
+                                 WarningOutlined WomanOutlined]]
+   [hc.hospital.events :as events]
+   [hc.hospital.subs :as subs]
+   [hc.hospital.ui-helpers :refer [custom-styled-card]]
+   [hc.hospital.utils :as utils]
+   [re-frame.core :as rf]))
 
-;; ---- Circulatory System Card ----
-(defn- circulatory-system-card []
+
+(defn circulatory-system-card "循环系统" []
   (let [patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])]
     [custom-styled-card
-     [:> icons/HeartOutlined {:style {:marginRight "8px"}}]
+     [:> HeartOutlined {:style {:marginRight "8px"}}]
      "循环系统"
      "#e6f7ff" ; Unique header background color
      (if patient-id
@@ -50,8 +43,8 @@
           [:> Radio {:value "不祥"} "不祥"]]]]
        [:> Empty {:description "请先选择患者"}])]))
 
-;; ---- Respiratory System Card ----
-(defn- respiratory-system-card []
+
+(defn respiratory-system-card "呼吸系统" []
   (let [respiratory-data @(rf/subscribe [::subs/respiratory-system-data])
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         get-val (fn [path] (get-in respiratory-data path))
@@ -68,7 +61,7 @@
                              {:value "已痊愈" :label "已痊愈"}
                              {:value "其他" :label "其他"}]]
       [custom-styled-card
-       [:> icons/CloudOutlined {:style {:marginRight "8px"}}]
+       [:> CloudOutlined {:style {:marginRight "8px"}}]
        "呼吸系统"
        "#e6fffb"
        (if patient-id
@@ -89,9 +82,9 @@
                               :value (when-let [date-str (get-val [:cold_history_last_2_weeks :onset_date])] (dayjs date-str))
                               :onChange #(dispatch-update [:cold_history_last_2_weeks :onset_date] (if % (utils/date->iso-string %) nil))}]]
              [:> Form.Item {:label "症状" :name [:cold_history_last_2_weeks :symptoms]}
-              [:> Form/Checkbox.Group {:options cold-symptom-options
-                                       :value (get-val [:cold_history_last_2_weeks :symptoms])
-                                       :onChange #(dispatch-update [:cold_history_last_2_weeks :symptoms] %)}]]
+              [:> Checkbox.Group {:options cold-symptom-options
+                                  :value (get-val [:cold_history_last_2_weeks :symptoms])
+                                  :onChange #(dispatch-update [:cold_history_last_2_weeks :symptoms] %)}]]
              [:> Form.Item {:label "治疗情况" :name [:cold_history_last_2_weeks :treatment_status]}
               [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
                           :value (get-val [:cold_history_last_2_weeks :treatment_status])
@@ -227,18 +220,18 @@
             [:> Radio {:value "无"} "无"]
             [:> Radio {:value "有"} "有"]]]
           (when (= (get-val [:tuberculosis_history :present]) "有")
-             [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
-              [:> Form.Item {:label "治疗情况" :name [:tuberculosis_history :treatment_status]}
-               [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                           :value (get-val [:tuberculosis_history :treatment_status])
-                           :options treatment-options
-                           :onChange #(dispatch-update [:tuberculosis_history :treatment_status] %)}]]
-              [:> Form.Item {:label "传染性" :name [:tuberculosis_history :infectious]}
-                [:> Radio.Group {:value (get-val [:tuberculosis_history :infectious])
-                                 :onChange #(dispatch-update-event [:tuberculosis_history :infectious] %)}
-                 [:> Radio {:value "无"} "无"]
-                 [:> Radio {:value "有"} "有"]
-                 [:> Radio {:value "不详"} "不详"]]]])
+            [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+             [:> Form.Item {:label "治疗情况" :name [:tuberculosis_history :treatment_status]}
+              [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                          :value (get-val [:tuberculosis_history :treatment_status])
+                          :options treatment-options
+                          :onChange #(dispatch-update [:tuberculosis_history :treatment_status] %)}]]
+             [:> Form.Item {:label "传染性" :name [:tuberculosis_history :infectious]}
+              [:> Radio.Group {:value (get-val [:tuberculosis_history :infectious])
+                               :onChange #(dispatch-update-event [:tuberculosis_history :infectious] %)}
+               [:> Radio {:value "无"} "无"]
+               [:> Radio {:value "有"} "有"]
+               [:> Radio {:value "不详"} "不详"]]]])
 
           [:> Form.Item {:label "其他呼吸系统相关情况" :name :other_respiratory_conditions}
            [:> Input.TextArea {:placeholder "如有其他呼吸系统相关情况请在此注明" :rows 3
@@ -247,220 +240,219 @@
           ]
          [:> Empty {:description "请先选择患者"}])])))
 
-;; ---- Mental & Neuromuscular System Card ----
-(defn- mental-neuromuscular-system-card []
+(defn mental-neuromuscular-system-card "精神及神经肌肉系统" []
   (let [mn-data @(rf/subscribe [::subs/mental-neuromuscular-system-data])
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         get-val (fn [path] (get-in mn-data path))
         dispatch-update (fn [path value] (rf/dispatch [::events/update-canonical-assessment-field (into [:mental_neuromuscular_system] path) value]))
-        dispatch-update-event (fn [path event] (dispatch-update path (-> event .-target .-value)))]
-    (let [psycho-cog-symptom-options [{:label "智力发育迟缓" :value "intellectual_disability"}
-                                      {:label "焦虑症" :value "anxiety_disorder"}
-                                      {:label "抑郁症" :value "depression"}
-                                      {:label "精神分裂" :value "schizophrenia"}
-                                      {:label "睡眠障碍" :value "sleep_disorder"}
-                                      {:label "孤独症" :value "autism"}
-                                      {:label "病情稳定" :value "stable_condition"}
-                                      {:label "其他" :value "other_symptoms"}]
-          general-treatment-status-options [{:value "治愈" :label "治愈"}
-                                            {:value "好转" :label "好转"}
-                                            {:value "仍有症状" :label "仍有症状"}
-                                            {:value "未治疗" :label "未治疗"}
-                                            {:value "病情稳定" :label "病情稳定"}
-                                            {:value "其他" :label "其他"}]]
-      [custom-styled-card
-       [:> icons/UserOutlined {:style {:marginRight "8px"}}]
-       "精神及神经肌肉系统"
-       "#fffbe6"
-       (if patient-id
-         [:> Form {:layout "vertical"
-                   :initialValues (clj->js mn-data)
-                   :key (str patient-id "-mental-neuromuscular")}
-          ;; Fields... (Content of mental-neuromuscular-system-card)
-           [:> Form.Item {:label "精神认知相关疾病史" :name :psycho_cognitive_history_present}
-            [:> Radio.Group {:value (get-val [:psycho_cognitive_history :present])
-                             :onChange #(dispatch-update-event [:psycho_cognitive_history :present] %)}
-             [:> Radio {:value "无"} "无"]
-             [:> Radio {:value "有"} "有"]
-             [:> Radio {:value "不祥"} "不祥"]]]
-           (when (= (get-val [:psycho_cognitive_history :present]) "有")
-             [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
-              [:> Form.Item {:label "症状" :name [:psycho_cognitive_history :symptoms]}
-               [:> Form/Checkbox.Group {:options psycho-cog-symptom-options
-                                        :value (get-val [:psycho_cognitive_history :symptoms])
-                                        :onChange #(dispatch-update [:psycho_cognitive_history :symptoms] %)}]]
-              (when (some #{"other_symptoms"} (get-val [:psycho_cognitive_history :symptoms]))
-                [:> Form.Item {:label "其他症状详情" :name [:psycho_cognitive_history :symptoms_other_details]}
-                 [:> Input {:placeholder "请描述其他症状"
-                            :value (get-val [:psycho_cognitive_history :symptoms_other_details])
-                            :onChange #(dispatch-update-event [:psycho_cognitive_history :symptoms_other_details] %)}]])
-              [:> Form.Item {:label "治疗情况" :name [:psycho_cognitive_history :treatment_status]}
-               [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                           :value (get-val [:psycho_cognitive_history :treatment_status])
-                           :options general-treatment-status-options
-                           :onChange #(dispatch-update [:psycho_cognitive_history :treatment_status] %)}]]
-              [:> Form.Item {:label "治疗用药" :name [:psycho_cognitive_history :medication]}
-               [:> Input.TextArea {:placeholder "请描述治疗用药" :rows 2
-                                   :value (get-val [:psycho_cognitive_history :medication])
-                                   :onChange #(dispatch-update-event [:psycho_cognitive_history :medication] %)}]]])
-           ;; ... (rest of the mental-neuromuscular card content)
-           [:> Form.Item {:label "癫痫病史" :name :epilepsy_history_present}
-            [:> Radio.Group {:value (get-val [:epilepsy_history :present])
-                             :onChange #(dispatch-update-event [:epilepsy_history :present] %)}
-             [:> Radio {:value "无"} "无"]
-             [:> Radio {:value "有"} "有"]
-             [:> Radio {:value "不祥"} "不祥"]]]
-           (when (= (get-val [:epilepsy_history :present]) "有")
-             [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
-              [:> Form.Item {:label "近期发作日期" :name [:epilepsy_history :last_seizure_date]}
-               [:> DatePicker {:style {:width "100%"} :placeholder "选择日期"
-                               :value (when-let [date-str (get-val [:epilepsy_history :last_seizure_date])] (dayjs date-str))
-                               :onChange #(dispatch-update [:epilepsy_history :last_seizure_date] (if % (utils/date->iso-string %) nil))}]]
-              [:> Form.Item {:label "治疗情况" :name [:epilepsy_history :treatment_status]}
-               [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                           :value (get-val [:epilepsy_history :treatment_status])
-                           :options general-treatment-status-options
-                           :onChange #(dispatch-update [:epilepsy_history :treatment_status] %)}]]
-              [:> Form.Item {:label "治疗用药" :name [:epilepsy_history :medication]}
-               [:> Input.TextArea {:placeholder "请描述治疗用药" :rows 2
-                                   :value (get-val [:epilepsy_history :medication])
-                                   :onChange #(dispatch-update-event [:epilepsy_history :medication] %)}]]])
+        dispatch-update-event (fn [path event] (dispatch-update path (-> event .-target .-value)))
+        psycho-cog-symptom-options [{:label "智力发育迟缓" :value "intellectual_disability"}
+                                    {:label "焦虑症" :value "anxiety_disorder"}
+                                    {:label "抑郁症" :value "depression"}
+                                    {:label "精神分裂" :value "schizophrenia"}
+                                    {:label "睡眠障碍" :value "sleep_disorder"}
+                                    {:label "孤独症" :value "autism"}
+                                    {:label "病情稳定" :value "stable_condition"}
+                                    {:label "其他" :value "other_symptoms"}]
+        general-treatment-status-options [{:value "治愈" :label "治愈"}
+                                          {:value "好转" :label "好转"}
+                                          {:value "仍有症状" :label "仍有症状"}
+                                          {:value "未治疗" :label "未治疗"}
+                                          {:value "病情稳定" :label "病情稳定"}
+                                          {:value "其他" :label "其他"}]]
+    [custom-styled-card
+     [:> UserOutlined {:style {:marginRight "8px"}}]
+     "精神及神经肌肉系统"
+     "#fffbe6"
+     (if patient-id
+       [:> Form {:layout "vertical"
+                 :initialValues (clj->js mn-data)
+                 :key (str patient-id "-mental-neuromuscular")}
+        ;; Fields... (Content of mental-neuromuscular-system-card)
+        [:> Form.Item {:label "精神认知相关疾病史" :name :psycho_cognitive_history_present}
+         [:> Radio.Group {:value (get-val [:psycho_cognitive_history :present])
+                          :onChange #(dispatch-update-event [:psycho_cognitive_history :present] %)}
+          [:> Radio {:value "无"} "无"]
+          [:> Radio {:value "有"} "有"]
+          [:> Radio {:value "不祥"} "不祥"]]]
+        (when (= (get-val [:psycho_cognitive_history :present]) "有")
+          [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+           [:> Form.Item {:label "症状" :name [:psycho_cognitive_history :symptoms]}
+            [:> Checkbox.Group {:options psycho-cog-symptom-options
+                                :value (get-val [:psycho_cognitive_history :symptoms])
+                                :onChange #(dispatch-update [:psycho_cognitive_history :symptoms] %)}]]
+           (when (some #{"other_symptoms"} (get-val [:psycho_cognitive_history :symptoms]))
+             [:> Form.Item {:label "其他症状详情" :name [:psycho_cognitive_history :symptoms_other_details]}
+              [:> Input {:placeholder "请描述其他症状"
+                         :value (get-val [:psycho_cognitive_history :symptoms_other_details])
+                         :onChange #(dispatch-update-event [:psycho_cognitive_history :symptoms_other_details] %)}]])
+           [:> Form.Item {:label "治疗情况" :name [:psycho_cognitive_history :treatment_status]}
+            [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                        :value (get-val [:psycho_cognitive_history :treatment_status])
+                        :options general-treatment-status-options
+                        :onChange #(dispatch-update [:psycho_cognitive_history :treatment_status] %)}]]
+           [:> Form.Item {:label "治疗用药" :name [:psycho_cognitive_history :medication]}
+            [:> Input.TextArea {:placeholder "请描述治疗用药" :rows 2
+                                :value (get-val [:psycho_cognitive_history :medication])
+                                :onChange #(dispatch-update-event [:psycho_cognitive_history :medication] %)}]]])
+        ;; ... (rest of the mental-neuromuscular card content)
+        [:> Form.Item {:label "癫痫病史" :name :epilepsy_history_present}
+         [:> Radio.Group {:value (get-val [:epilepsy_history :present])
+                          :onChange #(dispatch-update-event [:epilepsy_history :present] %)}
+          [:> Radio {:value "无"} "无"]
+          [:> Radio {:value "有"} "有"]
+          [:> Radio {:value "不祥"} "不祥"]]]
+        (when (= (get-val [:epilepsy_history :present]) "有")
+          [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+           [:> Form.Item {:label "近期发作日期" :name [:epilepsy_history :last_seizure_date]}
+            [:> DatePicker {:style {:width "100%"} :placeholder "选择日期"
+                            :value (when-let [date-str (get-val [:epilepsy_history :last_seizure_date])] (dayjs date-str))
+                            :onChange #(dispatch-update [:epilepsy_history :last_seizure_date] (if % (utils/date->iso-string %) nil))}]]
+           [:> Form.Item {:label "治疗情况" :name [:epilepsy_history :treatment_status]}
+            [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                        :value (get-val [:epilepsy_history :treatment_status])
+                        :options general-treatment-status-options
+                        :onChange #(dispatch-update [:epilepsy_history :treatment_status] %)}]]
+           [:> Form.Item {:label "治疗用药" :name [:epilepsy_history :medication]}
+            [:> Input.TextArea {:placeholder "请描述治疗用药" :rows 2
+                                :value (get-val [:epilepsy_history :medication])
+                                :onChange #(dispatch-update-event [:epilepsy_history :medication] %)}]]])
 
-           [:> Form.Item {:label "眩晕病史" :name :vertigo_history_present}
-            [:> Radio.Group {:value (get-val [:vertigo_history :present])
-                             :onChange #(dispatch-update-event [:vertigo_history :present] %)}
-             [:> Radio {:value "无"} "无"]
-             [:> Radio {:value "有"} "有"]]]
-           (when (= (get-val [:vertigo_history :present]) "有")
-             [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
-              [:> Form.Item {:label "近期发作日期" :name [:vertigo_history :last_episode_date]}
-               [:> DatePicker {:style {:width "100%"} :placeholder "选择日期"
-                               :value (when-let [date-str (get-val [:vertigo_history :last_episode_date])] (dayjs date-str))
-                               :onChange #(dispatch-update [:vertigo_history :last_episode_date] (if % (utils/date->iso-string %) nil))}]]
-              [:> Form.Item {:label "治疗情况" :name [:vertigo_history :treatment_status]}
-               [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                           :value (get-val [:vertigo_history :treatment_status])
-                           :options general-treatment-status-options
-                           :onChange #(dispatch-update [:vertigo_history :treatment_status] %)}]]])
+        [:> Form.Item {:label "眩晕病史" :name :vertigo_history_present}
+         [:> Radio.Group {:value (get-val [:vertigo_history :present])
+                          :onChange #(dispatch-update-event [:vertigo_history :present] %)}
+          [:> Radio {:value "无"} "无"]
+          [:> Radio {:value "有"} "有"]]]
+        (when (= (get-val [:vertigo_history :present]) "有")
+          [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+           [:> Form.Item {:label "近期发作日期" :name [:vertigo_history :last_episode_date]}
+            [:> DatePicker {:style {:width "100%"} :placeholder "选择日期"
+                            :value (when-let [date-str (get-val [:vertigo_history :last_episode_date])] (dayjs date-str))
+                            :onChange #(dispatch-update [:vertigo_history :last_episode_date] (if % (utils/date->iso-string %) nil))}]]
+           [:> Form.Item {:label "治疗情况" :name [:vertigo_history :treatment_status]}
+            [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                        :value (get-val [:vertigo_history :treatment_status])
+                        :options general-treatment-status-options
+                        :onChange #(dispatch-update [:vertigo_history :treatment_status] %)}]]])
 
-           [:> Form.Item {:label "短暂性脑缺血发作病史 (TIA)" :name :tia_history_present}
-            [:> Radio.Group {:value (get-val [:tia_history :present])
-                             :onChange #(dispatch-update-event [:tia_history :present] %)}
-             [:> Radio {:value "无"} "无"]
-             [:> Radio {:value "有"} "有"]
-             [:> Radio {:value "不祥"} "不祥"]]]
-           (when (= (get-val [:tia_history :present]) "有")
-             [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
-              [:> Form.Item {:label "近期发作情况" :name [:tia_history :recent_onset_status]}
-               [:> Select {:placeholder "选择近期发作情况" :style {:width "100%"} :allowClear true
-                           :value (get-val [:tia_history :recent_onset_status])
-                           :options [{:value "近 3 月内无发作" :label "近 3 月内无发作"}
-                                     {:value "近 3 月内有发作" :label "近 3 月内有发作"}]
-                           :onChange #(dispatch-update [:tia_history :recent_onset_status] %)}]]
-              [:> Form.Item {:label "治疗情况" :name [:tia_history :treatment_status]}
-               [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                           :value (get-val [:tia_history :treatment_status])
-                           :options general-treatment-status-options
-                           :onChange #(dispatch-update [:tia_history :treatment_status] %)}]]])
+        [:> Form.Item {:label "短暂性脑缺血发作病史 (TIA)" :name :tia_history_present}
+         [:> Radio.Group {:value (get-val [:tia_history :present])
+                          :onChange #(dispatch-update-event [:tia_history :present] %)}
+          [:> Radio {:value "无"} "无"]
+          [:> Radio {:value "有"} "有"]
+          [:> Radio {:value "不祥"} "不祥"]]]
+        (when (= (get-val [:tia_history :present]) "有")
+          [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+           [:> Form.Item {:label "近期发作情况" :name [:tia_history :recent_onset_status]}
+            [:> Select {:placeholder "选择近期发作情况" :style {:width "100%"} :allowClear true
+                        :value (get-val [:tia_history :recent_onset_status])
+                        :options [{:value "近 3 月内无发作" :label "近 3 月内无发作"}
+                                  {:value "近 3 月内有发作" :label "近 3 月内有发作"}]
+                        :onChange #(dispatch-update [:tia_history :recent_onset_status] %)}]]
+           [:> Form.Item {:label "治疗情况" :name [:tia_history :treatment_status]}
+            [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                        :value (get-val [:tia_history :treatment_status])
+                        :options general-treatment-status-options
+                        :onChange #(dispatch-update [:tia_history :treatment_status] %)}]]])
 
-           [:> Form.Item {:label "脑梗病史" :name :cerebral_infarction_history_present}
-            [:> Radio.Group {:value (get-val [:cerebral_infarction_history :present])
-                             :onChange #(dispatch-update-event [:cerebral_infarction_history :present] %)}
-             [:> Radio {:value "无"} "无"]
-             [:> Radio {:value "有"} "有"]]]
-           (when (= (get-val [:cerebral_infarction_history :present]) "有")
-             [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
-              [:> Form.Item {:label "近期发作日期" :name [:cerebral_infarction_history :last_episode_date]}
-               [:> DatePicker {:style {:width "100%"} :placeholder "选择日期"
-                               :value (when-let [date-str (get-val [:cerebral_infarction_history :last_episode_date])] (dayjs date-str))
-                               :onChange #(dispatch-update [:cerebral_infarction_history :last_episode_date] (if % (utils/date->iso-string %) nil))}]]
-              [:> Form.Item {:label "治疗情况" :name [:cerebral_infarction_history :treatment_status]}
-               [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                           :value (get-val [:cerebral_infarction_history :treatment_status])
-                           :options general-treatment-status-options
-                           :onChange #(dispatch-update [:cerebral_infarction_history :treatment_status] %)}]]
-              [:> Form.Item {:label "目前用药" :name [:cerebral_infarction_history :medication]}
-               [:> Input.TextArea {:placeholder "请描述目前用药" :rows 2
-                                   :value (get-val [:cerebral_infarction_history :medication])
-                                   :onChange #(dispatch-update-event [:cerebral_infarction_history :medication] %)}]]])
+        [:> Form.Item {:label "脑梗病史" :name :cerebral_infarction_history_present}
+         [:> Radio.Group {:value (get-val [:cerebral_infarction_history :present])
+                          :onChange #(dispatch-update-event [:cerebral_infarction_history :present] %)}
+          [:> Radio {:value "无"} "无"]
+          [:> Radio {:value "有"} "有"]]]
+        (when (= (get-val [:cerebral_infarction_history :present]) "有")
+          [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+           [:> Form.Item {:label "近期发作日期" :name [:cerebral_infarction_history :last_episode_date]}
+            [:> DatePicker {:style {:width "100%"} :placeholder "选择日期"
+                            :value (when-let [date-str (get-val [:cerebral_infarction_history :last_episode_date])] (dayjs date-str))
+                            :onChange #(dispatch-update [:cerebral_infarction_history :last_episode_date] (if % (utils/date->iso-string %) nil))}]]
+           [:> Form.Item {:label "治疗情况" :name [:cerebral_infarction_history :treatment_status]}
+            [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                        :value (get-val [:cerebral_infarction_history :treatment_status])
+                        :options general-treatment-status-options
+                        :onChange #(dispatch-update [:cerebral_infarction_history :treatment_status] %)}]]
+           [:> Form.Item {:label "目前用药" :name [:cerebral_infarction_history :medication]}
+            [:> Input.TextArea {:placeholder "请描述目前用药" :rows 2
+                                :value (get-val [:cerebral_infarction_history :medication])
+                                :onChange #(dispatch-update-event [:cerebral_infarction_history :medication] %)}]]])
 
-           [:> Form.Item {:label "脑出血病史" :name :cerebral_hemorrhage_history_present}
-            [:> Radio.Group {:value (get-val [:cerebral_hemorrhage_history :present])
-                             :onChange #(dispatch-update-event [:cerebral_hemorrhage_history :present] %)}
-             [:> Radio {:value "无"} "无"]
-             [:> Radio {:value "有"} "有"]]]
-           (when (= (get-val [:cerebral_hemorrhage_history :present]) "有")
-             [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
-              [:> Form.Item {:label "近期发作日期" :name [:cerebral_hemorrhage_history :last_episode_date]}
-               [:> DatePicker {:style {:width "100%"} :placeholder "选择日期"
-                               :value (when-let [date-str (get-val [:cerebral_hemorrhage_history :last_episode_date])] (dayjs date-str))
-                               :onChange #(dispatch-update [:cerebral_hemorrhage_history :last_episode_date] (if % (utils/date->iso-string %) nil))}]]
-              [:> Form.Item {:label "治疗情况" :name [:cerebral_hemorrhage_history :treatment_status]}
-               [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                           :value (get-val [:cerebral_hemorrhage_history :treatment_status])
-                           :options general-treatment-status-options
-                           :onChange #(dispatch-update [:cerebral_hemorrhage_history :treatment_status] %)}]]])
+        [:> Form.Item {:label "脑出血病史" :name :cerebral_hemorrhage_history_present}
+         [:> Radio.Group {:value (get-val [:cerebral_hemorrhage_history :present])
+                          :onChange #(dispatch-update-event [:cerebral_hemorrhage_history :present] %)}
+          [:> Radio {:value "无"} "无"]
+          [:> Radio {:value "有"} "有"]]]
+        (when (= (get-val [:cerebral_hemorrhage_history :present]) "有")
+          [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+           [:> Form.Item {:label "近期发作日期" :name [:cerebral_hemorrhage_history :last_episode_date]}
+            [:> DatePicker {:style {:width "100%"} :placeholder "选择日期"
+                            :value (when-let [date-str (get-val [:cerebral_hemorrhage_history :last_episode_date])] (dayjs date-str))
+                            :onChange #(dispatch-update [:cerebral_hemorrhage_history :last_episode_date] (if % (utils/date->iso-string %) nil))}]]
+           [:> Form.Item {:label "治疗情况" :name [:cerebral_hemorrhage_history :treatment_status]}
+            [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                        :value (get-val [:cerebral_hemorrhage_history :treatment_status])
+                        :options general-treatment-status-options
+                        :onChange #(dispatch-update [:cerebral_hemorrhage_history :treatment_status] %)}]]])
 
-           [:> Form.Item {:label "帕金森综合症" :name :parkinsons_syndrome_present}
-            [:> Radio.Group {:value (get-val [:parkinsons_syndrome :present])
-                             :onChange #(dispatch-update-event [:parkinsons_syndrome :present] %)}
-             [:> Radio {:value "无"} "无"]
-             [:> Radio {:value "有"} "有"]]]
-           (when (= (get-val [:parkinsons_syndrome :present]) "有")
-             [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
-              [:> Form.Item {:label "诊断年限 (年)" :name [:parkinsons_syndrome :diagnosis_duration_years]}
-               [:> InputNumber {:placeholder "请输入年数" :style {:width "100%"} :min 0
-                                :value (get-val [:parkinsons_syndrome :diagnosis_duration_years])
-                                :onChange #(dispatch-update [:parkinsons_syndrome :diagnosis_duration_years] %)}]]
-              [:> Form.Item {:label "治疗情况" :name [:parkinsons_syndrome :treatment_status]}
-               [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                           :value (get-val [:parkinsons_syndrome :treatment_status])
-                           :options general-treatment-status-options
-                           :onChange #(dispatch-update [:parkinsons_syndrome :treatment_status] %)}]]
-              [:> Form.Item {:label "用药情况" :name [:parkinsons_syndrome :medication]}
-               [:> Input.TextArea {:placeholder "请描述用药情况" :rows 2
-                                   :value (get-val [:parkinsons_syndrome :medication])
-                                   :onChange #(dispatch-update-event [:parkinsons_syndrome :medication] %)}]]])
+        [:> Form.Item {:label "帕金森综合症" :name :parkinsons_syndrome_present}
+         [:> Radio.Group {:value (get-val [:parkinsons_syndrome :present])
+                          :onChange #(dispatch-update-event [:parkinsons_syndrome :present] %)}
+          [:> Radio {:value "无"} "无"]
+          [:> Radio {:value "有"} "有"]]]
+        (when (= (get-val [:parkinsons_syndrome :present]) "有")
+          [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+           [:> Form.Item {:label "诊断年限 (年)" :name [:parkinsons_syndrome :diagnosis_duration_years]}
+            [:> InputNumber {:placeholder "请输入年数" :style {:width "100%"} :min 0
+                             :value (get-val [:parkinsons_syndrome :diagnosis_duration_years])
+                             :onChange #(dispatch-update [:parkinsons_syndrome :diagnosis_duration_years] %)}]]
+           [:> Form.Item {:label "治疗情况" :name [:parkinsons_syndrome :treatment_status]}
+            [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                        :value (get-val [:parkinsons_syndrome :treatment_status])
+                        :options general-treatment-status-options
+                        :onChange #(dispatch-update [:parkinsons_syndrome :treatment_status] %)}]]
+           [:> Form.Item {:label "用药情况" :name [:parkinsons_syndrome :medication]}
+            [:> Input.TextArea {:placeholder "请描述用药情况" :rows 2
+                                :value (get-val [:parkinsons_syndrome :medication])
+                                :onChange #(dispatch-update-event [:parkinsons_syndrome :medication] %)}]]])
 
-           [:> Form.Item {:label "颅脑和颈动脉狭窄" :name :cranial_carotid_stenosis_present}
-            [:> Radio.Group {:value (get-val [:cranial_carotid_stenosis :present])
-                             :onChange #(dispatch-update-event [:cranial_carotid_stenosis :present] %)}
-             [:> Radio {:value "无"} "无"]
-             [:> Radio {:value "有"} "有"]
-             [:> Radio {:value "不祥"} "不祥"]]
-            (when (= (get-val [:cranial_carotid_stenosis :present]) "有")
-              [:> Input {:placeholder "请描述狭窄详情" :style {:marginLeft "10px" :width "calc(100% - 150px)"}
-                         :value (get-val [:cranial_carotid_stenosis :details])
-                         :onChange #(dispatch-update-event [:cranial_carotid_stenosis :details] %)}])]
+        [:> Form.Item {:label "颅脑和颈动脉狭窄" :name :cranial_carotid_stenosis_present}
+         [:> Radio.Group {:value (get-val [:cranial_carotid_stenosis :present])
+                          :onChange #(dispatch-update-event [:cranial_carotid_stenosis :present] %)}
+          [:> Radio {:value "无"} "无"]
+          [:> Radio {:value "有"} "有"]
+          [:> Radio {:value "不祥"} "不祥"]]
+         (when (= (get-val [:cranial_carotid_stenosis :present]) "有")
+           [:> Input {:placeholder "请描述狭窄详情" :style {:marginLeft "10px" :width "calc(100% - 150px)"}
+                      :value (get-val [:cranial_carotid_stenosis :details])
+                      :onChange #(dispatch-update-event [:cranial_carotid_stenosis :details] %)}])]
 
-           [:> Form.Item {:label "其他神经肌肉系统情况" :name :other_neuromuscular_conditions_present}
-             [:> Radio.Group {:value (get-val [:other_neuromuscular_conditions :present])
-                              :onChange #(dispatch-update-event [:other_neuromuscular_conditions :present] %)}
-              [:> Radio {:value "无"} "无"]
-              [:> Radio {:value "有"} "有"]]]
-           (when (= (get-val [:other_neuromuscular_conditions :present]) "有")
-             (let [other-symptom-options [{:label "重症肌无力" :value "myasthenia_gravis"}
-                                          {:label "格林巴利综合征" :value "guillain_barre"}
-                                          {:label "帕金森病史" :value "parkinsons_disease"}
-                                          {:label "脊髓灰质炎后综合征" :value "post_polio_syndrome"}
-                                          {:label "多发性硬化症" :value "multiple_sclerosis"}
-                                          {:label "肌营养不良" :value "muscular_dystrophy"}
-                                          {:label "其他" :value "other_specific_conditions"}]]
-               [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
-                [:> Form.Item {:label "症状" :name [:other_neuromuscular_conditions :symptoms]}
-                 [:> Form/Checkbox.Group {:options other-symptom-options
-                                          :value (get-val [:other_neuromuscular_conditions :symptoms])
-                                          :onChange #(dispatch-update [:other_neuromuscular_conditions :symptoms] %)}]]
-                (when (some #{"other_specific_conditions"} (get-val [:other_neuromuscular_conditions :symptoms]))
-                  [:> Form.Item {:label "其他症状详情" :name [:other_neuromuscular_conditions :symptoms_other_details]}
-                   [:> Input {:placeholder "请描述其他具体情况"
-                              :value (get-val [:other_neuromuscular_conditions :symptoms_other_details])
-                              :onChange #(dispatch-update-event [:other_neuromuscular_conditions :symptoms_other_details] %)}]])]))]
-          ;; ... (End of mental-neuromuscular card content)
-         [:> Empty {:description "请先选择患者"}])])))
+        [:> Form.Item {:label "其他神经肌肉系统情况" :name :other_neuromuscular_conditions_present}
+         [:> Radio.Group {:value (get-val [:other_neuromuscular_conditions :present])
+                          :onChange #(dispatch-update-event [:other_neuromuscular_conditions :present] %)}
+          [:> Radio {:value "无"} "无"]
+          [:> Radio {:value "有"} "有"]]]
+        (when (= (get-val [:other_neuromuscular_conditions :present]) "有")
+          (let [other-symptom-options [{:label "重症肌无力" :value "myasthenia_gravis"}
+                                       {:label "格林巴利综合征" :value "guillain_barre"}
+                                       {:label "帕金森病史" :value "parkinsons_disease"}
+                                       {:label "脊髓灰质炎后综合征" :value "post_polio_syndrome"}
+                                       {:label "多发性硬化症" :value "multiple_sclerosis"}
+                                       {:label "肌营养不良" :value "muscular_dystrophy"}
+                                       {:label "其他" :value "other_specific_conditions"}]]
+            [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+             [:> Form.Item {:label "症状" :name [:other_neuromuscular_conditions :symptoms]}
+              [:> Checkbox.Group {:options other-symptom-options
+                                  :value (get-val [:other_neuromuscular_conditions :symptoms])
+                                  :onChange #(dispatch-update [:other_neuromuscular_conditions :symptoms] %)}]]
+             (when (some #{"other_specific_conditions"} (get-val [:other_neuromuscular_conditions :symptoms]))
+               [:> Form.Item {:label "其他症状详情" :name [:other_neuromuscular_conditions :symptoms_other_details]}
+                [:> Input {:placeholder "请描述其他具体情况"
+                           :value (get-val [:other_neuromuscular_conditions :symptoms_other_details])
+                           :onChange #(dispatch-update-event [:other_neuromuscular_conditions :symptoms_other_details] %)}]])]))]
+       ;; ... (End of mental-neuromuscular card content)
+       [:> Empty {:description "请先选择患者"}])]))
 
-;; ---- Endocrine System Card ----
-(defn- endocrine-system-card []
+
+(defn endocrine-system-card "内分泌系统" []
   (let [endo-data @(rf/subscribe [::subs/endocrine-system-data])
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         get-val (fn [path] (get-in endo-data path))
@@ -473,7 +465,7 @@
                                 {:label "其他" :value "other_thyroid_type"}]
           general-treatment-status-options [{:value "治愈" :label "治愈"} {:value "好转" :label "好转"} {:value "仍有症状" :label "仍有症状"} {:value "未治疗" :label "未治疗"} {:value "病情稳定" :label "病情稳定"} {:value "其他" :label "其他"}]]
       [custom-styled-card
-       [:> icons/ExperimentOutlined {:style {:marginRight "8px"}}]
+       [:> ExperimentOutlined {:style {:marginRight "8px"}}]
        "内分泌系统"
        "#f9f0ff"
        (if patient-id
@@ -490,9 +482,9 @@
           (when (= (get-val [:thyroid_disease_history :present]) "有")
             [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
              [:> Form.Item {:label "类型" :name [:thyroid_disease_history :types]}
-              [:> Form/Checkbox.Group {:options thyroid-type-options
-                                       :value (get-val [:thyroid_disease_history :types])
-                                       :onChange #(dispatch-update [:thyroid_disease_history :types] %)}]]
+              [:> Checkbox.Group {:options thyroid-type-options
+                                  :value (get-val [:thyroid_disease_history :types])
+                                  :onChange #(dispatch-update [:thyroid_disease_history :types] %)}]]
              (when (some #{"other_thyroid_type"} (get-val [:thyroid_disease_history :types]))
                [:> Form.Item {:label "其他类型详情" :name [:thyroid_disease_history :type_other_details]}
                 [:> Input {:placeholder "请描述其他甲状腺疾病类型"
@@ -579,9 +571,9 @@
                             :onChange #(dispatch-update [:pheochromocytoma :control_status] %)}]]
                (when (= (get-val [:pheochromocytoma :control_status]) "当前存在症状")
                  [:> Form.Item {:label "症状" :name [:pheochromocytoma :symptoms]}
-                  [:> Form/Checkbox.Group {:options pheo-symptom-options
-                                           :value (get-val [:pheochromocytoma :symptoms])
-                                           :onChange #(dispatch-update [:pheochromocytoma :symptoms] %)}]])]))
+                  [:> Checkbox.Group {:options pheo-symptom-options
+                                      :value (get-val [:pheochromocytoma :symptoms])
+                                      :onChange #(dispatch-update [:pheochromocytoma :symptoms] %)}]])]))
 
           [:> Form.Item {:label "皮质醇增多症" :name :hypercortisolism_present}
            [:> Radio.Group {:value (get-val [:hypercortisolism :present])
@@ -624,76 +616,73 @@
            [:> Input.TextArea {:placeholder "如有其他内分泌系统相关情况请在此注明" :rows 3
                                :value (get-val [:other_endocrine_conditions])
                                :onChange #(dispatch-update-event [:other_endocrine_conditions] %)}]]
-         [:> Empty {:description "请先选择患者"}])])))
+          [:> Empty {:description "请先选择患者"}]])])))
 
-;; ---- Liver & Kidney System Card ----
-(defn- liver-kidney-system-card []
+
+(defn liver-kidney-system-card "肝肾病史" []
   (let [lk-data @(rf/subscribe [::subs/liver-kidney-system-data])
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         get-val (fn [path] (get-in lk-data path))
         dispatch-update (fn [path value] (rf/dispatch [::events/update-canonical-assessment-field (into [:liver_kidney_system] path) value]))
-        dispatch-update-event (fn [path event] (dispatch-update path (-> event .-target .-value)))]
-    (let [liver-disease-type-options [{:label "无" :value "none"}
-                                      {:label "药物性肝炎" :value "drug_induced_hepatitis"}
-                                      {:label "自身免疫性肝病" :value "autoimmune_liver_disease"}
-                                      ;; ... other options
-                                      {:label "其他" :value "other_liver_disease"}]]
-      [custom-styled-card
-       [:> icons/ProjectOutlined {:style {:marginRight "8px"}}]
-       "肝肾病史"
-       "#fff7e6"
-       (if patient-id
-         [:> Form {:layout "vertical"
-                   :initialValues (clj->js lk-data)
-                   :key (str patient-id "-liver-kidney")}
-          ;; Fields... (Content of liver-kidney-system-card)
-          [:h4 "肝功能"]
-          [:> Form.Item {:label "状态" :name [:liver_function :status]}
-           [:> Radio.Group {:value (get-val [:liver_function :status])
-                            :onChange #(dispatch-update-event [:liver_function :status] %)}
-            [:> Radio {:value "正常"} "正常"]
-            [:> Radio {:value "异常"} "异常"]]]
-          (when (= (get-val [:liver_function :status]) "异常")
-            [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
-             [:> Row {:gutter 16}
-              [:> Col {:span 12}
-               [:> Form.Item {:label "谷丙转氨酶 (ALT)" :name [:liver_function :alt]}
-                [:> InputNumber {:placeholder "U/L (Ref: 0-40)" :style {:width "100%"} :addonAfter "U/L"
-                                 :value (get-val [:liver_function :alt])
-                                 :onChange #(dispatch-update [:liver_function :alt] %)}]]]
-              ;; ... other liver function inputs
-              [:> Col {:span 12}
-               [:> Form.Item {:label "血清白蛋白 (Albumin)" :name [:liver_function :albumin]}
-                [:> InputNumber {:placeholder "g/L (Ref: 35-55)" :style {:width "100%"} :addonAfter "g/L"
-                                 :value (get-val [:liver_function :albumin])
-                                 :onChange #(dispatch-update [:liver_function :albumin] %)}]]]]])
+        dispatch-update-event (fn [path event] (dispatch-update path (-> event .-target .-value)))
+        liver-disease-type-options [{:label "无" :value "none"}
+                                    {:label "药物性肝炎" :value "drug_induced_hepatitis"}
+                                    {:label "自身免疫性肝病" :value "autoimmune_liver_disease"}
+                                    ;; ... other options
+                                    {:label "其他" :value "other_liver_disease"}]]
+    [custom-styled-card
+     [:> ProjectOutlined {:style {:marginRight "8px"}}]
+     "肝肾病史"
+     "#fff7e6"
+     (if patient-id
+       [:> Form {:layout "vertical"
+                 :initialValues (clj->js lk-data)
+                 :key (str patient-id "-liver-kidney")}
+        ;; Fields... (Content of liver-kidney-system-card)
+        [:h4 "肝功能"]
+        [:> Form.Item {:label "状态" :name [:liver_function :status]}
+         [:> Radio.Group {:value (get-val [:liver_function :status])
+                          :onChange #(dispatch-update-event [:liver_function :status] %)}
+          [:> Radio {:value "正常"} "正常"]
+          [:> Radio {:value "异常"} "异常"]]]
+        (when (= (get-val [:liver_function :status]) "异常")
+          [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+           [:> Row {:gutter 16}
+            [:> Col {:span 12}
+             [:> Form.Item {:label "谷丙转氨酶 (ALT)" :name [:liver_function :alt]}
+              [:> InputNumber {:placeholder "U/L (Ref: 0-40)" :style {:width "100%"} :addonAfter "U/L"
+                               :value (get-val [:liver_function :alt])
+                               :onChange #(dispatch-update [:liver_function :alt] %)}]]]
+            ;; ... other liver function inputs
+            [:> Col {:span 12}
+             [:> Form.Item {:label "血清白蛋白 (Albumin)" :name [:liver_function :albumin]}
+              [:> InputNumber {:placeholder "g/L (Ref: 35-55)" :style {:width "100%"} :addonAfter "g/L"
+                               :value (get-val [:liver_function :albumin])
+                               :onChange #(dispatch-update [:liver_function :albumin] %)}]]]]])
 
-          [:h4 {:style {:marginTop "16px"}} "肝脏疾病病史"]
-          [:> Form.Item {:label "类型" :name [:liver_disease_history :types]}
-           [:> Form/Checkbox.Group {:options liver-disease-type-options
-                                    :value (get-val [:liver_disease_history :types])
-                                    :onChange #(dispatch-update [:liver_disease_history :types] %)}]]
-          ;; ... (rest of liver-kidney card)
-          [:h4 {:style {:marginTop "16px"}} "其他情况"]
-          [:> Form.Item {:label "其他肝肾系统相关情况" :name :other_liver_kidney_conditions}
-           [:> Input.TextArea {:placeholder "如有其他肝肾系统相关情况请在此注明" :rows 3
-                               :value (get-val [:other_liver_kidney_conditions])
-                               :onChange #(dispatch-update-event [:other_liver_kidney_conditions] %)}]]
-          ]
-         [:> Empty {:description "请先选择患者"}])])))
+        [:h4 {:style {:marginTop "16px"}} "肝脏疾病病史"]
+        [:> Form.Item {:label "类型" :name [:liver_disease_history :types]}
+         [:> Checkbox.Group {:options liver-disease-type-options
+                             :value (get-val [:liver_disease_history :types])
+                             :onChange #(dispatch-update [:liver_disease_history :types] %)}]]
+        ;; ... (rest of liver-kidney card)
+        [:h4 {:style {:marginTop "16px"}} "其他情况"]
+        [:> Form.Item {:label "其他肝肾系统相关情况" :name :other_liver_kidney_conditions}
+         [:> Input.TextArea {:placeholder "如有其他肝肾系统相关情况请在此注明" :rows 3
+                             :value (get-val [:other_liver_kidney_conditions])
+                             :onChange #(dispatch-update-event [:other_liver_kidney_conditions] %)}]]
+        ]
+       [:> Empty {:description "请先选择患者"}])]))
 
-;; ---- Digestive System Card ----
-(defn- digestive-system-card []
+(defn digestive-system-card  "消化系统" []
   (let [ds-data @(rf/subscribe [::subs/digestive-system-data])
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         get-val (fn [path] (get-in ds-data path))
         dispatch-update (fn [path value] (rf/dispatch [::events/update-canonical-assessment-field (into [:digestive_system] path) value]))
         dispatch-update-event (fn [path event] (dispatch-update path (-> event .-target .-value)))]
-    (let [acute-gastroenteritis-symptoms [{:label "恶心" :value "nausea"} {:label "呕吐" :value "vomiting"} {:label "腹泻" :value "diarrhea"}]
-          ;; ... other options
-          ]
+    (let [acute-gastroenteritis-symptoms [{:label "恶心" :value "nausea"} {:label "呕吐" :value "vomiting"} {:label "腹泻" :value "diarrhea"}]]
       [custom-styled-card
-       [:> icons/CoffeeOutlined {:style {:marginRight "8px"}}]
+       [:> CoffeeOutlined {:style {:marginRight "8px"}}]
        "消化系统"
        "#e6fffb"
        (if patient-id
@@ -707,7 +696,7 @@
             [:> Radio {:value "无"} "无"]
             [:> Radio {:value "有"} "有"]
             [:> Radio {:value "不祥"} "不祥"]]]
-           ;; ... (rest of digestive card)
+          ;; ... (rest of digestive card)
           [:> Form.Item {:label "其他消化系统相关情况" :name :other_digestive_conditions}
            [:> Input.TextArea {:placeholder "如有其他消化系统相关情况请在此注明" :rows 3
                                :value (get-val [:other_digestive_conditions])
@@ -715,15 +704,14 @@
           ]
          [:> Empty {:description "请先选择患者"}])])))
 
-;; ---- Hematologic System Card ----
-(defn- hematologic-system-card []
+(defn hematologic-system-card "血液系统" []
   (let [hs-data @(rf/subscribe [::subs/hematologic-system-data])
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         get-val (fn [path] (get-in hs-data path))
         dispatch-update (fn [path value] (rf/dispatch [::events/update-canonical-assessment-field (into [:hematologic_system] path) value]))
         dispatch-update-event (fn [path event] (dispatch-update path (-> event .-target .-value)))]
     [custom-styled-card
-     [:> icons/ExperimentOutlined {:style {:marginRight "8px"}}]
+     [:> ExperimentOutlined {:style {:marginRight "8px"}}]
      "血液系统"
      "#fff0f6"
      (if patient-id
@@ -744,8 +732,7 @@
         ]
        [:> Empty {:description "请先选择患者"}])]))
 
-;; ---- Immune System Card ----
-(defn- immune-system-card []
+(defn immune-system-card        "免疫系统" []
   (let [is-data @(rf/subscribe [::subs/immune-system-data])
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         get-val (fn [path] (get-in is-data path))
@@ -754,7 +741,7 @@
     (let [immune-dysfunction-type-options [{:label "获得性免疫缺陷" :value "acquired_immunodeficiency"} {:label "先天性免疫缺陷" :value "congenital_immunodeficiency"} {:label "其他" :value "other_immune_dysfunction"}]
           autoimmune-disease-symptom-options [{:label "系统性红斑狼疮" :value "systemic_lupus_erythematosus"} {:label "类风湿性关节炎" :value "rheumatoid_arthritis"} {:label "强直性脊柱炎" :value "ankylosing_spondylitis"} {:label "过敏性紫癜" :value "allergic_purpura"} {:label "其他" :value "other_autoimmune_symptom"}]]
       [custom-styled-card
-       [:> icons/SecurityScanOutlined {:style {:marginRight "8px"}}]
+       [:> SecurityScanOutlined {:style {:marginRight "8px"}}]
        "免疫系统"
        "#f6ffed"
        (if patient-id
@@ -768,7 +755,7 @@
             [:> Radio {:value "无"} "无"]
             [:> Radio {:value "有"} "有"]
             [:> Radio {:value "不祥"} "不祥"]]]
-           ;; ... (rest of immune card)
+          ;; ... (rest of immune card)
           [:> Form.Item {:label "其他免疫系统相关情况" :name :other_immune_conditions}
            [:> Input.TextArea {:placeholder "如有其他免疫系统相关情况请在此注明" :rows 3
                                :value (get-val [:other_immune_conditions])
@@ -776,8 +763,7 @@
           ]
          [:> Empty {:description "请先选择患者"}])])))
 
-;; ---- Special Medication History Card ----
-(defn- special-medication-history-card []
+(defn special-medication-history-card "特殊用药史" []
   (let [smh-data @(rf/subscribe [::subs/special-medication-history-data])
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         get-val (fn [path] (get-in smh-data path))
@@ -800,7 +786,7 @@
                                                          :value (get-val [field-key :details])
                                                          :onChange #(dispatch-update-event [field-key :details] %)}]])])]
     [custom-styled-card
-     [:> icons/MedicineBoxOutlined {:style {:marginRight "8px"}}]
+     [:> MedicineBoxOutlined {:style {:marginRight "8px"}}]
      "特殊用药史"
      "#fffbe6"
      (if patient-id
@@ -821,161 +807,160 @@
         ]
        [:> Empty {:description "请先选择患者"}])]))
 
-;; ---- Special Disease History Card ----
-(defn- special-disease-history-card []
+(defn special-disease-history-card   "特殊疾病病史" []
   (let [sdh-data @(rf/subscribe [::subs/special-disease-history-data])
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         get-val (fn [path] (get-in sdh-data path))
         dispatch-update (fn [path value] (rf/dispatch [::events/update-canonical-assessment-field (into [:special_disease_history] path) value]))
-        dispatch-update-event (fn [path event] (dispatch-update path (-> event .-target .-value)))]
-    (let [marfan-related-lesions-options [ {:label "眼部病变（晶状体脱位）" :value "eye_lesion_lens_dislocation"}
-                                          {:label "心血管病变（主动脉瘤）" :value "cardiovascular_aortic_aneurysm"}
-                                          {:label "心血管病变（主动脉夹层）" :value "cardiovascular_aortic_dissection"}
-                                          {:label "心血管病变（心脏二尖瓣病变）" :value "cardiovascular_mitral_valve_disease"}
-                                          {:label "心血管病变（其他）" :value "cardiovascular_other"}
-                                          {:label "骨骼病变（脊柱侧弯）" :value "skeletal_scoliosis"}
-                                          {:label "骨骼病变（胸廓畸形）" :value "skeletal_chest_deformity"}
-                                          {:label "其他" :value "skeletal_other"}]]
-      [custom-styled-card
-       [:> icons/WarningOutlined {:style {:marginRight "8px"}}]
-       "特殊疾病病史"
-       "#fff1f0"
-       (if patient-id
-         [:> Form {:layout "vertical"
-                   :initialValues (clj->js sdh-data)
-                   :key (str patient-id "-special-disease-history")}
-          ;; Fields... (Content of special-disease-history-card)
-          [:> Form.Item {:label "马方综合征" :name :marfan_syndrome_present}
-           [:> Radio.Group {:value (get-val [:marfan_syndrome :present])
-                            :onChange #(dispatch-update-event [:marfan_syndrome :present] %)}
-            [:> Radio {:value "无"} "无"]
-            [:> Radio {:value "有"} "有"]
-            [:> Radio {:value "不祥"} "不祥"]]]
-          (when (= (get-val [:marfan_syndrome :present]) "有")
-            [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
-             [:> Form.Item {:label "相关病变" :name [:marfan_syndrome :related_lesions]}
-              [:> Form/Checkbox.Group {:options marfan-related-lesions-options
-                                       :style {:display "flex" :flexDirection "column"}
-                                       :value (get-val [:marfan_syndrome :related_lesions])
-                                       :onChange #(dispatch-update [:marfan_syndrome :related_lesions] %)}]]
-             (when (some #{"cardiovascular_other"} (get-val [:marfan_syndrome :related_lesions]))
-               [:> Form.Item {:label "其他心血管病变详情" :name [:marfan_syndrome :cardiovascular_other_details]}
-                [:> Input {:placeholder "请描述其他心血管病变"
-                           :value (get-val [:marfan_syndrome :cardiovascular_other_details])
-                           :onChange #(dispatch-update-event [:marfan_syndrome :cardiovascular_other_details] %)}]])
-             (when (some #{"skeletal_other"} (get-val [:marfan_syndrome :related_lesions]))
-               [:> Form.Item {:label "其他骨骼畸形详情" :name [:marfan_syndrome :skeletal_other_details]}
-                [:> Input {:placeholder "请描述其他骨骼畸形"
-                           :value (get-val [:marfan_syndrome :skeletal_other_details])
-                           :onChange #(dispatch-update-event [:marfan_syndrome :skeletal_other_details] %)}]])])
-          [:> Form.Item {:label "其他特殊疾病" :name :other_special_diseases}
-           [:> Input.TextArea {:placeholder "请描述其他特殊疾病情况" :rows 3
-                               :value (get-val [:other_special_diseases])
-                               :onChange #(dispatch-update-event [:other_special_diseases] %)}]]
-          ]
-         [:> Empty {:description "请先选择患者"}])])))
+        dispatch-update-event (fn [path event] (dispatch-update path (-> event .-target .-value)))
+        marfan-related-lesions-options [{:label "眼部病变（晶状体脱位）" :value "eye_lesion_lens_dislocation"}
+                                        {:label "心血管病变（主动脉瘤）" :value "cardiovascular_aortic_aneurysm"}
+                                        {:label "心血管病变（主动脉夹层）" :value "cardiovascular_aortic_dissection"}
+                                        {:label "心血管病变（心脏二尖瓣病变）" :value "cardiovascular_mitral_valve_disease"}
+                                        {:label "心血管病变（其他）" :value "cardiovascular_other"}
+                                        {:label "骨骼病变（脊柱侧弯）" :value "skeletal_scoliosis"}
+                                        {:label "骨骼病变（胸廓畸形）" :value "skeletal_chest_deformity"}
+                                        {:label "其他" :value "skeletal_other"}]]
+    [custom-styled-card
+     [:> WarningOutlined {:style {:marginRight "8px"}}]
+     "特殊疾病病史"
+     "#fff1f0"
+     (if patient-id
+       [:> Form {:layout "vertical"
+                 :initialValues (clj->js sdh-data)
+                 :key (str patient-id "-special-disease-history")}
+        ;; Fields... (Content of special-disease-history-card)
+        [:> Form.Item {:label "马方综合征" :name :marfan_syndrome_present}
+         [:> Radio.Group {:value (get-val [:marfan_syndrome :present])
+                          :onChange #(dispatch-update-event [:marfan_syndrome :present] %)}
+          [:> Radio {:value "无"} "无"]
+          [:> Radio {:value "有"} "有"]
+          [:> Radio {:value "不祥"} "不祥"]]]
+        (when (= (get-val [:marfan_syndrome :present]) "有")
+          [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+           [:> Form.Item {:label "相关病变" :name [:marfan_syndrome :related_lesions]}
+            [:> Checkbox.Group {:options marfan-related-lesions-options
+                                :style {:display "flex" :flexDirection "column"}
+                                :value (get-val [:marfan_syndrome :related_lesions])
+                                :onChange #(dispatch-update [:marfan_syndrome :related_lesions] %)}]]
+           (when (some #{"cardiovascular_other"} (get-val [:marfan_syndrome :related_lesions]))
+             [:> Form.Item {:label "其他心血管病变详情" :name [:marfan_syndrome :cardiovascular_other_details]}
+              [:> Input {:placeholder "请描述其他心血管病变"
+                         :value (get-val [:marfan_syndrome :cardiovascular_other_details])
+                         :onChange #(dispatch-update-event [:marfan_syndrome :cardiovascular_other_details] %)}]])
+           (when (some #{"skeletal_other"} (get-val [:marfan_syndrome :related_lesions]))
+             [:> Form.Item {:label "其他骨骼畸形详情" :name [:marfan_syndrome :skeletal_other_details]}
+              [:> Input {:placeholder "请描述其他骨骼畸形"
+                         :value (get-val [:marfan_syndrome :skeletal_other_details])
+                         :onChange #(dispatch-update-event [:marfan_syndrome :skeletal_other_details] %)}]])])
+        [:> Form.Item {:label "其他特殊疾病" :name :other_special_diseases}
+         [:> Input.TextArea {:placeholder "请描述其他特殊疾病情况" :rows 3
+                             :value (get-val [:other_special_diseases])
+                             :onChange #(dispatch-update-event [:other_special_diseases] %)}]]
+        ]
+       [:> Empty {:description "请先选择患者"}])]))
 
-;; ---- Nutritional Assessment Card ----
-(defn- nutritional-assessment-card []
+
+(defn nutritional-assessment-card        "营养评估" []
   (let [na-data @(rf/subscribe [::subs/nutritional-assessment-data])
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         get-val (fn [path] (get-in na-data path))
         dispatch-update (fn [path value] (rf/dispatch [::events/update-canonical-assessment-field (into [:nutritional_assessment] path) value]))
-        dispatch-update-event (fn [path event] (dispatch-update path (-> event .-target .-value)))]
-    (let [yes-no-options [{:label "无" :value "无"} {:label "有" :value "有"}]]
-      [custom-styled-card
-       [:> icons/AppleOutlined {:style {:marginRight "8px"}}]
-       "营养评估"
-       "#f0fff0"
-       (if patient-id
-         [:> Form {:layout "vertical"
-                   :initialValues (clj->js na-data)
-                   :key (str patient-id "-nutritional-assessment")}
-          [:h4 "1. 营养评分"]
-          [:> Form.Item {:label "是否 BMI < 20.5" :name [:nutritional_score :bmi_lt_20_5]}
-           [:> Radio.Group {:options yes-no-options :value (get-val [:nutritional_score :bmi_lt_20_5]) :onChange #(dispatch-update-event [:nutritional_score :bmi_lt_20_5] %)}]]
-          [:> Form.Item {:label "患者在过去 1-3 个月有体重下降吗？" :name [:nutritional_score :weight_loss_last_3_months]}
-           [:> Radio.Group {:options yes-no-options :value (get-val [:nutritional_score :weight_loss_last_3_months]) :onChange #(dispatch-update-event [:nutritional_score :weight_loss_last_3_months] %)}]]
-          [:> Form.Item {:label "患者在过去的 1 周内有摄食减少吗？" :name [:nutritional_score :reduced_intake_last_week]}
-           [:> Radio.Group {:options yes-no-options :value (get-val [:nutritional_score :reduced_intake_last_week]) :onChange #(dispatch-update-event [:nutritional_score :reduced_intake_last_week] %)}]]
-          [:> Form.Item {:label "患者有严重疾病吗 (如 ICU 治疗)？" :name [:nutritional_score :severe_illness]}
-           [:> Radio.Group {:options yes-no-options :value (get-val [:nutritional_score :severe_illness]) :onChange #(dispatch-update-event [:nutritional_score :severe_illness] %)}]]
-          [:div {:style {:padding "8px" :border "1px solid #d9d9d9" :borderRadius "2px" :marginBottom "16px"}}
-           [:h5 {:style {:marginBottom "4px"}} "评分说明:"]
-           [:p {:style {:fontSize "12px" :color "gray"}} "每项“是”计1分，总分≥2分提示存在营养风险，建议进一步评估。"]]
-          [:h4 {:style {:marginTop "16px"}} "2. FRAIL（针对年龄大于 60 岁病人）"]
-          [:> Form.Item {:label "疲乏 (Fatigue): 是否感到疲乏？" :name [:frail_score :fatigue]}
-           [:> Radio.Group {:options yes-no-options :value (get-val [:frail_score :fatigue]) :onChange #(dispatch-update-event [:frail_score :fatigue] %)}]]
-          [:> Form.Item {:label "阻力增加 / 耐力减退 (Resistance): 是否难以独立爬一层楼梯？" :name [:frail_score :resistance]}
-           [:> Radio.Group {:options yes-no-options :value (get-val [:frail_score :resistance]) :onChange #(dispatch-update-event [:frail_score :resistance] %)}]]
-          [:> Form.Item {:label "自由活动下降 (Ambulation): 是否难以独立行走 100 米？" :name [:frail_score :ambulation]}
-           [:> Radio.Group {:options yes-no-options :value (get-val [:frail_score :ambulation]) :onChange #(dispatch-update-event [:frail_score :ambulation] %)}]]
-          [:> Form.Item {:label "疾病状况 (Illness): 是否患有 5 种及以上慢性疾病？" :name [:frail_score :illness_gt_5]}
-           [:> Radio.Group {:options yes-no-options :value (get-val [:frail_score :illness_gt_5]) :onChange #(dispatch-update-event [:frail_score :illness_gt_5] %)}]]
-          [:> Form.Item {:label "体重下降 (Loss of weight): 1 年或更短时间内体重下降是否超过 5%？" :name [:frail_score :loss_of_weight_gt_5_percent]}
-           [:> Radio.Group {:options yes-no-options :value (get-val [:frail_score :loss_of_weight_gt_5_percent]) :onChange #(dispatch-update-event [:frail_score :loss_of_weight_gt_5_percent] %)}]]
-          [:div {:style {:padding "8px" :border "1px solid #d9d9d9" :borderRadius "2px"}}
-           [:h5 {:style {:marginBottom "4px"}} "FRAIL 结论:"]
-           [:p {:style {:fontSize "12px" :color "gray"}}
-            "0 分：健康；" [:br]
-            "1-2 分：衰弱前期；" [:br]
-            "≥3 分：衰弱。"]]
-          ]
-         [:> Empty {:description "请先选择患者"}])])))
+        dispatch-update-event (fn [path event] (dispatch-update path (-> event .-target .-value)))
+        yes-no-options [{:label "无" :value "无"} {:label "有" :value "有"}]]
+    [custom-styled-card
+     [:> AppleOutlined {:style {:marginRight "8px"}}]
+     "营养评估"
+     "#f0fff0"
+     (if patient-id
+       [:> Form {:layout "vertical"
+                 :initialValues (clj->js na-data)
+                 :key (str patient-id "-nutritional-assessment")}
+        [:h4 "1. 营养评分"]
+        [:> Form.Item {:label "是否 BMI < 20.5" :name [:nutritional_score :bmi_lt_20_5]}
+         [:> Radio.Group {:options yes-no-options :value (get-val [:nutritional_score :bmi_lt_20_5]) :onChange #(dispatch-update-event [:nutritional_score :bmi_lt_20_5] %)}]]
+        [:> Form.Item {:label "患者在过去 1-3 个月有体重下降吗？" :name [:nutritional_score :weight_loss_last_3_months]}
+         [:> Radio.Group {:options yes-no-options :value (get-val [:nutritional_score :weight_loss_last_3_months]) :onChange #(dispatch-update-event [:nutritional_score :weight_loss_last_3_months] %)}]]
+        [:> Form.Item {:label "患者在过去的 1 周内有摄食减少吗？" :name [:nutritional_score :reduced_intake_last_week]}
+         [:> Radio.Group {:options yes-no-options :value (get-val [:nutritional_score :reduced_intake_last_week]) :onChange #(dispatch-update-event [:nutritional_score :reduced_intake_last_week] %)}]]
+        [:> Form.Item {:label "患者有严重疾病吗 (如 ICU 治疗)？" :name [:nutritional_score :severe_illness]}
+         [:> Radio.Group {:options yes-no-options :value (get-val [:nutritional_score :severe_illness]) :onChange #(dispatch-update-event [:nutritional_score :severe_illness] %)}]]
+        [:div {:style {:padding "8px" :border "1px solid #d9d9d9" :borderRadius "2px" :marginBottom "16px"}}
+         [:h5 {:style {:marginBottom "4px"}} "评分说明:"]
+         [:p {:style {:fontSize "12px" :color "gray"}} "每项“是”计1分，总分≥2分提示存在营养风险，建议进一步评估。"]]
+        [:h4 {:style {:marginTop "16px"}} "2. FRAIL（针对年龄大于 60 岁病人）"]
+        [:> Form.Item {:label "疲乏 (Fatigue): 是否感到疲乏？" :name [:frail_score :fatigue]}
+         [:> Radio.Group {:options yes-no-options :value (get-val [:frail_score :fatigue]) :onChange #(dispatch-update-event [:frail_score :fatigue] %)}]]
+        [:> Form.Item {:label "阻力增加 / 耐力减退 (Resistance): 是否难以独立爬一层楼梯？" :name [:frail_score :resistance]}
+         [:> Radio.Group {:options yes-no-options :value (get-val [:frail_score :resistance]) :onChange #(dispatch-update-event [:frail_score :resistance] %)}]]
+        [:> Form.Item {:label "自由活动下降 (Ambulation): 是否难以独立行走 100 米？" :name [:frail_score :ambulation]}
+         [:> Radio.Group {:options yes-no-options :value (get-val [:frail_score :ambulation]) :onChange #(dispatch-update-event [:frail_score :ambulation] %)}]]
+        [:> Form.Item {:label "疾病状况 (Illness): 是否患有 5 种及以上慢性疾病？" :name [:frail_score :illness_gt_5]}
+         [:> Radio.Group {:options yes-no-options :value (get-val [:frail_score :illness_gt_5]) :onChange #(dispatch-update-event [:frail_score :illness_gt_5] %)}]]
+        [:> Form.Item {:label "体重下降 (Loss of weight): 1 年或更短时间内体重下降是否超过 5%？" :name [:frail_score :loss_of_weight_gt_5_percent]}
+         [:> Radio.Group {:options yes-no-options :value (get-val [:frail_score :loss_of_weight_gt_5_percent]) :onChange #(dispatch-update-event [:frail_score :loss_of_weight_gt_5_percent] %)}]]
+        [:div {:style {:padding "8px" :border "1px solid #d9d9d9" :borderRadius "2px"}}
+         [:h5 {:style {:marginBottom "4px"}} "FRAIL 结论:"]
+         [:p {:style {:fontSize "12px" :color "gray"}}
+          "0 分：健康；" [:br]
+          "1-2 分：衰弱前期；" [:br]
+          "≥3 分：衰弱。"]]
+        ]
+       [:> Empty {:description "请先选择患者"}])]))
 
-;; ---- Pregnancy Assessment Card ----
-(defn- pregnancy-assessment-card []
+
+(defn pregnancy-assessment-card        "妊娠" []
   (let [pa-data @(rf/subscribe [::subs/pregnancy-assessment-data])
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         get-val (fn [path] (get-in pa-data path))
         dispatch-update (fn [path value] (rf/dispatch [::events/update-canonical-assessment-field (into [:pregnancy_assessment] path) value]))
-        dispatch-update-event (fn [path event] (dispatch-update path (-> event .-target .-value)))]
-    (let [gestational-week-options [{:label "0-12 周" :value "0-12_weeks"} {:label "13-28 周" :value "13-28_weeks"} {:label ">28 周" :value ">28_weeks"}]
-          comorbid-obstetric-options [{:label "单胎" :value "singleton_pregnancy"} {:label "多胎" :value "multiple_pregnancy"} {:label "妊娠期糖尿病" :value "gestational_diabetes"} {:label "妊娠期高血压" :value "gestational_hypertension"} {:label "周围型前置胎盘" :value "marginal_placenta_previa"} {:label "中央型前置胎盘" :value "complete_placenta_previa"} {:label "胎膜早破" :value "premature_rupture_of_membranes"} {:label "胎盘早剥" :value "placental_abruption"} {:label "胎盘植入" :value "placenta_accreta"} {:label "先兆流产" :value "threatened_abortion"} {:label "子痫前期" :value "preeclampsia"} {:label "子痫" :value "eclampsia"} {:label "其他" :value "other_obstetric_conditions"}]]
-      [custom-styled-card
-       [:> icons/WomanOutlined {:style {:marginRight "8px"}}]
-       "妊娠"
-       "#fff0f6"
-       (if patient-id
-         [:> Form {:layout "vertical"
-                   :initialValues (clj->js pa-data)
-                   :key (str patient-id "-pregnancy-assessment")}
-          [:> Form.Item {:label "是否妊娠" :name :is_pregnant}
-           [:> Radio.Group {:value (get-val [:is_pregnant])
-                            :onChange #(dispatch-update-event [:is_pregnant] %)}
-            [:> Radio {:value "无"} "无"]
-            [:> Radio {:value "有"} "有"]
-            [:> Radio {:value "不祥"} "不祥"]]]
-          (when (= (get-val [:is_pregnant]) "有")
-            [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
-             [:> Form.Item {:label "孕周" :name :gestational_week}
-              [:> Select {:placeholder "选择孕周" :style {:width "100%"} :allowClear true
-                          :value (get-val [:gestational_week])
-                          :options gestational-week-options
-                          :onChange #(dispatch-update [:gestational_week] %)}]]
-             [:> Form.Item {:label "孕产史" :name :obstetric_history}
-              [:> Input.TextArea {:placeholder "例如：G2P1A1L1 或 足月1、早产0、流产1、存活1" :rows 2
-                                  :value (get-val [:obstetric_history])
-                                  :onChange #(dispatch-update-event [:obstetric_history] %)}]]
-             [:> Form.Item {:label "合并产科情况" :name :comorbid_obstetric_conditions}
-              [:> Form/Checkbox.Group {:options comorbid-obstetric-options
-                                       :style {:display "flex" :flexDirection "column"}
-                                       :value (get-val [:comorbid_obstetric_conditions])
-                                       :onChange #(dispatch-update [:comorbid_obstetric_conditions] %)}]]
-             (when (some #{"other_obstetric_conditions"} (get-val [:comorbid_obstetric_conditions]))
-               [:> Form.Item {:label "其他合并产科情况详情" :name :comorbid_obstetric_conditions_other_details :style {:marginLeft "20px"}}
-                [:> Input {:placeholder "请描述其他合并产科情况"
-                           :value (get-val [:comorbid_obstetric_conditions_other_details])
-                           :onChange #(dispatch-update-event [:comorbid_obstetric_conditions_other_details] %)}]])])
-          [:> Form.Item {:label "其他妊娠相关情况" :name :other_pregnancy_conditions}
-           [:> Input.TextArea {:placeholder "如有其他妊娠相关情况请在此注明" :rows 3
-                               :value (get-val [:other_pregnancy_conditions])
-                               :onChange #(dispatch-update-event [:other_pregnancy_conditions] %)}]]
-          ]
-         [:> Empty {:description "请先选择患者"}])])))
+        dispatch-update-event (fn [path event] (dispatch-update path (-> event .-target .-value)))
+        gestational-week-options [{:label "0-12 周" :value "0-12_weeks"} {:label "13-28 周" :value "13-28_weeks"} {:label ">28 周" :value ">28_weeks"}]
+        comorbid-obstetric-options [{:label "单胎" :value "singleton_pregnancy"} {:label "多胎" :value "multiple_pregnancy"} {:label "妊娠期糖尿病" :value "gestational_diabetes"} {:label "妊娠期高血压" :value "gestational_hypertension"} {:label "周围型前置胎盘" :value "marginal_placenta_previa"} {:label "中央型前置胎盘" :value "complete_placenta_previa"} {:label "胎膜早破" :value "premature_rupture_of_membranes"} {:label "胎盘早剥" :value "placental_abruption"} {:label "胎盘植入" :value "placenta_accreta"} {:label "先兆流产" :value "threatened_abortion"} {:label "子痫前期" :value "preeclampsia"} {:label "子痫" :value "eclampsia"} {:label "其他" :value "other_obstetric_conditions"}]]
+    [custom-styled-card
+     [:> WomanOutlined {:style {:marginRight "8px"}}]
+     "妊娠"
+     "#fff0f6"
+     (if patient-id
+       [:> Form {:layout "vertical"
+                 :initialValues (clj->js pa-data)
+                 :key (str patient-id "-pregnancy-assessment")}
+        [:> Form.Item {:label "是否妊娠" :name :is_pregnant}
+         [:> Radio.Group {:value (get-val [:is_pregnant])
+                          :onChange #(dispatch-update-event [:is_pregnant] %)}
+          [:> Radio {:value "无"} "无"]
+          [:> Radio {:value "有"} "有"]
+          [:> Radio {:value "不祥"} "不祥"]]]
+        (when (= (get-val [:is_pregnant]) "有")
+          [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+           [:> Form.Item {:label "孕周" :name :gestational_week}
+            [:> Select {:placeholder "选择孕周" :style {:width "100%"} :allowClear true
+                        :value (get-val [:gestational_week])
+                        :options gestational-week-options
+                        :onChange #(dispatch-update [:gestational_week] %)}]]
+           [:> Form.Item {:label "孕产史" :name :obstetric_history}
+            [:> Input.TextArea {:placeholder "例如：G2P1A1L1 或 足月1、早产0、流产1、存活1" :rows 2
+                                :value (get-val [:obstetric_history])
+                                :onChange #(dispatch-update-event [:obstetric_history] %)}]]
+           [:> Form.Item {:label "合并产科情况" :name :comorbid_obstetric_conditions}
+            [:> Checkbox.Group {:options comorbid-obstetric-options
+                                :style {:display "flex" :flexDirection "column"}
+                                :value (get-val [:comorbid_obstetric_conditions])
+                                :onChange #(dispatch-update [:comorbid_obstetric_conditions] %)}]]
+           (when (some #{"other_obstetric_conditions"} (get-val [:comorbid_obstetric_conditions]))
+             [:> Form.Item {:label "其他合并产科情况详情" :name :comorbid_obstetric_conditions_other_details :style {:marginLeft "20px"}}
+              [:> Input {:placeholder "请描述其他合并产科情况"
+                         :value (get-val [:comorbid_obstetric_conditions_other_details])
+                         :onChange #(dispatch-update-event [:comorbid_obstetric_conditions_other_details] %)}]])])
+        [:> Form.Item {:label "其他妊娠相关情况" :name :other_pregnancy_conditions}
+         [:> Input.TextArea {:placeholder "如有其他妊娠相关情况请在此注明" :rows 3
+                             :value (get-val [:other_pregnancy_conditions])
+                             :onChange #(dispatch-update-event [:other_pregnancy_conditions] %)}]]
+        ]
+       [:> Empty {:description "请先选择患者"}])]))
 
-;; ---- Surgical Anesthesia History Card ----
-(defn- surgical-anesthesia-history-card []
+
+(defn surgical-anesthesia-history-card "手术麻醉史" []
   (let [sah-data @(rf/subscribe [::subs/surgical-anesthesia-history-data])
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         get-val (fn [path] (get-in sah-data path))
@@ -986,7 +971,7 @@
           postop-complications-options [{:label "术后恶心呕吐" :value "postop_nausea_vomiting"} {:label "术后疼痛" :value "postop_pain"} {:label "声音嘶哑" :value "hoarseness"} {:label "头晕头疼" :value "dizziness_headache"} {:label "其他" :value "other_postop_complications"}]
           adverse-events-options [{:label "过敏反应" :value "allergic_reaction"} {:label "困难气道" :value "difficult_airway"} {:label "气管切开" :value "tracheostomy"} {:label "术中知晓" :value "intraop_awareness"} {:label "术后认知功能障碍" :value "postop_cognitive_dysfunction"} {:label "恶性高热" :value "malignant_hyperthermia"} {:label "其他" :value "other_adverse_events"}]]
       [custom-styled-card
-       [:> icons/HistoryOutlined {:style {:marginRight "8px"}}]
+       [:> HistoryOutlined {:style {:marginRight "8px"}}]
        "手术麻醉史"
        "#e6f7ff"
        (if patient-id
@@ -1011,25 +996,25 @@
                               :value (when-let [date-str (get-val [:history :last_anesthesia_date_specific])] (dayjs date-str))
                               :onChange #(dispatch-update [:history :last_anesthesia_date_specific] (if % (utils/date->iso-string %) nil))}]]
              [:> Form.Item {:label "麻醉方式" :name [:history :anesthesia_types]}
-              [:> Form/Checkbox.Group {:options anesthesia-type-options
-                                       :style {:display "flex" :flexDirection "column"}
-                                       :value (get-val [:history :anesthesia_types])
-                                       :onChange #(dispatch-update [:history :anesthesia_types] %)}]]
+              [:> Checkbox.Group {:options anesthesia-type-options
+                                  :style {:display "flex" :flexDirection "column"}
+                                  :value (get-val [:history :anesthesia_types])
+                                  :onChange #(dispatch-update [:history :anesthesia_types] %)}]]
              [:> Form.Item {:label "术后并发症" :name [:history :postop_complications]}
-              [:> Form/Checkbox.Group {:options postop-complications-options
-                                       :style {:display "flex" :flexDirection "column"}
-                                       :value (get-val [:history :postop_complications])
-                                       :onChange #(dispatch-update [:history :postop_complications] %)}]]
+              [:> Checkbox.Group {:options postop-complications-options
+                                  :style {:display "flex" :flexDirection "column"}
+                                  :value (get-val [:history :postop_complications])
+                                  :onChange #(dispatch-update [:history :postop_complications] %)}]]
              (when (some #{"other_postop_complications"} (get-val [:history :postop_complications]))
                [:> Form.Item {:label "其他术后并发症详情" :name [:history :postop_complications_other_details] :style {:marginLeft "20px"}}
                 [:> Input {:placeholder "请描述其他术后并发症"
                            :value (get-val [:history :postop_complications_other_details])
                            :onChange #(dispatch-update-event [:history :postop_complications_other_details] %)}]])
              [:> Form.Item {:label "不良事件" :name [:history :adverse_events]}
-              [:> Form/Checkbox.Group {:options adverse-events-options
-                                       :style {:display "flex" :flexDirection "column"}
-                                       :value (get-val [:history :adverse_events])
-                                       :onChange #(dispatch-update [:history :adverse_events] %)}]]
+              [:> Checkbox.Group {:options adverse-events-options
+                                  :style {:display "flex" :flexDirection "column"}
+                                  :value (get-val [:history :adverse_events])
+                                  :onChange #(dispatch-update [:history :adverse_events] %)}]]
              (when (some #{"other_adverse_events"} (get-val [:history :adverse_events]))
                [:> Form.Item {:label "其他不良事件详情" :name [:history :adverse_events_other_details] :style {:marginLeft "20px"}}
                 [:> Input {:placeholder "请描述其他不良事件"
@@ -1056,58 +1041,58 @@
           ]
          [:> Empty {:description "请先选择患者"}])])))
 
-;; ---- Airway Assessment Card ----
-(defn- airway-assessment-card []
+
+(defn- airway-assessment-card        "气道评估" []
   (let [aa-data @(rf/subscribe [::subs/airway-assessment-data])
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         get-val (fn [path] (get-in aa-data path))
         dispatch-update (fn [path value] (rf/dispatch [::events/update-canonical-assessment-field (into [:airway_assessment] path) value]))
-        dispatch-update-event (fn [path event] (dispatch-update path (-> event .-target .-value)))]
-    (let [yes-no-options [{:label "无" :value "无"} {:label "有" :value "有"}]
-          yes-no-suspected-unknown-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "疑似" :value "疑似"} {:label "不祥" :value "不祥"}]
-          mouth-opening-options [{:label "≥3横指" :value "gte_3_fingers"} {:label "2.5 横指" :value "2_5_fingers"} {:label "2 横指" :value "2_fingers"} {:label "<2 横指" :value "lt_2_fingers"} {:label "无法张口" :value "cannot_open"}]
-          render-radio-with-details (fn [field-key-present field-key-details label-text]
-                                     [:div {:key (str (name field-key-present) "-group")}
-                                      [:> Form.Item {:label label-text :name [field-key-present]}
-                                       [:> Radio.Group {:options yes-no-options
-                                                        :value (get-val [field-key-present])
-                                                        :onChange #(let [val (-> % .-target .-value)]
-                                                                     (dispatch-update [field-key-present] val)
-                                                                     (when (= val "无") (dispatch-update [field-key-details] nil)))}]]
-                                      (when (= (get-val [field-key-present]) "有")
-                                        [:> Form.Item {:label "详情" :name [field-key-details] :style {:marginLeft "20px"}}
-                                         [:> Input.TextArea {:placeholder "请描述详情" :rows 2
-                                                             :value (get-val [field-key-details])
-                                                             :onChange #(dispatch-update-event [field-key-details] %)}]])])]
-      [custom-styled-card
-       [:> icons/NodeIndexOutlined {:style {:marginRight "8px"}}]
-       "气道评估"
-       "#fff7e6"
-       (if patient-id
-         [:> Form {:layout "vertical"
-                   :initialValues (clj->js aa-data)
-                   :key (str patient-id "-airway-assessment")}
-          [:p {:style {:fontStyle "italic" :color "gray"}} "参考甲颏距离及Mallampati分级图示 (图示待添加)"]
-          [:h4 {:style {:marginTop "16px"}} "详细评估项"]
-          [:> Form.Item {:label "既往困难通气史" :name [:detailed_assessment :difficult_ventilation_history]}
-           [:> Radio.Group {:options yes-no-suspected-unknown-options :value (get-val [:detailed_assessment :difficult_ventilation_history]) :onChange #(dispatch-update-event [:detailed_assessment :difficult_ventilation_history] %)}]]
-          [:> Form.Item {:label "既往困难插管史" :name [:detailed_assessment :difficult_intubation_history]}
-           [:> Radio.Group {:options yes-no-suspected-unknown-options :value (get-val [:detailed_assessment :difficult_intubation_history]) :onChange #(dispatch-update-event [:detailed_assessment :difficult_intubation_history] %)}]]
-          [:> Form.Item {:label "张口度" :name [:detailed_assessment :mouth_opening :degree]}
-           [:> Select {:placeholder "选择张口度" :style {:width "100%"} :allowClear true
-                       :value (get-val [:detailed_assessment :mouth_opening :degree])
-                       :options mouth-opening-options
-                       :onChange #(dispatch-update [:detailed_assessment :mouth_opening :degree] %)}]]
-          ;; ... (rest of airway card including special_facial_features, snoring, airway_related_diseases, mediastinal_history, current_airway_symptoms etc.)
-          [:> Form.Item {:label "其他气道相关情况" :name :other_airway_conditions}
-           [:> Input.TextArea {:placeholder "如有其他气道相关情况请在此注明" :rows 3
-                               :value (get-val [:other_airway_conditions])
-                               :onChange #(dispatch-update-event [:other_airway_conditions] %)}]]
-          ]
-         [:> Empty {:description "请先选择患者"}])])))
+        dispatch-update-event (fn [path event] (dispatch-update path (-> event .-target .-value)))
+        yes-no-options [{:label "无" :value "无"} {:label "有" :value "有"}]
+        yes-no-suspected-unknown-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "疑似" :value "疑似"} {:label "不祥" :value "不祥"}]
+        mouth-opening-options [{:label "≥3横指" :value "gte_3_fingers"} {:label "2.5 横指" :value "2_5_fingers"} {:label "2 横指" :value "2_fingers"} {:label "<2 横指" :value "lt_2_fingers"} {:label "无法张口" :value "cannot_open"}]
+        render-radio-with-details (fn [field-key-present field-key-details label-text]
+                                    [:div {:key (str (name field-key-present) "-group")}
+                                     [:> Form.Item {:label label-text :name [field-key-present]}
+                                      [:> Radio.Group {:options yes-no-options
+                                                       :value (get-val [field-key-present])
+                                                       :onChange #(let [val (-> % .-target .-value)]
+                                                                    (dispatch-update [field-key-present] val)
+                                                                    (when (= val "无") (dispatch-update [field-key-details] nil)))}]]
+                                     (when (= (get-val [field-key-present]) "有")
+                                       [:> Form.Item {:label "详情" :name [field-key-details] :style {:marginLeft "20px"}}
+                                        [:> Input.TextArea {:placeholder "请描述详情" :rows 2
+                                                            :value (get-val [field-key-details])
+                                                            :onChange #(dispatch-update-event [field-key-details] %)}]])])]
+    [custom-styled-card
+     [:> NodeIndexOutlined {:style {:marginRight "8px"}}]
+     "气道评估"
+     "#fff7e6"
+     (if patient-id
+       [:> Form {:layout "vertical"
+                 :initialValues (clj->js aa-data)
+                 :key (str patient-id "-airway-assessment")}
+        [:p {:style {:fontStyle "italic" :color "gray"}} "参考甲颏距离及Mallampati分级图示 (图示待添加)"]
+        [:h4 {:style {:marginTop "16px"}} "详细评估项"]
+        [:> Form.Item {:label "既往困难通气史" :name [:detailed_assessment :difficult_ventilation_history]}
+         [:> Radio.Group {:options yes-no-suspected-unknown-options :value (get-val [:detailed_assessment :difficult_ventilation_history]) :onChange #(dispatch-update-event [:detailed_assessment :difficult_ventilation_history] %)}]]
+        [:> Form.Item {:label "既往困难插管史" :name [:detailed_assessment :difficult_intubation_history]}
+         [:> Radio.Group {:options yes-no-suspected-unknown-options :value (get-val [:detailed_assessment :difficult_intubation_history]) :onChange #(dispatch-update-event [:detailed_assessment :difficult_intubation_history] %)}]]
+        [:> Form.Item {:label "张口度" :name [:detailed_assessment :mouth_opening :degree]}
+         [:> Select {:placeholder "选择张口度" :style {:width "100%"} :allowClear true
+                     :value (get-val [:detailed_assessment :mouth_opening :degree])
+                     :options mouth-opening-options
+                     :onChange #(dispatch-update [:detailed_assessment :mouth_opening :degree] %)}]]
+        ;; ... (rest of airway card including special_facial_features, snoring, airway_related_diseases, mediastinal_history, current_airway_symptoms etc.)
+        [:> Form.Item {:label "其他气道相关情况" :name :other_airway_conditions}
+         [:> Input.TextArea {:placeholder "如有其他气道相关情况请在此注明" :rows 3
+                             :value (get-val [:other_airway_conditions])
+                             :onChange #(dispatch-update-event [:other_airway_conditions] %)}]]
+        ]
+       [:> Empty {:description "请先选择患者"}])]))
 
-;; ---- Spinal Anesthesia Assessment Card ----
-(defn- spinal-anesthesia-assessment-card []
+
+(defn spinal-anesthesia-assessment-card        "椎管内麻醉相关评估" []
   (let [saa-data @(rf/subscribe [::subs/spinal-anesthesia-assessment-data])
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         get-val (fn [path] (get-in saa-data path))
@@ -1122,7 +1107,7 @@
             (render-subsection-title [title] ; Specific helper
               [:h4 {:style {:marginTop "16px" :marginBottom "8px" :borderBottom "1px solid #f0f0f0" :paddingBottom "4px"}} title])]
       [custom-styled-card
-       [:> icons/GatewayOutlined {:style {:marginRight "8px"}}]
+       [:> GatewayOutlined {:style {:marginRight "8px"}}]
        "椎管内麻醉相关评估"
        "#f0f5ff"
        (if patient-id
@@ -1178,8 +1163,8 @@
           (render-radio-group :puncture_site_inspection :deformity "畸形")
           (render-subsection-title "局麻药过敏")
           [:> Form.Item {:label "局麻药过敏史" :name :local_anesthetic_allergy :key "la-allergy"}
-            [:> Radio.Group {:options yes-no-options
-                             :value (get-val [:local_anesthetic_allergy])
-                             :onChange #(dispatch-update-event [:local_anesthetic_allergy] %)}]]
+           [:> Radio.Group {:options yes-no-options
+                            :value (get-val [:local_anesthetic_allergy])
+                            :onChange #(dispatch-update-event [:local_anesthetic_allergy] %)}]]
           ]
          [:> Empty {:description "请先选择患者"}])])))

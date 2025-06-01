@@ -101,7 +101,7 @@
 (rf/reg-sub ::canonical-patient-name
   :<- [::canonical-basic-info]
   (fn [basic-info _] (:name basic-info)))
-  
+
 (rf/reg-sub ::canonical-patient-outpatient-number
   :<- [::canonical-basic-info]
   (fn [basic-info _] (:outpatient_number basic-info)))
@@ -201,6 +201,11 @@
   (fn [assessment _]
     (or (:nutritional_assessment assessment) {}))) ; Return empty map if nil
 
+(rf/reg-sub ::pregnancy-assessment-data
+  :<- [::current-canonical-assessment]
+  (fn [assessment _]
+    (or (:pregnancy_assessment_data assessment) {})))
+
 ;; Surgical Anesthesia History - New
 (rf/reg-sub ::surgical-anesthesia-history-data
   :<- [::current-canonical-assessment]
@@ -214,11 +219,10 @@
     (or (:airway_assessment assessment) {}))) ; Return empty map if nil
 
 ;; Spinal Anesthesia Assessment - New
-(rf/reg-sub
- ::spinal-anesthesia-assessment-data
- :<- [::subs/current-canonical-assessment]
- (fn [assessment _]
-   (or (:spinal_anesthesia_assessment assessment) {})))
+(rf/reg-sub ::spinal-anesthesia-assessment-data
+  :<- [::current-canonical-assessment]
+  (fn [assessment _]
+    (or (:spinal_anesthesia_assessment assessment) {})))
 
 ;; ---- Existing subscriptions - Review/Refactor as needed ----
 ;; DEPRECATED by ::canonical-basic-info, ::canonical-medical-history etc.
