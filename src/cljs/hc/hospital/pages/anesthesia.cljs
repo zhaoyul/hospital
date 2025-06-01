@@ -295,11 +295,10 @@
                   :placeholder "请输入过敏源及症状"
                   :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:medical_history :allergy :details] (-> % .-target .-value)])}]]
       [:> Form.Item {:label "最近反应日期" :name [:allergy :last_reaction_date]} ; Path matches canonical
-       [:> DatePicker {;; :value (utils/to-dayjs (get-in medical-history [:allergy :last_reaction_date])) ; Let Form handle
-                       :style {:width "100%"}
+       [:> DatePicker {:style {:width "100%"}
                        :format "YYYY-MM-DD"
                        :placeholder "请选择日期"
-                       :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:medical_history :allergy :last_reaction_date] (utils/date->iso-string %)])}]]]))])
+                       :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:medical_history :allergy :last_reaction_date] (utils/date->iso-string %)])}]]])])
 
 (defn- render-lifestyle-section [medical-history]
   [:div
@@ -348,7 +347,7 @@
         [:> Input {;; :value (get-in medical-history [:drinking :alcohol_per_day]) ; Let Form handle
                    :placeholder "请输入饮酒量"
                    :style {:width "100%"}
-                   :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:medical_history :drinking :alcohol_per_day] (-> % .-target .-value)])}]]]]])
+                   :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:medical_history :drinking :alcohol_per_day] (-> % .-target .-value)])}]]]])])
 
 (defn- medical-history-summary-card []
   (let [medical-history @(rf/subscribe [::subs/canonical-medical-history]) ; Use new subscription
@@ -359,7 +358,7 @@
      "#fff7e6" ; Header background color
      (if (seq medical-history) ; Check if medical-history map is not empty
        [:> Form {:layout "horizontal" :labelCol {:span 6} :wrapperCol {:span 18} :labelAlign "left"
-                 :initialValues (clj->js medical-history)
+                 :initialValues (clj->js (update-in medical-history [:allergy :last_reaction_date] #(dayjs %) ))
                  :key patient-id} ; Key for re-initialization
         [render-allergy-section medical-history]
         [render-lifestyle-section medical-history]]
@@ -395,7 +394,9 @@
        "#f9f0ff" ; Header background color
        (if (seq comorbidities-data)
          [:> Form {:layout "horizontal" :labelCol {:span 10} :wrapperCol {:span 14} :labelAlign "left"
-                   :initialValues (clj->js comorbidities-data)
+                   :initialValues (clj->js (update-in (timbre/spy :info comorbidities-data)
+                                                      [:special_medications :last_dose_time]
+                                                      (fn [str]  (timbre/spy :info (dayjs str)))))
                    :key patient-id} ; Key for re-initialization
           [:> Row {:gutter [16 0]} ; Horizontal gutter 16, vertical 0
            (comorbidity-item :respiratory "呼吸系统疾病")
@@ -430,13 +431,12 @@
                (when has-taken-value
                  [:div {:style {:marginTop "8px"}}
                   [:> Form.Item {:name (conj form-item-base :details) :label "药物名称及剂量" :labelCol {:span 6} :wrapperCol {:span 18}}
-                   [:> Input {;; :value (get-in comorbidities-data [:special_medications :details]) ; Let Form handle
-                              :placeholder "药物名称及剂量"
+                   [:> Input {:placeholder "药物名称及剂量"
                               :style {:marginBottom "8px"}
                               :onChange #(rf/dispatch [::events/update-canonical-assessment-field details-path (-> % .-target .-value)])}]]
-                  [:> Form.Item {:name (conj form-item-base :last_dose_time) :label "最近用药时间" :labelCol {:span 6} :wrapperCol {:span 18}}
-                   [:> DatePicker {;; :value (utils/to-dayjs (get-in comorbidities-data [:special_medications :last_dose_time])) ; Let Form handle
-                                   :showTime true
+                  [:> Form.Item {:name (conj form-item-base :last_dose_time) :label "最近用药时间" :labelCol {:span 6} :wrapperCol {:span 18}
+                                 }
+                   [:> DatePicker {:showTime true
                                    :format "YYYY-MM-DD HH:mm"
                                    :placeholder "选择日期和时间"
                                    :style {:width "100%"}
