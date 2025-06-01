@@ -1081,7 +1081,7 @@
                              :value (get-val [:other_conditions])
                              :onChange #(dispatch-update-event [:other_conditions] %)}]]
         ] ; End of main Form content
-       [:> Empty {:description "请先选择患者"}])])))
+       [:> Empty {:description "请先选择患者"}])]))
 
 (defn hematologic-system-card "血液系统" []
   (let [hs-data @(rf/subscribe [::subs/hematologic-system-data])
@@ -1256,7 +1256,7 @@
                              :value (get-val [:other_immune_conditions])
                              :onChange #(dispatch-update-event [:other_immune_conditions] %)}]]
         ] ; End of main Form content
-       [:> Empty {:description "请先选择患者"}])])))
+       [:> Empty {:description "请先选择患者"}])]))
 
 (defn special-medication-history-card "特殊用药史" []
   (let [smh-data @(rf/subscribe [::subs/special-medication-history-data])
