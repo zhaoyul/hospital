@@ -18,29 +18,322 @@
 
 
 (defn circulatory-system-card "循环系统" []
-  (let [patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])]
+  (let [patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
+        circulatory-data @(rf/subscribe [::subs/circulatory-system-data])
+        get-val (fn [path] (get-in circulatory-data path))
+        dispatch-update (fn [path value] (rf/dispatch [::events/update-canonical-assessment-field (into [:circulatory_system] path) value]))
+        dispatch-update-event (fn [path event] (dispatch-update path (-> event .-target .-value)))
+        dispatch-checkbox-event (fn [path event] (dispatch-update path (-> event .-target .-checked)))
+
+        yes-no-options [{:label "无" :value "无"} {:label "有" :value "有"}]
+        yes-no-unknown-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
+        treatment-status-options [
+                                  {:label "治愈" :value "治愈"} {:label "好转" :value "好转"}
+                                  {:label "仍有症状" :value "仍有症状"} {:label "未治疗" :value "未治疗"}
+                                  ]
+        cardiac-function-options [
+                                  {:value "Ⅰ 级" :label "Ⅰ 级：心功能正常，体力活动不受限制。一般体力活动不引起过度疲劳、心悸、气喘或心绞痛"}
+                                  {:value "Ⅱ 级" :label "Ⅱ 级：心功能较差，体力活动轻度受限制。休息时无症状，一般体力活动引起过度疲劳、心悸、气喘或心绞痛"}
+                                  {:value "Ⅲ 级" :label "Ⅲ 级：心功能不全，体力活动明显受限制。休息时无症状，但小于一般体力活动即可引起过度疲劳、心悸、气喘或心绞痛"}
+                                  {:value "Ⅳ 级" :label "Ⅳ 级：心功能衰竭，不能从事任何体力劳动。休息状态下也出现心衰症状，体力活动后加重"}
+                                  ]
+        exercise-capacity-options [
+                                  {:value "运动能力正常" :label "运动能力正常。可耐受慢跑、跳绳等较高强度的身体训练 >6MET"}
+                                  {:value "运动能力轻度下降" :label "运动能力轻度下降。可胜任日常家务工作或骑自行车 3-6MET"}
+                                  {:value "运动能力明显下降" :label "运动能力明显下降。仅能从事文书工作或缓慢步行 <3MET"}
+                                  ]]
     [custom-styled-card
      [:> HeartOutlined {:style {:marginRight "8px"}}]
      "循环系统"
      "#e6f7ff" ; Unique header background color
      (if patient-id
        [:> Form {:layout "vertical"
-                 :key (str patient-id "-circulatory-simplified")}
+                 :key (str patient-id "-circulatory-detailed")}
 
         ;; 心电图 (ECG)
         [:> Form.Item {:label "心电图"}
          [:> Input.TextArea {:placeholder "请描述ECG结果"
                              :rows 3
-                             :value @(rf/subscribe [::subs/circulatory-system-data :ecg_description])
-                             :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:circulatory_system :ecg_description] (-> % .-target .-value)])}]]
+                             :value (get-val [:ecg_description])
+                             :onChange #(dispatch-update-event [:ecg_description] %)}]]
 
-        ;; 血管疾病病史
-        [:> Form.Item {:label "血管疾病病史"}
-         [:> Radio.Group {:value @(rf/subscribe [::subs/circulatory-system-data :vascular_disease_history])
-                          :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:circulatory_system :vascular_disease_history] (-> % .-target .-value)])}
+        ;; Main "心脏疾病病史" (History of Cardiac Diseases) Section
+        [:> Form.Item {:label "心脏疾病病史"}
+         [:> Radio.Group {:value (get-val [:cardiac_disease_history :has])
+                          :onChange #(dispatch-update-event [:cardiac_disease_history :has] %)}
+          [:> Radio {:value "无"} "无"]
+          [:> Radio {:value "有"} "有"]]]
+
+        (when (= (get-val [:cardiac_disease_history :has]) "有")
+          [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+
+           ;; Coronary Artery Disease (冠心病)
+           [:div {:style {:marginTop "10px" :paddingTop "10px" :borderTop "1px dashed #ccc"}}
+            [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "冠心病"]
+            [:> Form.Item {:label "有无"}
+             [:> Radio.Group {:options yes-no-options
+                              :value (get-val [:cardiac_disease_history :coronary_artery_disease :has])
+                              :onChange #(dispatch-update-event [:cardiac_disease_history :coronary_artery_disease :has] %)}]]
+            (when (= (get-val [:cardiac_disease_history :coronary_artery_disease :has]) "有")
+              [:<>
+               [:> Form.Item {:label "症状"}
+                [:> Select {:placeholder "选择症状" :style {:width "100%"} :allowClear true
+                            :value (get-val [:cardiac_disease_history :coronary_artery_disease :symptoms])
+                            :options [{:value "无症状" :label "无症状"}
+                                      {:value "稳定性心绞痛" :label "稳定性心绞痛"}
+                                      {:value "不稳定性心绞痛" :label "不稳定性心绞痛"}
+                                      {:value "心梗" :label "心梗"}]
+                            :onChange #(dispatch-update [:cardiac_disease_history :coronary_artery_disease :symptoms] %)}]]
+               [:> Form.Item {:label "心脏支架"}
+                [:> Radio.Group {:options yes-no-options
+                                 :value (get-val [:cardiac_disease_history :coronary_artery_disease :stent])
+                                 :onChange #(dispatch-update-event [:cardiac_disease_history :coronary_artery_disease :stent] %)}]]
+               [:> Form.Item {:label "治疗情况"}
+                [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                            :value (get-val [:cardiac_disease_history :coronary_artery_disease :treatment_status])
+                            :options treatment-status-options
+                            :onChange #(dispatch-update [:cardiac_disease_history :coronary_artery_disease :treatment_status] %)}]]
+               [:> Form.Item {:label "治疗用药"}
+                [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2
+                                    :value (get-val [:cardiac_disease_history :coronary_artery_disease :medication])
+                                    :onChange #(dispatch-update-event [:cardiac_disease_history :coronary_artery_disease :medication] %)}]]])]
+
+           ;; Arrhythmia (心律失常)
+           [:div {:style {:marginTop "10px" :paddingTop "10px" :borderTop "1px dashed #ccc"}}
+            [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "心律失常"]
+            [:> Form.Item {:label "有无"}
+             [:> Radio.Group {:value (get-val [:cardiac_disease_history :arrhythmia :has])
+                              :onChange (fn [ev]
+                                          (let [val (-> ev .-target .-value)]
+                                            (dispatch-update [:cardiac_disease_history :arrhythmia :has] val)
+                                            (when (not= val "有")
+                                              (dispatch-update [:cardiac_disease_history :arrhythmia :has_details] nil))))}
+              (for [opt yes-no-unknown-options]
+                ^{:key (:value opt)} [:> Radio {:value (:value opt)} (:label opt)]))]
+            (when (= (get-val [:cardiac_disease_history :arrhythmia :has]) "有")
+              [:> Input {:placeholder "心律失常类型 (若选择'有')" :style {:marginTop "8px" :width "calc(100% - 0px)"} ; Adjusted width
+                         :value (get-val [:cardiac_disease_history :arrhythmia :has_details])
+                         :onChange #(dispatch-update-event [:cardiac_disease_history :arrhythmia :has_details] %)}])
+            (when (or (= (get-val [:cardiac_disease_history :arrhythmia :has]) "有") (= (get-val [:cardiac_disease_history :arrhythmia :has]) "不祥"))
+              [:<>
+               [:> Form.Item {:label "类型"}
+                [:> Select {:placeholder "选择类型" :style {:width "100%"} :allowClear true
+                            :value (get-val [:cardiac_disease_history :arrhythmia :type])
+                            :options [{:value "低危型" :label "低危型"}
+                                      {:value "中危型" :label "中危型"}
+                                      {:value "高危型" :label "高危型"}]
+                            :onChange #(dispatch-update [:cardiac_disease_history :arrhythmia :type] %)}]]
+               [:> Form.Item {:label "治疗情况"}
+                [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                            :value (get-val [:cardiac_disease_history :arrhythmia :treatment_status])
+                            :options treatment-status-options
+                            :onChange #(dispatch-update [:cardiac_disease_history :arrhythmia :treatment_status] %)}]]
+               [:> Form.Item {:label "治疗用药"}
+                [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2
+                                    :value (get-val [:cardiac_disease_history :arrhythmia :medication])
+                                    :onChange #(dispatch-update-event [:cardiac_disease_history :arrhythmia :medication] %)}]]])]
+
+           ;; Cardiomyopathy (心肌病)
+           [:div {:style {:marginTop "10px" :paddingTop "10px" :borderTop "1px dashed #ccc"}}
+            [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "心肌病"]
+            [:> Form.Item {:label "有无"}
+             [:> Radio.Group {:value (get-val [:cardiac_disease_history :cardiomyopathy :has])
+                              :onChange (fn [ev]
+                                          (let [val (-> ev .-target .-value)]
+                                            (dispatch-update [:cardiac_disease_history :cardiomyopathy :has] val)
+                                            (when (not= val "有")
+                                              (dispatch-update [:cardiac_disease_history :cardiomyopathy :has_details] nil))))}
+              (for [opt yes-no-options] ; Assuming yes/no for this one, adjust if "不祥" needed
+                ^{:key (:value opt)} [:> Radio {:value (:value opt)} (:label opt)]))]
+            (when (= (get-val [:cardiac_disease_history :cardiomyopathy :has]) "有")
+              [:> Input {:placeholder "心肌病类型 (若选择'有')" :style {:marginTop "8px" :width "calc(100% - 0px)"}
+                         :value (get-val [:cardiac_disease_history :cardiomyopathy :has_details])
+                         :onChange #(dispatch-update-event [:cardiac_disease_history :cardiomyopathy :has_details] %)}])
+            (when (= (get-val [:cardiac_disease_history :cardiomyopathy :has]) "有")
+              [:<>
+               [:> Form.Item {:label "治疗情况"}
+                [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                            :value (get-val [:cardiac_disease_history :cardiomyopathy :treatment_status])
+                            :options treatment-status-options
+                            :onChange #(dispatch-update [:cardiac_disease_history :cardiomyopathy :treatment_status] %)}]]
+               [:> Form.Item {:label "治疗用药"}
+                [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2
+                                    :value (get-val [:cardiac_disease_history :cardiomyopathy :medication])
+                                    :onChange #(dispatch-update-event [:cardiac_disease_history :cardiomyopathy :medication] %)}]]])]
+
+           ;; Valvular Heart Disease (心脏瓣膜病变)
+           [:div {:style {:marginTop "10px" :paddingTop "10px" :borderTop "1px dashed #ccc"}}
+            [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "心脏瓣膜病变"]
+            [:> Form.Item {:label "有无"}
+             [:> Radio.Group {:value (get-val [:cardiac_disease_history :valvular_heart_disease :has])
+                              :onChange (fn [ev]
+                                          (let [val (-> ev .-target .-value)]
+                                            (dispatch-update [:cardiac_disease_history :valvular_heart_disease :has] val)
+                                            (when (not= val "有")
+                                              (dispatch-update [:cardiac_disease_history :valvular_heart_disease :has_details] nil))))}
+              (for [opt yes-no-options]
+                ^{:key (:value opt)} [:> Radio {:value (:value opt)} (:label opt)]))]
+            (when (= (get-val [:cardiac_disease_history :valvular_heart_disease :has]) "有")
+              [:> Input {:placeholder "心脏瓣膜病变类型 (若选择'有')" :style {:marginTop "8px" :width "calc(100% - 0px)"}
+                         :value (get-val [:cardiac_disease_history :valvular_heart_disease :has_details])
+                         :onChange #(dispatch-update-event [:cardiac_disease_history :valvular_heart_disease :has_details] %)}])
+            (when (= (get-val [:cardiac_disease_history :valvular_heart_disease :has]) "有")
+              [:<>
+               [:> Form.Item {:label "治疗情况"}
+                [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                            :value (get-val [:cardiac_disease_history :valvular_heart_disease :treatment_status])
+                            :options treatment-status-options
+                            :onChange #(dispatch-update [:cardiac_disease_history :valvular_heart_disease :treatment_status] %)}]]
+               [:> Form.Item {:label "治疗用药"}
+                [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2
+                                    :value (get-val [:cardiac_disease_history :valvular_heart_disease :medication])
+                                    :onChange #(dispatch-update-event [:cardiac_disease_history :valvular_heart_disease :medication] %)}]]])]
+
+           ;; Congenital Heart Disease (先天性心脏病)
+           [:div {:style {:marginTop "10px" :paddingTop "10px" :borderTop "1px dashed #ccc"}}
+            [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "先天性心脏病"]
+            [:> Form.Item {:label "有无"}
+             [:> Radio.Group {:value (get-val [:cardiac_disease_history :congenital_heart_disease :has])
+                              :onChange (fn [ev]
+                                          (let [val (-> ev .-target .-value)]
+                                            (dispatch-update [:cardiac_disease_history :congenital_heart_disease :has] val)
+                                            (when (not= val "有")
+                                              (dispatch-update [:cardiac_disease_history :congenital_heart_disease :has_details] nil))))}
+              (for [opt yes-no-options]
+                ^{:key (:value opt)} [:> Radio {:value (:value opt)} (:label opt)]))]
+            (when (= (get-val [:cardiac_disease_history :congenital_heart_disease :has]) "有")
+              [:> Input {:placeholder "先天性心脏病类型 (若选择'有')" :style {:marginTop "8px" :width "calc(100% - 0px)"}
+                         :value (get-val [:cardiac_disease_history :congenital_heart_disease :has_details])
+                         :onChange #(dispatch-update-event [:cardiac_disease_history :congenital_heart_disease :has_details] %)}])
+            (when (= (get-val [:cardiac_disease_history :congenital_heart_disease :has]) "有")
+              [:<>
+               [:> Form.Item {:label "治疗情况"}
+                [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                            :value (get-val [:cardiac_disease_history :congenital_heart_disease :treatment_status])
+                            :options treatment-status-options
+                            :onChange #(dispatch-update [:cardiac_disease_history :congenital_heart_disease :treatment_status] %)}]]
+               [:> Form.Item {:label "治疗用药"}
+                [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2
+                                    :value (get-val [:cardiac_disease_history :congenital_heart_disease :medication])
+                                    :onChange #(dispatch-update-event [:cardiac_disease_history :congenital_heart_disease :medication] %)}]]])]
+
+           ;; Congestive Heart Failure (充血性心力衰竭病史)
+           [:div {:style {:marginTop "10px" :paddingTop "10px" :borderTop "1px dashed #ccc"}}
+            [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "充血性心力衰竭病史"]
+            [:> Form.Item {:label "有无"}
+             [:> Radio.Group {:options yes-no-options
+                              :value (get-val [:cardiac_disease_history :congestive_heart_failure :has])
+                              :onChange #(dispatch-update-event [:cardiac_disease_history :congestive_heart_failure :has] %)}]]
+            (when (= (get-val [:cardiac_disease_history :congestive_heart_failure :has]) "有")
+              [:<>
+               [:> Form.Item {:label "上次发作日期"}
+                [:> DatePicker {:style {:width "100%"} :placeholder "选择日期"
+                                :value (utils/iso-string->dayjs (get-val [:cardiac_disease_history :congestive_heart_failure :last_episode_date]))
+                                :onChange #(dispatch-update [:cardiac_disease_history :congestive_heart_failure :last_episode_date] (if % (utils/date->iso-string %) nil))}]]
+               [:> Form.Item {:label "治疗情况"}
+                [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                            :value (get-val [:cardiac_disease_history :congestive_heart_failure :treatment_status])
+                            :options treatment-status-options
+                            :onChange #(dispatch-update [:cardiac_disease_history :congestive_heart_failure :treatment_status] %)}]]
+               [:> Form.Item {:label "治疗用药"}
+                [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2
+                                    :value (get-val [:cardiac_disease_history :congestive_heart_failure :medication])
+                                    :onChange #(dispatch-update-event [:cardiac_disease_history :congestive_heart_failure :medication] %)}]]])]
+
+           ;; Pulmonary Hypertension (肺动脉高压)
+           [:div {:style {:marginTop "10px" :paddingTop "10px" :borderTop "1px dashed #ccc"}}
+            [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "肺动脉高压"]
+            [:> Form.Item {:label "有无"}
+             [:> Radio.Group {:value (get-val [:cardiac_disease_history :pulmonary_hypertension :has])
+                              :onChange (fn [ev]
+                                          (let [val (-> ev .-target .-value)]
+                                            (dispatch-update [:cardiac_disease_history :pulmonary_hypertension :has] val)
+                                            (when (not= val "有")
+                                              (dispatch-update [:cardiac_disease_history :pulmonary_hypertension :has_details] nil))))}
+              (for [opt yes-no-options]
+                ^{:key (:value opt)} [:> Radio {:value (:value opt)} (:label opt)]))]
+            (when (= (get-val [:cardiac_disease_history :pulmonary_hypertension :has]) "有")
+              [:> Input {:placeholder "肺动脉高压类型 (若选择'有')" :style {:marginTop "8px" :width "calc(100% - 0px)"}
+                         :value (get-val [:cardiac_disease_history :pulmonary_hypertension :has_details])
+                         :onChange #(dispatch-update-event [:cardiac_disease_history :pulmonary_hypertension :has_details] %)}])
+            (when (= (get-val [:cardiac_disease_history :pulmonary_hypertension :has]) "有")
+              [:<>
+               [:> Form.Item {:label "治疗情况"}
+                [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                            :value (get-val [:cardiac_disease_history :pulmonary_hypertension :treatment_status])
+                            :options treatment-status-options
+                            :onChange #(dispatch-update [:cardiac_disease_history :pulmonary_hypertension :treatment_status] %)}]]
+               [:> Form.Item {:label "治疗用药"}
+                [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2
+                                    :value (get-val [:cardiac_disease_history :pulmonary_hypertension :medication])
+                                    :onChange #(dispatch-update-event [:cardiac_disease_history :pulmonary_hypertension :medication] %)}]]])]
+           ]) ; End of (when (= (get-val [:cardiac_disease_history :has]) "有") ...)
+
+        ;; Pacemaker Implantation Section
+        [:> Form.Item {:label "心脏起搏器植入史"}
+         [:> Radio.Group {:value (get-val [:pacemaker_history :has])
+                          :onChange #(let [val (-> % .-target .-value)]
+                                       (dispatch-update [:pacemaker_history :has] val)
+                                       (when (not= val "有") ; Clear sub-fields if "有" is not selected
+                                         (dispatch-update [:pacemaker_history :type] nil)
+                                         (dispatch-update [:pacemaker_history :working_status] nil)))}
           [:> Radio {:value "无"} "无"]
           [:> Radio {:value "有"} "有"]
-          [:> Radio {:value "不祥"} "不祥"]]]]
+          [:> Radio {:value "不祥"} "不祥"]]]
+
+        (when (= (get-val [:pacemaker_history :has]) "有")
+          [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+           [:> Form.Item {:label "起搏器类型"}
+            [:> Radio.Group {:value (get-val [:pacemaker_history :type])
+                             :onChange #(let [val (-> % .-target .-value)]
+                                          (dispatch-update [:pacemaker_history :type] val)
+                                          (when (not= val "永久起搏器") ; Clear working_status if not permanent
+                                            (dispatch-update [:pacemaker_history :working_status] nil)))}
+             [:> Radio {:value "临时起搏器"} "临时起搏器"]
+             [:> Radio {:value "永久起搏器"} "永久起搏器"]]]
+           (when (= (get-val [:pacemaker_history :type]) "永久起搏器")
+             [:> Form.Item {:label "工作状态"}
+              [:> Input {:placeholder "描述永久起搏器工作状态"
+                         :value (get-val [:pacemaker_history :working_status])
+                         :onChange #(dispatch-update-event [:pacemaker_history :working_status] %)}]])])
+
+        ;; Cardiac Ultrasound Findings Section
+        [:> Form.Item {:label "心脏彩超检查"}
+         [:> Input.TextArea {:placeholder "请描述心脏彩超检查内容"
+                             :rows 4
+                             :value (get-val [:cardiac_ultrasound_findings :details])
+                             :onChange #(dispatch-update-event [:cardiac_ultrasound_findings :details] %)}]]
+
+        ;; Coronary CTA/Angiography Results Section
+        [:> Form.Item {:label "冠脉CTA/冠脉造影结果"}
+         [:> Input.TextArea {:placeholder "请描述冠脉CTA/冠脉造影结果内容"
+                             :rows 4
+                             :value (get-val [:coronary_cta_angiography_results :details])
+                             :onChange #(dispatch-update-event [:coronary_cta_angiography_results :details] %)}]]
+
+        ;; Cardiac Function Assessment Section
+        [:> Form.Item {:label "心脏功能评估 (NYHA分级)"}
+         [:> Radio.Group {:value (get-val [:cardiac_function_assessment :class])
+                          :onChange #(dispatch-update-event [:cardiac_function_assessment :class] %)}
+          (for [opt cardiac-function-options]
+            ^{:key (:value opt)} [:> Radio {:value (:value opt) :style {:display "block" :height "auto" :lineHeight "22px" :whiteSpace "normal" :marginBottom "8px"}}
+             (:label opt)])]]
+
+        ;; Exercise Capacity Assessment Section
+        [:> Form.Item {:label "运动能力评估"}
+         [:> Radio.Group {:value (get-val [:exercise_capacity_assessment :level])
+                          :onChange #(dispatch-update-event [:exercise_capacity_assessment :level] %)}
+          (for [opt exercise-capacity-options]
+            ^{:key (:value opt)} [:> Radio {:value (:value opt) :style {:display "block" :height "auto" :lineHeight "22px" :whiteSpace "normal" :marginBottom "8px"}}
+             (:label opt)])]]
+
+        ;; Other Conditions Section
+        [:> Form.Item {:label "其他循环系统相关情况"}
+         [:> Input.TextArea {:placeholder "请描述其他循环系统相关情况"
+                             :rows 4
+                             :value (get-val [:other_cardiac_info :details])
+                             :onChange #(dispatch-update-event [:other_cardiac_info :details] %)}]]
+        ] ; End of main Form content
        [:> Empty {:description "请先选择患者"}])]))
 
 

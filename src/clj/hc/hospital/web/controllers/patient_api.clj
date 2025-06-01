@@ -90,8 +90,35 @@
                                 spec-meds-info (:special-medications raw-comorbidities {})]
                             {:respiratory {:has (to-boolean (get-comorb-data raw-comorbidities [:respiratory-disease :has]))
                                            :details (get-comorb-data raw-comorbidities [:respiratory-disease :details])}
-                             :cardiovascular {:has (to-boolean (get-comorb-data raw-comorbidities [:cardiovascular-disease :has]))
-                                              :details (get-comorb-data raw-comorbidities [:cardiovascular-disease :details])}
+                             :cardiovascular {:has (to-boolean (get-in raw-comorbidities [:cardiovascular-disease :has])) ; Top-level 'has'
+                                              :details { ; Nested map for all specific conditions
+                                                        :coronary_artery_disease {:has (to-boolean (get-in raw-comorbidities [:cardiovascular-disease :coronary-artery-disease :has]))
+                                                                                  :symptoms (get-in raw-comorbidities [:cardiovascular-disease :coronary-artery-disease :symptoms])
+                                                                                  :stent (to-boolean (get-in raw-comorbidities [:cardiovascular-disease :coronary-artery-disease :stent]))
+                                                                                  :treatment_status (get-in raw-comorbidities [:cardiovascular-disease :coronary-artery-disease :treatment-status])
+                                                                                  :medication (get-in raw-comorbidities [:cardiovascular-disease :coronary-artery-disease :medication])}
+                                                        :arrhythmia {:has (to-boolean (get-in raw-comorbidities [:cardiovascular-disease :arrhythmia :has]))
+                                                                     :type (get-in raw-comorbidities [:cardiovascular-disease :arrhythmia :type])
+                                                                     :treatment_status (get-in raw-comorbidities [:cardiovascular-disease :arrhythmia :treatment-status])
+                                                                     :medication (get-in raw-comorbidities [:cardiovascular-disease :arrhythmia :medication])}
+                                                        :cardiomyopathy {:has (to-boolean (get-in raw-comorbidities [:cardiovascular-disease :cardiomyopathy :has]))
+                                                                         :treatment_status (get-in raw-comorbidities [:cardiovascular-disease :cardiomyopathy :treatment-status])
+                                                                         :medication (get-in raw-comorbidities [:cardiovascular-disease :cardiomyopathy :medication])}
+                                                        :valvular_heart_disease {:has (to-boolean (get-in raw-comorbidities [:cardiovascular-disease :valvular-heart-disease :has]))
+                                                                                 :treatment_status (get-in raw-comorbidities [:cardiovascular-disease :valvular-heart-disease :treatment-status])
+                                                                                 :medication (get-in raw-comorbidities [:cardiovascular-disease :valvular-heart-disease :medication])}
+                                                        :congenital_heart_disease {:has (to-boolean (get-in raw-comorbidities [:cardiovascular-disease :congenital-heart-disease :has]))
+                                                                                   :treatment_status (get-in raw-comorbidities [:cardiovascular-disease :congenital-heart-disease :treatment-status])
+                                                                                   :medication (get-in raw-comorbidities [:cardiovascular-disease :congenital-heart-disease :medication])}
+                                                        :congestive_heart_failure {:has (to-boolean (get-in raw-comorbidities [:cardiovascular-disease :congestive-heart-failure :has]))
+                                                                                   :last_episode_date (get-in raw-comorbidities [:cardiovascular-disease :congestive-heart-failure :last-episode-date])
+                                                                                   :treatment_status (get-in raw-comorbidities [:cardiovascular-disease :congestive-heart-failure :treatment-status])
+                                                                                   :medication (get-in raw-comorbidities [:cardiovascular-disease :congestive-heart-failure :medication])}
+                                                        :pulmonary_hypertension {:has (to-boolean (get-in raw-comorbidities [:cardiovascular-disease :pulmonary-hypertension :has]))
+                                                                                 :treatment_status (get-in raw-comorbidities [:cardiovascular-disease :pulmonary-hypertension :treatment-status])
+                                                                                 :medication (get-in raw-comorbidities [:cardiovascular-disease :pulmonary-hypertension :medication])}
+                                                        }
+                                              }
                              :endocrine {:has (to-boolean (get-comorb-data raw-comorbidities [:endocrine-disease :has]))
                                          :details (get-comorb-data raw-comorbidities [:endocrine-disease :details])}
                              :neuro_psychiatric {:has (to-boolean (get-comorb-data raw-comorbidities [:neuropsychiatric-disease :has]))
@@ -121,7 +148,15 @@
                                            raw-aux-exams)
                                      [])
            :auxiliary_examinations_notes nil
-           :anesthesia_plan {:asa_rating nil, :anesthesia_type nil, :preoperative_instructions nil}}
+           :anesthesia_plan {:asa_rating nil, :anesthesia_type nil, :preoperative_instructions nil}
+           :pacemaker_history {:has (to-boolean (get-in body [:cardiac-assessment :pacemaker-history :has]))
+                               :type (get-in body [:cardiac-assessment :pacemaker-history :type])
+                               :working_status (get-in body [:cardiac-assessment :pacemaker-history :working-status])}
+           :cardiac_ultrasound_findings {:details (get-in body [:cardiac-assessment :cardiac-ultrasound-findings :details])}
+           :coronary_cta_angiography_results {:details (get-in body [:cardiac-assessment :coronary-cta-angiography-results :details])}
+           :cardiac_function_assessment {:class (get-in body [:cardiac-assessment :cardiac-function-assessment :class])}
+           :exercise_capacity_assessment {:level (get-in body [:cardiac-assessment :exercise-capacity-assessment :level])}
+           :other_cardiac_info {:details (get-in body [:cardiac-assessment :other-cardiac-info :details])}}
 
           patient-id (get-in transformed-data [:basic_info :outpatient_number])
           patient-name (get-in transformed-data [:basic_info :name] "")
