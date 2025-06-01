@@ -106,6 +106,16 @@
   (fn [db [_ path value]]
     (assoc-in db (concat [:anesthesia :current-assessment-canonical] path) value)))
 
+(rf/reg-event-db ::update-canonical-assessment-section
+  (fn [db [_ section-key section-data]]
+    ;; Ensure the section-key exists before trying to merge
+    (if (get-in db [:anesthesia :current-assessment-canonical section-key])
+      (update-in db [:anesthesia :current-assessment-canonical section-key] merge section-data)
+      ;; If section-key somehow doesn't exist (e.g. typo), log error and return db unchanged
+      ;; or initialize it: (assoc-in db [:anesthesia :current-assessment-canonical section-key] section-data)
+      ;; For now, let's be safe and merge, assuming keys are pre-defined in default-canonical-assessment
+      (update-in db [:anesthesia :current-assessment-canonical section-key] (fnil merge {}) section-data))))
+
 ;; Specific handlers for auxiliary exam file list management (canonical structure)
 (rf/reg-event-db ::add-aux-exam-file
   (fn [db [_ file-map]]
