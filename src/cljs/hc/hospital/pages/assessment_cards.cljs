@@ -972,57 +972,209 @@
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         get-val (fn [path] (get-in ds-data path))
         dispatch-update (fn [path value] (rf/dispatch [::events/update-canonical-assessment-field (into [:digestive_system] path) value]))
-        dispatch-update-event (fn [path event] (dispatch-update path (-> event .-target .-value)))]
-    (let [acute-gastroenteritis-symptoms [{:label "恶心" :value "nausea"} {:label "呕吐" :value "vomiting"} {:label "腹泻" :value "diarrhea"}]]
-      [custom-styled-card
-       [:> CoffeeOutlined {:style {:marginRight "8px"}}]
-       "消化系统"
-       "#e6fffb"
-       (if patient-id
-         [:> Form {:layout "vertical"
-                   :initialValues (clj->js ds-data)
-                   :key (str patient-id "-digestive")}
-          ;; Fields... (Content of digestive-system-card)
-          [:> Form.Item {:label "急性胃肠炎病史" :name :acute_gastroenteritis_present}
-           [:> Radio.Group {:value (get-val [:acute_gastroenteritis :present])
-                            :onChange #(dispatch-update-event [:acute_gastroenteritis :present] %)}
-            [:> Radio {:value "无"} "无"]
-            [:> Radio {:value "有"} "有"]
-            [:> Radio {:value "不祥"} "不祥"]]]
-          ;; ... (rest of digestive card)
-          [:> Form.Item {:label "其他消化系统相关情况" :name :other_digestive_conditions}
-           [:> Input.TextArea {:placeholder "如有其他消化系统相关情况请在此注明" :rows 3
-                               :value (get-val [:other_digestive_conditions])
-                               :onChange #(dispatch-update-event [:other_digestive_conditions] %)}]]
-          ]
-         [:> Empty {:description "请先选择患者"}])])))
+        dispatch-update-event (fn [path event] (dispatch-update path (-> event .-target .-value)))
+
+        yes-no-options [{:label "无" :value "无"} {:label "有" :value "有"}]
+        yes-no-unknown-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
+        treatment-status-options [
+                                  {:label "治愈" :value "治愈"} {:label "好转" :value "好转"}
+                                  {:label "仍有症状" :value "仍有症状"} {:label "未治疗" :value "未治疗"}
+                                  ]
+
+        acute-gastroenteritis-symptom-options [{:label "恶心" :value "nausea"}
+                                               {:label "呕吐" :value "vomiting"}
+                                               {:label "腹泻" :value "diarrhea"}]
+        esophageal-gastric-duodenal-symptom-options [
+                                                     {:label "慢性胃炎" :value "chronic_gastritis"}
+                                                     {:label "胃部肿瘤病史" :value "history_of_gastric_tumor"}
+                                                     {:label "反流性食管炎" :value "reflux_esophagitis"}
+                                                     {:label "慢性胃炎合并幽门螺旋杆菌感染" :value "chronic_gastritis_h_pylori"}
+                                                     {:label "溃疡" :value "ulcer"}
+                                                     {:label "食道肿瘤" :value "esophageal_tumor"}
+                                                     {:label "息肉" :value "polyp"}
+                                                     {:label "穿孔" :value "perforation"}
+                                                     {:label "应激性溃疡" :value "stress_ulcer"}
+                                                     {:label "食管静脉曲张" :value "esophageal_varices"}
+                                                     {:label "胃底静脉曲张" :value "fundic_varices"}]
+        chronic-digestive-symptom-options [
+                                           {:label "胰腺炎" :value "pancreatitis"}
+                                           {:label "慢性肠炎" :value "chronic_enteritis"}
+                                           {:label "溃疡性结肠炎" :value "ulcerative_colitis"}
+                                           {:label "克罗恩病" :value "crohns_disease"}
+                                           {:label "肠易激综合征" :value "irritable_bowel_syndrome"}
+                                           {:label "肠梗阻" :value "intestinal_obstruction"}
+                                           {:label "肠道肿瘤" :value "intestinal_tumor"}
+                                           {:label "胆囊炎" :value "cholecystitis"}
+                                           {:label "胆囊结石" :value "gallstones"}
+                                           {:label "胰腺肿瘤" :value "pancreatic_tumor"}
+                                           {:label "其他" :value "other_chronic_digestive"}]]
+    [custom-styled-card
+     [:> CoffeeOutlined {:style {:marginRight "8px"}}]
+     "消化系统"
+     "#eff8ff" ; Adjusted color to be slightly different from respiratory for distinction
+     (if patient-id
+       [:> Form {:layout "vertical"
+                 :key (str patient-id "-digestive-system")}
+
+        ;; 1. 急性胃肠炎病史 (Acute Gastroenteritis History)
+        [:> Form.Item {:label "急性胃肠炎病史"}
+         [:> Radio.Group {:value (get-val [:acute_gastroenteritis_history :has])
+                          :options yes-no-unknown-options
+                          :onChange #(dispatch-update-event [:acute_gastroenteritis_history :has] %)}]]
+        (when (= (get-val [:acute_gastroenteritis_history :has]) "有")
+          [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+           [:> Form.Item {:label "症状"}
+            [:> Checkbox.Group {:options acute-gastroenteritis-symptom-options
+                                :value (get-val [:acute_gastroenteritis_history :symptoms])
+                                :onChange #(dispatch-update [:acute_gastroenteritis_history :symptoms] %)}]]
+           [:> Form.Item {:label "治疗情况"}
+            [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                        :value (get-val [:acute_gastroenteritis_history :treatment_status])
+                        :options treatment-status-options
+                        :onChange #(dispatch-update [:acute_gastroenteritis_history :treatment_status] %)}]]])
+
+        ;; 2. 食管，胃十二指肠疾病病史 (Esophageal, Gastric, Duodenal Disease History)
+        [:> Form.Item {:label "食管，胃十二指肠疾病病史"}
+         [:> Radio.Group {:value (get-val [:esophageal_gastric_duodenal_history :has])
+                          :options yes-no-options
+                          :onChange #(dispatch-update-event [:esophageal_gastric_duodenal_history :has] %)}]]
+        (when (= (get-val [:esophageal_gastric_duodenal_history :has]) "有")
+          [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+           [:> Form.Item {:label "相关疾病"}
+            [:> Checkbox.Group {:options esophageal-gastric-duodenal-symptom-options
+                                :style {:display "flex" :flexDirection "column"}
+                                :value (get-val [:esophageal_gastric_duodenal_history :symptoms])
+                                :onChange #(dispatch-update [:esophageal_gastric_duodenal_history :symptoms] %)}]]
+           [:> Form.Item {:label "治疗情况"}
+            [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                        :value (get-val [:esophageal_gastric_duodenal_history :treatment_status])
+                        :options treatment-status-options
+                        :onChange #(dispatch-update [:esophageal_gastric_duodenal_history :treatment_status] %)}]]])
+
+        ;; 3. 慢性消化疾病病史 (Chronic Digestive Disease History)
+        [:> Form.Item {:label "慢性消化疾病病史"}
+         [:> Radio.Group {:value (get-val [:chronic_digestive_history :has])
+                          :options yes-no-unknown-options
+                          :onChange #(dispatch-update-event [:chronic_digestive_history :has] %)}]]
+        (when (= (get-val [:chronic_digestive_history :has]) "有")
+          [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+           [:> Form.Item {:label "相关疾病"}
+            [:> Checkbox.Group {:options chronic-digestive-symptom-options
+                                :style {:display "flex" :flexDirection "column"}
+                                :value (get-val [:chronic_digestive_history :symptoms])
+                                :onChange #(dispatch-update [:chronic_digestive_history :symptoms] %)}]]
+           (when (some #{"other_chronic_digestive"} (get-val [:chronic_digestive_history :symptoms]))
+             [:> Form.Item {:label "其他疾病详情"}
+              [:> Input {:placeholder "请描述其他慢性消化疾病"
+                         :value (get-val [:chronic_digestive_history :symptoms_other_details])
+                         :onChange #(dispatch-update-event [:chronic_digestive_history :symptoms_other_details] %)}]])
+           [:> Form.Item {:label "治疗情况"}
+            [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                        :value (get-val [:chronic_digestive_history :treatment_status])
+                        :options treatment-status-options
+                        :onChange #(dispatch-update [:chronic_digestive_history :treatment_status] %)}]]])
+
+        ;; 4. 其他情况 (Other Conditions)
+        [:> Form.Item {:label "其他消化系统相关情况"}
+         [:> Input.TextArea {:placeholder "请描述其他消化系统相关情况"
+                             :rows 4
+                             :value (get-val [:other_conditions])
+                             :onChange #(dispatch-update-event [:other_conditions] %)}]]
+        ] ; End of main Form content
+       [:> Empty {:description "请先选择患者"}])])))
 
 (defn hematologic-system-card "血液系统" []
   (let [hs-data @(rf/subscribe [::subs/hematologic-system-data])
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         get-val (fn [path] (get-in hs-data path))
         dispatch-update (fn [path value] (rf/dispatch [::events/update-canonical-assessment-field (into [:hematologic_system] path) value]))
-        dispatch-update-event (fn [path event] (dispatch-update path (-> event .-target .-value)))]
+        dispatch-update-event (fn [path event] (dispatch-update path (-> event .-target .-value)))
+        dispatch-numeric-input-event (fn [path value] (dispatch-update path value))
+
+        yes-no-options [{:label "无" :value "无"} {:label "有" :value "有"}]
+        yes-no-unknown-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]]
     [custom-styled-card
      [:> ExperimentOutlined {:style {:marginRight "8px"}}]
      "血液系统"
      "#fff0f6"
      (if patient-id
        [:> Form {:layout "vertical"
-                 :initialValues (clj->js hs-data)
-                 :key (str patient-id "-hematologic")}
-        ;; Fields... (Content of hematologic-system-card)
-        [:> Form.Item {:label "贫血" :name :anemia_present}
-         [:> Radio.Group {:value (get-val [:anemia :present])
-                          :onChange #(dispatch-update-event [:anemia :present] %)}
-          [:> Radio {:value "无"} "无"]
-          [:> Radio {:value "有"} "有"]]]
-        ;; ... (rest of hematologic card)
-        [:> Form.Item {:label "血管超声" :name :vascular_ultrasound_results}
+                 :key (str patient-id "-hematologic-system")}
+
+        ;; 1. 贫血 (Anemia)
+        [:> Form.Item {:label "贫血"}
+         [:> Radio.Group {:value (get-val [:anemia :has])
+                          :options yes-no-options
+                          :onChange #(dispatch-update-event [:anemia :has] %)}]]
+        (when (= (get-val [:anemia :has]) "有")
+          [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+           [:> Form.Item {:label "Hb (g/L)"}
+            [:> InputNumber {:placeholder "请输入Hb值" :style {:width "100%"}
+                             :value (get-val [:anemia :hb])
+                             :onChange #(dispatch-numeric-input-event [:anemia :hb] %)}]]
+           [:> Form.Item {:label "贫血原因及目前治疗方式"}
+            [:> Input.TextArea {:placeholder "描述贫血原因及目前治疗方式" :rows 3
+                                :value (get-val [:anemia :cause_treatment])
+                                :onChange #(dispatch-update-event [:anemia :cause_treatment] %)}]]])
+
+        ;; 2. 凝血功能障碍 (Coagulation Dysfunction)
+        [:> Form.Item {:label "凝血功能障碍"}
+         [:> Radio.Group {:value (get-val [:coagulation_dysfunction :has])
+                          :options yes-no-options
+                          :onChange #(dispatch-update-event [:coagulation_dysfunction :has] %)}]]
+        (when (= (get-val [:coagulation_dysfunction :has]) "有")
+          [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+           [:> Form.Item {:label "PT (s)" :help "PT延长超过3秒，即有临床意义"}
+            [:> InputNumber {:placeholder "秒" :style {:width "100%"}
+                             :value (get-val [:coagulation_dysfunction :pt])
+                             :onChange #(dispatch-numeric-input-event [:coagulation_dysfunction :pt] %)}]]
+           [:> Form.Item {:label "APTT (s)" :help "APTT延长超过10秒，即有临床意义"}
+            [:> InputNumber {:placeholder "秒" :style {:width "100%"}
+                             :value (get-val [:coagulation_dysfunction :aptt])
+                             :onChange #(dispatch-numeric-input-event [:coagulation_dysfunction :aptt] %)}]]
+           [:> Form.Item {:label "INR"}
+            [:> InputNumber {:placeholder "值" :style {:width "100%"}
+                             :value (get-val [:coagulation_dysfunction :inr])
+                             :onChange #(dispatch-numeric-input-event [:coagulation_dysfunction :inr] %)}]]
+           [:> Form.Item {:label "血小板计数 (×10^9/L)"}
+            [:> InputNumber {:placeholder "血小板数值" :style {:width "100%"}
+                             :value (get-val [:coagulation_dysfunction :platelet_count])
+                             :onChange #(dispatch-numeric-input-event [:coagulation_dysfunction :platelet_count] %)}]]
+           [:> Form.Item {:label "D-二聚体 (mg/L)"}
+            [:> InputNumber {:placeholder "D-dimer值" :style {:width "100%"}
+                             :value (get-val [:coagulation_dysfunction :d_dimer])
+                             :onChange #(dispatch-numeric-input-event [:coagulation_dysfunction :d_dimer] %)}]]])
+
+        ;; 3. 血栓史 (Thrombosis History)
+        [:> Form.Item {:label "血栓史"}
+         [:> Radio.Group {:value (get-val [:thrombosis_history :has])
+                          :options yes-no-options
+                          :onChange #(dispatch-update-event [:thrombosis_history :has] %)}]]
+        (when (= (get-val [:thrombosis_history :has]) "有")
+          [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+           [:> Form.Item {:label "详情"}
+            [:> Input {:placeholder "描述血栓史详情"
+                       :value (get-val [:thrombosis_history :details])
+                       :onChange #(dispatch-update-event [:thrombosis_history :details] %)}]]])
+
+        ;; 4. 下肢深静脉血栓 (Lower Limb Deep Vein Thrombosis)
+        [:> Form.Item {:label "下肢深静脉血栓"}
+         [:> Radio.Group {:value (get-val [:lower_limb_dvt :has])
+                          :options yes-no-unknown-options
+                          :onChange #(dispatch-update-event [:lower_limb_dvt :has] %)}]]
+        (when (= (get-val [:lower_limb_dvt :has]) "有")
+          [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+           [:> Form.Item {:label "详情"}
+            [:> Input {:placeholder "描述下肢深静脉血栓详情"
+                       :value (get-val [:lower_limb_dvt :details])
+                       :onChange #(dispatch-update-event [:lower_limb_dvt :details] %)}]]])
+
+        ;; 5. 血管超声 (Vascular Ultrasound)
+        [:> Form.Item {:label "血管超声"}
          [:> Input.TextArea {:placeholder "请描述血管超声结果" :rows 3
                              :value (get-val [:vascular_ultrasound_results])
                              :onChange #(dispatch-update-event [:vascular_ultrasound_results] %)}]]
-        ]
+        ] ; End of main Form content
        [:> Empty {:description "请先选择患者"}])]))
 
 (defn immune-system-card        "免疫系统" []
@@ -1030,31 +1182,81 @@
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         get-val (fn [path] (get-in is-data path))
         dispatch-update (fn [path value] (rf/dispatch [::events/update-canonical-assessment-field (into [:immune_system] path) value]))
-        dispatch-update-event (fn [path event] (dispatch-update path (-> event .-target .-value)))]
-    (let [immune-dysfunction-type-options [{:label "获得性免疫缺陷" :value "acquired_immunodeficiency"} {:label "先天性免疫缺陷" :value "congenital_immunodeficiency"} {:label "其他" :value "other_immune_dysfunction"}]
-          autoimmune-disease-symptom-options [{:label "系统性红斑狼疮" :value "systemic_lupus_erythematosus"} {:label "类风湿性关节炎" :value "rheumatoid_arthritis"} {:label "强直性脊柱炎" :value "ankylosing_spondylitis"} {:label "过敏性紫癜" :value "allergic_purpura"} {:label "其他" :value "other_autoimmune_symptom"}]]
-      [custom-styled-card
-       [:> SecurityScanOutlined {:style {:marginRight "8px"}}]
-       "免疫系统"
-       "#f6ffed"
-       (if patient-id
-         [:> Form {:layout "vertical"
-                   :initialValues (clj->js is-data)
-                   :key (str patient-id "-immune")}
-          ;; Fields... (Content of immune-system-card)
-          [:> Form.Item {:label "免疫功能障碍" :name :immune_dysfunction_present}
-           [:> Radio.Group {:value (get-val [:immune_dysfunction :present])
-                            :onChange #(dispatch-update-event [:immune_dysfunction :present] %)}
-            [:> Radio {:value "无"} "无"]
-            [:> Radio {:value "有"} "有"]
-            [:> Radio {:value "不祥"} "不祥"]]]
-          ;; ... (rest of immune card)
-          [:> Form.Item {:label "其他免疫系统相关情况" :name :other_immune_conditions}
-           [:> Input.TextArea {:placeholder "如有其他免疫系统相关情况请在此注明" :rows 3
-                               :value (get-val [:other_immune_conditions])
-                               :onChange #(dispatch-update-event [:other_immune_conditions] %)}]]
-          ]
-         [:> Empty {:description "请先选择患者"}])])))
+        dispatch-update-event (fn [path event] (dispatch-update path (-> event .-target .-value)))
+
+        yes-no-unknown-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
+        immune-dysfunction-type-options [{:label "获得性免疫缺陷" :value "acquired_immunodeficiency"}
+                                         {:label "先天性免疫缺陷" :value "congenital_immunodeficiency"}
+                                         {:label "其他" :value "other_immune_dysfunction"}]
+        autoimmune-disease-symptom-options [{:label "系统性红斑狼疮" :value "systemic_lupus_erythematosus"}
+                                            {:label "类风湿性关节炎" :value "rheumatoid_arthritis"}
+                                            {:label "强直性脊柱炎" :value "ankylosing_spondylitis"}
+                                            {:label "过敏性紫癜" :value "allergic_purpura"}
+                                            {:label "其他" :value "other_autoimmune_symptom"}]]
+    [custom-styled-card
+     [:> SecurityScanOutlined {:style {:marginRight "8px"}}]
+     "免疫系统"
+     "#f6ffed"
+     (if patient-id
+       [:> Form {:layout "vertical"
+                 :key (str patient-id "-immune-system")}
+
+        ;; 1. 免疫功能障碍 (Immune Dysfunction)
+        [:> Form.Item {:label "免疫功能障碍"}
+         [:> Radio.Group {:value (get-val [:immune_dysfunction :has])
+                          :options yes-no-unknown-options
+                          :onChange #(let [val (-> % .-target .-value)]
+                                       (dispatch-update [:immune_dysfunction :has] val)
+                                       (when (not= val "有") ; Clear sub-fields if "有" is not selected
+                                         (dispatch-update [:immune_dysfunction :type] nil)
+                                         (dispatch-update [:immune_dysfunction :type_other_details] nil)))}]]
+        (when (= (get-val [:immune_dysfunction :has]) "有")
+          [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+           [:> Form.Item {:label "类型"}
+            [:> Radio.Group {:options immune-dysfunction-type-options
+                             :value (get-val [:immune_dysfunction :type])
+                             :onChange #(let [val (-> % .-target .-value)]
+                                          (dispatch-update [:immune_dysfunction :type] val)
+                                          (when (not= val "other_immune_dysfunction")
+                                            (dispatch-update [:immune_dysfunction :type_other_details] nil)))}]]
+           (when (= (get-val [:immune_dysfunction :type]) "other_immune_dysfunction")
+             [:> Form.Item {:label "其他类型详情"}
+              [:> Input {:placeholder "请描述其他免疫功能障碍类型"
+                         :value (get-val [:immune_dysfunction :type_other_details])
+                         :onChange #(dispatch-update-event [:immune_dysfunction :type_other_details] %)}]])])
+
+        ;; 2. 自身免疫性疾病 (Autoimmune Diseases)
+        [:> Form.Item {:label "自身免疫性疾病"}
+         [:> Radio.Group {:value (get-val [:autoimmune_disease :has])
+                          :options yes-no-unknown-options
+                          :onChange #(let [val (-> % .-target .-value)]
+                                       (dispatch-update [:autoimmune_disease :has] val)
+                                       (when (not= val "有") ; Clear sub-fields
+                                         (dispatch-update [:autoimmune_disease :symptoms] nil)
+                                         (dispatch-update [:autoimmune_disease :symptoms_other_details] nil)))}]]
+        (when (= (get-val [:autoimmune_disease :has]) "有")
+          [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+           [:> Form.Item {:label "症状"}
+            [:> Checkbox.Group {:options autoimmune-disease-symptom-options
+                                :style {:display "flex" :flexDirection "column"}
+                                :value (get-val [:autoimmune_disease :symptoms])
+                                :onChange #(let [val %]
+                                             (dispatch-update [:autoimmune_disease :symptoms] val)
+                                             (when (not (some #{"other_autoimmune_symptom"} val))
+                                               (dispatch-update [:autoimmune_disease :symptoms_other_details] nil)))}]]
+           (when (some #{"other_autoimmune_symptom"} (get-val [:autoimmune_disease :symptoms]))
+             [:> Form.Item {:label "其他症状详情"}
+              [:> Input {:placeholder "请描述其他自身免疫性疾病症状"
+                         :value (get-val [:autoimmune_disease :symptoms_other_details])
+                         :onChange #(dispatch-update-event [:autoimmune_disease :symptoms_other_details] %)}]])])
+
+        ;; 3. 其他情况 (Other Conditions)
+        [:> Form.Item {:label "其他免疫系统相关情况"}
+         [:> Input.TextArea {:placeholder "如有其他免疫系统相关情况请在此注明" :rows 3
+                             :value (get-val [:other_immune_conditions])
+                             :onChange #(dispatch-update-event [:other_immune_conditions] %)}]]
+        ] ; End of main Form content
+       [:> Empty {:description "请先选择患者"}])])))
 
 (defn special-medication-history-card "特殊用药史" []
   (let [smh-data @(rf/subscribe [::subs/special-medication-history-data])
@@ -1208,48 +1410,81 @@
         get-val (fn [path] (get-in pa-data path))
         dispatch-update (fn [path value] (rf/dispatch [::events/update-canonical-assessment-field (into [:pregnancy_assessment] path) value]))
         dispatch-update-event (fn [path event] (dispatch-update path (-> event .-target .-value)))
-        gestational-week-options [{:label "0-12 周" :value "0-12_weeks"} {:label "13-28 周" :value "13-28_weeks"} {:label ">28 周" :value ">28_weeks"}]
-        comorbid-obstetric-options [{:label "单胎" :value "singleton_pregnancy"} {:label "多胎" :value "multiple_pregnancy"} {:label "妊娠期糖尿病" :value "gestational_diabetes"} {:label "妊娠期高血压" :value "gestational_hypertension"} {:label "周围型前置胎盘" :value "marginal_placenta_previa"} {:label "中央型前置胎盘" :value "complete_placenta_previa"} {:label "胎膜早破" :value "premature_rupture_of_membranes"} {:label "胎盘早剥" :value "placental_abruption"} {:label "胎盘植入" :value "placenta_accreta"} {:label "先兆流产" :value "threatened_abortion"} {:label "子痫前期" :value "preeclampsia"} {:label "子痫" :value "eclampsia"} {:label "其他" :value "other_obstetric_conditions"}]]
+
+        yes-no-unknown-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
+        gestational-week-options [{:label "0-12 周" :value "0-12_weeks"}
+                                  {:label "13-28 周" :value "13-28_weeks"}
+                                  {:label ">28 周" :value ">28_weeks"}]
+        comorbid-obstetric-options [
+                                    {:label "单胎" :value "singleton_pregnancy"}
+                                    {:label "多胎" :value "multiple_pregnancy"}
+                                    {:label "妊娠期糖尿病" :value "gestational_diabetes"}
+                                    {:label "妊娠期高血压" :value "gestational_hypertension"}
+                                    {:label "周围型前置胎盘" :value "marginal_placenta_previa"}
+                                    {:label "中央型前置胎盘" :value "complete_placenta_previa"}
+                                    {:label "胎膜早破" :value "premature_rupture_of_membranes"}
+                                    {:label "胎盘早剥" :value "placental_abruption"}
+                                    {:label "胎盘植入" :value "placenta_accreta"}
+                                    {:label "先兆流产" :value "threatened_abortion"}
+                                    {:label "子痫前期" :value "preeclampsia"}
+                                    {:label "子痫" :value "eclampsia"}
+                                    {:label "其他情况" :value "other_obstetric_conditions"}]]
     [custom-styled-card
      [:> WomanOutlined {:style {:marginRight "8px"}}]
      "妊娠"
      "#fff0f6"
      (if patient-id
        [:> Form {:layout "vertical"
-                 :initialValues (clj->js pa-data)
                  :key (str patient-id "-pregnancy-assessment")}
-        [:> Form.Item {:label "是否妊娠" :name :is_pregnant}
+
+        ;; 1. 是否妊娠 (Is Pregnant)
+        [:> Form.Item {:label "是否妊娠"}
          [:> Radio.Group {:value (get-val [:is_pregnant])
-                          :onChange #(dispatch-update-event [:is_pregnant] %)}
-          [:> Radio {:value "无"} "无"]
-          [:> Radio {:value "有"} "有"]
-          [:> Radio {:value "不祥"} "不祥"]]]
+                          :options yes-no-unknown-options
+                          :onChange #(let [val (-> % .-target .-value)]
+                                       (dispatch-update [:is_pregnant] val)
+                                       (when (not= val "有") ; Clear sub-fields if "有" is not selected
+                                         (dispatch-update [:gestational_week] nil)
+                                         (dispatch-update [:obstetric_history] nil)
+                                         (dispatch-update [:comorbid_obstetric_conditions] [])
+                                         (dispatch-update [:comorbid_obstetric_conditions_other_details] nil)))}]]
+
         (when (= (get-val [:is_pregnant]) "有")
           [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
-           [:> Form.Item {:label "孕周" :name :gestational_week}
+           ;; 孕周 (Gestational Week)
+           [:> Form.Item {:label "孕周"}
             [:> Select {:placeholder "选择孕周" :style {:width "100%"} :allowClear true
                         :value (get-val [:gestational_week])
                         :options gestational-week-options
                         :onChange #(dispatch-update [:gestational_week] %)}]]
-           [:> Form.Item {:label "孕产史" :name :obstetric_history}
+
+           ;; 孕产史 (Obstetric History)
+           [:> Form.Item {:label "孕产史"}
             [:> Input.TextArea {:placeholder "例如：G2P1A1L1 或 足月1、早产0、流产1、存活1" :rows 2
                                 :value (get-val [:obstetric_history])
                                 :onChange #(dispatch-update-event [:obstetric_history] %)}]]
-           [:> Form.Item {:label "合并产科情况" :name :comorbid_obstetric_conditions}
+
+           ;; 合并产科情况 (Comorbid Obstetric Conditions)
+           [:> Form.Item {:label "合并产科情况"}
             [:> Checkbox.Group {:options comorbid-obstetric-options
                                 :style {:display "flex" :flexDirection "column"}
                                 :value (get-val [:comorbid_obstetric_conditions])
-                                :onChange #(dispatch-update [:comorbid_obstetric_conditions] %)}]]
+                                :onChange #(let [val %]
+                                             (dispatch-update [:comorbid_obstetric_conditions] val)
+                                             (when (not (some #{"other_obstetric_conditions"} val))
+                                               (dispatch-update [:comorbid_obstetric_conditions_other_details] nil)))}]]
            (when (some #{"other_obstetric_conditions"} (get-val [:comorbid_obstetric_conditions]))
-             [:> Form.Item {:label "其他合并产科情况详情" :name :comorbid_obstetric_conditions_other_details :style {:marginLeft "20px"}}
+             [:> Form.Item {:label "其他合并产科情况详情" :style {:marginLeft "20px"}}
               [:> Input {:placeholder "请描述其他合并产科情况"
                          :value (get-val [:comorbid_obstetric_conditions_other_details])
                          :onChange #(dispatch-update-event [:comorbid_obstetric_conditions_other_details] %)}]])])
-        [:> Form.Item {:label "其他妊娠相关情况" :name :other_pregnancy_conditions}
+
+        ;; 其他情况 (Other Conditions) - This is outside the "if pregnant" block
+        [:> Form.Item {:label "其他妊娠相关情况"}
          [:> Input.TextArea {:placeholder "如有其他妊娠相关情况请在此注明" :rows 3
                              :value (get-val [:other_pregnancy_conditions])
                              :onChange #(dispatch-update-event [:other_pregnancy_conditions] %)}]]
-        ]
+        ] ; End of main Form content
        [:> Empty {:description "请先选择患者"}])]))
 
 
@@ -1335,53 +1570,319 @@
          [:> Empty {:description "请先选择患者"}])])))
 
 
-(defn- airway-assessment-card        "气道评估" []
+(defn- airway-assessment-card "气道评估" []
   (let [aa-data @(rf/subscribe [::subs/airway-assessment-data])
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         get-val (fn [path] (get-in aa-data path))
         dispatch-update (fn [path value] (rf/dispatch [::events/update-canonical-assessment-field (into [:airway_assessment] path) value]))
         dispatch-update-event (fn [path event] (dispatch-update path (-> event .-target .-value)))
+        dispatch-checkbox-event (fn [path event] (dispatch-update path (-> event .-target .-checked))) ; For single checkboxes if used
+        dispatch-numeric-input-event (fn [path value] (dispatch-update path value))
+
+
         yes-no-options [{:label "无" :value "无"} {:label "有" :value "有"}]
+        yes-no-unknown-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
         yes-no-suspected-unknown-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "疑似" :value "疑似"} {:label "不祥" :value "不祥"}]
-        mouth-opening-options [{:label "≥3横指" :value "gte_3_fingers"} {:label "2.5 横指" :value "2_5_fingers"} {:label "2 横指" :value "2_fingers"} {:label "<2 横指" :value "lt_2_fingers"} {:label "无法张口" :value "cannot_open"}]
-        render-radio-with-details (fn [field-key-present field-key-details label-text]
-                                    [:div {:key (str (name field-key-present) "-group")}
-                                     [:> Form.Item {:label label-text :name [field-key-present]}
-                                      [:> Radio.Group {:options yes-no-options
-                                                       :value (get-val [field-key-present])
-                                                       :onChange #(let [val (-> % .-target .-value)]
-                                                                    (dispatch-update [field-key-present] val)
-                                                                    (when (= val "无") (dispatch-update [field-key-details] nil)))}]]
-                                     (when (= (get-val [field-key-present]) "有")
-                                       [:> Form.Item {:label "详情" :name [field-key-details] :style {:marginLeft "20px"}}
-                                        [:> Input.TextArea {:placeholder "请描述详情" :rows 2
-                                                            :value (get-val [field-key-details])
-                                                            :onChange #(dispatch-update-event [field-key-details] %)}]])])]
+
+        mouth-opening-options [{:label "≥3横指" :value "gte_3_fingers"}
+                               {:label "<3横指" :value "lt_3_fingers"}
+                               {:label "无法张口" :value "cannot_open"}]
+        mouth-opening-limit-reason-options [{:label "颞颌关节功能障碍" :value "tmj_dysfunction"}
+                                            {:label "感染" :value "infection"}
+                                            {:label "肿瘤" :value "tumor"}
+                                            {:label "外伤" :value "trauma"}
+                                            {:label "其他" :value "other_mouth_opening_limit"}]
+        thyromental-distance-class-options [{:label ">6.5cm" :value "gt_6_5_cm"}
+                                       {:label "6.0-6.5cm" :value "6_0_to_6_5_cm"}
+                                       {:label "<6.0cm" :value "lt_6_0_cm"}]
+        head-neck-mobility-options [{:label "正常" :value "normal"}
+                                    {:label "轻度受限" :value "mildly_limited"}
+                                    {:label "中度受限" :value "moderately_limited"}
+                                    {:label "重度受限" :value "severely_limited"}
+                                    {:label "颈椎融合/固定" :value "cervical_fusion_fixation"}]
+        mallampati-classification-options [{:label "Ⅰ级" :value "grade_1"}
+                                           {:label "Ⅱ级" :value "grade_2"}
+                                           {:label "Ⅲ级" :value "grade_3"}
+                                           {:label "Ⅳ级" :value "grade_4"}]
+        upper-lip-bite-test-options [{:label "Ⅰ级（可咬及上唇红缘）" :value "grade_1_ulbt"}
+                                     {:label "Ⅱ级（不能咬及上唇红缘，但可咬及部分上唇）" :value "grade_2_ulbt"}
+                                     {:label "Ⅲ级（不能咬及上唇）" :value "grade_3_ulbt"}]
+        teeth-assessment-options [{:label "正常" :value "normal_teeth"}
+                                  {:label "松动" :value "loose_teeth"}
+                                  {:label "缺齿" :value "missing_teeth"}
+                                  {:label "义齿（全口/部分）" :value "dentures_full_partial"}
+                                  {:label "龅牙" :value "buck_teeth"}
+                                  {:label "其他" :value "other_teeth_assessment"}]
+        special-facial-features-options [{:label "小颌畸形" :value "micrognathia"}
+                                         {:label "腭裂/唇裂" :value "cleft_palate_lip"}
+                                         {:label "面部肿瘤" :value "facial_tumor"}
+                                         {:label "面部外伤" :value "facial_trauma"}
+                                         {:label "其他" :value "other_facial_features"}]
+        snoring-symptoms-options [{:label "睡眠呼吸暂停" :value "sleep_apnea"}
+                                  {:label "白天嗜睡" :value "daytime_sleepiness"}
+                                  {:label "其他" :value "other_snoring_symptoms"}]
+        airway-disease-location-options [{:label "上呼吸道" :value "upper_airway"}
+                                         {:label "下呼吸道" :value "lower_airway"}
+                                         {:label "其他" :value "other_airway_location"}]
+        current-airway-symptoms-options [{:label "声音嘶哑" :value "hoarseness"}
+                                         {:label "呼吸困难" :value "dyspnea"}
+                                         {:label "喘鸣" :value "stridor"}
+                                         {:label "吞咽困难" :value "dysphagia"}
+                                         {:label "咳嗽/咳痰" :value "cough_sputum"}
+                                         {:label "其他" :value "other_current_symptoms"}]
+        laryngeal-obstruction-grade-options [{:label "Ⅰ度（静时无症状，活动后轻度呼吸困难）" :value "grade_1_laryngeal"}
+                                             {:label "Ⅱ度（静时明显呼吸困难，喉喘鸣，烦躁不安）" :value "grade_2_laryngeal"}
+                                             {:label "Ⅲ度（呼吸极度困难，吸气三凹征，发绀，极度烦躁）" :value "grade_3_laryngeal"}
+                                             {:label "Ⅳ度（窒息，意识丧失或抽搐）" :value "grade_4_laryngeal"}]
+        esophageal-reflux-options [{:label "无" :value "no_reflux"} {:label "有" :value "has_reflux"} {:label "不祥" :value "unknown_reflux"}]]
+
     [custom-styled-card
      [:> NodeIndexOutlined {:style {:marginRight "8px"}}]
      "气道评估"
-     "#fff7e6"
+     "#fff7e6" ; Light orange/yellowish background
      (if patient-id
        [:> Form {:layout "vertical"
-                 :initialValues (clj->js aa-data)
                  :key (str patient-id "-airway-assessment")}
-        [:p {:style {:fontStyle "italic" :color "gray"}} "参考甲颏距离及Mallampati分级图示 (图示待添加)"]
-        [:h4 {:style {:marginTop "16px"}} "详细评估项"]
-        [:> Form.Item {:label "既往困难通气史" :name [:detailed_assessment :difficult_ventilation_history]}
-         [:> Radio.Group {:options yes-no-suspected-unknown-options :value (get-val [:detailed_assessment :difficult_ventilation_history]) :onChange #(dispatch-update-event [:detailed_assessment :difficult_ventilation_history] %)}]]
-        [:> Form.Item {:label "既往困难插管史" :name [:detailed_assessment :difficult_intubation_history]}
-         [:> Radio.Group {:options yes-no-suspected-unknown-options :value (get-val [:detailed_assessment :difficult_intubation_history]) :onChange #(dispatch-update-event [:detailed_assessment :difficult_intubation_history] %)}]]
-        [:> Form.Item {:label "张口度" :name [:detailed_assessment :mouth_opening :degree]}
+
+        [:h4 {:style {:fontStyle "italic"}} "甲颏距离图示与说明"]
+        [:p "甲颏距离 (TMD): 指下颌角到颏结节的距离。"]
+        [:table {:style {:width "100%" :borderCollapse "collapse" :marginBottom "10px"}}
+         [:thead
+          [:tr [:th {:style {:border "1px solid #ddd" :padding "4px"}} "分级"]
+           [:th {:style {:border "1px solid #ddd" :padding "4px"}} "距离"]
+           [:th {:style {:border "1px solid #ddd" :padding "4px"}} "临床意义"]]]
+         [:tbody
+          [:tr [:td {:style {:border "1px solid #ddd" :padding "4px"}} "Ⅰ级"] [:td {:style {:border "1px solid #ddd" :padding "4px"}} ">6.5 cm"] [:td {:style {:border "1px solid #ddd" :padding "4px"}} "插管通常无困难"]]
+          [:tr [:td {:style {:border "1px solid #ddd" :padding "4px"}} "Ⅱ级"] [:td {:style {:border "1px solid #ddd" :padding "4px"}} "6.0-6.5 cm"] [:td {:style {:border "1px solid #ddd" :padding "4px"}} "可能存在一定困难"]]
+          [:tr [:td {:style {:border "1px solid #ddd" :padding "4px"}} "Ⅲ级"] [:td {:style {:border "1px solid #ddd" :padding "4px"}} "<6.0 cm"] [:td {:style {:border "1px solid #ddd" :padding "4px"}} "提示插管困难"]]]]
+
+        [:h4 {:style {:fontStyle "italic" :marginTop "10px"}} "改良Mallampati分级图示与说明表"]
+        [:p "改良Mallampati分级 (Modified Mallampati Score): 患者取坐位，头保持中立位，张口伸舌，观察咽部结构。"]
+        [:table {:style {:width "100%" :borderCollapse "collapse" :marginBottom "15px"}}
+         [:thead
+          [:tr [:th {:style {:border "1px solid #ddd" :padding "4px"}} "分级"] [:th {:style {:border "1px solid #ddd" :padding "4px"}} "可见结构"]]]
+         [:tbody
+          [:tr [:td {:style {:border "1px solid #ddd" :padding "4px"}} "Ⅰ级"] [:td {:style {:border "1px solid #ddd" :padding "4px"}} "软腭、腭垂、腭弓、扁桃体均可见"]]
+          [:tr [:td {:style {:border "1px solid #ddd" :padding "4px"}} "Ⅱ级"] [:td {:style {:border "1px solid #ddd" :padding "4px"}} "软腭、腭垂、腭弓可见，扁桃体被舌根部分遮盖"]]
+          [:tr [:td {:style {:border "1px solid #ddd" :padding "4px"}} "Ⅲ级"] [:td {:style {:border "1px solid #ddd" :padding "4px"}} "软腭、腭垂根部可见"]]
+          [:tr [:td {:style {:border "1px solid #ddd" :padding "4px"}} "Ⅳ级"] [:td {:style {:border "1px solid #ddd" :padding "4px"}} "仅可见硬腭"]]]]
+
+        [:h4 {:style {:marginTop "16px" :borderTop "1px solid #eee" :paddingTop "10px"}} "详细评估项"]
+
+        [:> Form.Item {:label "既往困难通气史"}
+         [:> Radio.Group {:options yes-no-suspected-unknown-options
+                          :value (get-val [:detailed_assessment :difficult_ventilation_history])
+                          :onChange #(dispatch-update-event [:detailed_assessment :difficult_ventilation_history] %)}]]
+
+        [:> Form.Item {:label "既往困难插管史"}
+         [:> Radio.Group {:options yes-no-suspected-unknown-options
+                          :value (get-val [:detailed_assessment :difficult_intubation_history])
+                          :onChange #(dispatch-update-event [:detailed_assessment :difficult_intubation_history] %)}]]
+
+        [:> Form.Item {:label "张口度"}
          [:> Select {:placeholder "选择张口度" :style {:width "100%"} :allowClear true
                      :value (get-val [:detailed_assessment :mouth_opening :degree])
                      :options mouth-opening-options
-                     :onChange #(dispatch-update [:detailed_assessment :mouth_opening :degree] %)}]]
-        ;; ... (rest of airway card including special_facial_features, snoring, airway_related_diseases, mediastinal_history, current_airway_symptoms etc.)
-        [:> Form.Item {:label "其他气道相关情况" :name :other_airway_conditions}
+                     :onChange #(let [val %]
+                                  (dispatch-update [:detailed_assessment :mouth_opening :degree] val)
+                                  (when (or (= val "gte_3_fingers") (nil? val))
+                                    (dispatch-update [:detailed_assessment :mouth_opening :limit_reasons] [])
+                                    (dispatch-update [:detailed_assessment :mouth_opening :limit_reasons_other] nil)))}]]
+        (when (and (get-val [:detailed_assessment :mouth_opening :degree])
+                   (not= (get-val [:detailed_assessment :mouth_opening :degree]) "gte_3_fingers"))
+          [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+           [:> Form.Item {:label "受限原因"}
+            [:> Checkbox.Group {:options mouth-opening-limit-reason-options
+                                :value (get-val [:detailed_assessment :mouth_opening :limit_reasons])
+                                :onChange #(let [val %]
+                                             (dispatch-update [:detailed_assessment :mouth_opening :limit_reasons] val)
+                                             (when (not (some #{"other_mouth_opening_limit"} val))
+                                               (dispatch-update [:detailed_assessment :mouth_opening :limit_reasons_other] nil)))}]]
+           (when (some #{"other_mouth_opening_limit"} (get-val [:detailed_assessment :mouth_opening :limit_reasons]))
+             [:> Form.Item {:label "其他原因详情"}
+              [:> Input {:placeholder "描述其他原因"
+                         :value (get-val [:detailed_assessment :mouth_opening :limit_reasons_other])
+                         :onChange #(dispatch-update-event [:detailed_assessment :mouth_opening :limit_reasons_other] %)}]])])
+
+        [:> Form.Item {:label "甲颏距离 (cm)"}
+         [:> InputNumber {:placeholder "输入距离(cm)" :style {:width "100%"} :min 0
+                          :value (get-val [:detailed_assessment :thyromental_distance_cm])
+                          :onChange #(dispatch-numeric-input-event [:detailed_assessment :thyromental_distance_cm] %)}]]
+
+        [:> Form.Item {:label "甲颏距离 (分级)"}
+         [:> Select {:placeholder "选择分级" :style {:width "100%"} :allowClear true
+                     :value (get-val [:detailed_assessment :thyromental_distance_class])
+                     :options thyromental-distance-class-options
+                     :onChange #(dispatch-update [:detailed_assessment :thyromental_distance_class] %)}]]
+
+        [:> Form.Item {:label "头颈活动度"}
+         [:> Select {:placeholder "选择活动度" :style {:width "100%"} :allowClear true
+                     :value (get-val [:detailed_assessment :head_neck_mobility :status])
+                     :options head-neck-mobility-options
+                     :onChange #(let [val %]
+                                  (dispatch-update [:detailed_assessment :head_neck_mobility :status] val)
+                                  (when (not= val "cervical_fusion_fixation")
+                                    (dispatch-update [:detailed_assessment :head_neck_mobility :details] nil)))}]]
+        (when (= (get-val [:detailed_assessment :head_neck_mobility :status]) "cervical_fusion_fixation")
+          [:> Form.Item {:label "颈椎融合/固定详情" :style {:marginLeft "20px"}}
+           [:> Input {:placeholder "描述详情"
+                      :value (get-val [:detailed_assessment :head_neck_mobility :details])
+                      :onChange #(dispatch-update-event [:detailed_assessment :head_neck_mobility :details] %)}]])
+
+        [:> Form.Item {:label "Mallampati分级"}
+         [:> Select {:placeholder "选择Mallampati分级" :style {:width "100%"} :allowClear true
+                     :value (get-val [:detailed_assessment :mallampati_classification])
+                     :options mallampati-classification-options
+                     :onChange #(dispatch-update [:detailed_assessment :mallampati_classification] %)}]]
+
+        [:> Form.Item {:label "上唇咬合试验 (ULBT)"}
+         [:> Select {:placeholder "选择ULBT分级" :style {:width "100%"} :allowClear true
+                     :value (get-val [:detailed_assessment :upper_lip_bite_test])
+                     :options upper-lip-bite-test-options
+                     :onChange #(dispatch-update [:detailed_assessment :upper_lip_bite_test] %)}]]
+
+        [:> Form.Item {:label "牙齿评估"}
+         [:> Checkbox.Group {:options teeth-assessment-options
+                             :style {:display "flex" :flexDirection "column"}
+                             :value (get-val [:detailed_assessment :teeth_assessment :conditions])
+                             :onChange #(let [val %]
+                                          (dispatch-update [:detailed_assessment :teeth_assessment :conditions] val)
+                                          (when (not (some #{"other_teeth_assessment"} val))
+                                            (dispatch-update [:detailed_assessment :teeth_assessment :other_details] nil)))}]]
+        (when (some #{"other_teeth_assessment"} (get-val [:detailed_assessment :teeth_assessment :conditions]))
+          [:> Form.Item {:label "其他牙齿评估详情" :style {:marginLeft "20px"}}
+           [:> Input {:placeholder "描述其他牙齿情况"
+                      :value (get-val [:detailed_assessment :teeth_assessment :other_details])
+                      :onChange #(dispatch-update-event [:detailed_assessment :teeth_assessment :other_details] %)}]])
+
+        [:> Form.Item {:label "特殊面部特征 (可多选)"}
+         [:> Checkbox.Group {:options special-facial-features-options
+                             :style {:display "flex" :flexDirection "column"}
+                             :value (get-val [:detailed_assessment :special_facial_features :features])
+                             :onChange #(let [val %]
+                                          (dispatch-update [:detailed_assessment :special_facial_features :features] val)
+                                          (when (not (some #{"other_facial_features"} val))
+                                            (dispatch-update [:detailed_assessment :special_facial_features :other_details] nil)))}]]
+        (when (some #{"other_facial_features"} (get-val [:detailed_assessment :special_facial_features :features]))
+          [:> Form.Item {:label "其他特殊面部特征详情" :style {:marginLeft "20px"}}
+           [:> Input {:placeholder "描述其他特征"
+                      :value (get-val [:detailed_assessment :special_facial_features :other_details])
+                      :onChange #(dispatch-update-event [:detailed_assessment :special_facial_features :other_details] %)}]])
+
+        [:> Form.Item {:label "鼾症"}
+         [:> Radio.Group {:options yes-no-unknown-options
+                          :value (get-val [:detailed_assessment :snoring :has])
+                          :onChange #(let [val (-> % .-target .-value)]
+                                       (dispatch-update [:detailed_assessment :snoring :has] val)
+                                       (when (not= val "有")
+                                         (dispatch-update [:detailed_assessment :snoring :symptoms] [])
+                                         (dispatch-update [:detailed_assessment :snoring :symptoms_other_details] nil)))}]]
+        (when (= (get-val [:detailed_assessment :snoring :has]) "有")
+          [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+           [:> Form.Item {:label "症状 (可多选)"}
+            [:> Checkbox.Group {:options snoring-symptoms-options
+                                :value (get-val [:detailed_assessment :snoring :symptoms])
+                                :onChange #(let [val %]
+                                             (dispatch-update [:detailed_assessment :snoring :symptoms] val)
+                                             (when (not (some #{"other_snoring_symptoms"} val))
+                                               (dispatch-update [:detailed_assessment :snoring :symptoms_other_details] nil)))}]]
+           (when (some #{"other_snoring_symptoms"} (get-val [:detailed_assessment :snoring :symptoms]))
+             [:> Form.Item {:label "其他鼾症症状详情"}
+              [:> Input {:placeholder "描述其他症状"
+                         :value (get-val [:detailed_assessment :snoring :symptoms_other_details])
+                         :onChange #(dispatch-update-event [:detailed_assessment :snoring :symptoms_other_details] %)}]])])
+
+        [:> Form.Item {:label "气道相关疾病"}
+         [:> Radio.Group {:options yes-no-unknown-options
+                          :value (get-val [:detailed_assessment :airway_related_diseases :has])
+                          :onChange #(let [val (-> % .-target .-value)]
+                                       (dispatch-update [:detailed_assessment :airway_related_diseases :has] val)
+                                       (when (not= val "有")
+                                         (dispatch-update [:detailed_assessment :airway_related_diseases :locations] [])
+                                         (dispatch-update [:detailed_assessment :airway_related_diseases :upper_airway_details] nil)
+                                         (dispatch-update [:detailed_assessment :airway_related_diseases :lower_airway_details] nil)
+                                         (dispatch-update [:detailed_assessment :airway_related_diseases :other_location_details] nil)))}]]
+        (when (= (get-val [:detailed_assessment :airway_related_diseases :has]) "有")
+          [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+           [:> Form.Item {:label "部位 (可多选)"}
+            [:> Checkbox.Group {:options airway-disease-location-options
+                                :value (get-val [:detailed_assessment :airway_related_diseases :locations])
+                                :onChange #(let [val %]
+                                             (dispatch-update [:detailed_assessment :airway_related_diseases :locations] val)
+                                             (when (not (some #{"upper_airway"} val)) (dispatch-update [:detailed_assessment :airway_related_diseases :upper_airway_details] nil))
+                                             (when (not (some #{"lower_airway"} val)) (dispatch-update [:detailed_assessment :airway_related_diseases :lower_airway_details] nil))
+                                             (when (not (some #{"other_airway_location"} val)) (dispatch-update [:detailed_assessment :airway_related_diseases :other_location_details] nil)))}]]
+           (when (some #{"upper_airway"} (get-val [:detailed_assessment :airway_related_diseases :locations]))
+             [:> Form.Item {:label "上呼吸道详情"} [:> Input.TextArea {:placeholder "描述上呼吸道疾病详情" :rows 2 :value (get-val [:detailed_assessment :airway_related_diseases :upper_airway_details]) :onChange #(dispatch-update-event [:detailed_assessment :airway_related_diseases :upper_airway_details] %)}]])
+           (when (some #{"lower_airway"} (get-val [:detailed_assessment :airway_related_diseases :locations]))
+             [:> Form.Item {:label "下呼吸道详情"} [:> Input.TextArea {:placeholder "描述下呼吸道疾病详情" :rows 2 :value (get-val [:detailed_assessment :airway_related_diseases :lower_airway_details]) :onChange #(dispatch-update-event [:detailed_assessment :airway_related_diseases :lower_airway_details] %)}]])
+           (when (some #{"other_airway_location"} (get-val [:detailed_assessment :airway_related_diseases :locations]))
+             [:> Form.Item {:label "其他部位详情"} [:> Input.TextArea {:placeholder "描述其他部位疾病详情" :rows 2 :value (get-val [:detailed_assessment :airway_related_diseases :other_location_details]) :onChange #(dispatch-update-event [:detailed_assessment :airway_related_diseases :other_location_details] %)}]])])
+
+        [:> Form.Item {:label "纵隔病史 (如肿瘤、放疗等)"}
+         [:> Radio.Group {:options yes-no-unknown-options
+                          :value (get-val [:detailed_assessment :mediastinal_history :has])
+                          :onChange #(let [val (-> % .-target .-value)]
+                                       (dispatch-update [:detailed_assessment :mediastinal_history :has] val)
+                                       (when (not= val "有")
+                                         (dispatch-update [:detailed_assessment :mediastinal_history :details] nil)))}]]
+        (when (= (get-val [:detailed_assessment :mediastinal_history :has]) "有")
+          [:> Form.Item {:label "详情" :style {:marginLeft "20px"}}
+           [:> Input.TextArea {:placeholder "描述纵隔病史详情" :rows 2
+                               :value (get-val [:detailed_assessment :mediastinal_history :details])
+                               :onChange #(dispatch-update-event [:detailed_assessment :mediastinal_history :details] %)}]])
+
+        [:> Form.Item {:label "现存气道症状"}
+         [:> Radio.Group {:options yes-no-unknown-options
+                          :value (get-val [:detailed_assessment :current_airway_symptoms :has])
+                          :onChange #(let [val (-> % .-target .-value)]
+                                       (dispatch-update [:detailed_assessment :current_airway_symptoms :has] val)
+                                       (when (not= val "有")
+                                         (dispatch-update [:detailed_assessment :current_airway_symptoms :symptoms] [])
+                                         (dispatch-update [:detailed_assessment :current_airway_symptoms :symptoms_other_details] nil)
+                                         (dispatch-update [:detailed_assessment :current_airway_symptoms :laryngeal_obstruction_grade] nil)))}]]
+        (when (= (get-val [:detailed_assessment :current_airway_symptoms :has]) "有")
+          [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+           [:> Form.Item {:label "症状 (可多选)"}
+            [:> Checkbox.Group {:options current-airway-symptoms-options
+                                :value (get-val [:detailed_assessment :current_airway_symptoms :symptoms])
+                                :onChange #(let [val %]
+                                             (dispatch-update [:detailed_assessment :current_airway_symptoms :symptoms] val)
+                                             (when (not (some #{"other_current_symptoms"} val))
+                                               (dispatch-update [:detailed_assessment :current_airway_symptoms :symptoms_other_details] nil))
+                                             (when (not (some #{"stridor"} val)) ; Clear laryngeal grade if stridor not selected
+                                               (dispatch-update [:detailed_assessment :current_airway_symptoms :laryngeal_obstruction_grade] nil)))}]]
+           (when (some #{"other_current_symptoms"} (get-val [:detailed_assessment :current_airway_symptoms :symptoms]))
+             [:> Form.Item {:label "其他症状详情"}
+              [:> Input {:placeholder "描述其他症状"
+                         :value (get-val [:detailed_assessment :current_airway_symptoms :symptoms_other_details])
+                         :onChange #(dispatch-update-event [:detailed_assessment :current_airway_symptoms :symptoms_other_details] %)}]])
+           (when (some #{"stridor"} (get-val [:detailed_assessment :current_airway_symptoms :symptoms]))
+             [:> Form.Item {:label "喉梗阻分级 (若有喘鸣)"}
+              [:> Select {:placeholder "选择喉梗阻分级" :style {:width "100%"} :allowClear true
+                          :value (get-val [:detailed_assessment :current_airway_symptoms :laryngeal_obstruction_grade])
+                          :options laryngeal-obstruction-grade-options
+                          :onChange #(dispatch-update [:detailed_assessment :current_airway_symptoms :laryngeal_obstruction_grade] %)}]])])
+
+        [:> Form.Item {:label "食管手术史"}
+         [:> Radio.Group {:options yes-no-unknown-options
+                          :value (get-val [:detailed_assessment :esophageal_surgery_history :has])
+                          :onChange #(let [val (-> % .-target .-value)]
+                                       (dispatch-update [:detailed_assessment :esophageal_surgery_history :has] val)
+                                       (when (not= val "有")
+                                         (dispatch-update [:detailed_assessment :esophageal_surgery_history :reflux_status] nil)))}]]
+        (when (= (get-val [:detailed_assessment :esophageal_surgery_history :has]) "有")
+          [:> Form.Item {:label "是否存在返流" :style {:marginLeft "20px"}}
+           [:> Radio.Group {:options esophageal-reflux-options
+                            :value (get-val [:detailed_assessment :esophageal_surgery_history :reflux_status])
+                            :onChange #(dispatch-update-event [:detailed_assessment :esophageal_surgery_history :reflux_status] %)}]])
+
+
+        [:> Form.Item {:label "其他气道相关情况"}
          [:> Input.TextArea {:placeholder "如有其他气道相关情况请在此注明" :rows 3
-                             :value (get-val [:other_airway_conditions])
+                             :value (get-val [:other_airway_conditions]) ; Top-level other conditions
                              :onChange #(dispatch-update-event [:other_airway_conditions] %)}]]
-        ]
+        ] ; End of main Form
        [:> Empty {:description "请先选择患者"}])]))
 
 
