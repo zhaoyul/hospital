@@ -6,16 +6,18 @@
    ["@ant-design/icons" :as icons :refer [FileTextOutlined MedicineBoxOutlined
                                           ProfileOutlined QrcodeOutlined
                                           SolutionOutlined SyncOutlined
-                                          CheckCircleOutlined ClockCircleOutlined CloseCircleOutlined PrinterOutlined]]
+                                          CheckCircleOutlined ClockCircleOutlined CloseCircleOutlined PrinterOutlined UserOutlined HeartOutlined CloudOutlined ExperimentOutlined ProjectOutlined CoffeeOutlined SecurityScanOutlined WarningOutlined AppleOutlined HistoryOutlined NodeIndexOutlined GatewayOutlined EditOutlined SaveOutlined MessageOutlined UploadOutlined]]
    ["antd" :refer [Button Card Col DatePicker Descriptions Empty Form
                    Input InputNumber Layout Modal Radio Row Select Space Tag
-                   Upload]] ; Removed Tooltip as it's not used
+                   Upload Checkbox]] ; Removed Tooltip as it's not used, Added Checkbox
    [hc.hospital.events :as events]
-   [taoensso.timbre :as timbre]
    [hc.hospital.subs :as subs]
    [hc.hospital.utils :as utils]
    [re-frame.core :as rf]
-   [reagent.core :as r]))
+   [reagent.core :as r]
+   [taoensso.timbre :as timbre]
+   [hc.hospital.pages.assessment-cards :as acards]
+   [hc.hospital.ui-helpers :refer [custom-styled-card]])) ; Added ui-helpers require
 
 ;; Define common grid style maps and helper function
 (def ^:private grid-style-4-col
@@ -101,13 +103,7 @@
    [patient-list-filters]
    [patient-list]])
 
-(defn- custom-styled-card "创建统一样式的卡片"[icon title-text header-bg-color content]
-  [:> Card {:title (r/as-element [:span icon title-text])
-            :styles {:header {:background header-bg-color}
-                     :body {:background "#ffffff"}} ; 确保内容区域背景为白色
-            :type "inner"
-            :style {:marginBottom "12px"}}
-   content])
+;; custom-styled-card was moved to hc.hospital.ui-helpers
 
 (defn- patient-info-card "显示患者基本信息" []
   (let [basic-info @(rf/subscribe [::subs/canonical-basic-info])] ; Use new subscription
@@ -276,6 +272,7 @@
                               :style {:width "100px"}
                               :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:physical_examination :spo2] %])}]]]]]
          [:> Empty {:description "暂无一般情况信息或未选择患者"}])])))
+
 
 (defn- render-allergy-section [medical-history]
   [:div {:style {:marginBottom "16px"}}
@@ -673,12 +670,26 @@
        ;; Main scrollable content area for cards
        [:div {:style {:padding "16px" :overflowY "auto" :flexGrow 1 :background "#f0f2f5"}}
         [patient-info-card]
+        [acards/circulatory-system-card]
+        [acards/respiratory-system-card]
+        [acards/mental-neuromuscular-system-card]
+        [acards/endocrine-system-card]
+        [acards/liver-kidney-system-card]
+        [acards/digestive-system-card]
+        [acards/hematologic-system-card]
+        [acards/immune-system-card]
+        [acards/special-medication-history-card]
+        [acards/special-disease-history-card]
+        [acards/nutritional-assessment-card]
+        [acards/pregnancy-assessment-card]
+        [acards/surgical-anesthesia-history-card]
+        [acards/airway-assessment-card]
+        [acards/spinal-anesthesia-assessment-card]
         [general-condition-card]
         [medical-history-summary-card]
         [comorbidities-card]
         [physical-examination-card]
         [auxiliary-tests-card]
-        ;; ASA评分和麻醉计划 - Consider if this needs its own card or is part of preoperative-orders
         [preoperative-orders-card]
         [remarks-card]
         [signature-and-date-card]
@@ -706,3 +717,5 @@
    ;; 右侧评估详情区域
    [:div {:style {:flexGrow 1 :background "#f0f2f5" :overflow "hidden"}}
     [assessment]]])
+
+[end of src/cljs/hc/hospital/pages/anesthesia.cljs]

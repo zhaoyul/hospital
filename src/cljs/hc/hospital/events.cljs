@@ -36,7 +36,23 @@
                    :special_medications {:has_taken false, :details nil, :last_dose_time nil}}
    :auxiliary_examinations []
    :auxiliary_examinations_notes nil
-   :anesthesia_plan {:asa_rating nil, :anesthesia_type nil, :preoperative_instructions nil}})
+   :anesthesia_plan {:asa_rating nil, :anesthesia_type nil, :preoperative_instructions nil}
+   ;; Adding new assessment sections, initialized to empty maps
+   :circulatory_system {}
+   :respiratory_system {}
+   :mental_neuromuscular_system {}
+   :endocrine_system {}
+   :liver_kidney_system {}
+   :digestive_system {}
+   :hematologic_system {}
+   :immune_system {}
+   :special_medication_history {}
+   :special_disease_history {}
+   :nutritional_assessment {}
+   :pregnancy_assessment {}
+   :surgical_anesthesia_history {}
+   :airway_assessment {}
+   :spinal_anesthesia_assessment {}})
 
 
 ;; -- Initialization

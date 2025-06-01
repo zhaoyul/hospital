@@ -135,6 +135,91 @@
   :<- [::current-canonical-assessment]
   (fn [assessment _] (:anesthesia_plan assessment)))
 
+;; Cardiovascular System - New
+(rf/reg-sub ::circulatory-system-data
+  :<- [::current-canonical-assessment]
+  (fn [assessment _]
+    (or (:circulatory_system assessment) {}))) ; Return empty map if nil
+
+;; Respiratory System - New
+(rf/reg-sub ::respiratory-system-data
+  :<- [::current-canonical-assessment]
+  (fn [assessment _]
+    (or (:respiratory_system assessment) {}))) ; Return empty map if nil
+
+;; Mental & Neuromuscular System - New
+(rf/reg-sub ::mental-neuromuscular-system-data
+  :<- [::current-canonical-assessment]
+  (fn [assessment _]
+    (or (:mental_neuromuscular_system assessment) {}))) ; Return empty map if nil
+
+;; Endocrine System - New
+(rf/reg-sub ::endocrine-system-data
+  :<- [::current-canonical-assessment]
+  (fn [assessment _]
+    (or (:endocrine_system assessment) {}))) ; Return empty map if nil
+
+;; Liver & Kidney System - New
+(rf/reg-sub ::liver-kidney-system-data
+  :<- [::current-canonical-assessment]
+  (fn [assessment _]
+    (or (:liver_kidney_system assessment) {}))) ; Return empty map if nil
+
+;; Digestive System - New
+(rf/reg-sub ::digestive-system-data
+  :<- [::current-canonical-assessment]
+  (fn [assessment _]
+    (or (:digestive_system assessment) {}))) ; Return empty map if nil
+
+;; Hematologic System - New
+(rf/reg-sub ::hematologic-system-data
+  :<- [::current-canonical-assessment]
+  (fn [assessment _]
+    (or (:hematologic_system assessment) {}))) ; Return empty map if nil
+
+;; Immune System - New
+(rf/reg-sub ::immune-system-data
+  :<- [::current-canonical-assessment]
+  (fn [assessment _]
+    (or (:immune_system assessment) {}))) ; Return empty map if nil
+
+;; Special Medication History - New
+(rf/reg-sub ::special-medication-history-data
+  :<- [::current-canonical-assessment]
+  (fn [assessment _]
+    (or (:special_medication_history assessment) {}))) ; Return empty map if nil
+
+;; Special Disease History - New
+(rf/reg-sub ::special-disease-history-data
+  :<- [::current-canonical-assessment]
+  (fn [assessment _]
+    (or (:special_disease_history assessment) {}))) ; Return empty map if nil
+
+;; Nutritional Assessment - New
+(rf/reg-sub ::nutritional-assessment-data
+  :<- [::current-canonical-assessment]
+  (fn [assessment _]
+    (or (:nutritional_assessment assessment) {}))) ; Return empty map if nil
+
+;; Surgical Anesthesia History - New
+(rf/reg-sub ::surgical-anesthesia-history-data
+  :<- [::current-canonical-assessment]
+  (fn [assessment _]
+    (or (:surgical_anesthesia_history assessment) {}))) ; Return empty map if nil
+
+;; Airway Assessment - New
+(rf/reg-sub ::airway-assessment-data
+  :<- [::current-canonical-assessment]
+  (fn [assessment _]
+    (or (:airway_assessment assessment) {}))) ; Return empty map if nil
+
+;; Spinal Anesthesia Assessment - New
+(rf/reg-sub
+ ::spinal-anesthesia-assessment-data
+ :<- [::subs/current-canonical-assessment]
+ (fn [assessment _]
+   (or (:spinal_anesthesia_assessment assessment) {})))
+
 ;; ---- Existing subscriptions - Review/Refactor as needed ----
 ;; DEPRECATED by ::canonical-basic-info, ::canonical-medical-history etc.
 ;; (rf/reg-sub ::selected-patient-assessment-forms-data
