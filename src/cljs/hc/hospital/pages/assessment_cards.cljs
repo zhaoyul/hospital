@@ -38,10 +38,10 @@
                                   {:value "Ⅳ 级" :label "Ⅳ 级：心功能衰竭，不能从事任何体力劳动。休息状态下也出现心衰症状，体力活动后加重"}
                                   ]
         exercise-capacity-options [
-                                  {:value "运动能力正常" :label "运动能力正常。可耐受慢跑、跳绳等较高强度的身体训练 >6MET"}
-                                  {:value "运动能力轻度下降" :label "运动能力轻度下降。可胜任日常家务工作或骑自行车 3-6MET"}
-                                  {:value "运动能力明显下降" :label "运动能力明显下降。仅能从事文书工作或缓慢步行 <3MET"}
-                                  ]]
+                                   {:value "运动能力正常" :label "运动能力正常。可耐受慢跑、跳绳等较高强度的身体训练 >6MET"}
+                                   {:value "运动能力轻度下降" :label "运动能力轻度下降。可胜任日常家务工作或骑自行车 3-6MET"}
+                                   {:value "运动能力明显下降" :label "运动能力明显下降。仅能从事文书工作或缓慢步行 <3MET"}
+                                   ]]
     [custom-styled-card
      [:> HeartOutlined {:style {:marginRight "8px"}}]
      "循环系统"
@@ -109,7 +109,7 @@
                                             (when (not= val "有")
                                               (dispatch-update [:cardiac_disease_history :arrhythmia :has_details] nil))))}
               (for [opt yes-no-unknown-options]
-                ^{:key (:value opt)} [:> Radio {:value (:value opt)} (:label opt)]))]
+                ^{:key (:value opt)} [:> Radio {:value (:value opt)} (:label opt)])]]
             (when (= (get-val [:cardiac_disease_history :arrhythmia :has]) "有")
               [:> Input {:placeholder "心律失常类型 (若选择'有')" :style {:marginTop "8px" :width "calc(100% - 0px)"} ; Adjusted width
                          :value (get-val [:cardiac_disease_history :arrhythmia :has_details])
@@ -144,7 +144,7 @@
                                             (when (not= val "有")
                                               (dispatch-update [:cardiac_disease_history :cardiomyopathy :has_details] nil))))}
               (for [opt yes-no-options] ; Assuming yes/no for this one, adjust if "不祥" needed
-                ^{:key (:value opt)} [:> Radio {:value (:value opt)} (:label opt)]))]
+                ^{:key (:value opt)} [:> Radio {:value (:value opt)} (:label opt)])]]
             (when (= (get-val [:cardiac_disease_history :cardiomyopathy :has]) "有")
               [:> Input {:placeholder "心肌病类型 (若选择'有')" :style {:marginTop "8px" :width "calc(100% - 0px)"}
                          :value (get-val [:cardiac_disease_history :cardiomyopathy :has_details])
@@ -172,7 +172,7 @@
                                             (when (not= val "有")
                                               (dispatch-update [:cardiac_disease_history :valvular_heart_disease :has_details] nil))))}
               (for [opt yes-no-options]
-                ^{:key (:value opt)} [:> Radio {:value (:value opt)} (:label opt)]))]
+                ^{:key (:value opt)} [:> Radio {:value (:value opt)} (:label opt)])]]
             (when (= (get-val [:cardiac_disease_history :valvular_heart_disease :has]) "有")
               [:> Input {:placeholder "心脏瓣膜病变类型 (若选择'有')" :style {:marginTop "8px" :width "calc(100% - 0px)"}
                          :value (get-val [:cardiac_disease_history :valvular_heart_disease :has_details])
@@ -200,7 +200,7 @@
                                             (when (not= val "有")
                                               (dispatch-update [:cardiac_disease_history :congenital_heart_disease :has_details] nil))))}
               (for [opt yes-no-options]
-                ^{:key (:value opt)} [:> Radio {:value (:value opt)} (:label opt)]))]
+                ^{:key (:value opt)} [:> Radio {:value (:value opt)} (:label opt)])]]
             (when (= (get-val [:cardiac_disease_history :congenital_heart_disease :has]) "有")
               [:> Input {:placeholder "先天性心脏病类型 (若选择'有')" :style {:marginTop "8px" :width "calc(100% - 0px)"}
                          :value (get-val [:cardiac_disease_history :congenital_heart_disease :has_details])
@@ -251,7 +251,7 @@
                                             (when (not= val "有")
                                               (dispatch-update [:cardiac_disease_history :pulmonary_hypertension :has_details] nil))))}
               (for [opt yes-no-options]
-                ^{:key (:value opt)} [:> Radio {:value (:value opt)} (:label opt)]))]
+                ^{:key (:value opt)} [:> Radio {:value (:value opt)} (:label opt)])]]
             (when (= (get-val [:cardiac_disease_history :pulmonary_hypertension :has]) "有")
               [:> Input {:placeholder "肺动脉高压类型 (若选择'有')" :style {:marginTop "8px" :width "calc(100% - 0px)"}
                          :value (get-val [:cardiac_disease_history :pulmonary_hypertension :has_details])
@@ -317,7 +317,7 @@
                           :onChange #(dispatch-update-event [:cardiac_function_assessment :class] %)}
           (for [opt cardiac-function-options]
             ^{:key (:value opt)} [:> Radio {:value (:value opt) :style {:display "block" :height "auto" :lineHeight "22px" :whiteSpace "normal" :marginBottom "8px"}}
-             (:label opt)])]]
+                                  (:label opt)])]]
 
         ;; Exercise Capacity Assessment Section
         [:> Form.Item {:label "运动能力评估"}
@@ -325,7 +325,7 @@
                           :onChange #(dispatch-update-event [:exercise_capacity_assessment :level] %)}
           (for [opt exercise-capacity-options]
             ^{:key (:value opt)} [:> Radio {:value (:value opt) :style {:display "block" :height "auto" :lineHeight "22px" :whiteSpace "normal" :marginBottom "8px"}}
-             (:label opt)])]]
+                                  (:label opt)])]]
 
         ;; Other Conditions Section
         [:> Form.Item {:label "其他循环系统相关情况"}
