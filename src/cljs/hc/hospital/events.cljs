@@ -186,7 +186,7 @@
       (if current-patient-id
         (if assessment-payload
           {:http-xhrio {:method          :put
-                        :uri             (str "/api/patient/assessments/" current-patient-id)
+                        :uri             (str "/api/patient/assessment/" current-patient-id)
                         :params          assessment-payload ;; Send the whole canonical structure
                         :format          (ajax/json-request-format) ;; <--- ADD THIS LINE
                         :response-format (ajax/json-response-format {:keywords? true})
