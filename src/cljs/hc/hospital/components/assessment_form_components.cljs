@@ -1,5 +1,6 @@
 (ns hc.hospital.components.assessment-form-components
   (:require
+   [taoensso.timbre :as timbre :refer [spy]]
    ["antd" :refer [Form Empty Radio]]
    [hc.hospital.ui-helpers :refer [custom-styled-card]]))
 
@@ -24,9 +25,11 @@
 (defn form-item-radio-conditional
   [{:keys [form-instance label radio-name radio-options conditional-value children
            extra-condition-values value-for-children-wrapper]}]
-  (let [watched-value (Form/useWatch radio-name form-instance)
-        show-children? (or (= watched-value conditional-value)
-                           (when extra-condition-values
+
+  (let [radio-name (clj->js (spy :info radio-name))
+        watched-value (Form.useWatch radio-name form-instance)
+        show-children? (or (= (spy :info watched-value) (spy :info conditional-value))
+                           (when (spy :info extra-condition-values)
                              (some #(= watched-value %) extra-condition-values)))
         wrap-children? (if value-for-children-wrapper
                          (= watched-value value-for-children-wrapper)
