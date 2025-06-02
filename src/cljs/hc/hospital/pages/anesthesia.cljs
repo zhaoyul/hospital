@@ -82,7 +82,7 @@
                         :cursor "pointer"}
                 :onClick #(rf/dispatch [::events/select-patient (:key item)])}
           [:div {:style {:display "flex" :alignItems "center"}}
-           [:> icons/UserOutlined {:style {:marginRight "8px" :fontSize "16px"}}]
+           [:> UserOutlined {:style {:marginRight "8px" :fontSize "16px"}}]
            [:div
             [:div {:style {:fontWeight "500"}} (:name item)]
             [:div {:style {:fontSize "12px" :color "gray"}}
@@ -103,18 +103,15 @@
    [patient-list-filters]
    [patient-list]])
 
-;; custom-styled-card was moved to hc.hospital.ui-helpers
-
 (defn- patient-info-card "显示患者基本信息" []
   (let [basic-info @(rf/subscribe [::subs/canonical-basic-info])] ; Use new subscription
     [custom-styled-card
-     [:> icons/UserOutlined {:style {:marginRight "8px"}}]
+     [:> UserOutlined {:style {:marginRight "8px"}}]
      "患者基本信息"
      "#e6fffb" ; Header background color
      (if (seq basic-info) ; Check if basic-info map is not empty
        [:> Form {:layout "horizontal" :labelCol {:span 8} :wrapperCol {:span 16} :labelAlign "left"
                  :initialValues (clj->js basic-info)
-                 ;; Add a key to force re-render when patient changes, ensuring initialValues are applied
                  :key (get basic-info :outpatient_number)}
         [:div {:style grid-style-4-col}
 
@@ -182,7 +179,7 @@
                                   {:value "卧床" :label "卧床"}
                                   {:value "其他" :label "其他"}]]
       [custom-styled-card
-       [:> icons/HeartOutlined {:style {:marginRight "8px"}}]
+       [:> HeartOutlined {:style {:marginRight "8px"}}]
        "一般情况"
        "#f6ffed" ; Header background color
        (if (seq physical-exam-data) ; Check if data is not empty
@@ -191,7 +188,7 @@
                    :key patient-id} ; Key to re-initialize form when patient changes
           ;; 第一部分：身高、体重、精神状态、活动能力
           [:div {:key "vital-signs-group-1"}
-            [:div {:style (assoc grid-style-4-col :marginBottom "16px")}
+           [:div {:style (assoc grid-style-4-col :marginBottom "16px")}
             [:> Form.Item {:label "身高" :name :height} ; Matches canonical
              [:> InputNumber {:placeholder "cm"
                               :addonAfter "cm"
@@ -394,12 +391,12 @@
                    :initialValues (clj->js (update-in (timbre/spy :info comorbidities-data)
                                                       [:special_medications :last_dose_time]
                                                       (fn [str]  (timbre/spy :info (dayjs str)))))
-                   :key patient-id} ; Key for re-initialization
-          [:> Row {:gutter [16 0]} ; Horizontal gutter 16, vertical 0
+                   :key patient-id}
+          [:> Row {:gutter [16 0]}
            (comorbidity-item :respiratory "呼吸系统疾病")
            (comorbidity-item :cardiovascular "心血管疾病")
            (comorbidity-item :endocrine "内分泌疾病")
-           (comorbidity-item :neuro_psychiatric "神经精神疾病") ; Canonical key
+           (comorbidity-item :neuro_psychiatric "神经精神疾病")
            (comorbidity-item :neuromuscular "神经肌肉疾病")
            (comorbidity-item :hepatic "肝脏疾病")
            (comorbidity-item :renal "肾脏疾病")
@@ -431,8 +428,7 @@
                    [:> Input {:placeholder "药物名称及剂量"
                               :style {:marginBottom "8px"}
                               :onChange #(rf/dispatch [::events/update-canonical-assessment-field details-path (-> % .-target .-value)])}]]
-                  [:> Form.Item {:name (conj form-item-base :last_dose_time) :label "最近用药时间" :labelCol {:span 6} :wrapperCol {:span 18}
-                                 }
+                  [:> Form.Item {:name (conj form-item-base :last_dose_time) :label "最近用药时间" :labelCol {:span 6} :wrapperCol {:span 18}}
                    [:> DatePicker {:showTime true
                                    :format "YYYY-MM-DD HH:mm"
                                    :placeholder "选择日期和时间"
@@ -441,9 +437,9 @@
          [:> Empty {:description "暂无并存疾病信息或未选择患者"}])])))
 
 (defn- physical-examination-card []
-  (let [phys-exam-data @(rf/subscribe [::subs/canonical-physical-examination]) ; Use new subscription
-        patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])] ; For Form key
-    (letfn [(exam-item [field-key label-text] ; field-key is like :heart
+  (let [phys-exam-data @(rf/subscribe [::subs/canonical-physical-examination])
+        patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])]
+    (letfn [(exam-item [field-key label-text]
               (let [base-path [:physical_examination field-key] ; Path for dispatch, e.g. [:physical_examination :heart]
                     form-item-name [field-key :status] ; Path for Form.Item name, e.g. [:heart :status]
                     notes-form-item-name [field-key :notes]
@@ -453,7 +449,7 @@
                   [:> Radio.Group {;; :value current-status-val ; Let Form handle
                                    :onChange #(let [val (-> % .-target .-value)]
                                                 (rf/dispatch [::events/update-canonical-assessment-field base-path (assoc (get phys-exam-data field-key) :status val)])
-                                                (when (= val "normal") ; If "normal", clear notes
+                                                (when (= val "normal") 
                                                   (rf/dispatch [::events/update-canonical-assessment-field (conj base-path :notes) nil])))}
                    [:> Radio {:value "normal"} "正常"]
                    [:> Radio {:value "abnormal"} "异常"]]
@@ -461,8 +457,7 @@
                     [:> Form.Item {:name notes-form-item-name
                                    :noStyle true
                                    :style {:marginTop "8px"}}
-                     [:> Input {;; :value (get-in phys-exam-data [field-key :notes]) ; Let Form handle
-                                :placeholder "请描述异常情况"
+                     [:> Input {:placeholder "请描述异常情况"
                                 :onChange #(rf/dispatch [::events/update-canonical-assessment-field (conj base-path :notes) (-> % .-target .-value)])}]])]]))]
       [custom-styled-card
        [:> ProfileOutlined]
@@ -540,7 +535,7 @@
         [:> Form.Item {:label "上传检查文件 (如ECG, 胸片, 血常规等)"}
          [:> Upload upload-props
           [:div
-           [:> icons/UploadOutlined]
+           [:> UploadOutlined]
            [:div {:style {:marginTop 8}} "上传文件"]]]]
         
         [:> Form.Item {:label "其他检查结果说明" :name :auxiliary_examinations_notes}
@@ -562,7 +557,7 @@
   (let [anesthesia-plan-data @(rf/subscribe [::subs/canonical-anesthesia-plan]) ; Use new subscription
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])] ; For Form key
     [custom-styled-card
-     [:> icons/EditOutlined {:style {:marginRight "8px"}}]
+     [:> EditOutlined {:style {:marginRight "8px"}}]
      "术前麻醉医嘱"
      "#fff1f0" ; Header background color
      (if (seq anesthesia-plan-data) ; Check if data is not empty
@@ -592,7 +587,7 @@
         assessment-updated-at (get basic-info :assessment_updated_at (utils/date->iso-string (js/Date.now))) ; Default to now if not present
         doctor-name (get basic-info :doctor_name)]
     [custom-styled-card
-     [:> icons/SaveOutlined {:style {:marginRight "8px"}}]
+     [:> SaveOutlined {:style {:marginRight "8px"}}]
      "麻醉医师签名及日期"
      "#fff0f6" ; Header background color
      [:> Descriptions {:bordered true :column 1 :size "small"} ; Changed to 1 column for better layout
@@ -607,7 +602,7 @@
 (defn- remarks-card []
   (let [assessment-notes (rf/subscribe [::subs/canonical-basic-info :assessment_notes])]
     [custom-styled-card
-     [:> icons/MessageOutlined {:style {:marginRight "8px"}}]
+     [:> MessageOutlined {:style {:marginRight "8px"}}]
      "评估备注" ; Changed title to be more specific
      "#fffaf0" ; Header background color
      [:> Input.TextArea {:rows 4 ; Increased rows for better visibility
@@ -645,15 +640,15 @@
                  :zIndex 10}} ; Ensure it's above scrolled content
    [:> Button {:type "primary"
                :size "large"
-               :icon (r/as-element [:> icons/SaveOutlined])
+               :icon (r/as-element [:> SaveOutlined])
                :onClick #(rf/dispatch [::events/save-final-assessment])}
     "保存评估结果"]])
 
 (defn- assessment []
   (let [current-patient-id @(rf/subscribe [::subs/current-patient-id])
-        basic-info @(rf/subscribe [::subs/canonical-basic-info]) ; Use canonical basic-info
+        basic-info @(rf/subscribe [::subs/canonical-basic-info])
         patient-name (get basic-info :name "未知患者")
-        patient-status (get basic-info :assessment_status "待评估")] ; Get status from canonical basic_info
+        patient-status (get basic-info :assessment_status "待评估")]
     (if current-patient-id
       ;; 有选择患者时的视图
       [:div {:style {:height "calc(100vh - 64px)" :display "flex" :flexDirection "column"}}

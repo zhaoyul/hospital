@@ -1,6 +1,6 @@
 (ns hc.hospital.components.assessment-form-components
   (:require
-   [re-frame.core :as rf] ; Added re-frame.core
+   [re-frame.core :as rf]
    [taoensso.timbre :as timbre :refer [spy]]
    [hc.hospital.patient.events :as events]
    ["antd" :refer [Form Empty Radio]]
@@ -11,10 +11,7 @@
   [{:keys [icon title header-color patient-id
            form-instance form-key initial-data on-finish-handler on-values-change-handler
            children]}]
-  [custom-styled-card
-   icon ; Assuming icon is already a hiccup vector like [:> HeartOutlined ...]
-   title
-   header-color
+  [custom-styled-card icon title header-color
    (if patient-id
      [:> Form (cond-> {:form form-instance
                        :key form-key
