@@ -55,7 +55,7 @@
                      [:> Input.TextArea {:placeholder "请描述ECG结果"
                                          :rows 3}]]
 
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "心脏疾病病史"
                       :radio-name [:cardiac_disease_history :has]
@@ -63,7 +63,7 @@
                       :conditional-value "有"}
                      ;; Children items directly appended
                      ;; Coronary Artery Disease (冠心病)
-                     [afc/form-item-radio-conditional
+                     [:f> afc/form-item-radio-conditional
                       {:form-instance form
                        :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "冠心病"]
                        :radio-name [:cardiac_disease_history :coronary_artery_disease :has]
@@ -83,7 +83,7 @@
                       [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :coronary_artery_disease :medication]}
                        [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]
                      ;; Arrhythmia (心律失常)
-                     [afc/form-item-radio-conditional
+                     [:f> afc/form-item-radio-conditional
                       {:form-instance form
                        :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "心律失常"]
                        :radio-name [:cardiac_disease_history :arrhythmia :has]
@@ -106,7 +106,7 @@
                       [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :arrhythmia :medication]}
                        [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]
                      ;; Cardiomyopathy (心肌病)
-                     [afc/form-item-radio-conditional
+                     [:f> afc/form-item-radio-conditional
                       {:form-instance form
                        :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "心肌病"]
                        :radio-name [:cardiac_disease_history :cardiomyopathy :has]
@@ -120,7 +120,7 @@
                       [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :cardiomyopathy :medication]}
                        [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]
                      ;; Valvular Heart Disease (心脏瓣膜病变)
-                     [afc/form-item-radio-conditional
+                     [:f> afc/form-item-radio-conditional
                       {:form-instance form
                        :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "心脏瓣膜病变"]
                        :radio-name [:cardiac_disease_history :valvular_heart_disease :has]
@@ -134,7 +134,7 @@
                       [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :valvular_heart_disease :medication]}
                        [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]
                      ;; Congenital Heart Disease (先天性心脏病)
-                     [afc/form-item-radio-conditional
+                     [:f> afc/form-item-radio-conditional
                       {:form-instance form
                        :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "先天性心脏病"]
                        :radio-name [:cardiac_disease_history :congenital_heart_disease :has]
@@ -148,7 +148,7 @@
                       [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :congenital_heart_disease :medication]}
                        [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]
                      ;; Congestive Heart Failure (充血性心力衰竭病史)
-                     [afc/form-item-radio-conditional
+                     [:f> afc/form-item-radio-conditional
                       {:form-instance form
                        :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "充血性心力衰竭病史"]
                        :radio-name [:cardiac_disease_history :congestive_heart_failure :has]
@@ -162,7 +162,7 @@
                       [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :congestive_heart_failure :medication]}
                        [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]
                      ;; Pulmonary Hypertension (肺动脉高压)
-                     [afc/form-item-radio-conditional
+                     [:f> afc/form-item-radio-conditional
                       {:form-instance form
                        :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "肺动脉高压"]
                        :radio-name [:cardiac_disease_history :pulmonary_hypertension :has]
@@ -176,7 +176,7 @@
                       [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :pulmonary_hypertension :medication]}
                        [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]]
 
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "心脏起搏器植入史"
                       :radio-name [:pacemaker_history :has]
@@ -268,7 +268,7 @@
                                                                 (utils/date->iso-string d))))]
                          (rf/dispatch [::events/update-canonical-assessment-section :respiratory_system (js->clj transformed-values :keywordize-keys true)])))
         form-items [:<>
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "近两周内感冒病史"
                       :radio-name [:cold_history_last_2_weeks :present]
@@ -282,7 +282,7 @@
                       [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
                                   :options treatment-options}]]]
 
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "近一个月内支气管炎 / 肺炎病史"
                       :radio-name [:bronchitis_pneumonia_last_month :present]
@@ -294,7 +294,7 @@
                       [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
                                   :options treatment-options}]]]
 
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "哮喘病史"
                       :radio-name [:asthma_history :present]
@@ -313,7 +313,7 @@
                      [:> Form.Item {:label "用药详情" :name [:asthma_history :medication_details]}
                       [:> Input.TextArea {:placeholder "请描述具体用药情况" :rows 2}]]]
 
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "慢性阻塞性肺疾病 (COPD)"
                       :radio-name [:copd_history :present]
@@ -323,7 +323,7 @@
                       [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
                                   :options treatment-options}]]]
 
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "支气管扩张症"
                       :radio-name [:bronchiectasis_history :present]
@@ -333,7 +333,7 @@
                       [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
                                   :options treatment-options}]]]
 
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "肺部结节"
                       :radio-name [:pulmonary_nodules_history :present]
@@ -343,7 +343,7 @@
                       [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
                                   :options treatment-options}]]]
 
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "肺部肿瘤"
                       :radio-name [:lung_tumor_history :present]
@@ -365,7 +365,7 @@
                     [:> Form.Item {:label "血气分析" :name [:blood_gas_analysis_results]}
                      [:> Input.TextArea {:placeholder "请描述血气分析结果" :rows 2}]]
 
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "是否有肺结核"
                       :radio-name [:tuberculosis_history :present]
@@ -431,7 +431,7 @@
                                                     (assoc-in [:cerebral_hemorrhage_history :last_episode_date] (when-let [d (get-in values [:cerebral_hemorrhage_history :last_episode_date])] (utils/date->iso-string d))))]
                          (rf/dispatch [::events/update-canonical-assessment-section :mental_neuromuscular_system (js->clj transformed-values :keywordize-keys true)])))
         form-items [:<>
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "精神认知相关疾病史"
                       :radio-name [:psycho_cognitive_history :present]
@@ -448,7 +448,7 @@
                      [:> Form.Item {:label "治疗用药" :name [:psycho_cognitive_history :medication]}
                       [:> Input.TextArea {:placeholder "请描述治疗用药" :rows 2}]]]
 
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "癫痫病史"
                       :radio-name [:epilepsy_history :present]
@@ -462,7 +462,7 @@
                      [:> Form.Item {:label "治疗用药" :name [:epilepsy_history :medication]}
                       [:> Input.TextArea {:placeholder "请描述治疗用药" :rows 2}]]]
 
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "眩晕病史"
                       :radio-name [:vertigo_history :present]
@@ -474,7 +474,7 @@
                       [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
                                   :options general-treatment-status-options}]]]
 
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "短暂性脑缺血发作病史 (TIA)"
                       :radio-name [:tia_history :present]
@@ -488,7 +488,7 @@
                       [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
                                   :options general-treatment-status-options}]]]
 
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "脑梗病史"
                       :radio-name [:cerebral_infarction_history :present]
@@ -502,7 +502,7 @@
                      [:> Form.Item {:label "目前用药" :name [:cerebral_infarction_history :medication]}
                       [:> Input.TextArea {:placeholder "请描述目前用药" :rows 2}]]]
 
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "脑出血病史"
                       :radio-name [:cerebral_hemorrhage_history :present]
@@ -514,7 +514,7 @@
                       [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
                                   :options general-treatment-status-options}]]]
 
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "帕金森综合症"
                       :radio-name [:parkinsons_syndrome :present]
@@ -539,7 +539,7 @@
                        [:> Form.Item {:name [:cranial_carotid_stenosis :details]}
                         [:> Input {:placeholder "请描述狭窄详情" :style {:marginLeft "10px" :width "calc(100% - 150px)"}}]])]
 
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "其他神经肌肉系统情况"
                       :radio-name [:other_neuromuscular_conditions :present]
@@ -593,7 +593,7 @@
         on-finish-fn (fn [values]
                        (rf/dispatch [::events/update-canonical-assessment-section :endocrine_system (js->clj values :keywordize-keys true)]))
         form-items [:<>
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "甲状腺疾病病史"
                       :radio-name [:thyroid_disease_history :present]
@@ -618,7 +618,7 @@
                        [:> Radio {:value "无"} "无"]
                        [:> Radio {:value "有"} "有"]]]]
 
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "糖尿病病史"
                       :radio-name [:diabetes_history :present]
@@ -646,7 +646,7 @@
                          [:> InputNumber {:placeholder "%" :style {:width "100%"}
                                           :addonAfter "%"}]]])]
 
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "嗜铬细胞瘤"
                       :radio-name [:pheochromocytoma :present]
@@ -668,7 +668,7 @@
                           [:> Form.Item {:label "症状" :name [:pheochromocytoma :symptoms]}
                            [:> Checkbox.Group {:options pheo-symptom-options}]])])]
 
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "皮质醇增多症"
                       :radio-name [:hypercortisolism :present]
@@ -728,7 +728,7 @@
                        (rf/dispatch [::events/update-canonical-assessment-section :liver_kidney_system (js->clj values :keywordize-keys true)]))
         form-items [:<>
                     [:h4 "肝功能"]
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "状态"
                       :radio-name [:liver_function :status]
@@ -808,7 +808,7 @@
         on-finish-fn (fn [values]
                        (rf/dispatch [::events/update-canonical-assessment-section :digestive_system (js->clj values :keywordize-keys true)]))
         form-items [:<>
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "急性胃肠炎病史"
                       :radio-name [:acute_gastroenteritis_history :has]
@@ -820,7 +820,7 @@
                       [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
                                   :options treatment-status-options}]]]
 
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "食管，胃十二指肠疾病病史"
                       :radio-name [:esophageal_gastric_duodenal_history :has]
@@ -833,7 +833,7 @@
                       [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
                                   :options treatment-status-options}]]]
 
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "慢性消化疾病病史"
                       :radio-name [:chronic_digestive_history :has]
@@ -878,7 +878,7 @@
         on-finish-fn (fn [values]
                        (rf/dispatch [::events/update-canonical-assessment-section :hematologic_system (js->clj values :keywordize-keys true)]))
         form-items [:<>
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "贫血"
                       :radio-name [:anemia :has]
@@ -889,7 +889,7 @@
                      [:> Form.Item {:label "贫血原因及目前治疗方式" :name [:anemia :cause_treatment]}
                       [:> Input.TextArea {:placeholder "描述贫血原因及目前治疗方式" :rows 3}]]]
 
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "凝血功能障碍"
                       :radio-name [:coagulation_dysfunction :has]
@@ -906,7 +906,7 @@
                      [:> Form.Item {:label "D-二聚体 (mg/L)" :name [:coagulation_dysfunction :d_dimer]}
                       [:> InputNumber {:placeholder "D-dimer值" :style {:width "100%"}}]]]
 
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "血栓史"
                       :radio-name [:thrombosis_history :has]
@@ -915,7 +915,7 @@
                      [:> Form.Item {:label "详情" :name [:thrombosis_history :details]}
                       [:> Input {:placeholder "描述血栓史详情"}]]]
 
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "下肢深静脉血栓"
                       :radio-name [:lower_limb_dvt :has]
@@ -975,7 +975,7 @@
                                     (.setFieldsValue form-instance (clj->js {:autoimmune_disease {:symptoms_other_details nil}}))))
                                 ))
         form-items [:<>
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "免疫功能障碍"
                       :radio-name [:immune_dysfunction :has]
@@ -987,7 +987,7 @@
                        [:> Form.Item {:label "其他类型详情" :name [:immune_dysfunction :type_other_details]}
                         [:> Input {:placeholder "请描述其他免疫功能障碍类型"}]])]
 
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "自身免疫性疾病"
                       :radio-name [:autoimmune_disease :has]
@@ -1112,7 +1112,7 @@
                                     (.setFieldsValue form-instance (clj->js {:marfan_syndrome {:skeletal_other_details nil}}))))
                                 ))
         form-items [:<>
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "马方综合征"
                       :radio-name [:marfan_syndrome :present]
@@ -1241,7 +1241,7 @@
                                     (.setFieldsValue form-instance (clj->js {:comorbid_obstetric_conditions_other_details nil}))))
                                 ))
         form-items [:<>
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "是否妊娠"
                       :radio-name [:is_pregnant]
@@ -1574,7 +1574,7 @@
                       [:> Form.Item {:label "其他特殊面部特征详情" :name [:detailed_assessment :special_facial_features :other_details] :style {:marginLeft "20px"}}
                        [:> Input {:placeholder "描述其他特征"}]])
 
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "鼾症"
                       :radio-name [:detailed_assessment :snoring :has]
@@ -1586,7 +1586,7 @@
                        [:> Form.Item {:label "其他鼾症症状详情" :name [:detailed_assessment :snoring :symptoms_other_details]}
                         [:> Input {:placeholder "描述其他症状"}]])]
 
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "气道相关疾病"
                       :radio-name [:detailed_assessment :airway_related_diseases :has]
@@ -1601,7 +1601,7 @@
                      (when (some #{"other_airway_location"} airway-diseases-locations-watch)
                        [:> Form.Item {:label "其他部位详情" :name [:detailed_assessment :airway_related_diseases :other_location_details]} [:> Input.TextArea {:placeholder "描述其他部位疾病详情" :rows 2}]])]
 
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "纵隔病史 (如肿瘤、放疗等)"
                       :radio-name [:detailed_assessment :mediastinal_history :has]
@@ -1610,7 +1610,7 @@
                      [:> Form.Item {:label "详情" :name [:detailed_assessment :mediastinal_history :details]}
                       [:> Input.TextArea {:placeholder "描述纵隔病史详情" :rows 2}]]]
 
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "现存气道症状"
                       :radio-name [:detailed_assessment :current_airway_symptoms :has]
@@ -1625,7 +1625,7 @@
                        [:> Form.Item {:label "喉梗阻分级 (若有喘鸣)" :name [:detailed_assessment :current_airway_symptoms :laryngeal_obstruction_grade]}
                         [:> Select {:placeholder "选择喉梗阻分级" :style {:width "100%"} :allowClear true
                                     :options laryngeal-obstruction-grade-options}]])]
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "食管手术史"
                       :radio-name [:detailed_assessment :esophageal_surgery_history :has]
@@ -1690,7 +1690,7 @@
                     (render-radio-group :peripheral_nervous_system :lumbar_surgery_history "腰椎手术史")
 
                     (render-subsection-title "腰椎间盘突出")
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "腰椎间盘突出"
                       :radio-name [:lumbar_disc_herniation :present]
@@ -1702,7 +1702,7 @@
                     (render-subsection-title "心血管系统")
                     (render-radio-group :cardiovascular_system :aortic_stenosis "主动脉瓣狭窄")
                     (render-radio-group :cardiovascular_system :hypertrophic_obstructive_cardiomyopathy "肥厚型梗阻型心肌病")
-                    [afc/form-item-radio-conditional
+                    [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "抗凝 / 抗血小板药物"
                       :radio-name [:cardiovascular_system :anticoagulants_present]

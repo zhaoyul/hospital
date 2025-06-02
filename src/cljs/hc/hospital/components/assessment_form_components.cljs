@@ -37,8 +37,8 @@
                            (when (spy :info extra-condition-values)
                              (some #(= watched-value %) extra-condition-values)))
         wrap? (if value-for-children-wrapper
-                         (= watched-value value-for-children-wrapper)
-                         (= watched-value conditional-value))]
+                (= watched-value value-for-children-wrapper)
+                (= watched-value conditional-value))]
     (into
      [:<>
       [:> Form.Item {:label (r/as-element label) :name field-identifier}
@@ -49,4 +49,4 @@
        (if wrap?
          [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
           (into [:<>] children)]
-         children)))))
+         (into [:<>] children))))))
