@@ -44,9 +44,9 @@
       [:> Form.Item {:label (r/as-element label) :name field-identifier}
        [:> Radio.Group {:options radio-options
                         :onChange #(let [value (-> % .-target .-value)]
-                                     (rf/dispatch [::events/update-form-field radio-name value]))}]]]
-     (when show-children?
-       (if wrap?
-         [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
-          (into [:<>] children)]
-         (into [:<>] children))))))
+                                     (rf/dispatch [::events/update-form-field radio-name value]))}]]
+      (when show-children?
+        (if wrap?
+          [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+           (into [:<>] children)]
+          (into [:<>] children)))])))
