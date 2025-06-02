@@ -1,23 +1,27 @@
 (ns hc.hospital.pages.anesthesia
   "麻醉管理, 医生补充患者自己填写的评估报告, 最终评估患者的情况, 判断是否可以麻醉"
-  (:require ; Added Image, Modal
-   ;; 确保 antd/Form 等组件已引入
-   ["dayjs" :as dayjs]
-   ["@ant-design/icons" :as icons :refer [FileTextOutlined MedicineBoxOutlined
-                                          ProfileOutlined QrcodeOutlined
+  (:require
+   ["@ant-design/icons" :as icons :refer [CheckCircleOutlined
+                                          ClockCircleOutlined
+                                          CloseCircleOutlined EditOutlined
+                                          FileTextOutlined HeartOutlined
+                                          MedicineBoxOutlined MessageOutlined
+                                          PrinterOutlined ProfileOutlined
+                                          QrcodeOutlined SaveOutlined
                                           SolutionOutlined SyncOutlined
-                                          CheckCircleOutlined ClockCircleOutlined CloseCircleOutlined PrinterOutlined UserOutlined HeartOutlined CloudOutlined ExperimentOutlined ProjectOutlined CoffeeOutlined SecurityScanOutlined WarningOutlined AppleOutlined HistoryOutlined NodeIndexOutlined GatewayOutlined EditOutlined SaveOutlined MessageOutlined UploadOutlined]]
-   ["antd" :refer [Button Card Col DatePicker Descriptions Empty Form
-                   Input InputNumber Layout Modal Radio Row Select Space Tag
-                   Upload Checkbox]] ; Removed Tooltip as it's not used, Added Checkbox
+                                          UploadOutlined UserOutlined]]
+   ["dayjs" :as dayjs] ; Added Image, Modal
+   ;; 确保 antd/Form 等组件已引入
+   ["antd" :refer [Button Card Col DatePicker Descriptions Empty Form Input
+                   InputNumber Layout Modal Radio Row Select Space Tag Upload]] ; Removed Tooltip as it's not used, Added Checkbox
    [hc.hospital.events :as events]
+   [hc.hospital.pages.assessment-cards :as acards]
    [hc.hospital.subs :as subs]
+   [hc.hospital.ui-helpers :refer [custom-styled-card]]
    [hc.hospital.utils :as utils]
    [re-frame.core :as rf]
    [reagent.core :as r]
-   [taoensso.timbre :as timbre]
-   [hc.hospital.pages.assessment-cards :as acards]
-   [hc.hospital.ui-helpers :refer [custom-styled-card]])) ; Added ui-helpers require
+   [taoensso.timbre :as timbre])) ; Added ui-helpers require
 
 ;; Define common grid style maps and helper function
 (def ^:private grid-style-4-col
