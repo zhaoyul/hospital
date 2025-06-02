@@ -23,11 +23,12 @@
      [:> Empty {:description "请先选择患者"}])])
 
 (defn form-item-radio-conditional
-  [{:keys [form-instance label radio-name radio-options conditional-value children
+  [{:keys [form-instance label radio-name ; This 'radio-name' is the original prop key (e.g., a keyword)
+           radio-options conditional-value children
            extra-condition-values value-for-children-wrapper]}]
 
-  (let [radio-name (clj->js (spy :info radio-name))
-        watched-value (Form.useWatch radio-name form-instance)
+  (let [field-identifier (clj->js (spy :info radio-name)) ; Renamed 'radio-name' from let to 'field-identifier'
+        watched-value (Form.useWatch field-identifier form-instance) ; Use new name for watching
         show-children? (or (= (spy :info watched-value) (spy :info conditional-value))
                            (when (spy :info extra-condition-values)
                              (some #(= watched-value %) extra-condition-values)))
@@ -35,8 +36,11 @@
                          (= watched-value value-for-children-wrapper)
                          (= watched-value conditional-value))]
     [:<>
-     [:> Form.Item {:label label :name radio-name}
-      [:> Radio.Group {:options radio-options}]]
+     [:> Form.Item {:label label :name field-identifier} ; Use new name for Form.Item
+      [:> Radio.Group {:options radio-options
+                       :onChange #(let [value (-> % .-target .-value)]
+                                    ; 'radio-name' here now unambiguously refers to the destructured prop from {:keys ...}
+                                    (.setFieldsValue form-instance (js-obj (name radio-name) value)))}]]
      (when show-children?
        (if wrap-children?
          [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
