@@ -1,5 +1,6 @@
 (ns hc.hospital.components.assessment-form-components
   (:require
+   [re-frame.core :as rf] ; Added re-frame.core
    [taoensso.timbre :as timbre :refer [spy]]
    ["antd" :refer [Form Empty Radio]]
    [hc.hospital.ui-helpers :refer [custom-styled-card]]))
@@ -39,8 +40,7 @@
      [:> Form.Item {:label label :name field-identifier} ; Use new name for Form.Item
       [:> Radio.Group {:options radio-options
                        :onChange #(let [value (-> % .-target .-value)]
-                                    ; 'radio-name' here now unambiguously refers to the destructured prop from {:keys ...}
-                                    (.setFieldsValue form-instance (js-obj (name radio-name) value)))}]]
+                                    (rf/dispatch [:update-form-field radio-name value]))}]] ; Changed to rf/dispatch
      (when show-children?
        (if wrap-children?
          [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
