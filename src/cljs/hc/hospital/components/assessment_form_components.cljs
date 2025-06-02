@@ -27,24 +27,26 @@
 
 (defn form-item-radio-conditional
   [{:keys [form-instance label radio-name
-           radio-options conditional-value children
-           extra-condition-values value-for-children-wrapper]}]
+           radio-options conditional-value
+           extra-condition-values value-for-children-wrapper]}
+   & children]
 
   (let [field-identifier (clj->js (spy :info radio-name))
         watched-value (Form.useWatch field-identifier form-instance) ; Use new name for watching
         show-children? (or (= (spy :info watched-value) (spy :info conditional-value))
                            (when (spy :info extra-condition-values)
                              (some #(= watched-value %) extra-condition-values)))
-        wrap-children? (if value-for-children-wrapper
+        wrap? (if value-for-children-wrapper
                          (= watched-value value-for-children-wrapper)
                          (= watched-value conditional-value))]
-    [:<>
-     [:> Form.Item {:label (r/as-element label) :name field-identifier}
-      [:> Radio.Group {:options radio-options
-                       :onChange #(let [value (-> % .-target .-value)]
-                                    (rf/dispatch [::events/update-form-field radio-name value]))}]]
+    (into
+     [:<>
+      [:> Form.Item {:label (r/as-element label) :name field-identifier}
+       [:> Radio.Group {:options radio-options
+                        :onChange #(let [value (-> % .-target .-value)]
+                                     (rf/dispatch [::events/update-form-field radio-name value]))}]]]
      (when show-children?
-       (if wrap-children?
+       (if wrap?
          [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
-          children]
-         children))]))
+          (into [:<>] children)]
+         children)))))
