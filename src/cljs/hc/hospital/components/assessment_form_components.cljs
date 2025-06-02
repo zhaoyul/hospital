@@ -2,8 +2,10 @@
   (:require
    [re-frame.core :as rf] ; Added re-frame.core
    [taoensso.timbre :as timbre :refer [spy]]
+   [hc.hospital.patient.events :as events]
    ["antd" :refer [Form Empty Radio]]
-   [hc.hospital.ui-helpers :refer [custom-styled-card]]))
+   [hc.hospital.ui-helpers :refer [custom-styled-card]]
+   [reagent.core :as r]))
 
 (defn patient-assessment-card-wrapper
   [{:keys [icon title header-color patient-id
@@ -24,11 +26,11 @@
      [:> Empty {:description "请先选择患者"}])])
 
 (defn form-item-radio-conditional
-  [{:keys [form-instance label radio-name ; This 'radio-name' is the original prop key (e.g., a keyword)
+  [{:keys [form-instance label radio-name
            radio-options conditional-value children
            extra-condition-values value-for-children-wrapper]}]
 
-  (let [field-identifier (clj->js (spy :info radio-name)) ; Renamed 'radio-name' from let to 'field-identifier'
+  (let [field-identifier (clj->js (spy :info radio-name))
         watched-value (Form.useWatch field-identifier form-instance) ; Use new name for watching
         show-children? (or (= (spy :info watched-value) (spy :info conditional-value))
                            (when (spy :info extra-condition-values)
@@ -37,10 +39,10 @@
                          (= watched-value value-for-children-wrapper)
                          (= watched-value conditional-value))]
     [:<>
-     [:> Form.Item {:label label :name field-identifier} ; Use new name for Form.Item
+     [:> Form.Item {:label (r/as-element label) :name field-identifier}
       [:> Radio.Group {:options radio-options
                        :onChange #(let [value (-> % .-target .-value)]
-                                    (rf/dispatch [:update-form-field radio-name value]))}]] ; Changed to rf/dispatch
+                                    (rf/dispatch [::events/update-form-field radio-name value]))}]]
      (when show-children?
        (if wrap-children?
          [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}

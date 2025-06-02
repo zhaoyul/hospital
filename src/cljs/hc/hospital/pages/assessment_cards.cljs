@@ -15,6 +15,7 @@
    [hc.hospital.subs :as subs]
    [hc.hospital.ui-helpers :refer [custom-styled-card]]
    [hc.hospital.utils :as utils]
+   [reagent.core :as r]
    [re-frame.core :as rf]))
 
 
@@ -60,128 +61,129 @@
                       :radio-name [:cardiac_disease_history :has]
                       :radio-options [{:label "无" :value "无"} {:label "有" :value "有"}]
                       :conditional-value "有"
-                      :children [:<>
-                                 ;; Coronary Artery Disease (冠心病)
-                                 [:f> afc/form-item-radio-conditional
-                                  {:form-instance form
-                                   :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "冠心病"]
-                                   :radio-name [:cardiac_disease_history :coronary_artery_disease :has]
-                                   :radio-options yes-no-options
-                                   :conditional-value "有"
-                                   :children [:<>
-                                              [:> Form.Item {:label "症状" :name [:cardiac_disease_history :coronary_artery_disease :symptoms]}
-                                               [:> Select {:placeholder "选择症状" :style {:width "100%"} :allowClear true
-                                                           :options [{:value "无症状" :label "无症状"}
-                                                                     {:value "稳定性心绞痛" :label "稳定性心绞痛"}
-                                                                     {:value "不稳定性心绞痛" :label "不稳定性心绞痛"}
-                                                                     {:value "心梗" :label "心梗"}]}]]
-                                              [:> Form.Item {:label "心脏支架" :name [:cardiac_disease_history :coronary_artery_disease :stent]}
-                                               [:> Radio.Group {:options yes-no-options}]]
-                                              [:> Form.Item {:label "治疗情况" :name [:cardiac_disease_history :coronary_artery_disease :treatment_status]}
-                                               [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                                           :options treatment-status-options}]]
-                                              [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :coronary_artery_disease :medication]}
-                                               [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]}]
-                                 ;; Arrhythmia (心律失常)
-                                 [:f> afc/form-item-radio-conditional
-                                  {:form-instance form
-                                   :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "心律失常"]
-                                   :radio-name [:cardiac_disease_history :arrhythmia :has]
-                                   :radio-options yes-no-unknown-options
-                                   :conditional-value "有" ; Shows children if "有"
-                                   :extra-condition-values ["不祥"] ; Also show children if "不祥"
-                                   :value-for-children-wrapper "有" ; Only wrap with div if "有" (to allow specific styling for "有")
-                                   :children [:<>
-                                              (when (= arrhythmia-has "有") ; Specific input for "有"
-                                                [:> Form.Item {:name [:cardiac_disease_history :arrhythmia :has_details]}
-                                                 [:> Input {:placeholder "心律失常类型 (若选择'有')" :style {:marginTop "8px" :width "calc(100% - 0px)"}}]])
-                                              ;; Fields for "有" or "不祥"
-                                              [:> Form.Item {:label "类型" :name [:cardiac_disease_history :arrhythmia :type]}
-                                               [:> Select {:placeholder "选择类型" :style {:width "100%"} :allowClear true
-                                                           :options [{:value "低危型" :label "低危型"}
-                                                                     {:value "中危型" :label "中危型"}
-                                                                     {:value "高危型" :label "高危型"}]}]]
-                                              [:> Form.Item {:label "治疗情况" :name [:cardiac_disease_history :arrhythmia :treatment_status]}
-                                               [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                                           :options treatment-status-options}]]
-                                              [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :arrhythmia :medication]}
-                                               [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]}]
-                                 ;; Cardiomyopathy (心肌病)
-                                 [:f> afc/form-item-radio-conditional
-                                  {:form-instance form
-                                   :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "心肌病"]
-                                   :radio-name [:cardiac_disease_history :cardiomyopathy :has]
-                                   :radio-options yes-no-options
-                                   :conditional-value "有"
-                                   :children [:<>
-                                              [:> Form.Item {:name [:cardiac_disease_history :cardiomyopathy :has_details]}
-                                               [:> Input {:placeholder "心肌病类型 (若选择'有')" :style {:marginTop "8px" :width "calc(100% - 0px)"}}]]
-                                              [:> Form.Item {:label "治疗情况" :name [:cardiac_disease_history :cardiomyopathy :treatment_status]}
-                                               [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                                           :options treatment-status-options}]]
-                                              [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :cardiomyopathy :medication]}
-                                               [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]}]
-                                 ;; Valvular Heart Disease (心脏瓣膜病变)
-                                 [:f> afc/form-item-radio-conditional
-                                  {:form-instance form
-                                   :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "心脏瓣膜病变"]
-                                   :radio-name [:cardiac_disease_history :valvular_heart_disease :has]
-                                   :radio-options yes-no-options
-                                   :conditional-value "有"
-                                   :children [:<>
-                                              [:> Form.Item {:name [:cardiac_disease_history :valvular_heart_disease :has_details]}
-                                               [:> Input {:placeholder "心脏瓣膜病变类型 (若选择'有')" :style {:marginTop "8px" :width "calc(100% - 0px)"}}]]
-                                              [:> Form.Item {:label "治疗情况" :name [:cardiac_disease_history :valvular_heart_disease :treatment_status]}
-                                               [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                                           :options treatment-status-options}]]
-                                              [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :valvular_heart_disease :medication]}
-                                               [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]}]
-                                 ;; Congenital Heart Disease (先天性心脏病)
-                                 [:f> afc/form-item-radio-conditional
-                                  {:form-instance form
-                                   :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "先天性心脏病"]
-                                   :radio-name [:cardiac_disease_history :congenital_heart_disease :has]
-                                   :radio-options yes-no-options
-                                   :conditional-value "有"
-                                   :children [:<>
-                                              [:> Form.Item {:name [:cardiac_disease_history :congenital_heart_disease :has_details]}
-                                               [:> Input {:placeholder "先天性心脏病类型 (若选择'有')" :style {:marginTop "8px" :width "calc(100% - 0px)"}}]]
-                                              [:> Form.Item {:label "治疗情况" :name [:cardiac_disease_history :congenital_heart_disease :treatment_status]}
-                                               [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                                           :options treatment-status-options}]]
-                                              [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :congenital_heart_disease :medication]}
-                                               [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]}]
-                                 ;; Congestive Heart Failure (充血性心力衰竭病史)
-                                 [:f> afc/form-item-radio-conditional
-                                  {:form-instance form
-                                   :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "充血性心力衰竭病史"]
-                                   :radio-name [:cardiac_disease_history :congestive_heart_failure :has]
-                                   :radio-options yes-no-options
-                                   :conditional-value "有"
-                                   :children [:<>
-                                              [:> Form.Item {:label "上次发作日期" :name [:cardiac_disease_history :congestive_heart_failure :last_episode_date]}
-                                               [:> DatePicker {:style {:width "100%"} :placeholder "选择日期"}]]
-                                              [:> Form.Item {:label "治疗情况" :name [:cardiac_disease_history :congestive_heart_failure :treatment_status]}
-                                               [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                                           :options treatment-status-options}]]
-                                              [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :congestive_heart_failure :medication]}
-                                               [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]}]
-                                 ;; Pulmonary Hypertension (肺动脉高压)
-                                 [:f> afc/form-item-radio-conditional
-                                  {:form-instance form
-                                   :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "肺动脉高压"]
-                                   :radio-name [:cardiac_disease_history :pulmonary_hypertension :has]
-                                   :radio-options yes-no-options
-                                   :conditional-value "有"
-                                   :children [:<>
-                                              [:> Form.Item {:name [:cardiac_disease_history :pulmonary_hypertension :has_details]}
-                                               [:> Input {:placeholder "肺动脉高压类型 (若选择'有')" :style {:marginTop "8px" :width "calc(100% - 0px)"}}]]
-                                              [:> Form.Item {:label "治疗情况" :name [:cardiac_disease_history :pulmonary_hypertension :treatment_status]}
-                                               [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                                           :options treatment-status-options}]]
-                                              [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :pulmonary_hypertension :medication]}
-                                               [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]}]
-                                 ]}]
+                      :children
+                      [:<>
+                       ;; Coronary Artery Disease (冠心病)
+                       [:f> afc/form-item-radio-conditional
+                        {:form-instance form
+                         :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "冠心病"]
+                         :radio-name [:cardiac_disease_history :coronary_artery_disease :has]
+                         :radio-options yes-no-options
+                         :conditional-value "有"
+                         :children [:<>
+                                    [:> Form.Item {:label "症状" :name [:cardiac_disease_history :coronary_artery_disease :symptoms]}
+                                     [:> Select {:placeholder "选择症状" :style {:width "100%"} :allowClear true
+                                                 :options [{:value "无症状" :label "无症状"}
+                                                           {:value "稳定性心绞痛" :label "稳定性心绞痛"}
+                                                           {:value "不稳定性心绞痛" :label "不稳定性心绞痛"}
+                                                           {:value "心梗" :label "心梗"}]}]]
+                                    [:> Form.Item {:label "心脏支架" :name [:cardiac_disease_history :coronary_artery_disease :stent]}
+                                     [:> Radio.Group {:options yes-no-options}]]
+                                    [:> Form.Item {:label "治疗情况" :name [:cardiac_disease_history :coronary_artery_disease :treatment_status]}
+                                     [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                                 :options treatment-status-options}]]
+                                    [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :coronary_artery_disease :medication]}
+                                     [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]}]
+                       ;; Arrhythmia (心律失常)
+                       [:f> afc/form-item-radio-conditional
+                        {:form-instance form
+                         :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "心律失常"]
+                         :radio-name [:cardiac_disease_history :arrhythmia :has]
+                         :radio-options yes-no-unknown-options
+                         :conditional-value "有" ; Shows children if "有"
+                         :extra-condition-values ["不祥"] ; Also show children if "不祥"
+                         :value-for-children-wrapper "有" ; Only wrap with div if "有" (to allow specific styling for "有")
+                         :children [:<>
+                                    (when (= arrhythmia-has "有") ; Specific input for "有"
+                                      [:> Form.Item {:name [:cardiac_disease_history :arrhythmia :has_details]}
+                                       [:> Input {:placeholder "心律失常类型 (若选择'有')" :style {:marginTop "8px" :width "calc(100% - 0px)"}}]])
+                                    ;; Fields for "有" or "不祥"
+                                    [:> Form.Item {:label "类型" :name [:cardiac_disease_history :arrhythmia :type]}
+                                     [:> Select {:placeholder "选择类型" :style {:width "100%"} :allowClear true
+                                                 :options [{:value "低危型" :label "低危型"}
+                                                           {:value "中危型" :label "中危型"}
+                                                           {:value "高危型" :label "高危型"}]}]]
+                                    [:> Form.Item {:label "治疗情况" :name [:cardiac_disease_history :arrhythmia :treatment_status]}
+                                     [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                                 :options treatment-status-options}]]
+                                    [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :arrhythmia :medication]}
+                                     [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]}]
+                       ;; Cardiomyopathy (心肌病)
+                       [:f> afc/form-item-radio-conditional
+                        {:form-instance form
+                         :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "心肌病"]
+                         :radio-name [:cardiac_disease_history :cardiomyopathy :has]
+                         :radio-options yes-no-options
+                         :conditional-value "有"
+                         :children [:<>
+                                    [:> Form.Item {:name [:cardiac_disease_history :cardiomyopathy :has_details]}
+                                     [:> Input {:placeholder "心肌病类型 (若选择'有')" :style {:marginTop "8px" :width "calc(100% - 0px)"}}]]
+                                    [:> Form.Item {:label "治疗情况" :name [:cardiac_disease_history :cardiomyopathy :treatment_status]}
+                                     [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                                 :options treatment-status-options}]]
+                                    [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :cardiomyopathy :medication]}
+                                     [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]}]
+                       ;; Valvular Heart Disease (心脏瓣膜病变)
+                       [:f> afc/form-item-radio-conditional
+                        {:form-instance form
+                         :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "心脏瓣膜病变"]
+                         :radio-name [:cardiac_disease_history :valvular_heart_disease :has]
+                         :radio-options yes-no-options
+                         :conditional-value "有"
+                         :children [:<>
+                                    [:> Form.Item {:name [:cardiac_disease_history :valvular_heart_disease :has_details]}
+                                     [:> Input {:placeholder "心脏瓣膜病变类型 (若选择'有')" :style {:marginTop "8px" :width "calc(100% - 0px)"}}]]
+                                    [:> Form.Item {:label "治疗情况" :name [:cardiac_disease_history :valvular_heart_disease :treatment_status]}
+                                     [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                                 :options treatment-status-options}]]
+                                    [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :valvular_heart_disease :medication]}
+                                     [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]}]
+                       ;; Congenital Heart Disease (先天性心脏病)
+                       [:f> afc/form-item-radio-conditional
+                        {:form-instance form
+                         :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "先天性心脏病"]
+                         :radio-name [:cardiac_disease_history :congenital_heart_disease :has]
+                         :radio-options yes-no-options
+                         :conditional-value "有"
+                         :children [:<>
+                                    [:> Form.Item {:name [:cardiac_disease_history :congenital_heart_disease :has_details]}
+                                     [:> Input {:placeholder "先天性心脏病类型 (若选择'有')" :style {:marginTop "8px" :width "calc(100% - 0px)"}}]]
+                                    [:> Form.Item {:label "治疗情况" :name [:cardiac_disease_history :congenital_heart_disease :treatment_status]}
+                                     [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                                 :options treatment-status-options}]]
+                                    [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :congenital_heart_disease :medication]}
+                                     [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]}]
+                       ;; Congestive Heart Failure (充血性心力衰竭病史)
+                       [:f> afc/form-item-radio-conditional
+                        {:form-instance form
+                         :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "充血性心力衰竭病史"]
+                         :radio-name [:cardiac_disease_history :congestive_heart_failure :has]
+                         :radio-options yes-no-options
+                         :conditional-value "有"
+                         :children [:<>
+                                    [:> Form.Item {:label "上次发作日期" :name [:cardiac_disease_history :congestive_heart_failure :last_episode_date]}
+                                     [:> DatePicker {:style {:width "100%"} :placeholder "选择日期"}]]
+                                    [:> Form.Item {:label "治疗情况" :name [:cardiac_disease_history :congestive_heart_failure :treatment_status]}
+                                     [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                                 :options treatment-status-options}]]
+                                    [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :congestive_heart_failure :medication]}
+                                     [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]}]
+                       ;; Pulmonary Hypertension (肺动脉高压)
+                       [:f> afc/form-item-radio-conditional
+                        {:form-instance form
+                         :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "肺动脉高压"]
+                         :radio-name [:cardiac_disease_history :pulmonary_hypertension :has]
+                         :radio-options yes-no-options
+                         :conditional-value "有"
+                         :children [:<>
+                                    [:> Form.Item {:name [:cardiac_disease_history :pulmonary_hypertension :has_details]}
+                                     [:> Input {:placeholder "肺动脉高压类型 (若选择'有')" :style {:marginTop "8px" :width "calc(100% - 0px)"}}]]
+                                    [:> Form.Item {:label "治疗情况" :name [:cardiac_disease_history :pulmonary_hypertension :treatment_status]}
+                                     [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                                 :options treatment-status-options}]]
+                                    [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :pulmonary_hypertension :medication]}
+                                     [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]}]
+                       ]}]
 
                     [:f> afc/form-item-radio-conditional
                      {:form-instance form
