@@ -2,7 +2,7 @@
   (:require [clojure.test :refer :all]
             [malli.core :as m]
             [malli.generator :as mg] ; Added for generator
-            [hc.hospital.specs.assessment-compleute-cn :as cn-spec]))
+            [hc.hospital.specs.assessment-complete-cn-spec :as cn-spec]))
 
 (deftest non-empty-string-test
   (is (m/validate cn-spec/NonEmptyString "hello"))

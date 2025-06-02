@@ -37,7 +37,12 @@
   "医生登出 API"
   [_req]
   (-> (http-response/ok {:message "登出成功"})
-      (assoc :session nil))) ; 清除 session 中的 :identity
+      (assoc :session nil) ; Standard way to clear session data from store
+      ;; Explicitly set cookie attributes for immediate expiry.
+      (assoc :cookies {"hc.hospital" {:value ""
+                                      :path "/"
+                                      :max-age 0
+                                      :expires "Thu, 01 Jan 1970 00:00:00 GMT"}})))
 
 (defn get-current-doctor-profile
   [{{:keys [query-fn]} :integrant-deps

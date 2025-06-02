@@ -119,9 +119,11 @@
             response (handler mock-req)] ;; 使用主 handler 处理这个伪造的、已认证的请求
 
         (is (= 200 (:status response)) "获取医生列表状态码应为 200")
-        (let [body (json/parse-string (:body response) keyword)]
-          (is (vector? body) "响应体应为一个 JSON 数组（医生列表）")
-          (is (pos? (count body)) "医生列表不应为空")
+        (let [parsed-body (json/parse-stream (java.io.InputStreamReader. ^java.io.InputStream (:body response) "UTF-8") keyword)
+              doctors-list (:doctors parsed-body)]
+          (is (map? parsed-body) "响应体应为一个 JSON 对象")
+          (is (vector? doctors-list) "医生列表应为 parsed-body 中的 :doctors 键对应的值，且应为一个向量")
+          (is (pos? (count doctors-list)) "医生列表不应为空")
           ;; 可以进一步检查列表中的医生信息是否符合预期
-          (is (some #(= "列表医生1" (:name %)) body) "列表中应包含测试医生1")
-          (is (some #(= "列表医生2" (:name %)) body) "列表中应包含测试医生2"))))))
+          (is (some #(= "列表医生1" (:name %)) doctors-list) "列表中应包含测试医生1")
+          (is (some #(= "列表医生2" (:name %)) doctors-list) "列表中应包含测试医生2"))))))

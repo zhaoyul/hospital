@@ -1,4 +1,4 @@
-(ns hc.hospital.specs.assessment-complete-cn
+(ns hc.hospital.specs.assessment-complete-cn-spec
   (:require [malli.core :as m]
             [malli.util :as mu]))
 

@@ -1309,6 +1309,8 @@
   (let [sah-data @(rf/subscribe [::subs/surgical-anesthesia-history-data])
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         [form] (Form.useForm)
+        history-present-watch (Form.useWatch [:history :present] form)
+        family-hyperthermia-watch (Form.useWatch [:family_history_malignant_hyperthermia :present] form)
         ;; Watchers for nested conditions, not directly handled by the form-item-radio-conditional itself
         postop-complications-watch (Form.useWatch [:history :postop_complications] form)
         adverse-events-watch (Form.useWatch [:history :adverse_events] form)
