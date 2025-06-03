@@ -20,3 +20,4 @@ modules/
 .calva/output-window/
 .lsp/.cache/
 /code-prompt.md
+/resources/hc/
