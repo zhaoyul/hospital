@@ -28,7 +28,8 @@
 
     (if session-check-pending?
       [:div {:style {:display "flex" :justifyContent "center" :alignItems "center" :height "100vh"}}
-       [:> antd/Spin {:tip "Loading session..." :size "large"}]]
+       [:div ; <--- This is the new wrapping div
+        [:> antd/Spin {:tip "Loading session..." :size "large"}]]]
       (if is-logged-in?
         (do
           ;; If logged in, but somehow on /login or /login.html, redirect to main app page.

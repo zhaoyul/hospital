@@ -226,19 +226,19 @@
            [:div {:style {:display "flex" :flexWrap "wrap" :gap "8px 24px"}} ; 增大列间距
             ;; 血压
             [:> Form.Item {:label "血压"}
-             [:div {:style {:display "flex" :alignItems "center"}}
+             [:> Space {:align "center"} ; Use Space as the single child
               [:> Form.Item {:name :bp_systolic :noStyle true} ; Canonical: bp_systolic
                [:> InputNumber {:placeholder "收缩压"
                                 :min 0
                                 :style {:width "70px"}
                                 :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:physical_examination :bp_systolic] %])}]]
-              [:span {:style {:margin "0 4px"}} "/"]
+              [:span {:style {:margin "0 4px"}} "/"] ; Keep the separator
               [:> Form.Item {:name :bp_diastolic :noStyle true} ; Canonical: bp_diastolic
                [:> InputNumber {:placeholder "舒张压"
                                 :min 0
                                 :style {:width "70px"}
                                 :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:physical_examination :bp_diastolic] %])}]]
-              [:span {:style {:marginLeft "8px"}} "mmHg"]]]
+              [:span {:style {:marginLeft "4px"}} "mmHg"]]] ; Adjusted margin for consistency
 
             ;; 脉搏
             [:> Form.Item {:label "脉搏" :name :heart_rate} ; Canonical: heart_rate
