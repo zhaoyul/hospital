@@ -108,62 +108,22 @@
    [patient-list]])
 
 (defn- patient-info-card "显示患者基本信息" []
-  (let [basic-info @(rf/subscribe [::subs/canonical-basic-info])] ; Use new subscription
+  (let [basic-info @(rf/subscribe [::subs/canonical-basic-info])]
     [custom-styled-card
      [:> UserOutlined {:style {:marginRight "8px"}}]
      "患者基本信息"
      "#e6fffb" ; Header background color
-     (if (seq basic-info) ; Check if basic-info map is not empty
-       [:> Form {:layout "horizontal" :labelCol {:span 8} :wrapperCol {:span 16} :labelAlign "left"
-                 :initialValues (clj->js basic-info)
-                 :key (get basic-info :outpatient_number)}
-        [:div {:style grid-style-4-col}
-
-         [:> Form.Item {:label "门诊号" :name :outpatient_number ; Matches canonical
-                        :rules [{:required true :message "请输入门诊号!"}]}
-          [:> Input {:placeholder "请输入门诊号"
-                     :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:basic_info :outpatient_number] (-> % .-target .-value)])}]]
-
-         [:> Form.Item {:label "姓名" :name :name} ; Matches canonical
-          [:> Input {:placeholder "请输入姓名"
-                     :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:basic_info :name] (-> % .-target .-value)])}]]
-
-         [:> Form.Item {:label "性别" :name :gender} ; Matches canonical
-          [:> Select {:placeholder "请选择性别"
-                      :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:basic_info :gender] %])
-                      :options [{:value "male" :label "男"}
-                                {:value "female" :label "女"}
-                                {:value "其他" :label "其他"}]}]]
-
-         [:> Form.Item {:label "年龄" :name :age} ; Matches canonical
-          [:> InputNumber {:placeholder "岁"
-                           :min 0
-                           :style {:width "100%"}
-                           :addonAfter "岁"
-                           :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:basic_info :age] %])}]]
-
-         [:> Form.Item {:label "病区" :name :department ; Matches canonical
-                        :style (grid-col-span-style 2)}
-          [:> Input {:placeholder "请输入病区"
-                     :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:basic_info :department] (-> % .-target .-value)])}]]
-
-         [:> Form.Item {:label "电子健康卡号" :name :health_card_number ; Matches canonical
-                        :style (grid-col-span-style 2)}
-          [:> Input {:placeholder "请输入电子健康卡号 (可选)"
-                     :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:basic_info :health_card_number] (-> % .-target .-value)])}]]
-
-         [:> Form.Item {:label "术前诊断" :name :diagnosis ; Matches canonical
-                        :style (grid-col-span-style 4)}
-          [:> Input.TextArea {:placeholder "请输入术前诊断"
-                              :rows 2
-                              :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:basic_info :diagnosis] (-> % .-target .-value)])}]]
-
-         [:> Form.Item {:label "拟施手术" :name :planned_surgery ; Matches canonical
-                        :style (grid-col-span-style 4)}
-          [:> Input.TextArea {:placeholder "请输入拟施手术"
-                              :rows 2
-                              :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:basic_info :planned_surgery] (-> % .-target .-value)])}]]]]
-       [:> Empty {:description "请先选择患者或患者无基本信息"}])])) ; Updated empty message
+     (if (seq basic-info)
+       ;; 使用 Flexbox 将患者基本信息排列在一行, 并允许换行
+       [:div {:style {:display "flex" :flex-wrap "wrap" :align-items "center" :padding "10px 0"}}
+        ;; 将每个患者信息字段显示为独立的标签
+        [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "门诊号: " (get basic-info :outpatient_number "未知"))]
+        [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "姓名: " (get basic-info :name "未知"))]
+        [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "性别: " (get basic-info :gender "未知"))]
+        [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "年龄: " (get basic-info :age "未知") "岁")]
+        [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "病区: " (get basic-info :department "未知"))]
+        [:span {:style {:margin-bottom "8px"}} (str "电子健康卡号: " (get basic-info :health_card_number "无"))]] ; No right margin for the last item
+       [:> Empty {:description "请先选择患者或患者无基本信息"}])]))
 
 (defn- general-condition-card "显示一般情况" []
   (let [physical-exam-data @(rf/subscribe [::subs/canonical-physical-examination]) ; Use new subscription
