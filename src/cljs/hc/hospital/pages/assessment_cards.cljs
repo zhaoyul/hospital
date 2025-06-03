@@ -19,7 +19,7 @@
    [re-frame.core :as rf]
    [reagent.core :as r]))
 
-(defn generate-circulatory-summary [data]
+(defn- generate-circulatory-summary "循环系统总结" [data]
   (if (or (nil? data) (empty? data))
     "无数据"
     (let [findings (transient [])]
@@ -115,13 +115,13 @@
           "循环系统: 未见明显异常"
           (str "循环系统: " (str/join ", " persistent_findings)))))))
 
-(defn circulatory-system-summary-view [props]
+(defn- circulatory-system-summary-view [props]
   (let [{:keys [circulatory-data]} props
         content (generate-circulatory-summary circulatory-data)]
     [:div {:style {:padding "10px"}}
      content]))
 
-(defn circulatory-system-detailed-view [props]
+(defn- circulatory-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id circulatory-data on-show-summary]} props
         [form] (Form.useForm)
         arrhythmia-has (Form.useWatch [:cardiac_disease_history :arrhythmia :has] form)
@@ -358,7 +358,6 @@
 
 (defn circulatory-system-card "循环系统" [props]
   (let [view-state (r/atom :summary) ; Manages :summary or :detailed view
-        show-detailed-fn #(reset! view-state :detailed)
         show-summary-fn #(reset! view-state :summary)
         toggle-view-fn #(reset! view-state (if (= @view-state :summary) :detailed :summary))
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
@@ -371,13 +370,14 @@
        (if (= @view-state :summary)
          [circulatory-system-summary-view {:circulatory-data circulatory-data}]
          [:f> circulatory-system-detailed-view (merge props {:patient-id patient-id
-                                                            :circulatory-data circulatory-data
-                                                            :on-show-summary show-summary-fn})])
-       :on-double-click toggle-view-fn
+                                                             :circulatory-data circulatory-data
+                                                             :on-show-summary show-summary-fn})])
+       :on-click toggle-view-fn
+       :view-state @view-state
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
 
-(defn generate-respiratory-summary [data]
+(defn- generate-respiratory-summary [data]
   (if (or (nil? data) (empty? data))
     "无数据"
     (let [findings (transient [])]
@@ -698,7 +698,6 @@
 
 (defn respiratory-system-card "呼吸系统" [props]
   (let [view-state (r/atom :summary)
-        show-detailed-fn #(reset! view-state :detailed)
         show-summary-fn #(reset! view-state :summary)
         toggle-view-fn #(reset! view-state (if (= @view-state :summary) :detailed :summary))
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
@@ -711,9 +710,9 @@
        (if (= @view-state :summary)
          [respiratory-system-summary-view {:respiratory-data respiratory-data}]
          [:f> respiratory-system-detailed-view (merge props {:patient-id patient-id
-                                                            :respiratory-data respiratory-data
-                                                            :on-show-summary show-summary-fn})])
-       :on-double-click toggle-view-fn
+                                                             :respiratory-data respiratory-data
+                                                             :on-show-summary show-summary-fn})])
+       :on-click toggle-view-fn
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
 
@@ -1012,7 +1011,7 @@
          [:f> mental-neuromuscular-system-detailed-view (merge props {:patient-id patient-id
                                                                       :mn-data mn-data
                                                                       :on-show-summary show-summary-fn})])
-       :on-double-click toggle-view-fn
+       :on-click toggle-view-fn
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
 
@@ -1259,7 +1258,7 @@
          [:f> endocrine-system-detailed-view (merge props {:patient-id patient-id
                                                           :endo-data endo-data
                                                           :on-show-summary show-summary-fn})])
-       :on-double-click toggle-view-fn
+       :on-click toggle-view-fn
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
 
@@ -1380,7 +1379,7 @@
          [:f> liver-kidney-system-detailed-view (merge props {:patient-id patient-id
                                                              :lk-data lk-data
                                                              :on-show-summary show-summary-fn})])
-       :on-double-click toggle-view-fn
+       :on-click toggle-view-fn
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
 
@@ -1558,7 +1557,7 @@
          [:f> digestive-system-detailed-view (merge props {:patient-id patient-id
                                                           :ds-data ds-data
                                                           :on-show-summary show-summary-fn})])
-       :on-double-click toggle-view-fn
+       :on-click toggle-view-fn
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
 
@@ -1725,7 +1724,7 @@
          [:f> hematologic-system-detailed-view (merge props {:patient-id patient-id
                                                             :hs-data hs-data
                                                             :on-show-summary show-summary-fn})])
-       :on-double-click toggle-view-fn
+       :on-click toggle-view-fn
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
 
@@ -1885,7 +1884,7 @@
          [:f> immune-system-detailed-view (merge props {:patient-id patient-id
                                                        :is-data is-data
                                                        :on-show-summary show-summary-fn})])
-       :on-double-click toggle-view-fn
+       :on-click toggle-view-fn
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
 
@@ -2012,7 +2011,7 @@
          [:f> special-medication-history-detailed-view (merge props {:patient-id patient-id
                                                                     :smh-data smh-data
                                                                     :on-show-summary show-summary-fn})])
-       :on-double-click toggle-view-fn
+       :on-click toggle-view-fn
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
 
@@ -2148,7 +2147,7 @@
          [:f> special-disease-history-detailed-view (merge props {:patient-id patient-id
                                                                  :sdh-data sdh-data
                                                                  :on-show-summary show-summary-fn})])
-       :on-double-click toggle-view-fn
+       :on-click toggle-view-fn
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
 
@@ -2286,7 +2285,7 @@
          [:f> nutritional-assessment-detailed-view (merge props {:patient-id patient-id
                                                                 :na-data na-data
                                                                 :on-show-summary show-summary-fn})])
-       :on-double-click toggle-view-fn
+       :on-click toggle-view-fn
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
 
@@ -2433,7 +2432,7 @@
          [:f> pregnancy-assessment-detailed-view (merge props {:patient-id patient-id
                                                               :pa-data pa-data
                                                               :on-show-summary show-summary-fn})])
-       :on-double-click toggle-view-fn
+       :on-click toggle-view-fn
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
 
@@ -2583,7 +2582,7 @@
          [:f> surgical-anesthesia-history-detailed-view (merge props {:patient-id patient-id
                                                                      :sah-data sah-data
                                                                      :on-show-summary show-summary-fn})])
-       :on-double-click toggle-view-fn
+       :on-click toggle-view-fn
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
 
@@ -2921,7 +2920,7 @@
          [:f> airway-assessment-detailed-view (merge props {:patient-id patient-id
                                                            :aa-data aa-data
                                                            :on-show-summary show-summary-fn})])
-       :on-double-click toggle-view-fn
+       :on-click toggle-view-fn
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
 
@@ -3079,6 +3078,6 @@
          [:f> spinal-anesthesia-assessment-detailed-view (merge props {:patient-id patient-id
                                                                        :saa-data saa-data
                                                                        :on-show-summary show-summary-fn})])
-       :on-double-click toggle-view-fn
+       :on-click toggle-view-fn
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))

@@ -4,7 +4,6 @@
    [taoensso.timbre :as timbre :refer [spy]]
    [hc.hospital.patient.events :as events]
    ["antd" :refer [Form Empty Radio Card]]
-   [hc.hospital.ui-helpers :refer [custom-styled-card]]
    [reagent.core :as r]))
 
 (defn patient-assessment-card-wrapper
