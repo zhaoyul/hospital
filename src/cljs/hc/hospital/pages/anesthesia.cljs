@@ -115,14 +115,24 @@
      "#e6fffb" ; Header background color
      (if (seq basic-info)
        ;; 使用 Flexbox 将患者基本信息排列在一行, 并允许换行
-       [:div {:style {:display "flex" :flex-wrap "wrap" :align-items "center" :padding "10px 0"}}
-        ;; 将每个患者信息字段显示为独立的标签
-        [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "门诊号: " (get basic-info :outpatient_number "未知"))]
-        [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "姓名: " (get basic-info :name "未知"))]
-        [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "性别: " (get basic-info :gender "未知"))]
-        [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "年龄: " (get basic-info :age "未知") "岁")]
-        [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "病区: " (get basic-info :department "未知"))]
-        [:span {:style {:margin-bottom "8px"}} (str "电子健康卡号: " (get basic-info :health_card_number "无"))]] ; No right margin for the last item
+       [:div
+        [:div {:style {:display "flex" :flex-wrap "wrap" :align-items "center" :padding "10px 0"}}
+         ;; 将每个患者信息字段显示为独立的标签
+         [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "门诊号: " (get basic-info :outpatient_number "未知"))]
+         [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "姓名: " (get basic-info :name "未知"))]
+         [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "性别: " (get basic-info :gender "未知"))]
+         [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "年龄: " (get basic-info :age "未知") "岁")]
+         [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "病区: " (get basic-info :department "未知"))]
+         [:span {:style {:margin-bottom "8px"}} (str "电子健康卡号: " (get basic-info :health_card_number "无"))]]
+
+        [:> Form.Item {:label "术前诊断" :name :diagnosis}
+         [:> Input.TextArea {:placeholder "请输入术前诊断"
+                             :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:basic_info :diagnosis] (-> % .-target .-value)])}]]
+
+        [:> Form.Item {:label "拟施手术" :name :planned_surgery}
+         [:> Input.TextArea {:placeholder "请输入拟施手术"
+
+                             :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:basic_info :planned_surgery] (-> % .-target .-value)])}]]]
        [:> Empty {:description "请先选择患者或患者无基本信息"}])]))
 
 (defn- general-condition-card "显示一般情况" []
@@ -593,20 +603,6 @@
                  :on-click #(js/window.print)
                  :style {:background "#1890ff" :borderColor "#1890ff" :color "white"}} ; Added styling
       "打印表单"])])
-
-(defn save-button []
-  [:div {:style {:padding "10px 0"
-                 :background "white"
-                 :borderTop "1px solid #f0f0f0"
-                 :textAlign "center"
-                 :position "sticky"
-                 :bottom 0
-                 :zIndex 10}} ; Ensure it's above scrolled content
-   [:> Button {:type "primary"
-               :size "large"
-               :icon (r/as-element [:> SaveOutlined])
-               :onClick #(rf/dispatch [::events/save-final-assessment])}
-    "保存评估结果"]])
 
 (defn- assessment []
   (let [card-form-instances (r/atom {})
