@@ -12,10 +12,12 @@
    [hc.hospital.events :as events]
    [hc.hospital.subs :as subs]
    [hc.hospital.utils :as utils]
-   [re-frame.core :as rf]))
+   [re-frame.core :as rf]
+   [reagent.core :as r]))
 
-(defn circulatory-system-card "循环系统" []
-  (let [patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
+(defn circulatory-system-card "循环系统" [props]
+  (let [{:keys [report-form-instance-fn]} props
+        patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         circulatory-data @(rf/subscribe [::subs/circulatory-system-data])
         [form] (Form.useForm)
         ;; Removed Form.useWatch for radio groups that will be handled by form-item-radio-conditional
@@ -43,8 +45,13 @@
                                                     (assoc-in [:cardiac_disease_history :congestive_heart_failure :last_episode_date]
                                                               (when-let [d (get-in values [:cardiac_disease_history :congestive_heart_failure :last_episode_date])]
                                                                 (utils/date->iso-string d))))]
-                         (rf/dispatch [::events/update-canonical-assessment-section :circulatory_system (js->clj transformed-values :keywordize-keys true)])))
-        form-items [:<>
+                        (rf/dispatch [::events/update-canonical-assessment-section :circulatory_system (js->clj transformed-values :keywordize-keys true)])))]
+    (r/useEffect (fn []
+                   (when report-form-instance-fn
+                     (report-form-instance-fn :circulatory_system form))
+                   js/undefined)
+                 #js [])
+    (let [form-items [:<>
                     ;; 心电图 (ECG)
                     [:> Form.Item {:label "心电图" :name [:ecg_description]}
                      [:> Input.TextArea {:placeholder "请描述ECG结果"
@@ -227,8 +234,9 @@
       :children form-items}]))
 
 
-(defn respiratory-system-card "呼吸系统" []
-  (let [patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
+(defn respiratory-system-card "呼吸系统" [props]
+  (let [{:keys [report-form-instance-fn]} props
+        patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         respiratory-data @(rf/subscribe [::subs/respiratory-system-data])
         [form] (Form.useForm)
         ;; Removed Form.useWatch calls that are now handled by form-item-radio-conditional
@@ -261,8 +269,13 @@
                                                     (assoc-in [:asthma_history :last_episode_date]
                                                               (when-let [d (get-in values [:asthma_history :last_episode_date])]
                                                                 (utils/date->iso-string d))))]
-                         (rf/dispatch [::events/update-canonical-assessment-section :respiratory_system (js->clj transformed-values :keywordize-keys true)])))
-        form-items [:<>
+                         (rf/dispatch [::events/update-canonical-assessment-section :respiratory_system (js->clj transformed-values :keywordize-keys true)])))]
+    (r/useEffect (fn []
+                   (when report-form-instance-fn
+                     (report-form-instance-fn :respiratory_system form))
+                   js/undefined)
+                 #js [])
+    (let [form-items [:<>
                     [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "近两周内感冒病史"
@@ -389,8 +402,9 @@
       :on-values-change-handler nil
       :children form-items}]))
 
-(defn mental-neuromuscular-system-card "精神及神经肌肉系统" []
-  (let [patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
+(defn mental-neuromuscular-system-card "精神及神经肌肉系统" [props]
+  (let [{:keys [report-form-instance-fn]} props
+        patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         mn-data @(rf/subscribe [::subs/mental-neuromuscular-system-data])
         [form] (Form.useForm)
         ;; Watchers that are still needed for complex conditional logic within children
@@ -424,8 +438,13 @@
                                                     (assoc-in [:vertigo_history :last_episode_date] (when-let [d (get-in values [:vertigo_history :last_episode_date])] (utils/date->iso-string d)))
                                                     (assoc-in [:cerebral_infarction_history :last_episode_date] (when-let [d (get-in values [:cerebral_infarction_history :last_episode_date])] (utils/date->iso-string d)))
                                                     (assoc-in [:cerebral_hemorrhage_history :last_episode_date] (when-let [d (get-in values [:cerebral_hemorrhage_history :last_episode_date])] (utils/date->iso-string d))))]
-                         (rf/dispatch [::events/update-canonical-assessment-section :mental_neuromuscular_system (js->clj transformed-values :keywordize-keys true)])))
-        form-items [:<>
+                         (rf/dispatch [::events/update-canonical-assessment-section :mental_neuromuscular_system (js->clj transformed-values :keywordize-keys true)])))]
+    (r/useEffect (fn []
+                   (when report-form-instance-fn
+                     (report-form-instance-fn :mental_neuromuscular_system form))
+                   js/undefined)
+                 #js [])
+    (let [form-items [:<>
                     [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "精神认知相关疾病史"
@@ -567,8 +586,9 @@
       :children form-items}]))
 
 
-(defn endocrine-system-card "内分泌系统" []
-  (let [patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
+(defn endocrine-system-card "内分泌系统" [props]
+  (let [{:keys [report-form-instance-fn]} props
+        patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         endo-data @(rf/subscribe [::subs/endocrine-system-data])
         [form] (Form.useForm)
         ;; Watchers for nested/internal conditional logic
@@ -586,8 +606,13 @@
         general-treatment-status-options [{:value "治愈" :label "治愈"} {:value "好转" :label "好转"} {:value "仍有症状" :label "仍有症状"} {:value "未治疗" :label "未治疗"} {:value "病情稳定" :label "病情稳定"} {:value "其他" :label "其他"}]
         initial-form-values endo-data ; No date parsing needed for this card
         on-finish-fn (fn [values]
-                       (rf/dispatch [::events/update-canonical-assessment-section :endocrine_system (js->clj values :keywordize-keys true)]))
-        form-items [:<>
+                       (rf/dispatch [::events/update-canonical-assessment-section :endocrine_system (js->clj values :keywordize-keys true)])))]
+    (r/useEffect (fn []
+                   (when report-form-instance-fn
+                     (report-form-instance-fn :endocrine_system form))
+                   js/undefined)
+                 #js [])
+    (let [form-items [:<>
                     [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "甲状腺疾病病史"
@@ -708,8 +733,9 @@
       :children form-items}]))
 
 
-(defn liver-kidney-system-card "肝肾病史" []
-  (let [patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
+(defn liver-kidney-system-card "肝肾病史" [props]
+  (let [{:keys [report-form-instance-fn]} props
+        patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         lk-data @(rf/subscribe [::subs/liver-kidney-system-data])
         [form] (Form.useForm)
         initial-form-values lk-data
@@ -720,8 +746,13 @@
                                     ;; ... other options
                                     {:label "其他" :value "other_liver_disease"}]
         on-finish-fn (fn [values]
-                       (rf/dispatch [::events/update-canonical-assessment-section :liver_kidney_system (js->clj values :keywordize-keys true)]))
-        form-items [:<>
+                       (rf/dispatch [::events/update-canonical-assessment-section :liver_kidney_system (js->clj values :keywordize-keys true)])))]
+    (r/useEffect (fn []
+                   (when report-form-instance-fn
+                     (report-form-instance-fn :liver_kidney_system form))
+                   js/undefined)
+                 #js [])
+    (let [form-items [:<>
                     [:h4 "肝功能"]
                     [:f> afc/form-item-radio-conditional
                      {:form-instance form
@@ -758,8 +789,9 @@
       :on-values-change-handler nil
       :children form-items}]))
 
-(defn digestive-system-card  "消化系统" []
-  (let [patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
+(defn digestive-system-card  "消化系统" [props]
+  (let [{:keys [report-form-instance-fn]} props
+        patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         ds-data @(rf/subscribe [::subs/digestive-system-data])
         [form] (Form.useForm)
         ;; Watcher for nested condition
@@ -801,8 +833,13 @@
                                            {:label "其他" :value "other_chronic_digestive"}]
         initial-form-values ds-data
         on-finish-fn (fn [values]
-                       (rf/dispatch [::events/update-canonical-assessment-section :digestive_system (js->clj values :keywordize-keys true)]))
-        form-items [:<>
+                       (rf/dispatch [::events/update-canonical-assessment-section :digestive_system (js->clj values :keywordize-keys true)])))]
+    (r/useEffect (fn []
+                   (when report-form-instance-fn
+                     (report-form-instance-fn :digestive_system form))
+                   js/undefined)
+                 #js [])
+    (let [form-items [:<>
                     [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "急性胃肠炎病史"
@@ -861,8 +898,9 @@
       :on-values-change-handler nil
       :children form-items}]))
 
-(defn hematologic-system-card "血液系统" []
-  (let [patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
+(defn hematologic-system-card "血液系统" [props]
+  (let [{:keys [report-form-instance-fn]} props
+        patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         hs-data @(rf/subscribe [::subs/hematologic-system-data])
         [form] (Form.useForm)
         ;; Removed Form.useWatch calls for radio groups now handled by form-item-radio-conditional
@@ -871,8 +909,13 @@
         yes-no-unknown-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
         initial-form-values hs-data
         on-finish-fn (fn [values]
-                       (rf/dispatch [::events/update-canonical-assessment-section :hematologic_system (js->clj values :keywordize-keys true)]))
-        form-items [:<>
+                       (rf/dispatch [::events/update-canonical-assessment-section :hematologic_system (js->clj values :keywordize-keys true)])))]
+    (r/useEffect (fn []
+                   (when report-form-instance-fn
+                     (report-form-instance-fn :hematologic_system form))
+                   js/undefined)
+                 #js [])
+    (let [form-items [:<>
                     [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "贫血"
@@ -933,8 +976,9 @@
       :on-values-change-handler nil
       :children form-items}]))
 
-(defn immune-system-card        "免疫系统" []
-  (let [patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
+(defn immune-system-card        "免疫系统" [props]
+  (let [{:keys [report-form-instance-fn]} props
+        patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         is-data @(rf/subscribe [::subs/immune-system-data])
         [form] (Form.useForm)
         ;; Watchers for nested conditions
@@ -968,8 +1012,13 @@
                                 (when (contains? changed-values [:autoimmune_disease :symptoms])
                                   (when (not (some #{"other_autoimmune_symptom"} (get-in all-values-clj [:autoimmune_disease :symptoms])))
                                     (.setFieldsValue form-instance (clj->js {:autoimmune_disease {:symptoms_other_details nil}}))))
-                                ))
-        form-items [:<>
+                                ))]
+    (r/useEffect (fn []
+                   (when report-form-instance-fn
+                     (report-form-instance-fn :immune_system form))
+                   js/undefined)
+                 #js [])
+    (let [form-items [:<>
                     [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "免疫功能障碍"
@@ -1011,8 +1060,9 @@
       :on-values-change-handler on-values-change-fn
       :children form-items}]))
 
-(defn special-medication-history-card "特殊用药史" []
-  (let [patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
+(defn special-medication-history-card "特殊用药史" [props]
+  (let [{:keys [report-form-instance-fn]} props
+        patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         smh-data @(rf/subscribe [::subs/special-medication-history-data])
         [form] (Form.useForm)
         initial-form-values smh-data
@@ -1038,8 +1088,13 @@
                                 (doseq [med-key med-keys]
                                   (when (and (contains? changed-values [med-key :present])
                                              (not= (get-in all-values-clj [med-key :present]) "有"))
-                                    (.setFieldsValue form-instance (clj->js {med-key {:details nil}}))))))
-        render-medication-item (fn [field-key label-text placeholder-text show-details?]
+                                    (.setFieldsValue form-instance (clj->js {med-key {:details nil}})))))))]
+    (r/useEffect (fn []
+                   (when report-form-instance-fn
+                     (report-form-instance-fn :special_medication_history form))
+                   js/undefined)
+                 #js [])
+    (let [render-medication-item (fn [field-key label-text placeholder-text show-details?]
                                  [:div {:key (name field-key)}
                                   [:> Form.Item {:label label-text :name [field-key :present]}
                                    [:> Radio.Group {}
@@ -1071,8 +1126,9 @@
       :on-values-change-handler on-values-change-fn
       :children form-items}]))
 
-(defn special-disease-history-card "特殊疾病病史" []
-  (let [patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
+(defn special-disease-history-card "特殊疾病病史" [props]
+  (let [{:keys [report-form-instance-fn]} props
+        patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         sdh-data @(rf/subscribe [::subs/special-disease-history-data])
         [form] (Form.useForm)
         marfan-lesions (Form.useWatch [:marfan_syndrome :related_lesions] form) ; Watched for conditional rendering of details
@@ -1105,8 +1161,13 @@
                                 (when (contains? changed-values (clj->js {:marfan_syndrome {:related_lesions nil}}))
                                   (when (not (some #{"skeletal_other"} (get-in all-values-clj [:marfan_syndrome :related_lesions])))
                                     (.setFieldsValue form-instance (clj->js {:marfan_syndrome {:skeletal_other_details nil}}))))
-                                ))
-        form-items [:<>
+                                ))]
+    (r/useEffect (fn []
+                   (when report-form-instance-fn
+                     (report-form-instance-fn :special_disease_history form))
+                   js/undefined)
+                 #js [])
+    (let [form-items [:<>
                     [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "马方综合征"
@@ -1139,16 +1200,22 @@
       :children form-items}]))
 
 
-(defn nutritional-assessment-card "营养评估" []
-  (let [na-data @(rf/subscribe [::subs/nutritional-assessment-data])
+(defn nutritional-assessment-card "营养评估" [props]
+  (let [{:keys [report-form-instance-fn]} props
+        na-data @(rf/subscribe [::subs/nutritional-assessment-data])
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         [form] (Form.useForm)
         initial-form-values na-data
 
         yes-no-options [{:label "无" :value "无"} {:label "有" :value "有"}]
         on-finish-fn (fn [values]
-                       (rf/dispatch [::events/update-canonical-assessment-section :nutritional_assessment (js->clj values :keywordize-keys true)]))
-        form-items [:<>
+                       (rf/dispatch [::events/update-canonical-assessment-section :nutritional_assessment (js->clj values :keywordize-keys true)])))]
+    (r/useEffect (fn []
+                   (when report-form-instance-fn
+                     (report-form-instance-fn :nutritional_assessment form))
+                   js/undefined)
+                 #js [])
+    (let [form-items [:<>
                     [:h4 "1. 营养评分"]
                     [:> Form.Item {:label "是否 BMI < 20.5" :name [:nutritional_score :bmi_lt_20_5]}
                      [:> Radio.Group {:options yes-no-options}]]
@@ -1194,8 +1261,9 @@
       :children form-items}]))
 
 
-(defn pregnancy-assessment-card "妊娠" []
-  (let [pa-data @(rf/subscribe [::subs/pregnancy-assessment-data])
+(defn pregnancy-assessment-card "妊娠" [props]
+  (let [{:keys [report-form-instance-fn]} props
+        pa-data @(rf/subscribe [::subs/pregnancy-assessment-data])
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         [form] (Form.useForm)
         comorbid-conditions-watch (Form.useWatch [:comorbid_obstetric_conditions] form) ; Watcher for nested condition
@@ -1234,8 +1302,13 @@
                                 (when (contains? changed-values (clj->js {:comorbid_obstetric_conditions nil}))
                                   (when (not (some #{"other_obstetric_conditions"} (get-in all-values-clj [:comorbid_obstetric_conditions])))
                                     (.setFieldsValue form-instance (clj->js {:comorbid_obstetric_conditions_other_details nil}))))
-                                ))
-        form-items [:<>
+                                ))]
+    (r/useEffect (fn []
+                   (when report-form-instance-fn
+                     (report-form-instance-fn :pregnancy_assessment form))
+                   js/undefined)
+                 #js [])
+    (let [form-items [:<>
                     [:f> afc/form-item-radio-conditional
                      {:form-instance form
                       :label "是否妊娠"
@@ -1270,8 +1343,9 @@
       :children form-items}]))
 
 
-(defn surgical-anesthesia-history-card "手术麻醉史" []
-  (let [sah-data @(rf/subscribe [::subs/surgical-anesthesia-history-data])
+(defn surgical-anesthesia-history-card "手术麻醉史" [props]
+  (let [{:keys [report-form-instance-fn]} props
+        sah-data @(rf/subscribe [::subs/surgical-anesthesia-history-data])
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         [form] (Form.useForm)
         history-present-watch (Form.useWatch [:history :present] form)
@@ -1311,12 +1385,17 @@
                                     (.setFieldsValue form-instance (clj->js {:history {:adverse_events_other_details nil}}))))
                                 (when (contains? changed-values (clj->js {:family_history_malignant_hyperthermia {:present nil}}))
                                   (when (not= (get-in all-values-clj [:family_history_malignant_hyperthermia :present]) "有")
-                                    (.setFieldsValue form-instance (clj->js {:family_history_malignant_hyperthermia {:relationship nil}}))))))
-        last-anesthesia-date-options [{:label ">5 年" :value ">5_years"} {:label "1-5 年" :value "1-5_years"} {:label "<1 年" :value "<1_year"}]
-        anesthesia-type-options [{:label "全身麻醉" :value "general_anesthesia"} {:label "椎管内麻醉" :value "spinal_anesthesia"} {:label "神经阻滞" :value "nerve_block"} {:label "局部麻醉" :value "local_anesthesia"}]
-        postop-complications-options [{:label "术后恶心呕吐" :value "postop_nausea_vomiting"} {:label "术后疼痛" :value "postop_pain"} {:label "声音嘶哑" :value "hoarseness"} {:label "头晕头疼" :value "dizziness_headache"} {:label "其他" :value "other_postop_complications"}]
-        adverse-events-options [{:label "过敏反应" :value "allergic_reaction"} {:label "困难气道" :value "difficult_airway"} {:label "气管切开" :value "tracheostomy"} {:label "术中知晓" :value "intraop_awareness"} {:label "术后认知功能障碍" :value "postop_cognitive_dysfunction"} {:label "恶性高热" :value "malignant_hyperthermia"} {:label "其他" :value "other_adverse_events"}]
-        form-items [:<>
+                                    (.setFieldsValue form-instance (clj->js {:family_history_malignant_hyperthermia {:relationship nil}})))))))]
+    (r/useEffect (fn []
+                   (when report-form-instance-fn
+                     (report-form-instance-fn :surgical_anesthesia_history form))
+                   js/undefined)
+                 #js [])
+    (let [last-anesthesia-date-options [{:label ">5 年" :value ">5_years"} {:label "1-5 年" :value "1-5_years"} {:label "<1 年" :value "<1_year"}]
+          anesthesia-type-options [{:label "全身麻醉" :value "general_anesthesia"} {:label "椎管内麻醉" :value "spinal_anesthesia"} {:label "神经阻滞" :value "nerve_block"} {:label "局部麻醉" :value "local_anesthesia"}]
+          postop-complications-options [{:label "术后恶心呕吐" :value "postop_nausea_vomiting"} {:label "术后疼痛" :value "postop_pain"} {:label "声音嘶哑" :value "hoarseness"} {:label "头晕头疼" :value "dizziness_headache"} {:label "其他" :value "other_postop_complications"}]
+          adverse-events-options [{:label "过敏反应" :value "allergic_reaction"} {:label "困难气道" :value "difficult_airway"} {:label "气管切开" :value "tracheostomy"} {:label "术中知晓" :value "intraop_awareness"} {:label "术后认知功能障碍" :value "postop_cognitive_dysfunction"} {:label "恶性高热" :value "malignant_hyperthermia"} {:label "其他" :value "other_adverse_events"}]
+          form-items [:<>
                     [:> Form.Item {:label "手术麻醉史" :name [:history :present]}
                      [:> Radio.Group {}
                       [:> Radio {:value "无"} "无"]
@@ -1371,8 +1450,9 @@
       :children form-items}]))
 
 
-(defn airway-assessment-card "气道评估" []
-  (let [aa-data @(rf/subscribe [::subs/airway-assessment-data])
+(defn airway-assessment-card "气道评估" [props]
+  (let [{:keys [report-form-instance-fn]} props
+        aa-data @(rf/subscribe [::subs/airway-assessment-data])
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         [form] (Form.useForm)
         initial-form-values aa-data
@@ -1492,8 +1572,13 @@
                                 (when (cv [:detailed_assessment :esophageal_surgery_history :has])
                                   (when (not= (av [:detailed_assessment :esophageal_surgery_history :has]) "有")
                                     (set-val {:detailed_assessment {:esophageal_surgery_history {:reflux_status nil}}})))
-                                ))
-        form-items [:<>
+                                ))]
+    (r/useEffect (fn []
+                   (when report-form-instance-fn
+                     (report-form-instance-fn :airway_assessment form))
+                   js/undefined)
+                 #js [])
+    (let [form-items [:<>
                     [:h4 {:style {:fontStyle "italic"}} "甲颏距离图示与说明"]
                     [:p "甲颏距离 (TMD): 指下颌角到颏结节的距离。"]
                     [:table {:style {:width "100%" :borderCollapse "collapse" :marginBottom "10px"}}
@@ -1644,8 +1729,9 @@
       :children form-items}]))
 
 
-(defn spinal-anesthesia-assessment-card "椎管内麻醉相关评估" []
-  (let [saa-data @(rf/subscribe [::subs/spinal-anesthesia-assessment-data])
+(defn spinal-anesthesia-assessment-card "椎管内麻醉相关评估" [props]
+  (let [{:keys [report-form-instance-fn]} props
+        saa-data @(rf/subscribe [::subs/spinal-anesthesia-assessment-data])
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         [form] (Form.useForm)
         initial-form-values saa-data
@@ -1662,13 +1748,18 @@
                                 (when (contains? changed-values (clj->js {:cardiovascular_system {:anticoagulants_present nil}}))
                                   (when (not= (get-in all-values-clj [:cardiovascular_system :anticoagulants_present]) "有")
                                     (.setFieldsValue form-instance (clj->js {:cardiovascular_system {:anticoagulants_details nil}}))))
-                                ))
-        render-radio-group (fn [main-key item-key label-text]
+                                )))]
+    (r/useEffect (fn []
+                   (when report-form-instance-fn
+                     (report-form-instance-fn :spinal_anesthesia_assessment form))
+                   js/undefined)
+                 #js [])
+    (let [render-radio-group (fn [main-key item-key label-text]
                              [:> Form.Item {:label label-text :name [main-key item-key] :key (str (name main-key) "-" (name item-key))}
                               [:> Radio.Group {:options yes-no-options}]])
-        render-subsection-title (fn [title]
+          render-subsection-title (fn [title]
                                   [:h4 {:style {:marginTop "16px" :marginBottom "8px" :borderBottom "1px solid #f0f0f0" :paddingBottom "4px"}} title])
-        form-items [:<>
+          form-items [:<>
                     (render-subsection-title "中枢神经系统")
                     (render-radio-group :central_nervous_system :brain_tumor "脑肿瘤")
                     (render-radio-group :central_nervous_system :cerebral_hemorrhage "脑出血")

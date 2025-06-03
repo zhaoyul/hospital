@@ -649,10 +649,39 @@
     "保存评估结果"]])
 
 (defn- assessment []
-  (let [current-patient-id @(rf/subscribe [::subs/current-patient-id])
+  (let [card-form-instances (r/atom {})
+        current-patient-id @(rf/subscribe [::subs/current-patient-id])
         basic-info @(rf/subscribe [::subs/canonical-basic-info])
         patient-name (get basic-info :name "未知患者")
-        patient-status (get basic-info :assessment_status "待评估")]
+        patient-status (get basic-info :assessment_status "待评估")
+
+        register-form-instance (fn [card-key form-instance]
+                                 (swap! card-form-instances assoc card-key form-instance))
+        
+        save-button (fn [] ; Moved save-button inside assessment
+                      [:div {:style {:padding "10px 0"
+                                     :background "white"
+                                     :borderTop "1px solid #f0f0f0"
+                                     :textAlign "center"
+                                     :position "sticky"
+                                     :bottom 0
+                                     :zIndex 10}} ; Ensure it's above scrolled content
+                       [:> Button {:type "primary"
+                                   :size "large"
+                                   :icon (r/as-element [:> SaveOutlined])
+                                    :onClick (fn []
+                                               (let [forms-map @card-form-instances]
+                                                 (timbre/info "Attempting to submit all card forms. Forms found:" (count (keys forms-map)))
+                                                 (doseq [[card-key form-inst] forms-map]
+                                                   (if form-inst
+                                                     (do
+                                                       (timbre/info "Submitting form for card:" card-key)
+                                                       (.submit form-inst))
+                                                     (timbre/warn "No form instance found for card key:" card-key)))
+                                                 (timbre/info "All card forms submitted, proceeding to save final assessment.")
+                                                 (rf/dispatch [::events/save-final-assessment])))
+                                    }
+                        "保存评估结果"]])]
     (if current-patient-id
       ;; 有选择患者时的视图
       [:div {:style {:height "calc(100vh - 64px)" :display "flex" :flexDirection "column"}}
@@ -669,21 +698,21 @@
        ;; Main scrollable content area for cards
        [:div {:style {:padding "16px" :overflowY "auto" :flexGrow 1 :background "#f0f2f5"}}
         [patient-info-card]
-        [:f> acards/circulatory-system-card]
-        [:f> acards/respiratory-system-card]
-        [:f> acards/mental-neuromuscular-system-card]
-        [:f> acards/endocrine-system-card]
-        [:f> acards/liver-kidney-system-card]
-        [:f> acards/digestive-system-card]
-        [:f> acards/hematologic-system-card]
-        [:f> acards/immune-system-card]
-        [:f> acards/special-medication-history-card]
-        [:f> acards/special-disease-history-card]
-        [:f> acards/nutritional-assessment-card]
-        [:f> acards/pregnancy-assessment-card]
-        [:f> acards/surgical-anesthesia-history-card]
-        [:f> acards/airway-assessment-card]
-        [:f> acards/spinal-anesthesia-assessment-card]
+        [:f> acards/circulatory-system-card {:report-form-instance-fn register-form-instance}]
+        [:f> acards/respiratory-system-card {:report-form-instance-fn register-form-instance}]
+        [:f> acards/mental-neuromuscular-system-card {:report-form-instance-fn register-form-instance}]
+        [:f> acards/endocrine-system-card {:report-form-instance-fn register-form-instance}]
+        [:f> acards/liver-kidney-system-card {:report-form-instance-fn register-form-instance}]
+        [:f> acards/digestive-system-card {:report-form-instance-fn register-form-instance}]
+        [:f> acards/hematologic-system-card {:report-form-instance-fn register-form-instance}]
+        [:f> acards/immune-system-card {:report-form-instance-fn register-form-instance}]
+        [:f> acards/special-medication-history-card {:report-form-instance-fn register-form-instance}]
+        [:f> acards/special-disease-history-card {:report-form-instance-fn register-form-instance}]
+        [:f> acards/nutritional-assessment-card {:report-form-instance-fn register-form-instance}]
+        [:f> acards/pregnancy-assessment-card {:report-form-instance-fn register-form-instance}]
+        [:f> acards/surgical-anesthesia-history-card {:report-form-instance-fn register-form-instance}]
+        [:f> acards/airway-assessment-card {:report-form-instance-fn register-form-instance}]
+        [:f> acards/spinal-anesthesia-assessment-card {:report-form-instance-fn register-form-instance}]
         [general-condition-card]
         [medical-history-summary-card]
         [comorbidities-card]
@@ -692,7 +721,7 @@
         [preoperative-orders-card]
         [remarks-card]
         [signature-and-date-card]
-        [save-button]]]
+        [save-button]]] ; save-button is now called as a function defined in the let block
 
       ;; 无选择患者时的空状态
       [:div {:style {:display "flex" :justifyContent "center" :alignItems "center" :height "100%"}}
