@@ -42,12 +42,12 @@
   (let [{:keys [on-show-detailed circulatory-data]} props]
     [ui-helpers/custom-styled-card
      {:icon [:> HeartOutlined {:style {:marginRight "8px"}}]
-      :title "循环系统"
-      :header-color "#e6f7ff"
+      :title-text "循环系统"
+      :header-bg-color "#e6f7ff"
+      :content (generate-circulatory-summary circulatory-data)
       :on-double-click on-show-detailed
       :card-style {:cursor "pointer"}
-      :card-body-style {:padding "10px"}}
-     (generate-circulatory-summary circulatory-data)]))
+      :card-body-style {:padding "10px"}}]))
 
 (defn circulatory-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id circulatory-data on-show-summary]} props
@@ -307,12 +307,12 @@
   (let [{:keys [on-show-detailed respiratory-data]} props]
     [ui-helpers/custom-styled-card
      {:icon [:> CloudOutlined {:style {:marginRight "8px"}}]
-      :title "呼吸系统"
-      :header-color "#e6fffb"
+      :title-text "呼吸系统"
+      :header-bg-color "#e6fffb"
+      :content (generate-respiratory-summary respiratory-data)
       :on-double-click on-show-detailed
       :card-style {:cursor "pointer"}
-      :card-body-style {:padding "10px"}}
-     (generate-respiratory-summary respiratory-data)]))
+      :card-body-style {:padding "10px"}}]))
 
 (defn respiratory-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id respiratory-data on-show-summary]} props
@@ -519,12 +519,12 @@
   (let [{:keys [on-show-detailed mn-data]} props]
     [ui-helpers/custom-styled-card
      {:icon [:> UserOutlined {:style {:marginRight "8px"}}]
-      :title "精神及神经肌肉系统"
-      :header-color "#fffbe6"
+      :title-text "精神及神经肌肉系统"
+      :header-bg-color "#fffbe6"
+      :content (generate-mental-neuromuscular-summary mn-data)
       :on-double-click on-show-detailed
       :card-style {:cursor "pointer"}
-      :card-body-style {:padding "10px"}}
-     (generate-mental-neuromuscular-summary mn-data)]))
+      :card-body-style {:padding "10px"}}]))
 
 (defn mental-neuromuscular-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id mn-data on-show-summary]} props
@@ -743,12 +743,12 @@
   (let [{:keys [on-show-detailed endo-data]} props]
     [ui-helpers/custom-styled-card
      {:icon [:> ExperimentOutlined {:style {:marginRight "8px"}}]
-      :title "内分泌系统"
-      :header-color "#f9f0ff"
+      :title-text "内分泌系统"
+      :header-bg-color "#f9f0ff"
+      :content (generate-endocrine-summary endo-data)
       :on-double-click on-show-detailed
       :card-style {:cursor "pointer"}
-      :card-body-style {:padding "10px"}}
-     (generate-endocrine-summary endo-data)]))
+      :card-body-style {:padding "10px"}}]))
 
 (defn endocrine-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id endo-data on-show-summary]} props
@@ -934,12 +934,12 @@
   (let [{:keys [on-show-detailed lk-data]} props]
     [ui-helpers/custom-styled-card
      {:icon [:> ProjectOutlined {:style {:marginRight "8px"}}]
-      :title "肝肾病史"
-      :header-color "#fff7e6"
+      :title-text "肝肾病史"
+      :header-bg-color "#fff7e6"
+      :content (generate-liver-kidney-summary lk-data)
       :on-double-click on-show-detailed
       :card-style {:cursor "pointer"}
-      :card-body-style {:padding "10px"}}
-     (generate-liver-kidney-summary lk-data)]))
+      :card-body-style {:padding "10px"}}]))
 
 (defn liver-kidney-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id lk-data on-show-summary]} props
@@ -1034,12 +1034,12 @@
   (let [{:keys [on-show-detailed ds-data]} props]
     [ui-helpers/custom-styled-card
      {:icon [:> CoffeeOutlined {:style {:marginRight "8px"}}]
-      :title "消化系统"
-      :header-color "#eff8ff"
+      :title-text "消化系统"
+      :header-bg-color "#eff8ff"
+      :content (generate-digestive-summary ds-data)
       :on-double-click on-show-detailed
       :card-style {:cursor "pointer"}
-      :card-body-style {:padding "10px"}}
-     (generate-digestive-summary ds-data)]))
+      :card-body-style {:padding "10px"}}]))
 
 (defn digestive-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id ds-data on-show-summary]} props
@@ -1184,12 +1184,12 @@
   (let [{:keys [on-show-detailed hs-data]} props]
     [ui-helpers/custom-styled-card
      {:icon [:> ExperimentOutlined {:style {:marginRight "8px"}}]
-      :title "血液系统"
-      :header-color "#fff0f6"
+      :title-text "血液系统"
+      :header-bg-color "#fff0f6"
+      :content (generate-hematologic-summary hs-data)
       :on-double-click on-show-detailed
       :card-style {:cursor "pointer"}
-      :card-body-style {:padding "10px"}}
-     (generate-hematologic-summary hs-data)]))
+      :card-body-style {:padding "10px"}}]))
 
 (defn hematologic-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id hs-data on-show-summary]} props
@@ -1304,12 +1304,12 @@
   (let [{:keys [on-show-detailed is-data]} props]
     [ui-helpers/custom-styled-card
      {:icon [:> SecurityScanOutlined {:style {:marginRight "8px"}}]
-      :title "免疫系统"
-      :header-color "#f6ffed"
+      :title-text "免疫系统"
+      :header-bg-color "#f6ffed"
+      :content (generate-immune-summary is-data)
       :on-double-click on-show-detailed
       :card-style {:cursor "pointer"}
-      :card-body-style {:padding "10px"}}
-     (generate-immune-summary is-data)]))
+      :card-body-style {:padding "10px"}}]))
 
 (defn immune-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id is-data on-show-summary]} props
@@ -1432,12 +1432,12 @@
   (let [{:keys [on-show-detailed smh-data]} props]
     [ui-helpers/custom-styled-card
      {:icon [:> MedicineBoxOutlined {:style {:marginRight "8px"}}]
-      :title "特殊用药史"
-      :header-color "#fffbe6"
+      :title-text "特殊用药史"
+      :header-bg-color "#fffbe6"
+      :content (generate-special-medication-summary smh-data)
       :on-double-click on-show-detailed
       :card-style {:cursor "pointer"}
-      :card-body-style {:padding "10px"}}
-     (generate-special-medication-summary smh-data)]))
+      :card-body-style {:padding "10px"}}]))
 
 (defn special-medication-history-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id smh-data on-show-summary]} props
@@ -1540,12 +1540,12 @@
   (let [{:keys [on-show-detailed sdh-data]} props]
     [ui-helpers/custom-styled-card
      {:icon [:> WarningOutlined {:style {:marginRight "8px"}}]
-      :title "特殊疾病病史"
-      :header-color "#fff1f0"
+      :title-text "特殊疾病病史"
+      :header-bg-color "#fff1f0"
+      :content (generate-special-disease-summary sdh-data)
       :on-double-click on-show-detailed
       :card-style {:cursor "pointer"}
-      :card-body-style {:padding "10px"}}
-     (generate-special-disease-summary sdh-data)]))
+      :card-body-style {:padding "10px"}}]))
 
 (defn special-disease-history-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id sdh-data on-show-summary]} props
@@ -1659,12 +1659,12 @@
   (let [{:keys [on-show-detailed na-data]} props]
     [ui-helpers/custom-styled-card
      {:icon [:> AppleOutlined {:style {:marginRight "8px"}}]
-      :title "营养评估"
-      :header-color "#f0fff0"
+      :title-text "营养评估"
+      :header-bg-color "#f0fff0"
+      :content (generate-nutritional-summary na-data)
       :on-double-click on-show-detailed
       :card-style {:cursor "pointer"}
-      :card-body-style {:padding "10px"}}
-     (generate-nutritional-summary na-data)]))
+      :card-body-style {:padding "10px"}}]))
 
 (defn nutritional-assessment-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id na-data on-show-summary]} props
@@ -1768,12 +1768,12 @@
   (let [{:keys [on-show-detailed pa-data]} props]
     [ui-helpers/custom-styled-card
      {:icon [:> WomanOutlined {:style {:marginRight "8px"}}]
-      :title "妊娠"
-      :header-color "#fff0f6"
+      :title-text "妊娠"
+      :header-bg-color "#fff0f6"
+      :content (generate-pregnancy-summary pa-data)
       :on-double-click on-show-detailed
       :card-style {:cursor "pointer"}
-      :card-body-style {:padding "10px"}}
-     (generate-pregnancy-summary pa-data)]))
+      :card-body-style {:padding "10px"}}]))
 
 (defn pregnancy-assessment-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id pa-data on-show-summary]} props
@@ -1889,12 +1889,12 @@
   (let [{:keys [on-show-detailed sah-data]} props]
     [ui-helpers/custom-styled-card
      {:icon [:> HistoryOutlined {:style {:marginRight "8px"}}]
-      :title "手术麻醉史"
-      :header-color "#e6f7ff"
+      :title-text "手术麻醉史"
+      :header-bg-color "#e6f7ff"
+      :content (generate-surgical-anesthesia-summary sah-data)
       :on-double-click on-show-detailed
       :card-style {:cursor "pointer"}
-      :card-body-style {:padding "10px"}}
-     (generate-surgical-anesthesia-summary sah-data)]))
+      :card-body-style {:padding "10px"}}]))
 
 (defn surgical-anesthesia-history-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id sah-data on-show-summary]} props
@@ -2051,12 +2051,12 @@
   (let [{:keys [on-show-detailed aa-data]} props]
     [ui-helpers/custom-styled-card
      {:icon [:> NodeIndexOutlined {:style {:marginRight "8px"}}]
-      :title "气道评估"
-      :header-color "#fff7e6"
+      :title-text "气道评估"
+      :header-bg-color "#fff7e6"
+      :content (generate-airway-summary aa-data)
       :on-double-click on-show-detailed
       :card-style {:cursor "pointer"}
-      :card-body-style {:padding "10px"}}
-     (generate-airway-summary aa-data)]))
+      :card-body-style {:padding "10px"}}]))
 
 (defn airway-assessment-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id aa-data on-show-summary]} props
@@ -2377,12 +2377,12 @@
   (let [{:keys [on-show-detailed saa-data]} props]
     [ui-helpers/custom-styled-card
      {:icon [:> GatewayOutlined {:style {:marginRight "8px"}}]
-      :title "椎管内麻醉相关评估"
-      :header-color "#f0f5ff"
+      :title-text "椎管内麻醉相关评估"
+      :header-bg-color "#f0f5ff"
+      :content (generate-spinal-anesthesia-summary saa-data)
       :on-double-click on-show-detailed
       :card-style {:cursor "pointer"}
-      :card-body-style {:padding "10px"}}
-     (generate-spinal-anesthesia-summary saa-data)]))
+      :card-body-style {:padding "10px"}}]))
 
 (defn spinal-anesthesia-assessment-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id saa-data on-show-summary]} props
