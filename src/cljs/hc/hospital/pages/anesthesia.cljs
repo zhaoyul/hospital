@@ -657,7 +657,7 @@
 
         register-form-instance (fn [card-key form-instance]
                                  (swap! card-form-instances assoc card-key form-instance))
-        
+
         save-button (fn [] ; Moved save-button inside assessment
                       [:div {:style {:padding "10px 0"
                                      :background "white"
@@ -669,18 +669,17 @@
                        [:> Button {:type "primary"
                                    :size "large"
                                    :icon (r/as-element [:> SaveOutlined])
-                                    :onClick (fn []
-                                               (let [forms-map @card-form-instances]
-                                                 (timbre/info "Attempting to submit all card forms. Forms found:" (count (keys forms-map)))
-                                                 (doseq [[card-key form-inst] forms-map]
-                                                   (if form-inst
-                                                     (do
-                                                       (timbre/info "Submitting form for card:" card-key)
-                                                       (.submit form-inst))
-                                                     (timbre/warn "No form instance found for card key:" card-key)))
-                                                 (timbre/info "All card forms submitted, proceeding to save final assessment.")
-                                                 (rf/dispatch [::events/save-final-assessment])))
-                                    }
+                                   :onClick (fn []
+                                              (let [forms-map @card-form-instances]
+                                                (timbre/info "Attempting to submit all card forms. Forms found:" (count (keys forms-map)))
+                                                (doseq [[card-key form-inst] forms-map]
+                                                  (if form-inst
+                                                    (do
+                                                      (timbre/info "Submitting form for card:" card-key)
+                                                      (.submit form-inst))
+                                                    (timbre/warn "No form instance found for card key:" card-key)))
+                                                (timbre/info "All card forms submitted, proceeding to save final assessment.")
+                                                (rf/dispatch [::events/save-final-assessment-later])))} ;; 稍等一会, db修改完成后再提交
                         "保存评估结果"]])]
     (if current-patient-id
       ;; 有选择患者时的视图

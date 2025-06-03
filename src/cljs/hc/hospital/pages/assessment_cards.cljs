@@ -8,6 +8,8 @@
                                  UserOutlined WarningOutlined WomanOutlined]]
    ["antd" :refer [Checkbox Col DatePicker Form Input InputNumber Radio Row
                    Select]]
+   ["react" :as React]
+   [taoensso.timbre :as timbre :refer [spy]]
    [hc.hospital.components.assessment-form-components :as afc]
    [hc.hospital.events :as events]
    [hc.hospital.subs :as subs]
@@ -41,197 +43,198 @@
                                   (assoc-in [:cardiac_disease_history :congestive_heart_failure :last_episode_date]
                                             (utils/parse-date (get-in circulatory-data [:cardiac_disease_history :congestive_heart_failure :last_episode_date])))))
         on-finish-fn (fn [values]
-                       (let [transformed-values (-> values
+                       (let [values (js->clj values :keywordize-keys true)
+                             transformed-values (-> values
                                                     (assoc-in [:cardiac_disease_history :congestive_heart_failure :last_episode_date]
                                                               (when-let [d (get-in values [:cardiac_disease_history :congestive_heart_failure :last_episode_date])]
                                                                 (utils/date->iso-string d))))]
-                        (rf/dispatch [::events/update-canonical-assessment-section :circulatory_system (js->clj transformed-values :keywordize-keys true)])))]
-    (r/useEffect (fn []
-                   (when report-form-instance-fn
-                     (report-form-instance-fn :circulatory_system form))
-                   js/undefined)
-                 #js [])
+                         (rf/dispatch [::events/update-canonical-assessment-section :circulatory_system (js->clj transformed-values :keywordize-keys true)])))]
+    (React/useEffect (fn []
+                       (when report-form-instance-fn
+                         (report-form-instance-fn :circulatory_system form))
+                       js/undefined)
+                     #js [])
     (let [form-items [:<>
-                    ;; 心电图 (ECG)
-                    [:> Form.Item {:label "心电图" :name [:ecg_description]}
-                     [:> Input.TextArea {:placeholder "请描述ECG结果"
-                                         :rows 3}]]
+                      ;; 心电图 (ECG)
+                      [:> Form.Item {:label "心电图" :name [:ecg_description]}
+                       [:> Input.TextArea {:placeholder "请描述ECG结果"
+                                           :rows 3}]]
 
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "心脏疾病病史"
-                      :radio-name [:cardiac_disease_history :has]
-                      :radio-options [{:label "无" :value "无"} {:label "有" :value "有"}]
-                      :conditional-value "有"}
-                     ;; Children items directly appended
-                     ;; Coronary Artery Disease (冠心病)
-                     [:f> afc/form-item-radio-conditional
-                      {:form-instance form
-                       :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "冠心病"]
-                       :radio-name [:cardiac_disease_history :coronary_artery_disease :has]
-                       :radio-options yes-no-options
-                       :conditional-value "有"}
-                      [:> Form.Item {:label "症状" :name [:cardiac_disease_history :coronary_artery_disease :symptoms]}
-                       [:> Select {:placeholder "选择症状" :style {:width "100%"} :allowClear true
-                                   :options [{:value "无症状" :label "无症状"}
-                                             {:value "稳定性心绞痛" :label "稳定性心绞痛"}
-                                             {:value "不稳定性心绞痛" :label "不稳定性心绞痛"}
-                                             {:value "心梗" :label "心梗"}]}]]
-                      [:> Form.Item {:label "心脏支架" :name [:cardiac_disease_history :coronary_artery_disease :stent]}
-                       [:> Radio.Group {:options yes-no-options}]]
-                      [:> Form.Item {:label "治疗情况" :name [:cardiac_disease_history :coronary_artery_disease :treatment_status]}
-                       [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                   :options treatment-status-options}]]
-                      [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :coronary_artery_disease :medication]}
-                       [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]
-                     ;; Arrhythmia (心律失常)
-                     [:f> afc/form-item-radio-conditional
-                      {:form-instance form
-                       :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "心律失常"]
-                       :radio-name [:cardiac_disease_history :arrhythmia :has]
-                       :radio-options yes-no-unknown-options
-                       :conditional-value "有" ; Shows children if "有"
-                       :extra-condition-values ["不祥"] ; Also show children if "不祥"
-                       :value-for-children-wrapper "有"} ; Only wrap with div if "有" (to allow specific styling for "有")
-                      (when (= arrhythmia-has "有") ; Specific input for "有"
-                        [:> Form.Item {:name [:cardiac_disease_history :arrhythmia :has_details]}
-                         [:> Input {:placeholder "心律失常类型 (若选择'有')" :style {:marginTop "8px" :width "calc(100% - 0px)"}}]])
-                      ;; Fields for "有" or "不祥"
-                      [:> Form.Item {:label "类型" :name [:cardiac_disease_history :arrhythmia :type]}
-                       [:> Select {:placeholder "选择类型" :style {:width "100%"} :allowClear true
-                                   :options [{:value "低危型" :label "低危型"}
-                                             {:value "中危型" :label "中危型"}
-                                             {:value "高危型" :label "高危型"}]}]]
-                      [:> Form.Item {:label "治疗情况" :name [:cardiac_disease_history :arrhythmia :treatment_status]}
-                       [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                   :options treatment-status-options}]]
-                      [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :arrhythmia :medication]}
-                       [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]
-                     ;; Cardiomyopathy (心肌病)
-                     [:f> afc/form-item-radio-conditional
-                      {:form-instance form
-                       :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "心肌病"]
-                       :radio-name [:cardiac_disease_history :cardiomyopathy :has]
-                       :radio-options yes-no-options
-                       :conditional-value "有"}
-                      [:> Form.Item {:name [:cardiac_disease_history :cardiomyopathy :has_details]}
-                       [:> Input {:placeholder "心肌病类型 (若选择'有')" :style {:marginTop "8px" :width "calc(100% - 0px)"}}]]
-                      [:> Form.Item {:label "治疗情况" :name [:cardiac_disease_history :cardiomyopathy :treatment_status]}
-                       [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                   :options treatment-status-options}]]
-                      [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :cardiomyopathy :medication]}
-                       [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]
-                     ;; Valvular Heart Disease (心脏瓣膜病变)
-                     [:f> afc/form-item-radio-conditional
-                      {:form-instance form
-                       :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "心脏瓣膜病变"]
-                       :radio-name [:cardiac_disease_history :valvular_heart_disease :has]
-                       :radio-options yes-no-options
-                       :conditional-value "有"}
-                      [:> Form.Item {:name [:cardiac_disease_history :valvular_heart_disease :has_details]}
-                       [:> Input {:placeholder "心脏瓣膜病变类型 (若选择'有')" :style {:marginTop "8px" :width "calc(100% - 0px)"}}]]
-                      [:> Form.Item {:label "治疗情况" :name [:cardiac_disease_history :valvular_heart_disease :treatment_status]}
-                       [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                   :options treatment-status-options}]]
-                      [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :valvular_heart_disease :medication]}
-                       [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]
-                     ;; Congenital Heart Disease (先天性心脏病)
-                     [:f> afc/form-item-radio-conditional
-                      {:form-instance form
-                       :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "先天性心脏病"]
-                       :radio-name [:cardiac_disease_history :congenital_heart_disease :has]
-                       :radio-options yes-no-options
-                       :conditional-value "有"}
-                      [:> Form.Item {:name [:cardiac_disease_history :congenital_heart_disease :has_details]}
-                       [:> Input {:placeholder "先天性心脏病类型 (若选择'有')" :style {:marginTop "8px" :width "calc(100% - 0px)"}}]]
-                      [:> Form.Item {:label "治疗情况" :name [:cardiac_disease_history :congenital_heart_disease :treatment_status]}
-                       [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                   :options treatment-status-options}]]
-                      [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :congenital_heart_disease :medication]}
-                       [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]
-                     ;; Congestive Heart Failure (充血性心力衰竭病史)
-                     [:f> afc/form-item-radio-conditional
-                      {:form-instance form
-                       :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "充血性心力衰竭病史"]
-                       :radio-name [:cardiac_disease_history :congestive_heart_failure :has]
-                       :radio-options yes-no-options
-                       :conditional-value "有"}
-                      [:> Form.Item {:label "上次发作日期" :name [:cardiac_disease_history :congestive_heart_failure :last_episode_date]}
-                       [:> DatePicker {:style {:width "100%"} :placeholder "选择日期"}]]
-                      [:> Form.Item {:label "治疗情况" :name [:cardiac_disease_history :congestive_heart_failure :treatment_status]}
-                       [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                   :options treatment-status-options}]]
-                      [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :congestive_heart_failure :medication]}
-                       [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]
-                     ;; Pulmonary Hypertension (肺动脉高压)
-                     [:f> afc/form-item-radio-conditional
-                      {:form-instance form
-                       :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "肺动脉高压"]
-                       :radio-name [:cardiac_disease_history :pulmonary_hypertension :has]
-                       :radio-options yes-no-options
-                       :conditional-value "有"}
-                      [:> Form.Item {:name [:cardiac_disease_history :pulmonary_hypertension :has_details]}
-                       [:> Input {:placeholder "肺动脉高压类型 (若选择'有')" :style {:marginTop "8px" :width "calc(100% - 0px)"}}]]
-                      [:> Form.Item {:label "治疗情况" :name [:cardiac_disease_history :pulmonary_hypertension :treatment_status]}
-                       [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                   :options treatment-status-options}]]
-                      [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :pulmonary_hypertension :medication]}
-                       [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "心脏疾病病史"
+                        :radio-name [:cardiac_disease_history :has]
+                        :radio-options [{:label "无" :value "无"} {:label "有" :value "有"}]
+                        :conditional-value "有"}
+                       ;; Children items directly appended
+                       ;; Coronary Artery Disease (冠心病)
+                       [:f> afc/form-item-radio-conditional
+                        {:form-instance form
+                         :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "冠心病"]
+                         :radio-name [:cardiac_disease_history :coronary_artery_disease :has]
+                         :radio-options yes-no-options
+                         :conditional-value "有"}
+                        [:> Form.Item {:label "症状" :name [:cardiac_disease_history :coronary_artery_disease :symptoms]}
+                         [:> Select {:placeholder "选择症状" :style {:width "100%"} :allowClear true
+                                     :options [{:value "无症状" :label "无症状"}
+                                               {:value "稳定性心绞痛" :label "稳定性心绞痛"}
+                                               {:value "不稳定性心绞痛" :label "不稳定性心绞痛"}
+                                               {:value "心梗" :label "心梗"}]}]]
+                        [:> Form.Item {:label "心脏支架" :name [:cardiac_disease_history :coronary_artery_disease :stent]}
+                         [:> Radio.Group {:options yes-no-options}]]
+                        [:> Form.Item {:label "治疗情况" :name [:cardiac_disease_history :coronary_artery_disease :treatment_status]}
+                         [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                     :options treatment-status-options}]]
+                        [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :coronary_artery_disease :medication]}
+                         [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]
+                       ;; Arrhythmia (心律失常)
+                       [:f> afc/form-item-radio-conditional
+                        {:form-instance form
+                         :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "心律失常"]
+                         :radio-name [:cardiac_disease_history :arrhythmia :has]
+                         :radio-options yes-no-unknown-options
+                         :conditional-value "有" ; Shows children if "有"
+                         :extra-condition-values ["不祥"] ; Also show children if "不祥"
+                         :value-for-children-wrapper "有"} ; Only wrap with div if "有" (to allow specific styling for "有")
+                        (when (= arrhythmia-has "有") ; Specific input for "有"
+                          [:> Form.Item {:name [:cardiac_disease_history :arrhythmia :has_details]}
+                           [:> Input {:placeholder "心律失常类型 (若选择'有')" :style {:marginTop "8px" :width "calc(100% - 0px)"}}]])
+                        ;; Fields for "有" or "不祥"
+                        [:> Form.Item {:label "类型" :name [:cardiac_disease_history :arrhythmia :type]}
+                         [:> Select {:placeholder "选择类型" :style {:width "100%"} :allowClear true
+                                     :options [{:value "低危型" :label "低危型"}
+                                               {:value "中危型" :label "中危型"}
+                                               {:value "高危型" :label "高危型"}]}]]
+                        [:> Form.Item {:label "治疗情况" :name [:cardiac_disease_history :arrhythmia :treatment_status]}
+                         [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                     :options treatment-status-options}]]
+                        [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :arrhythmia :medication]}
+                         [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]
+                       ;; Cardiomyopathy (心肌病)
+                       [:f> afc/form-item-radio-conditional
+                        {:form-instance form
+                         :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "心肌病"]
+                         :radio-name [:cardiac_disease_history :cardiomyopathy :has]
+                         :radio-options yes-no-options
+                         :conditional-value "有"}
+                        [:> Form.Item {:name [:cardiac_disease_history :cardiomyopathy :has_details]}
+                         [:> Input {:placeholder "心肌病类型 (若选择'有')" :style {:marginTop "8px" :width "calc(100% - 0px)"}}]]
+                        [:> Form.Item {:label "治疗情况" :name [:cardiac_disease_history :cardiomyopathy :treatment_status]}
+                         [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                     :options treatment-status-options}]]
+                        [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :cardiomyopathy :medication]}
+                         [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]
+                       ;; Valvular Heart Disease (心脏瓣膜病变)
+                       [:f> afc/form-item-radio-conditional
+                        {:form-instance form
+                         :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "心脏瓣膜病变"]
+                         :radio-name [:cardiac_disease_history :valvular_heart_disease :has]
+                         :radio-options yes-no-options
+                         :conditional-value "有"}
+                        [:> Form.Item {:name [:cardiac_disease_history :valvular_heart_disease :has_details]}
+                         [:> Input {:placeholder "心脏瓣膜病变类型 (若选择'有')" :style {:marginTop "8px" :width "calc(100% - 0px)"}}]]
+                        [:> Form.Item {:label "治疗情况" :name [:cardiac_disease_history :valvular_heart_disease :treatment_status]}
+                         [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                     :options treatment-status-options}]]
+                        [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :valvular_heart_disease :medication]}
+                         [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]
+                       ;; Congenital Heart Disease (先天性心脏病)
+                       [:f> afc/form-item-radio-conditional
+                        {:form-instance form
+                         :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "先天性心脏病"]
+                         :radio-name [:cardiac_disease_history :congenital_heart_disease :has]
+                         :radio-options yes-no-options
+                         :conditional-value "有"}
+                        [:> Form.Item {:name [:cardiac_disease_history :congenital_heart_disease :has_details]}
+                         [:> Input {:placeholder "先天性心脏病类型 (若选择'有')" :style {:marginTop "8px" :width "calc(100% - 0px)"}}]]
+                        [:> Form.Item {:label "治疗情况" :name [:cardiac_disease_history :congenital_heart_disease :treatment_status]}
+                         [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                     :options treatment-status-options}]]
+                        [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :congenital_heart_disease :medication]}
+                         [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]
+                       ;; Congestive Heart Failure (充血性心力衰竭病史)
+                       [:f> afc/form-item-radio-conditional
+                        {:form-instance form
+                         :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "充血性心力衰竭病史"]
+                         :radio-name [:cardiac_disease_history :congestive_heart_failure :has]
+                         :radio-options yes-no-options
+                         :conditional-value "有"}
+                        [:> Form.Item {:label "上次发作日期" :name [:cardiac_disease_history :congestive_heart_failure :last_episode_date]}
+                         [:> DatePicker {:style {:width "100%"} :placeholder "选择日期"}]]
+                        [:> Form.Item {:label "治疗情况" :name [:cardiac_disease_history :congestive_heart_failure :treatment_status]}
+                         [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                     :options treatment-status-options}]]
+                        [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :congestive_heart_failure :medication]}
+                         [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]
+                       ;; Pulmonary Hypertension (肺动脉高压)
+                       [:f> afc/form-item-radio-conditional
+                        {:form-instance form
+                         :label [:h4 {:style {:fontSize "15px" :marginBottom "10px"}} "肺动脉高压"]
+                         :radio-name [:cardiac_disease_history :pulmonary_hypertension :has]
+                         :radio-options yes-no-options
+                         :conditional-value "有"}
+                        [:> Form.Item {:name [:cardiac_disease_history :pulmonary_hypertension :has_details]}
+                         [:> Input {:placeholder "肺动脉高压类型 (若选择'有')" :style {:marginTop "8px" :width "calc(100% - 0px)"}}]]
+                        [:> Form.Item {:label "治疗情况" :name [:cardiac_disease_history :pulmonary_hypertension :treatment_status]}
+                         [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                     :options treatment-status-options}]]
+                        [:> Form.Item {:label "治疗用药" :name [:cardiac_disease_history :pulmonary_hypertension :medication]}
+                         [:> Input.TextArea {:placeholder "描述治疗用药" :rows 2}]]]]
 
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "心脏起搏器植入史"
-                      :radio-name [:pacemaker_history :has]
-                      :radio-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "起搏器类型" :name [:pacemaker_history :type]}
-                      [:> Radio.Group {}
-                       [:> Radio {:value "临时起搏器"} "临时起搏器"]
-                       [:> Radio {:value "永久起搏器"} "永久起搏器"]]]
-                     (when (= pacemaker-type "永久起搏器") ; This nested condition remains
-                       [:> Form.Item {:label "工作状态" :name [:pacemaker_history :working_status]}
-                        [:> Input {:placeholder "描述永久起搏器工作状态"}]])]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "心脏起搏器植入史"
+                        :radio-name [:pacemaker_history :has]
+                        :radio-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "起搏器类型" :name [:pacemaker_history :type]}
+                        [:> Radio.Group {}
+                         [:> Radio {:value "临时起搏器"} "临时起搏器"]
+                         [:> Radio {:value "永久起搏器"} "永久起搏器"]]]
+                       (when (= pacemaker-type "永久起搏器") ; This nested condition remains
+                         [:> Form.Item {:label "工作状态" :name [:pacemaker_history :working_status]}
+                          [:> Input {:placeholder "描述永久起搏器工作状态"}]])]
 
-                    ;; Cardiac Ultrasound Findings Section
-                    [:> Form.Item {:label "心脏彩超检查" :name [:cardiac_ultrasound_findings :details]}
-                     [:> Input.TextArea {:placeholder "请描述心脏彩超检查内容"
-                                         :rows 4}]]
+                      ;; Cardiac Ultrasound Findings Section
+                      [:> Form.Item {:label "心脏彩超检查" :name [:cardiac_ultrasound_findings :details]}
+                       [:> Input.TextArea {:placeholder "请描述心脏彩超检查内容"
+                                           :rows 4}]]
 
-                    ;; Coronary CTA/Angiography Results Section
-                    [:> Form.Item {:label "冠脉CTA/冠脉造影结果" :name [:coronary_cta_angiography_results :details]}
-                     [:> Input.TextArea {:placeholder "请描述冠脉CTA/冠脉造影结果内容"
-                                         :rows 4}]]
+                      ;; Coronary CTA/Angiography Results Section
+                      [:> Form.Item {:label "冠脉CTA/冠脉造影结果" :name [:coronary_cta_angiography_results :details]}
+                       [:> Input.TextArea {:placeholder "请描述冠脉CTA/冠脉造影结果内容"
+                                           :rows 4}]]
 
-                    ;; Cardiac Function Assessment Section
-                    [:> Form.Item {:label "心脏功能评估 (NYHA分级)" :name [:cardiac_function_assessment :class]}
-                     [:> Radio.Group {}
-                      (for [opt cardiac-function-options]
-                        ^{:key (:value opt)} [:> Radio {:value (:value opt) :style {:display "block" :height "auto" :lineHeight "22px" :whiteSpace "normal" :marginBottom "8px"}}
-                                              (:label opt)])]]
+                      ;; Cardiac Function Assessment Section
+                      [:> Form.Item {:label "心脏功能评估 (NYHA分级)" :name [:cardiac_function_assessment :class]}
+                       [:> Radio.Group {}
+                        (for [opt cardiac-function-options]
+                          ^{:key (:value opt)} [:> Radio {:value (:value opt) :style {:display "block" :height "auto" :lineHeight "22px" :whiteSpace "normal" :marginBottom "8px"}}
+                                                (:label opt)])]]
 
-                    ;; Exercise Capacity Assessment Section
-                    [:> Form.Item {:label "运动能力评估" :name [:exercise_capacity_assessment :level]}
-                     [:> Radio.Group {}
-                      (for [opt exercise-capacity-options]
-                        ^{:key (:value opt)} [:> Radio {:value (:value opt) :style {:display "block" :height "auto" :lineHeight "22px" :whiteSpace "normal" :marginBottom "8px"}}
-                                              (:label opt)])]]
+                      ;; Exercise Capacity Assessment Section
+                      [:> Form.Item {:label "运动能力评估" :name [:exercise_capacity_assessment :level]}
+                       [:> Radio.Group {}
+                        (for [opt exercise-capacity-options]
+                          ^{:key (:value opt)} [:> Radio {:value (:value opt) :style {:display "block" :height "auto" :lineHeight "22px" :whiteSpace "normal" :marginBottom "8px"}}
+                                                (:label opt)])]]
 
-                    ;; Other Conditions Section
-                    [:> Form.Item {:label "其他循环系统相关情况" :name [:other_cardiac_info :details]}
-                     [:> Input.TextArea {:placeholder "请描述其他循环系统相关情况"
-                                         :rows 4}]]
-                    ]]
-    [afc/patient-assessment-card-wrapper
-     {:icon [:> HeartOutlined {:style {:marginRight "8px"}}]
-      :title "循环系统"
-      :header-color "#e6f7ff"
-      :patient-id patient-id
-      :form-instance form
-      :form-key (str patient-id "-circulatory-detailed")
-      :initial-data initial-form-values
-      :on-finish-handler on-finish-fn
-      :on-values-change-handler nil ; No onValuesChange for this card yet
-      :children form-items}]))
+                      ;; Other Conditions Section
+                      [:> Form.Item {:label "其他循环系统相关情况" :name [:other_cardiac_info :details]}
+                       [:> Input.TextArea {:placeholder "请描述其他循环系统相关情况"
+                                           :rows 4}]]
+                      ]]
+      [afc/patient-assessment-card-wrapper
+       {:icon [:> HeartOutlined {:style {:marginRight "8px"}}]
+        :title "循环系统"
+        :header-color "#e6f7ff"
+        :patient-id patient-id
+        :form-instance form
+        :form-key (str patient-id "-circulatory-detailed")
+        :initial-data initial-form-values
+        :on-finish-handler on-finish-fn
+        :on-values-change-handler nil ; No onValuesChange for this card yet
+        :children form-items}])))
 
 
 (defn respiratory-system-card "呼吸系统" [props]
@@ -259,7 +262,8 @@
                                   (assoc-in [:asthma_history :last_episode_date]
                                             (utils/parse-date (get-in respiratory-data [:asthma_history :last_episode_date])))))
         on-finish-fn (fn [values]
-                       (let [transformed-values (-> values
+                       (let [values (js->clj values :keywordize-keys true)
+                             transformed-values (-> values
                                                     (assoc-in [:cold_history_last_2_weeks :onset_date]
                                                               (when-let [d (get-in values [:cold_history_last_2_weeks :onset_date])]
                                                                 (utils/date->iso-string d)))
@@ -270,137 +274,137 @@
                                                               (when-let [d (get-in values [:asthma_history :last_episode_date])]
                                                                 (utils/date->iso-string d))))]
                          (rf/dispatch [::events/update-canonical-assessment-section :respiratory_system (js->clj transformed-values :keywordize-keys true)])))]
-    (r/useEffect (fn []
-                   (when report-form-instance-fn
-                     (report-form-instance-fn :respiratory_system form))
-                   js/undefined)
-                 #js [])
+    (React/useEffect (fn []
+                       (when report-form-instance-fn
+                         (report-form-instance-fn :respiratory_system form))
+                       js/undefined)
+                     #js [])
     (let [form-items [:<>
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "近两周内感冒病史"
-                      :radio-name [:cold_history_last_2_weeks :present]
-                      :radio-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "发病日期" :name [:cold_history_last_2_weeks :onset_date]}
-                      [:> DatePicker {:style {:width "100%"} :placeholder "选择日期"}]]
-                     [:> Form.Item {:label "症状" :name [:cold_history_last_2_weeks :symptoms]}
-                      [:> Checkbox.Group {:options cold-symptom-options}]]
-                     [:> Form.Item {:label "治疗情况" :name [:cold_history_last_2_weeks :treatment_status]}
-                      [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                  :options treatment-options}]]]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "近两周内感冒病史"
+                        :radio-name [:cold_history_last_2_weeks :present]
+                        :radio-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "发病日期" :name [:cold_history_last_2_weeks :onset_date]}
+                        [:> DatePicker {:style {:width "100%"} :placeholder "选择日期"}]]
+                       [:> Form.Item {:label "症状" :name [:cold_history_last_2_weeks :symptoms]}
+                        [:> Checkbox.Group {:options cold-symptom-options}]]
+                       [:> Form.Item {:label "治疗情况" :name [:cold_history_last_2_weeks :treatment_status]}
+                        [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                    :options treatment-options}]]]
 
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "近一个月内支气管炎 / 肺炎病史"
-                      :radio-name [:bronchitis_pneumonia_last_month :present]
-                      :radio-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "发病日期" :name [:bronchitis_pneumonia_last_month :onset_date]}
-                      [:> DatePicker {:style {:width "100%"} :placeholder "选择日期"}]]
-                     [:> Form.Item {:label "治疗情况" :name [:bronchitis_pneumonia_last_month :treatment_status]}
-                      [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                  :options treatment-options}]]]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "近一个月内支气管炎 / 肺炎病史"
+                        :radio-name [:bronchitis_pneumonia_last_month :present]
+                        :radio-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "发病日期" :name [:bronchitis_pneumonia_last_month :onset_date]}
+                        [:> DatePicker {:style {:width "100%"} :placeholder "选择日期"}]]
+                       [:> Form.Item {:label "治疗情况" :name [:bronchitis_pneumonia_last_month :treatment_status]}
+                        [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                    :options treatment-options}]]]
 
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "哮喘病史"
-                      :radio-name [:asthma_history :present]
-                      :radio-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "上次发作日期" :name [:asthma_history :last_episode_date]}
-                      [:> DatePicker {:style {:width "100%"} :placeholder "选择日期"}]]
-                     [:> Form.Item {:label "治疗情况" :name [:asthma_history :treatment_status]}
-                      [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                  :options treatment-options}]]
-                     [:> Form.Item {:label "用药情况" :name [:asthma_history :medication_status]}
-                      [:> Select {:placeholder "选择用药情况" :style {:width "100%"} :allowClear true
-                                  :options [{:value "规律吸入激素" :label "规律吸入激素"}
-                                            {:value "按需使用支扩剂" :label "按需使用支扩剂"}
-                                            {:value "其他" :label "其他"} {:value "未用药" :label "未用药"}]}]]
-                     [:> Form.Item {:label "用药详情" :name [:asthma_history :medication_details]}
-                      [:> Input.TextArea {:placeholder "请描述具体用药情况" :rows 2}]]]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "哮喘病史"
+                        :radio-name [:asthma_history :present]
+                        :radio-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "上次发作日期" :name [:asthma_history :last_episode_date]}
+                        [:> DatePicker {:style {:width "100%"} :placeholder "选择日期"}]]
+                       [:> Form.Item {:label "治疗情况" :name [:asthma_history :treatment_status]}
+                        [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                    :options treatment-options}]]
+                       [:> Form.Item {:label "用药情况" :name [:asthma_history :medication_status]}
+                        [:> Select {:placeholder "选择用药情况" :style {:width "100%"} :allowClear true
+                                    :options [{:value "规律吸入激素" :label "规律吸入激素"}
+                                              {:value "按需使用支扩剂" :label "按需使用支扩剂"}
+                                              {:value "其他" :label "其他"} {:value "未用药" :label "未用药"}]}]]
+                       [:> Form.Item {:label "用药详情" :name [:asthma_history :medication_details]}
+                        [:> Input.TextArea {:placeholder "请描述具体用药情况" :rows 2}]]]
 
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "慢性阻塞性肺疾病 (COPD)"
-                      :radio-name [:copd_history :present]
-                      :radio-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "治疗情况" :name [:copd_history :treatment_status]}
-                      [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                  :options treatment-options}]]]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "慢性阻塞性肺疾病 (COPD)"
+                        :radio-name [:copd_history :present]
+                        :radio-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "治疗情况" :name [:copd_history :treatment_status]}
+                        [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                    :options treatment-options}]]]
 
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "支气管扩张症"
-                      :radio-name [:bronchiectasis_history :present]
-                      :radio-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "治疗情况" :name [:bronchiectasis_history :treatment_status]}
-                      [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                  :options treatment-options}]]]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "支气管扩张症"
+                        :radio-name [:bronchiectasis_history :present]
+                        :radio-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "治疗情况" :name [:bronchiectasis_history :treatment_status]}
+                        [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                    :options treatment-options}]]]
 
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "肺部结节"
-                      :radio-name [:pulmonary_nodules_history :present]
-                      :radio-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "治疗情况" :name [:pulmonary_nodules_history :treatment_status]}
-                      [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                  :options treatment-options}]]]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "肺部结节"
+                        :radio-name [:pulmonary_nodules_history :present]
+                        :radio-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "治疗情况" :name [:pulmonary_nodules_history :treatment_status]}
+                        [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                    :options treatment-options}]]]
 
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "肺部肿瘤"
-                      :radio-name [:lung_tumor_history :present]
-                      :radio-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "治疗情况" :name [:lung_tumor_history :treatment_status]}
-                      [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                  :options treatment-options}]]]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "肺部肿瘤"
+                        :radio-name [:lung_tumor_history :present]
+                        :radio-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "治疗情况" :name [:lung_tumor_history :treatment_status]}
+                        [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                    :options treatment-options}]]]
 
-                    [:> Form.Item {:label "胸片" :name [:chest_xray_results]}
-                     [:> Input.TextArea {:placeholder "请描述胸片结果" :rows 2}]]
+                      [:> Form.Item {:label "胸片" :name [:chest_xray_results]}
+                       [:> Input.TextArea {:placeholder "请描述胸片结果" :rows 2}]]
 
-                    [:> Form.Item {:label "胸部 CT" :name [:chest_ct_results]}
-                     [:> Input.TextArea {:placeholder "请描述胸部 CT 结果" :rows 2}]]
+                      [:> Form.Item {:label "胸部 CT" :name [:chest_ct_results]}
+                       [:> Input.TextArea {:placeholder "请描述胸部 CT 结果" :rows 2}]]
 
-                    [:> Form.Item {:label "肺功能" :name [:pulmonary_function_test_results]}
-                     [:> Input.TextArea {:placeholder "请描述肺功能检查结果" :rows 2}]]
+                      [:> Form.Item {:label "肺功能" :name [:pulmonary_function_test_results]}
+                       [:> Input.TextArea {:placeholder "请描述肺功能检查结果" :rows 2}]]
 
-                    [:> Form.Item {:label "血气分析" :name [:blood_gas_analysis_results]}
-                     [:> Input.TextArea {:placeholder "请描述血气分析结果" :rows 2}]]
+                      [:> Form.Item {:label "血气分析" :name [:blood_gas_analysis_results]}
+                       [:> Input.TextArea {:placeholder "请描述血气分析结果" :rows 2}]]
 
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "是否有肺结核"
-                      :radio-name [:tuberculosis_history :present]
-                      :radio-options [{:label "无" :value "无"} {:label "有" :value "有"}]
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "治疗情况" :name [:tuberculosis_history :treatment_status]}
-                      [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                  :options treatment-options}]]
-                     [:> Form.Item {:label "传染性" :name [:tuberculosis_history :infectious]}
-                      [:> Radio.Group {}
-                       [:> Radio {:value "无"} "无"]
-                       [:> Radio {:value "有"} "有"]
-                       [:> Radio {:value "不详"} "不祥"]]]]
-                    [:> Form.Item {:label "其他呼吸系统相关情况" :name [:other_respiratory_conditions]}
-                     [:> Input.TextArea {:placeholder "如有其他呼吸系统相关情况请在此注明" :rows 3}]]]]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "是否有肺结核"
+                        :radio-name [:tuberculosis_history :present]
+                        :radio-options [{:label "无" :value "无"} {:label "有" :value "有"}]
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "治疗情况" :name [:tuberculosis_history :treatment_status]}
+                        [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                    :options treatment-options}]]
+                       [:> Form.Item {:label "传染性" :name [:tuberculosis_history :infectious]}
+                        [:> Radio.Group {}
+                         [:> Radio {:value "无"} "无"]
+                         [:> Radio {:value "有"} "有"]
+                         [:> Radio {:value "不详"} "不祥"]]]]
+                      [:> Form.Item {:label "其他呼吸系统相关情况" :name [:other_respiratory_conditions]}
+                       [:> Input.TextArea {:placeholder "如有其他呼吸系统相关情况请在此注明" :rows 3}]]]]
 
-    [afc/patient-assessment-card-wrapper
-     {:icon [:> CloudOutlined {:style {:marginRight "8px"}}]
-      :title "呼吸系统"
-      :header-color "#e6fffb"
-      :patient-id patient-id
-      :form-instance form
-      :form-key (str patient-id "-respiratory")
-      :initial-data initial-form-values
-      :on-finish-handler on-finish-fn
-      :on-values-change-handler nil
-      :children form-items}]))
+      [afc/patient-assessment-card-wrapper
+       {:icon [:> CloudOutlined {:style {:marginRight "8px"}}]
+        :title "呼吸系统"
+        :header-color "#e6fffb"
+        :patient-id patient-id
+        :form-instance form
+        :form-key (str patient-id "-respiratory")
+        :initial-data initial-form-values
+        :on-finish-handler on-finish-fn
+        :on-values-change-handler nil
+        :children form-items}])))
 
 (defn mental-neuromuscular-system-card "精神及神经肌肉系统" [props]
   (let [{:keys [report-form-instance-fn]} props
@@ -433,157 +437,157 @@
                                   (assoc-in [:cerebral_infarction_history :last_episode_date] (utils/parse-date (get-in mn-data [:cerebral_infarction_history :last_episode_date])))
                                   (assoc-in [:cerebral_hemorrhage_history :last_episode_date] (utils/parse-date (get-in mn-data [:cerebral_hemorrhage_history :last_episode_date])))))
         on-finish-fn (fn [values]
-                       (let [transformed-values (-> values
+                       (let [transformed-values (-> (js->clj values :keywordize-keys true)
                                                     (assoc-in [:epilepsy_history :last_seizure_date] (when-let [d (get-in values [:epilepsy_history :last_seizure_date])] (utils/date->iso-string d)))
                                                     (assoc-in [:vertigo_history :last_episode_date] (when-let [d (get-in values [:vertigo_history :last_episode_date])] (utils/date->iso-string d)))
                                                     (assoc-in [:cerebral_infarction_history :last_episode_date] (when-let [d (get-in values [:cerebral_infarction_history :last_episode_date])] (utils/date->iso-string d)))
                                                     (assoc-in [:cerebral_hemorrhage_history :last_episode_date] (when-let [d (get-in values [:cerebral_hemorrhage_history :last_episode_date])] (utils/date->iso-string d))))]
                          (rf/dispatch [::events/update-canonical-assessment-section :mental_neuromuscular_system (js->clj transformed-values :keywordize-keys true)])))]
-    (r/useEffect (fn []
-                   (when report-form-instance-fn
-                     (report-form-instance-fn :mental_neuromuscular_system form))
-                   js/undefined)
-                 #js [])
+    (React/useEffect (fn []
+                       (when report-form-instance-fn
+                         (report-form-instance-fn :mental_neuromuscular_system form))
+                       js/undefined)
+                     #js [])
     (let [form-items [:<>
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "精神认知相关疾病史"
-                      :radio-name [:psycho_cognitive_history :present]
-                      :radio-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "症状" :name [:psycho_cognitive_history :symptoms]}
-                      [:> Checkbox.Group {:options psycho-cog-symptom-options}]]
-                     (when (some #{"other_symptoms"} psycho-cognitive-symptoms)
-                       [:> Form.Item {:label "其他症状详情" :name [:psycho_cognitive_history :symptoms_other_details]}
-                        [:> Input {:placeholder "请描述其他症状"}]])
-                     [:> Form.Item {:label "治疗情况" :name [:psycho_cognitive_history :treatment_status]}
-                      [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                  :options general-treatment-status-options}]]
-                     [:> Form.Item {:label "治疗用药" :name [:psycho_cognitive_history :medication]}
-                      [:> Input.TextArea {:placeholder "请描述治疗用药" :rows 2}]]]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "精神认知相关疾病史"
+                        :radio-name [:psycho_cognitive_history :present]
+                        :radio-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "症状" :name [:psycho_cognitive_history :symptoms]}
+                        [:> Checkbox.Group {:options psycho-cog-symptom-options}]]
+                       (when (some #{"other_symptoms"} psycho-cognitive-symptoms)
+                         [:> Form.Item {:label "其他症状详情" :name [:psycho_cognitive_history :symptoms_other_details]}
+                          [:> Input {:placeholder "请描述其他症状"}]])
+                       [:> Form.Item {:label "治疗情况" :name [:psycho_cognitive_history :treatment_status]}
+                        [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                    :options general-treatment-status-options}]]
+                       [:> Form.Item {:label "治疗用药" :name [:psycho_cognitive_history :medication]}
+                        [:> Input.TextArea {:placeholder "请描述治疗用药" :rows 2}]]]
 
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "癫痫病史"
-                      :radio-name [:epilepsy_history :present]
-                      :radio-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "近期发作日期" :name [:epilepsy_history :last_seizure_date]}
-                      [:> DatePicker {:style {:width "100%"} :placeholder "选择日期"}]]
-                     [:> Form.Item {:label "治疗情况" :name [:epilepsy_history :treatment_status]}
-                      [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                  :options general-treatment-status-options}]]
-                     [:> Form.Item {:label "治疗用药" :name [:epilepsy_history :medication]}
-                      [:> Input.TextArea {:placeholder "请描述治疗用药" :rows 2}]]]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "癫痫病史"
+                        :radio-name [:epilepsy_history :present]
+                        :radio-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "近期发作日期" :name [:epilepsy_history :last_seizure_date]}
+                        [:> DatePicker {:style {:width "100%"} :placeholder "选择日期"}]]
+                       [:> Form.Item {:label "治疗情况" :name [:epilepsy_history :treatment_status]}
+                        [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                    :options general-treatment-status-options}]]
+                       [:> Form.Item {:label "治疗用药" :name [:epilepsy_history :medication]}
+                        [:> Input.TextArea {:placeholder "请描述治疗用药" :rows 2}]]]
 
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "眩晕病史"
-                      :radio-name [:vertigo_history :present]
-                      :radio-options [{:label "无" :value "无"} {:label "有" :value "有"}]
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "近期发作日期" :name [:vertigo_history :last_episode_date]}
-                      [:> DatePicker {:style {:width "100%"} :placeholder "选择日期"}]]
-                     [:> Form.Item {:label "治疗情况" :name [:vertigo_history :treatment_status]}
-                      [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                  :options general-treatment-status-options}]]]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "眩晕病史"
+                        :radio-name [:vertigo_history :present]
+                        :radio-options [{:label "无" :value "无"} {:label "有" :value "有"}]
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "近期发作日期" :name [:vertigo_history :last_episode_date]}
+                        [:> DatePicker {:style {:width "100%"} :placeholder "选择日期"}]]
+                       [:> Form.Item {:label "治疗情况" :name [:vertigo_history :treatment_status]}
+                        [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                    :options general-treatment-status-options}]]]
 
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "短暂性脑缺血发作病史 (TIA)"
-                      :radio-name [:tia_history :present]
-                      :radio-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "近期发作情况" :name [:tia_history :recent_onset_status]}
-                      [:> Select {:placeholder "选择近期发作情况" :style {:width "100%"} :allowClear true
-                                  :options [{:value "近 3 月内无发作" :label "近 3 月内无发作"}
-                                            {:value "近 3 月内有发作" :label "近 3 月内有发作"}]}]]
-                     [:> Form.Item {:label "治疗情况" :name [:tia_history :treatment_status]}
-                      [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                  :options general-treatment-status-options}]]]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "短暂性脑缺血发作病史 (TIA)"
+                        :radio-name [:tia_history :present]
+                        :radio-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "近期发作情况" :name [:tia_history :recent_onset_status]}
+                        [:> Select {:placeholder "选择近期发作情况" :style {:width "100%"} :allowClear true
+                                    :options [{:value "近 3 月内无发作" :label "近 3 月内无发作"}
+                                              {:value "近 3 月内有发作" :label "近 3 月内有发作"}]}]]
+                       [:> Form.Item {:label "治疗情况" :name [:tia_history :treatment_status]}
+                        [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                    :options general-treatment-status-options}]]]
 
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "脑梗病史"
-                      :radio-name [:cerebral_infarction_history :present]
-                      :radio-options [{:label "无" :value "无"} {:label "有" :value "有"}]
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "近期发作日期" :name [:cerebral_infarction_history :last_episode_date]}
-                      [:> DatePicker {:style {:width "100%"} :placeholder "选择日期"}]]
-                     [:> Form.Item {:label "治疗情况" :name [:cerebral_infarction_history :treatment_status]}
-                      [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                  :options general-treatment-status-options}]]
-                     [:> Form.Item {:label "目前用药" :name [:cerebral_infarction_history :medication]}
-                      [:> Input.TextArea {:placeholder "请描述目前用药" :rows 2}]]]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "脑梗病史"
+                        :radio-name [:cerebral_infarction_history :present]
+                        :radio-options [{:label "无" :value "无"} {:label "有" :value "有"}]
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "近期发作日期" :name [:cerebral_infarction_history :last_episode_date]}
+                        [:> DatePicker {:style {:width "100%"} :placeholder "选择日期"}]]
+                       [:> Form.Item {:label "治疗情况" :name [:cerebral_infarction_history :treatment_status]}
+                        [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                    :options general-treatment-status-options}]]
+                       [:> Form.Item {:label "目前用药" :name [:cerebral_infarction_history :medication]}
+                        [:> Input.TextArea {:placeholder "请描述目前用药" :rows 2}]]]
 
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "脑出血病史"
-                      :radio-name [:cerebral_hemorrhage_history :present]
-                      :radio-options [{:label "无" :value "无"} {:label "有" :value "有"}]
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "近期发作日期" :name [:cerebral_hemorrhage_history :last_episode_date]}
-                      [:> DatePicker {:style {:width "100%"} :placeholder "选择日期"}]]
-                     [:> Form.Item {:label "治疗情况" :name [:cerebral_hemorrhage_history :treatment_status]}
-                      [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                  :options general-treatment-status-options}]]]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "脑出血病史"
+                        :radio-name [:cerebral_hemorrhage_history :present]
+                        :radio-options [{:label "无" :value "无"} {:label "有" :value "有"}]
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "近期发作日期" :name [:cerebral_hemorrhage_history :last_episode_date]}
+                        [:> DatePicker {:style {:width "100%"} :placeholder "选择日期"}]]
+                       [:> Form.Item {:label "治疗情况" :name [:cerebral_hemorrhage_history :treatment_status]}
+                        [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                    :options general-treatment-status-options}]]]
 
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "帕金森综合症"
-                      :radio-name [:parkinsons_syndrome :present]
-                      :radio-options [{:label "无" :value "无"} {:label "有" :value "有"}]
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "诊断年限 (年)" :name [:parkinsons_syndrome :diagnosis_duration_years]}
-                      [:> InputNumber {:placeholder "请输入年数" :style {:width "100%"} :min 0}]]
-                     [:> Form.Item {:label "治疗情况" :name [:parkinsons_syndrome :treatment_status]}
-                      [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                  :options general-treatment-status-options}]]
-                     [:> Form.Item {:label "用药情况" :name [:parkinsons_syndrome :medication]}
-                      [:> Input.TextArea {:placeholder "请描述用药情况" :rows 2}]]]
-                    ;; Cranial Carotid Stenosis - an Input appears if "有", not a div block.
-                    ;; This pattern is simpler and might not need the form-item-radio-conditional component unless we want to standardize all.
-                    ;; For now, leaving as is, as per instructions to prioritize div-revealing patterns.
-                    [:> Form.Item {:label "颅脑和颈动脉狭窄" :name [:cranial_carotid_stenosis :present]}
-                     [:> Radio.Group {}
-                      [:> Radio {:value "无"} "无"]
-                      [:> Radio {:value "有"} "有"]
-                      [:> Radio {:value "不祥"} "不祥"]]
-                     (when (= cranial-stenosis-present "有") ; Still use useWatch for this inline conditional input
-                       [:> Form.Item {:name [:cranial_carotid_stenosis :details]}
-                        [:> Input {:placeholder "请描述狭窄详情" :style {:marginLeft "10px" :width "calc(100% - 150px)"}}]])]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "帕金森综合症"
+                        :radio-name [:parkinsons_syndrome :present]
+                        :radio-options [{:label "无" :value "无"} {:label "有" :value "有"}]
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "诊断年限 (年)" :name [:parkinsons_syndrome :diagnosis_duration_years]}
+                        [:> InputNumber {:placeholder "请输入年数" :style {:width "100%"} :min 0}]]
+                       [:> Form.Item {:label "治疗情况" :name [:parkinsons_syndrome :treatment_status]}
+                        [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                    :options general-treatment-status-options}]]
+                       [:> Form.Item {:label "用药情况" :name [:parkinsons_syndrome :medication]}
+                        [:> Input.TextArea {:placeholder "请描述用药情况" :rows 2}]]]
+                      ;; Cranial Carotid Stenosis - an Input appears if "有", not a div block.
+                      ;; This pattern is simpler and might not need the form-item-radio-conditional component unless we want to standardize all.
+                      ;; For now, leaving as is, as per instructions to prioritize div-revealing patterns.
+                      [:> Form.Item {:label "颅脑和颈动脉狭窄" :name [:cranial_carotid_stenosis :present]}
+                       [:> Radio.Group {}
+                        [:> Radio {:value "无"} "无"]
+                        [:> Radio {:value "有"} "有"]
+                        [:> Radio {:value "不祥"} "不祥"]]
+                       (when (= cranial-stenosis-present "有") ; Still use useWatch for this inline conditional input
+                         [:> Form.Item {:name [:cranial_carotid_stenosis :details]}
+                          [:> Input {:placeholder "请描述狭窄详情" :style {:marginLeft "10px" :width "calc(100% - 150px)"}}]])]
 
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "其他神经肌肉系统情况"
-                      :radio-name [:other_neuromuscular_conditions :present]
-                      :radio-options [{:label "无" :value "无"} {:label "有" :value "有"}]
-                      :conditional-value "有"}
-                     ;; The entire let form becomes a child argument
-                     (let [other-symptom-options [{:label "重症肌无力" :value "myasthenia_gravis"}
-                                                   {:label "格林巴利综合征" :value "guillain_barre"}
-                                                   {:label "帕金森病史" :value "parkinsons_disease"}
-                                                   {:label "脊髓灰质炎后综合征" :value "post_polio_syndrome"}
-                                                   {:label "多发性硬化症" :value "multiple_sclerosis"}
-                                                   {:label "肌营养不良" :value "muscular_dystrophy"}
-                                                   {:label "其他" :value "other_specific_conditions"}]]
-                       [:<>
-                        [:> Form.Item {:label "症状" :name [:other_neuromuscular_conditions :symptoms]}
-                         [:> Checkbox.Group {:options other-symptom-options}]]
-                        (when (some #{"other_specific_conditions"} other-neuromuscular-symptoms)
-                          [:> Form.Item {:label "其他症状详情" :name [:other_neuromuscular_conditions :symptoms_other_details]}
-                           [:> Input {:placeholder "请描述其他具体情况"}]])])]]]
-    [afc/patient-assessment-card-wrapper
-     {:icon [:> UserOutlined {:style {:marginRight "8px"}}]
-      :title "精神及神经肌肉系统"
-      :header-color "#fffbe6"
-      :patient-id patient-id
-      :form-instance form
-      :form-key (str patient-id "-mental-neuromuscular")
-      :initial-data initial-form-values
-      :on-finish-handler on-finish-fn
-      :on-values-change-handler nil ; No onValuesChange for this card
-      :children form-items}]))
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "其他神经肌肉系统情况"
+                        :radio-name [:other_neuromuscular_conditions :present]
+                        :radio-options [{:label "无" :value "无"} {:label "有" :value "有"}]
+                        :conditional-value "有"}
+                       ;; The entire let form becomes a child argument
+                       (let [other-symptom-options [{:label "重症肌无力" :value "myasthenia_gravis"}
+                                                    {:label "格林巴利综合征" :value "guillain_barre"}
+                                                    {:label "帕金森病史" :value "parkinsons_disease"}
+                                                    {:label "脊髓灰质炎后综合征" :value "post_polio_syndrome"}
+                                                    {:label "多发性硬化症" :value "multiple_sclerosis"}
+                                                    {:label "肌营养不良" :value "muscular_dystrophy"}
+                                                    {:label "其他" :value "other_specific_conditions"}]]
+                         [:<>
+                          [:> Form.Item {:label "症状" :name [:other_neuromuscular_conditions :symptoms]}
+                           [:> Checkbox.Group {:options other-symptom-options}]]
+                          (when (some #{"other_specific_conditions"} other-neuromuscular-symptoms)
+                            [:> Form.Item {:label "其他症状详情" :name [:other_neuromuscular_conditions :symptoms_other_details]}
+                             [:> Input {:placeholder "请描述其他具体情况"}]])])]]]
+      [afc/patient-assessment-card-wrapper
+       {:icon [:> UserOutlined {:style {:marginRight "8px"}}]
+        :title "精神及神经肌肉系统"
+        :header-color "#fffbe6"
+        :patient-id patient-id
+        :form-instance form
+        :form-key (str patient-id "-mental-neuromuscular")
+        :initial-data initial-form-values
+        :on-finish-handler on-finish-fn
+        :on-values-change-handler nil ; No onValuesChange for this card
+        :children form-items}])))
 
 
 (defn endocrine-system-card "内分泌系统" [props]
@@ -606,8 +610,8 @@
         general-treatment-status-options [{:value "治愈" :label "治愈"} {:value "好转" :label "好转"} {:value "仍有症状" :label "仍有症状"} {:value "未治疗" :label "未治疗"} {:value "病情稳定" :label "病情稳定"} {:value "其他" :label "其他"}]
         initial-form-values endo-data ; No date parsing needed for this card
         on-finish-fn (fn [values]
-                       (rf/dispatch [::events/update-canonical-assessment-section :endocrine_system (js->clj values :keywordize-keys true)])))]
-    (r/useEffect (fn []
+                       (rf/dispatch [::events/update-canonical-assessment-section :endocrine_system (js->clj values :keywordize-keys true)]))]
+    (React/useEffect (fn []
                    (when report-form-instance-fn
                      (report-form-instance-fn :endocrine_system form))
                    js/undefined)
@@ -730,7 +734,7 @@
       :initial-data initial-form-values
       :on-finish-handler on-finish-fn
       :on-values-change-handler nil
-      :children form-items}]))
+      :children form-items}])))
 
 
 (defn liver-kidney-system-card "肝肾病史" [props]
@@ -746,48 +750,48 @@
                                     ;; ... other options
                                     {:label "其他" :value "other_liver_disease"}]
         on-finish-fn (fn [values]
-                       (rf/dispatch [::events/update-canonical-assessment-section :liver_kidney_system (js->clj values :keywordize-keys true)])))]
-    (r/useEffect (fn []
+                       (rf/dispatch [::events/update-canonical-assessment-section :liver_kidney_system (js->clj values :keywordize-keys true)]))]
+    (React/useEffect (fn []
                    (when report-form-instance-fn
                      (report-form-instance-fn :liver_kidney_system form))
                    js/undefined)
                  #js [])
     (let [form-items [:<>
-                    [:h4 "肝功能"]
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "状态"
-                      :radio-name [:liver_function :status]
-                      :radio-options [{:label "正常" :value "正常"} {:label "异常" :value "异常"}]
-                      :conditional-value "异常"}
-                     [:> Row {:gutter 16}
-                      [:> Col {:span 12}
-                       [:> Form.Item {:label "谷丙转氨酶 (ALT)" :name [:liver_function :alt]}
-                        [:> InputNumber {:placeholder "U/L (Ref: 0-40)" :style {:width "100%"} :addonAfter "U/L"}]]]
-                      ;; ... other liver function inputs
-                      [:> Col {:span 12}
-                       [:> Form.Item {:label "血清白蛋白 (Albumin)" :name [:liver_function :albumin]}
-                        [:> InputNumber {:placeholder "g/L (Ref: 35-55)" :style {:width "100%"} :addonAfter "g/L"}]]]]]
+                      [:h4 "肝功能"]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "状态"
+                        :radio-name [:liver_function :status]
+                        :radio-options [{:label "正常" :value "正常"} {:label "异常" :value "异常"}]
+                        :conditional-value "异常"}
+                       [:> Row {:gutter 16}
+                        [:> Col {:span 12}
+                         [:> Form.Item {:label "谷丙转氨酶 (ALT)" :name [:liver_function :alt]}
+                          [:> InputNumber {:placeholder "U/L (Ref: 0-40)" :style {:width "100%"} :addonAfter "U/L"}]]]
+                        ;; ... other liver function inputs
+                        [:> Col {:span 12}
+                         [:> Form.Item {:label "血清白蛋白 (Albumin)" :name [:liver_function :albumin]}
+                          [:> InputNumber {:placeholder "g/L (Ref: 35-55)" :style {:width "100%"} :addonAfter "g/L"}]]]]]
 
-                    [:h4 {:style {:marginTop "16px"}} "肝脏疾病病史"]
-                    [:> Form.Item {:label "类型" :name [:liver_disease_history :types]}
-                     [:> Checkbox.Group {:options liver-disease-type-options}]]
-                    ;; ... (rest of liver-kidney card)
-                    [:h4 {:style {:marginTop "16px"}} "其他情况"]
-                    [:> Form.Item {:label "其他肝肾系统相关情况" :name [:other_liver_kidney_conditions]}
-                     [:> Input.TextArea {:placeholder "如有其他肝肾系统相关情况请在此注明" :rows 3}]]
-                    ]]
-    [afc/patient-assessment-card-wrapper
-     {:icon [:> ProjectOutlined {:style {:marginRight "8px"}}]
-      :title "肝肾病史"
-      :header-color "#fff7e6"
-      :patient-id patient-id
-      :form-instance form
-      :form-key (str patient-id "-liver-kidney")
-      :initial-data initial-form-values
-      :on-finish-handler on-finish-fn
-      :on-values-change-handler nil
-      :children form-items}]))
+                      [:h4 {:style {:marginTop "16px"}} "肝脏疾病病史"]
+                      [:> Form.Item {:label "类型" :name [:liver_disease_history :types]}
+                       [:> Checkbox.Group {:options liver-disease-type-options}]]
+                      ;; ... (rest of liver-kidney card)
+                      [:h4 {:style {:marginTop "16px"}} "其他情况"]
+                      [:> Form.Item {:label "其他肝肾系统相关情况" :name [:other_liver_kidney_conditions]}
+                       [:> Input.TextArea {:placeholder "如有其他肝肾系统相关情况请在此注明" :rows 3}]]
+                      ]]
+      [afc/patient-assessment-card-wrapper
+       {:icon [:> ProjectOutlined {:style {:marginRight "8px"}}]
+        :title "肝肾病史"
+        :header-color "#fff7e6"
+        :patient-id patient-id
+        :form-instance form
+        :form-key (str patient-id "-liver-kidney")
+        :initial-data initial-form-values
+        :on-finish-handler on-finish-fn
+        :on-values-change-handler nil
+        :children form-items}])))
 
 (defn digestive-system-card  "消化系统" [props]
   (let [{:keys [report-form-instance-fn]} props
@@ -833,70 +837,70 @@
                                            {:label "其他" :value "other_chronic_digestive"}]
         initial-form-values ds-data
         on-finish-fn (fn [values]
-                       (rf/dispatch [::events/update-canonical-assessment-section :digestive_system (js->clj values :keywordize-keys true)])))]
-    (r/useEffect (fn []
+                       (rf/dispatch [::events/update-canonical-assessment-section :digestive_system (js->clj values :keywordize-keys true)]))]
+    (React/useEffect (fn []
                    (when report-form-instance-fn
                      (report-form-instance-fn :digestive_system form))
                    js/undefined)
                  #js [])
     (let [form-items [:<>
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "急性胃肠炎病史"
-                      :radio-name [:acute_gastroenteritis_history :has]
-                      :radio-options yes-no-unknown-options
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "症状" :name [:acute_gastroenteritis_history :symptoms]}
-                      [:> Checkbox.Group {:options acute-gastroenteritis-symptom-options}]]
-                     [:> Form.Item {:label "治疗情况" :name [:acute_gastroenteritis_history :treatment_status]}
-                      [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                  :options treatment-status-options}]]]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "急性胃肠炎病史"
+                        :radio-name [:acute_gastroenteritis_history :has]
+                        :radio-options yes-no-unknown-options
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "症状" :name [:acute_gastroenteritis_history :symptoms]}
+                        [:> Checkbox.Group {:options acute-gastroenteritis-symptom-options}]]
+                       [:> Form.Item {:label "治疗情况" :name [:acute_gastroenteritis_history :treatment_status]}
+                        [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                    :options treatment-status-options}]]]
 
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "食管，胃十二指肠疾病病史"
-                      :radio-name [:esophageal_gastric_duodenal_history :has]
-                      :radio-options yes-no-options
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "相关疾病" :name [:esophageal_gastric_duodenal_history :symptoms]}
-                      [:> Checkbox.Group {:options esophageal-gastric-duodenal-symptom-options
-                                          :style {:display "flex" :flexDirection "column"}}]]
-                     [:> Form.Item {:label "治疗情况" :name [:esophageal_gastric_duodenal_history :treatment_status]}
-                      [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                  :options treatment-status-options}]]]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "食管，胃十二指肠疾病病史"
+                        :radio-name [:esophageal_gastric_duodenal_history :has]
+                        :radio-options yes-no-options
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "相关疾病" :name [:esophageal_gastric_duodenal_history :symptoms]}
+                        [:> Checkbox.Group {:options esophageal-gastric-duodenal-symptom-options
+                                            :style {:display "flex" :flexDirection "column"}}]]
+                       [:> Form.Item {:label "治疗情况" :name [:esophageal_gastric_duodenal_history :treatment_status]}
+                        [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                    :options treatment-status-options}]]]
 
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "慢性消化疾病病史"
-                      :radio-name [:chronic_digestive_history :has]
-                      :radio-options yes-no-unknown-options
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "相关疾病" :name [:chronic_digestive_history :symptoms]}
-                      [:> Checkbox.Group {:options chronic-digestive-symptom-options
-                                          :style {:display "flex" :flexDirection "column"}}]]
-                     (when (some #{"other_chronic_digestive"} chronic-digestive-symptoms)
-                       [:> Form.Item {:label "其他疾病详情" :name [:chronic_digestive_history :symptoms_other_details]}
-                        [:> Input {:placeholder "请描述其他慢性消化疾病"}]])
-                     [:> Form.Item {:label "治疗情况" :name [:chronic_digestive_history :treatment_status]}
-                      [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                  :options treatment-status-options}]]]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "慢性消化疾病病史"
+                        :radio-name [:chronic_digestive_history :has]
+                        :radio-options yes-no-unknown-options
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "相关疾病" :name [:chronic_digestive_history :symptoms]}
+                        [:> Checkbox.Group {:options chronic-digestive-symptom-options
+                                            :style {:display "flex" :flexDirection "column"}}]]
+                       (when (some #{"other_chronic_digestive"} chronic-digestive-symptoms)
+                         [:> Form.Item {:label "其他疾病详情" :name [:chronic_digestive_history :symptoms_other_details]}
+                          [:> Input {:placeholder "请描述其他慢性消化疾病"}]])
+                       [:> Form.Item {:label "治疗情况" :name [:chronic_digestive_history :treatment_status]}
+                        [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                    :options treatment-status-options}]]]
 
-                    ;; 4. 其他情况 (Other Conditions)
-                    [:> Form.Item {:label "其他消化系统相关情况" :name [:other_conditions]}
-                     [:> Input.TextArea {:placeholder "请描述其他消化系统相关情况"
-                                         :rows 4}]]
-                    ]]
-    [afc/patient-assessment-card-wrapper
-     {:icon [:> CoffeeOutlined {:style {:marginRight "8px"}}]
-      :title "消化系统"
-      :header-color "#eff8ff" ; Adjusted color to be slightly different from respiratory for distinction
-      :patient-id patient-id
-      :form-instance form
-      :form-key (str patient-id "-digestive-system")
-      :initial-data initial-form-values
-      :on-finish-handler on-finish-fn
-      :on-values-change-handler nil
-      :children form-items}]))
+                      ;; 4. 其他情况 (Other Conditions)
+                      [:> Form.Item {:label "其他消化系统相关情况" :name [:other_conditions]}
+                       [:> Input.TextArea {:placeholder "请描述其他消化系统相关情况"
+                                           :rows 4}]]
+                      ]]
+      [afc/patient-assessment-card-wrapper
+       {:icon [:> CoffeeOutlined {:style {:marginRight "8px"}}]
+        :title "消化系统"
+        :header-color "#eff8ff" ; Adjusted color to be slightly different from respiratory for distinction
+        :patient-id patient-id
+        :form-instance form
+        :form-key (str patient-id "-digestive-system")
+        :initial-data initial-form-values
+        :on-finish-handler on-finish-fn
+        :on-values-change-handler nil
+        :children form-items}])))
 
 (defn hematologic-system-card "血液系统" [props]
   (let [{:keys [report-form-instance-fn]} props
@@ -909,72 +913,72 @@
         yes-no-unknown-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
         initial-form-values hs-data
         on-finish-fn (fn [values]
-                       (rf/dispatch [::events/update-canonical-assessment-section :hematologic_system (js->clj values :keywordize-keys true)])))]
-    (r/useEffect (fn []
+                       (rf/dispatch [::events/update-canonical-assessment-section :hematologic_system (js->clj values :keywordize-keys true)]))]
+    (React/useEffect (fn []
                    (when report-form-instance-fn
                      (report-form-instance-fn :hematologic_system form))
                    js/undefined)
                  #js [])
     (let [form-items [:<>
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "贫血"
-                      :radio-name [:anemia :has]
-                      :radio-options yes-no-options
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "Hb (g/L)" :name [:anemia :hb]}
-                      [:> InputNumber {:placeholder "请输入Hb值" :style {:width "100%"}}]]
-                     [:> Form.Item {:label "贫血原因及目前治疗方式" :name [:anemia :cause_treatment]}
-                      [:> Input.TextArea {:placeholder "描述贫血原因及目前治疗方式" :rows 3}]]]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "贫血"
+                        :radio-name [:anemia :has]
+                        :radio-options yes-no-options
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "Hb (g/L)" :name [:anemia :hb]}
+                        [:> InputNumber {:placeholder "请输入Hb值" :style {:width "100%"}}]]
+                       [:> Form.Item {:label "贫血原因及目前治疗方式" :name [:anemia :cause_treatment]}
+                        [:> Input.TextArea {:placeholder "描述贫血原因及目前治疗方式" :rows 3}]]]
 
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "凝血功能障碍"
-                      :radio-name [:coagulation_dysfunction :has]
-                      :radio-options yes-no-options
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "PT (s)" :help "PT延长超过3秒，即有临床意义" :name [:coagulation_dysfunction :pt]}
-                      [:> InputNumber {:placeholder "秒" :style {:width "100%"}}]]
-                     [:> Form.Item {:label "APTT (s)" :help "APTT延长超过10秒，即有临床意义" :name [:coagulation_dysfunction :aptt]}
-                      [:> InputNumber {:placeholder "秒" :style {:width "100%"}}]]
-                     [:> Form.Item {:label "INR" :name [:coagulation_dysfunction :inr]}
-                      [:> InputNumber {:placeholder "值" :style {:width "100%"}}]]
-                     [:> Form.Item {:label "血小板计数 (×10^9/L)" :name [:coagulation_dysfunction :platelet_count]}
-                      [:> InputNumber {:placeholder "血小板数值" :style {:width "100%"}}]]
-                     [:> Form.Item {:label "D-二聚体 (mg/L)" :name [:coagulation_dysfunction :d_dimer]}
-                      [:> InputNumber {:placeholder "D-dimer值" :style {:width "100%"}}]]]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "凝血功能障碍"
+                        :radio-name [:coagulation_dysfunction :has]
+                        :radio-options yes-no-options
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "PT (s)" :help "PT延长超过3秒，即有临床意义" :name [:coagulation_dysfunction :pt]}
+                        [:> InputNumber {:placeholder "秒" :style {:width "100%"}}]]
+                       [:> Form.Item {:label "APTT (s)" :help "APTT延长超过10秒，即有临床意义" :name [:coagulation_dysfunction :aptt]}
+                        [:> InputNumber {:placeholder "秒" :style {:width "100%"}}]]
+                       [:> Form.Item {:label "INR" :name [:coagulation_dysfunction :inr]}
+                        [:> InputNumber {:placeholder "值" :style {:width "100%"}}]]
+                       [:> Form.Item {:label "血小板计数 (×10^9/L)" :name [:coagulation_dysfunction :platelet_count]}
+                        [:> InputNumber {:placeholder "血小板数值" :style {:width "100%"}}]]
+                       [:> Form.Item {:label "D-二聚体 (mg/L)" :name [:coagulation_dysfunction :d_dimer]}
+                        [:> InputNumber {:placeholder "D-dimer值" :style {:width "100%"}}]]]
 
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "血栓史"
-                      :radio-name [:thrombosis_history :has]
-                      :radio-options yes-no-options
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "详情" :name [:thrombosis_history :details]}
-                      [:> Input {:placeholder "描述血栓史详情"}]]]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "血栓史"
+                        :radio-name [:thrombosis_history :has]
+                        :radio-options yes-no-options
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "详情" :name [:thrombosis_history :details]}
+                        [:> Input {:placeholder "描述血栓史详情"}]]]
 
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "下肢深静脉血栓"
-                      :radio-name [:lower_limb_dvt :has]
-                      :radio-options yes-no-unknown-options
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "详情" :name [:lower_limb_dvt :details]}
-                      [:> Input {:placeholder "描述下肢深静脉血栓详情"}]]]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "下肢深静脉血栓"
+                        :radio-name [:lower_limb_dvt :has]
+                        :radio-options yes-no-unknown-options
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "详情" :name [:lower_limb_dvt :details]}
+                        [:> Input {:placeholder "描述下肢深静脉血栓详情"}]]]
 
-                    [:> Form.Item {:label "血管超声" :name [:vascular_ultrasound_results]}
-                     [:> Input.TextArea {:placeholder "请描述血管超声结果" :rows 3}]]]]
-    [afc/patient-assessment-card-wrapper
-     {:icon [:> ExperimentOutlined {:style {:marginRight "8px"}}]
-      :title "血液系统"
-      :header-color "#fff0f6"
-      :patient-id patient-id
-      :form-instance form
-      :form-key (str patient-id "-hematologic-system")
-      :initial-data initial-form-values
-      :on-finish-handler on-finish-fn
-      :on-values-change-handler nil
-      :children form-items}]))
+                      [:> Form.Item {:label "血管超声" :name [:vascular_ultrasound_results]}
+                       [:> Input.TextArea {:placeholder "请描述血管超声结果" :rows 3}]]]]
+      [afc/patient-assessment-card-wrapper
+       {:icon [:> ExperimentOutlined {:style {:marginRight "8px"}}]
+        :title "血液系统"
+        :header-color "#fff0f6"
+        :patient-id patient-id
+        :form-instance form
+        :form-key (str patient-id "-hematologic-system")
+        :initial-data initial-form-values
+        :on-finish-handler on-finish-fn
+        :on-values-change-handler nil
+        :children form-items}])))
 
 (defn immune-system-card        "免疫系统" [props]
   (let [{:keys [report-form-instance-fn]} props
@@ -1013,52 +1017,52 @@
                                   (when (not (some #{"other_autoimmune_symptom"} (get-in all-values-clj [:autoimmune_disease :symptoms])))
                                     (.setFieldsValue form-instance (clj->js {:autoimmune_disease {:symptoms_other_details nil}}))))
                                 ))]
-    (r/useEffect (fn []
+    (React/useEffect (fn []
                    (when report-form-instance-fn
                      (report-form-instance-fn :immune_system form))
                    js/undefined)
                  #js [])
     (let [form-items [:<>
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "免疫功能障碍"
-                      :radio-name [:immune_dysfunction :has]
-                      :radio-options yes-no-unknown-options
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "类型" :name [:immune_dysfunction :type]}
-                      [:> Radio.Group {:options immune-dysfunction-type-options}]]
-                     (when (= immune-dysfunction-type "other_immune_dysfunction")
-                       [:> Form.Item {:label "其他类型详情" :name [:immune_dysfunction :type_other_details]}
-                        [:> Input {:placeholder "请描述其他免疫功能障碍类型"}]])]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "免疫功能障碍"
+                        :radio-name [:immune_dysfunction :has]
+                        :radio-options yes-no-unknown-options
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "类型" :name [:immune_dysfunction :type]}
+                        [:> Radio.Group {:options immune-dysfunction-type-options}]]
+                       (when (= immune-dysfunction-type "other_immune_dysfunction")
+                         [:> Form.Item {:label "其他类型详情" :name [:immune_dysfunction :type_other_details]}
+                          [:> Input {:placeholder "请描述其他免疫功能障碍类型"}]])]
 
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "自身免疫性疾病"
-                      :radio-name [:autoimmune_disease :has]
-                      :radio-options yes-no-unknown-options
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "症状" :name [:autoimmune_disease :symptoms]}
-                      [:> Checkbox.Group {:options autoimmune-disease-symptom-options
-                                          :style {:display "flex" :flexDirection "column"}}]]
-                     (when (some #{"other_autoimmune_symptom"} autoimmune-symptoms)
-                       [:> Form.Item {:label "其他症状详情" :name [:autoimmune_disease :symptoms_other_details]}
-                        [:> Input {:placeholder "请描述其他自身免疫性疾病症状"}]])]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "自身免疫性疾病"
+                        :radio-name [:autoimmune_disease :has]
+                        :radio-options yes-no-unknown-options
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "症状" :name [:autoimmune_disease :symptoms]}
+                        [:> Checkbox.Group {:options autoimmune-disease-symptom-options
+                                            :style {:display "flex" :flexDirection "column"}}]]
+                       (when (some #{"other_autoimmune_symptom"} autoimmune-symptoms)
+                         [:> Form.Item {:label "其他症状详情" :name [:autoimmune_disease :symptoms_other_details]}
+                          [:> Input {:placeholder "请描述其他自身免疫性疾病症状"}]])]
 
-                    ;; 3. 其他情况 (Other Conditions)
-                    [:> Form.Item {:label "其他免疫系统相关情况" :name [:other_immune_conditions]}
-                     [:> Input.TextArea {:placeholder "如有其他免疫系统相关情况请在此注明" :rows 3}]]
-                    ]]
-    [afc/patient-assessment-card-wrapper
-     {:icon [:> SecurityScanOutlined {:style {:marginRight "8px"}}]
-      :title "免疫系统"
-      :header-color "#f6ffed"
-      :patient-id patient-id
-      :form-instance form
-      :form-key (str patient-id "-immune-system")
-      :initial-data initial-form-values
-      :on-finish-handler on-finish-fn
-      :on-values-change-handler on-values-change-fn
-      :children form-items}]))
+                      ;; 3. 其他情况 (Other Conditions)
+                      [:> Form.Item {:label "其他免疫系统相关情况" :name [:other_immune_conditions]}
+                       [:> Input.TextArea {:placeholder "如有其他免疫系统相关情况请在此注明" :rows 3}]]
+                      ]]
+      [afc/patient-assessment-card-wrapper
+       {:icon [:> SecurityScanOutlined {:style {:marginRight "8px"}}]
+        :title "免疫系统"
+        :header-color "#f6ffed"
+        :patient-id patient-id
+        :form-instance form
+        :form-key (str patient-id "-immune-system")
+        :initial-data initial-form-values
+        :on-finish-handler on-finish-fn
+        :on-values-change-handler on-values-change-fn
+        :children form-items}])))
 
 (defn special-medication-history-card "特殊用药史" [props]
   (let [{:keys [report-form-instance-fn]} props
@@ -1088,43 +1092,43 @@
                                 (doseq [med-key med-keys]
                                   (when (and (contains? changed-values [med-key :present])
                                              (not= (get-in all-values-clj [med-key :present]) "有"))
-                                    (.setFieldsValue form-instance (clj->js {med-key {:details nil}})))))))]
-    (r/useEffect (fn []
+                                    (.setFieldsValue form-instance (clj->js {med-key {:details nil}}))))))]
+    (React/useEffect (fn []
                    (when report-form-instance-fn
                      (report-form-instance-fn :special_medication_history form))
                    js/undefined)
                  #js [])
     (let [render-medication-item (fn [field-key label-text placeholder-text show-details?]
-                                 [:div {:key (name field-key)}
-                                  [:> Form.Item {:label label-text :name [field-key :present]}
-                                   [:> Radio.Group {}
-                                    [:> Radio {:value "无"} "无"]
-                                    [:> Radio {:value "有"} "有"]]]
-                                  (when show-details?
-                                    [:> Form.Item {:label "详情" :name [field-key :details] :style {:marginLeft "20px"}}
-                                     [:> Input.TextArea {:placeholder (or placeholder-text "请描述详情") :rows 2}]])])
-        form-items [:<>
-                    (render-medication-item :anticoagulant_antiplatelet "抗凝 / 抗血小板药物" "请描述药物名称、剂量、频率、末次用药时间" (= watch-anticoagulant-present "有"))
-                    (render-medication-item :glucocorticoids "糖皮质激素" "请描述药物名称、剂量、频率、用药时长" (= watch-glucocorticoids-present "有"))
-                    (render-medication-item :cancer_treatment "肿瘤治疗" "请描述治疗方案、药物、周期、末次治疗时间" (= watch-cancer-treatment-present "有"))
-                    (render-medication-item :drug_abuse_dependence "药物滥用依赖史" "请描述药物种类、频率、时长" (= watch-drug-abuse-present "有"))
-                    (render-medication-item :neuroleptic_drugs "神经安定类药物" "请描述药物名称、剂量、频率" (= watch-neuroleptic-present "有"))
-                    (render-medication-item :glp1_agonists "GLP-1受体激动剂" "例如：利拉鲁肽、司美格鲁肽等。请描述药物名称、剂量、频率、末次用药时间" (= watch-glp1-agonists-present "有"))
+                                   [:div {:key (name field-key)}
+                                    [:> Form.Item {:label label-text :name [field-key :present]}
+                                     [:> Radio.Group {}
+                                      [:> Radio {:value "无"} "无"]
+                                      [:> Radio {:value "有"} "有"]]]
+                                    (when show-details?
+                                      [:> Form.Item {:label "详情" :name [field-key :details] :style {:marginLeft "20px"}}
+                                       [:> Input.TextArea {:placeholder (or placeholder-text "请描述详情") :rows 2}]])])
+          form-items [:<>
+                      (render-medication-item :anticoagulant_antiplatelet "抗凝 / 抗血小板药物" "请描述药物名称、剂量、频率、末次用药时间" (= watch-anticoagulant-present "有"))
+                      (render-medication-item :glucocorticoids "糖皮质激素" "请描述药物名称、剂量、频率、用药时长" (= watch-glucocorticoids-present "有"))
+                      (render-medication-item :cancer_treatment "肿瘤治疗" "请描述治疗方案、药物、周期、末次治疗时间" (= watch-cancer-treatment-present "有"))
+                      (render-medication-item :drug_abuse_dependence "药物滥用依赖史" "请描述药物种类、频率、时长" (= watch-drug-abuse-present "有"))
+                      (render-medication-item :neuroleptic_drugs "神经安定类药物" "请描述药物名称、剂量、频率" (= watch-neuroleptic-present "有"))
+                      (render-medication-item :glp1_agonists "GLP-1受体激动剂" "例如：利拉鲁肽、司美格鲁肽等。请描述药物名称、剂量、频率、末次用药时间" (= watch-glp1-agonists-present "有"))
 
-                    [:> Form.Item {:label "其他药物使用" :name [:other_drug_use]}
-                     [:> Input.TextArea {:placeholder "请描述其他特殊药物使用情况" :rows 3}]]
-                    ]]
-    [afc/patient-assessment-card-wrapper
-     {:icon [:> MedicineBoxOutlined {:style {:marginRight "8px"}}]
-      :title "特殊用药史"
-      :header-color "#fffbe6"
-      :patient-id patient-id
-      :form-instance form
-      :form-key (str patient-id "-special-medication-history")
-      :initial-data initial-form-values
-      :on-finish-handler on-finish-fn
-      :on-values-change-handler on-values-change-fn
-      :children form-items}]))
+                      [:> Form.Item {:label "其他药物使用" :name [:other_drug_use]}
+                       [:> Input.TextArea {:placeholder "请描述其他特殊药物使用情况" :rows 3}]]
+                      ]]
+      [afc/patient-assessment-card-wrapper
+       {:icon [:> MedicineBoxOutlined {:style {:marginRight "8px"}}]
+        :title "特殊用药史"
+        :header-color "#fffbe6"
+        :patient-id patient-id
+        :form-instance form
+        :form-key (str patient-id "-special-medication-history")
+        :initial-data initial-form-values
+        :on-finish-handler on-finish-fn
+        :on-values-change-handler on-values-change-fn
+        :children form-items}])))
 
 (defn special-disease-history-card "特殊疾病病史" [props]
   (let [{:keys [report-form-instance-fn]} props
@@ -1151,8 +1155,8 @@
                                 (when (and (contains? changed-values (clj->js {:marfan_syndrome {:present nil}}))
                                            (not= (get-in all-values-clj [:marfan_syndrome :present]) "有"))
                                   (.setFieldsValue form-instance (clj->js {:marfan_syndrome {:related_lesions []
-                                                                                            :cardiovascular_other_details nil
-                                                                                            :skeletal_other_details nil}})))
+                                                                                             :cardiovascular_other_details nil
+                                                                                             :skeletal_other_details nil}})))
                                 ;; Clear cardiovascular_other_details if "cardiovascular_other" is not in related_lesions
                                 (when (contains? changed-values (clj->js {:marfan_syndrome {:related_lesions nil}}))
                                   (when (not (some #{"cardiovascular_other"} (get-in all-values-clj [:marfan_syndrome :related_lesions])))
@@ -1162,42 +1166,42 @@
                                   (when (not (some #{"skeletal_other"} (get-in all-values-clj [:marfan_syndrome :related_lesions])))
                                     (.setFieldsValue form-instance (clj->js {:marfan_syndrome {:skeletal_other_details nil}}))))
                                 ))]
-    (r/useEffect (fn []
+    (React/useEffect (fn []
                    (when report-form-instance-fn
                      (report-form-instance-fn :special_disease_history form))
                    js/undefined)
                  #js [])
     (let [form-items [:<>
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "马方综合征"
-                      :radio-name [:marfan_syndrome :present]
-                      :radio-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "相关病变" :name [:marfan_syndrome :related_lesions]}
-                      [:> Checkbox.Group {:options marfan-related-lesions-options
-                                          :style {:display "flex" :flexDirection "column"}}]]
-                     (when (some #{"cardiovascular_other"} marfan-lesions)
-                       [:> Form.Item {:label "其他心血管病变详情" :name [:marfan_syndrome :cardiovascular_other_details]}
-                        [:> Input {:placeholder "请描述其他心血管病变"}]])
-                     (when (some #{"skeletal_other"} marfan-lesions)
-                       [:> Form.Item {:label "其他骨骼畸形详情" :name [:marfan_syndrome :skeletal_other_details]}
-                        [:> Input {:placeholder "请描述其他骨骼畸形"}]])]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "马方综合征"
+                        :radio-name [:marfan_syndrome :present]
+                        :radio-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "相关病变" :name [:marfan_syndrome :related_lesions]}
+                        [:> Checkbox.Group {:options marfan-related-lesions-options
+                                            :style {:display "flex" :flexDirection "column"}}]]
+                       (when (some #{"cardiovascular_other"} marfan-lesions)
+                         [:> Form.Item {:label "其他心血管病变详情" :name [:marfan_syndrome :cardiovascular_other_details]}
+                          [:> Input {:placeholder "请描述其他心血管病变"}]])
+                       (when (some #{"skeletal_other"} marfan-lesions)
+                         [:> Form.Item {:label "其他骨骼畸形详情" :name [:marfan_syndrome :skeletal_other_details]}
+                          [:> Input {:placeholder "请描述其他骨骼畸形"}]])]
 
-                    [:> Form.Item {:label "其他特殊疾病" :name [:other_special_diseases]}
-                     [:> Input.TextArea {:placeholder "请描述其他特殊疾病情况" :rows 3}]]
-                    ]]
-    [afc/patient-assessment-card-wrapper
-     {:icon [:> WarningOutlined {:style {:marginRight "8px"}}]
-      :title "特殊疾病病史"
-      :header-color "#fff1f0"
-      :patient-id patient-id
-      :form-instance form
-      :form-key (str patient-id "-special-disease-history")
-      :initial-data initial-form-values
-      :on-finish-handler on-finish-fn
-      :on-values-change-handler on-values-change-fn
-      :children form-items}]))
+                      [:> Form.Item {:label "其他特殊疾病" :name [:other_special_diseases]}
+                       [:> Input.TextArea {:placeholder "请描述其他特殊疾病情况" :rows 3}]]
+                      ]]
+      [afc/patient-assessment-card-wrapper
+       {:icon [:> WarningOutlined {:style {:marginRight "8px"}}]
+        :title "特殊疾病病史"
+        :header-color "#fff1f0"
+        :patient-id patient-id
+        :form-instance form
+        :form-key (str patient-id "-special-disease-history")
+        :initial-data initial-form-values
+        :on-finish-handler on-finish-fn
+        :on-values-change-handler on-values-change-fn
+        :children form-items}])))
 
 
 (defn nutritional-assessment-card "营养评估" [props]
@@ -1209,56 +1213,56 @@
 
         yes-no-options [{:label "无" :value "无"} {:label "有" :value "有"}]
         on-finish-fn (fn [values]
-                       (rf/dispatch [::events/update-canonical-assessment-section :nutritional_assessment (js->clj values :keywordize-keys true)])))]
-    (r/useEffect (fn []
+                       (rf/dispatch [::events/update-canonical-assessment-section :nutritional_assessment (js->clj values :keywordize-keys true)]))]
+    (React/useEffect (fn []
                    (when report-form-instance-fn
                      (report-form-instance-fn :nutritional_assessment form))
                    js/undefined)
                  #js [])
     (let [form-items [:<>
-                    [:h4 "1. 营养评分"]
-                    [:> Form.Item {:label "是否 BMI < 20.5" :name [:nutritional_score :bmi_lt_20_5]}
-                     [:> Radio.Group {:options yes-no-options}]]
-                    [:> Form.Item {:label "患者在过去 1-3 个月有体重下降吗？" :name [:nutritional_score :weight_loss_last_3_months]}
-                     [:> Radio.Group {:options yes-no-options}]]
-                    [:> Form.Item {:label "患者在过去的 1 周内有摄食减少吗？" :name [:nutritional_score :reduced_intake_last_week]}
-                     [:> Radio.Group {:options yes-no-options}]]
-                    [:> Form.Item {:label "患者有严重疾病吗 (如 ICU 治疗)？" :name [:nutritional_score :severe_illness]}
-                     [:> Radio.Group {:options yes-no-options}]]
+                      [:h4 "1. 营养评分"]
+                      [:> Form.Item {:label "是否 BMI < 20.5" :name [:nutritional_score :bmi_lt_20_5]}
+                       [:> Radio.Group {:options yes-no-options}]]
+                      [:> Form.Item {:label "患者在过去 1-3 个月有体重下降吗？" :name [:nutritional_score :weight_loss_last_3_months]}
+                       [:> Radio.Group {:options yes-no-options}]]
+                      [:> Form.Item {:label "患者在过去的 1 周内有摄食减少吗？" :name [:nutritional_score :reduced_intake_last_week]}
+                       [:> Radio.Group {:options yes-no-options}]]
+                      [:> Form.Item {:label "患者有严重疾病吗 (如 ICU 治疗)？" :name [:nutritional_score :severe_illness]}
+                       [:> Radio.Group {:options yes-no-options}]]
 
-                    [:div {:style {:padding "8px" :border "1px solid #d9d9d9" :borderRadius "2px" :marginBottom "16px"}}
-                     [:h5 {:style {:marginBottom "4px"}} "评分说明:"]
-                     [:p {:style {:fontSize "12px" :color "gray"}} "每项“是”计1分，总分≥2分提示存在营养风险，建议进一步评估。"]]
+                      [:div {:style {:padding "8px" :border "1px solid #d9d9d9" :borderRadius "2px" :marginBottom "16px"}}
+                       [:h5 {:style {:marginBottom "4px"}} "评分说明:"]
+                       [:p {:style {:fontSize "12px" :color "gray"}} "每项“是”计1分，总分≥2分提示存在营养风险，建议进一步评估。"]]
 
-                    [:h4 {:style {:marginTop "16px"}} "2. FRAIL（针对年龄大于 60 岁病人）"]
-                    [:> Form.Item {:label "疲乏 (Fatigue): 是否感到疲乏？" :name [:frail_score :fatigue]}
-                     [:> Radio.Group {:options yes-no-options}]]
-                    [:> Form.Item {:label "阻力增加 / 耐力减退 (Resistance): 是否难以独立爬一层楼梯？" :name [:frail_score :resistance]}
-                     [:> Radio.Group {:options yes-no-options}]]
-                    [:> Form.Item {:label "自由活动下降 (Ambulation): 是否难以独立行走 100 米？" :name [:frail_score :ambulation]}
-                     [:> Radio.Group {:options yes-no-options}]]
-                    [:> Form.Item {:label "疾病状况 (Illness): 是否患有 5 种及以上慢性疾病？" :name [:frail_score :illness_gt_5]}
-                     [:> Radio.Group {:options yes-no-options}]]
-                    [:> Form.Item {:label "体重下降 (Loss of weight): 1 年或更短时间内体重下降是否超过 5%？" :name [:frail_score :loss_of_weight_gt_5_percent]}
-                     [:> Radio.Group {:options yes-no-options}]]
+                      [:h4 {:style {:marginTop "16px"}} "2. FRAIL（针对年龄大于 60 岁病人）"]
+                      [:> Form.Item {:label "疲乏 (Fatigue): 是否感到疲乏？" :name [:frail_score :fatigue]}
+                       [:> Radio.Group {:options yes-no-options}]]
+                      [:> Form.Item {:label "阻力增加 / 耐力减退 (Resistance): 是否难以独立爬一层楼梯？" :name [:frail_score :resistance]}
+                       [:> Radio.Group {:options yes-no-options}]]
+                      [:> Form.Item {:label "自由活动下降 (Ambulation): 是否难以独立行走 100 米？" :name [:frail_score :ambulation]}
+                       [:> Radio.Group {:options yes-no-options}]]
+                      [:> Form.Item {:label "疾病状况 (Illness): 是否患有 5 种及以上慢性疾病？" :name [:frail_score :illness_gt_5]}
+                       [:> Radio.Group {:options yes-no-options}]]
+                      [:> Form.Item {:label "体重下降 (Loss of weight): 1 年或更短时间内体重下降是否超过 5%？" :name [:frail_score :loss_of_weight_gt_5_percent]}
+                       [:> Radio.Group {:options yes-no-options}]]
 
-                    [:div {:style {:padding "8px" :border "1px solid #d9d9d9" :borderRadius "2px"}}
-                     [:h5 {:style {:marginBottom "4px"}} "FRAIL 结论:"]
-                     [:p {:style {:fontSize "12px" :color "gray"}}
-                      "0 分：健康；" [:br]
-                      "1-2 分：衰弱前期；" [:br]
-                      "≥3 分：衰弱。"]]]]
-    [afc/patient-assessment-card-wrapper
-     {:icon [:> AppleOutlined {:style {:marginRight "8px"}}]
-      :title "营养评估"
-      :header-color "#f0fff0" ; Light green background
-      :patient-id patient-id
-      :form-instance form
-      :form-key (str patient-id "-nutritional-assessment")
-      :initial-data initial-form-values
-      :on-finish-handler on-finish-fn
-      :on-values-change-handler nil
-      :children form-items}]))
+                      [:div {:style {:padding "8px" :border "1px solid #d9d9d9" :borderRadius "2px"}}
+                       [:h5 {:style {:marginBottom "4px"}} "FRAIL 结论:"]
+                       [:p {:style {:fontSize "12px" :color "gray"}}
+                        "0 分：健康；" [:br]
+                        "1-2 分：衰弱前期；" [:br]
+                        "≥3 分：衰弱。"]]]]
+      [afc/patient-assessment-card-wrapper
+       {:icon [:> AppleOutlined {:style {:marginRight "8px"}}]
+        :title "营养评估"
+        :header-color "#f0fff0" ; Light green background
+        :patient-id patient-id
+        :form-instance form
+        :form-key (str patient-id "-nutritional-assessment")
+        :initial-data initial-form-values
+        :on-finish-handler on-finish-fn
+        :on-values-change-handler nil
+        :children form-items}])))
 
 
 (defn pregnancy-assessment-card "妊娠" [props]
@@ -1295,52 +1299,52 @@
                                 (when (contains? changed-values (clj->js {:is_pregnant nil}))
                                   (when (not= (get-in all-values-clj [:is_pregnant]) "有")
                                     (.setFieldsValue form-instance (clj->js {:gestational_week nil
-                                                                              :obstetric_history nil
-                                                                              :comorbid_obstetric_conditions []
-                                                                              :comorbid_obstetric_conditions_other_details nil}))))
+                                                                             :obstetric_history nil
+                                                                             :comorbid_obstetric_conditions []
+                                                                             :comorbid_obstetric_conditions_other_details nil}))))
                                 ;; Clear other details if "other_obstetric_conditions" is not selected
                                 (when (contains? changed-values (clj->js {:comorbid_obstetric_conditions nil}))
                                   (when (not (some #{"other_obstetric_conditions"} (get-in all-values-clj [:comorbid_obstetric_conditions])))
                                     (.setFieldsValue form-instance (clj->js {:comorbid_obstetric_conditions_other_details nil}))))
                                 ))]
-    (r/useEffect (fn []
+    (React/useEffect (fn []
                    (when report-form-instance-fn
                      (report-form-instance-fn :pregnancy_assessment form))
                    js/undefined)
                  #js [])
     (let [form-items [:<>
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "是否妊娠"
-                      :radio-name [:is_pregnant]
-                      :radio-options yes-no-unknown-options
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "孕周" :name [:gestational_week]}
-                      [:> Select {:placeholder "选择孕周" :style {:width "100%"} :allowClear true
-                                  :options gestational-week-options}]]
-                     [:> Form.Item {:label "孕产史" :name [:obstetric_history]}
-                      [:> Input.TextArea {:placeholder "例如：G2P1A1L1 或 足月1、早产0、流产1、存活1" :rows 2}]]
-                     [:> Form.Item {:label "合并产科情况" :name [:comorbid_obstetric_conditions]}
-                      [:> Checkbox.Group {:options comorbid-obstetric-options
-                                          :style {:display "flex" :flexDirection "column"}}]]
-                     (when (some #{"other_obstetric_conditions"} comorbid-conditions-watch)
-                       [:> Form.Item {:label "其他合并产科情况详情" :name [:comorbid_obstetric_conditions_other_details] :style {:marginLeft "20px"}}
-                        [:> Input {:placeholder "请描述其他合并产科情况"}]])]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "是否妊娠"
+                        :radio-name [:is_pregnant]
+                        :radio-options yes-no-unknown-options
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "孕周" :name [:gestational_week]}
+                        [:> Select {:placeholder "选择孕周" :style {:width "100%"} :allowClear true
+                                    :options gestational-week-options}]]
+                       [:> Form.Item {:label "孕产史" :name [:obstetric_history]}
+                        [:> Input.TextArea {:placeholder "例如：G2P1A1L1 或 足月1、早产0、流产1、存活1" :rows 2}]]
+                       [:> Form.Item {:label "合并产科情况" :name [:comorbid_obstetric_conditions]}
+                        [:> Checkbox.Group {:options comorbid-obstetric-options
+                                            :style {:display "flex" :flexDirection "column"}}]]
+                       (when (some #{"other_obstetric_conditions"} comorbid-conditions-watch)
+                         [:> Form.Item {:label "其他合并产科情况详情" :name [:comorbid_obstetric_conditions_other_details] :style {:marginLeft "20px"}}
+                          [:> Input {:placeholder "请描述其他合并产科情况"}]])]
 
-                    [:> Form.Item {:label "其他妊娠相关情况" :name [:other_pregnancy_conditions]}
-                     [:> Input.TextArea {:placeholder "如有其他妊娠相关情况请在此注明" :rows 3}]]
-                    ]]
-    [afc/patient-assessment-card-wrapper
-     {:icon [:> WomanOutlined {:style {:marginRight "8px"}}]
-      :title "妊娠"
-      :header-color "#fff0f6" ; Light pink background
-      :patient-id patient-id
-      :form-instance form
-      :form-key (str patient-id "-pregnancy-assessment")
-      :initial-data initial-form-values
-      :on-finish-handler on-finish-fn
-      :on-values-change-handler on-values-change-fn
-      :children form-items}]))
+                      [:> Form.Item {:label "其他妊娠相关情况" :name [:other_pregnancy_conditions]}
+                       [:> Input.TextArea {:placeholder "如有其他妊娠相关情况请在此注明" :rows 3}]]
+                      ]]
+      [afc/patient-assessment-card-wrapper
+       {:icon [:> WomanOutlined {:style {:marginRight "8px"}}]
+        :title "妊娠"
+        :header-color "#fff0f6" ; Light pink background
+        :patient-id patient-id
+        :form-instance form
+        :form-key (str patient-id "-pregnancy-assessment")
+        :initial-data initial-form-values
+        :on-finish-handler on-finish-fn
+        :on-values-change-handler on-values-change-fn
+        :children form-items}])))
 
 
 (defn surgical-anesthesia-history-card "手术麻醉史" [props]
@@ -1358,12 +1362,14 @@
                               (-> sah-data
                                   (assoc-in [:history :last_anesthesia_date_specific]
                                             (utils/parse-date (get-in sah-data [:history :last_anesthesia_date_specific])))))
-        on-finish-fn (fn [values]
-                       (let [transformed-values (-> values
-                                                    (assoc-in [:history :last_anesthesia_date_specific]
-                                                              (when-let [d (get-in values [:history :last_anesthesia_date_specific])]
-                                                                (utils/date->iso-string d))))]
-                         (rf/dispatch [::events/update-canonical-assessment-section :surgical_anesthesia_history (js->clj transformed-values :keywordize-keys true)])))
+        on-finish-fn
+        (fn [values]
+          (let [values (js->clj values :keywordize-keys true)
+                transformed-values (-> values
+                                       (assoc-in [:history :last_anesthesia_date_specific]
+                                                 (when-let [d (get-in values [:history :last_anesthesia_date_specific])]
+                                                   (utils/date->iso-string d))))]
+            (rf/dispatch [::events/update-canonical-assessment-section :surgical_anesthesia_history (js->clj transformed-values :keywordize-keys true)])))
         on-values-change-fn (fn [changed-values all-values]
                               (let [form-instance form
                                     all-values-clj (js->clj all-values :keywordize-keys true)]
@@ -1385,69 +1391,69 @@
                                     (.setFieldsValue form-instance (clj->js {:history {:adverse_events_other_details nil}}))))
                                 (when (contains? changed-values (clj->js {:family_history_malignant_hyperthermia {:present nil}}))
                                   (when (not= (get-in all-values-clj [:family_history_malignant_hyperthermia :present]) "有")
-                                    (.setFieldsValue form-instance (clj->js {:family_history_malignant_hyperthermia {:relationship nil}})))))))]
-    (r/useEffect (fn []
-                   (when report-form-instance-fn
-                     (report-form-instance-fn :surgical_anesthesia_history form))
-                   js/undefined)
-                 #js [])
+                                    (.setFieldsValue form-instance (clj->js {:family_history_malignant_hyperthermia {:relationship nil}}))))))]
+    (React/useEffect (fn []
+                       (when report-form-instance-fn
+                         (report-form-instance-fn :surgical_anesthesia_history form))
+                       js/undefined)
+                     #js [])
     (let [last-anesthesia-date-options [{:label ">5 年" :value ">5_years"} {:label "1-5 年" :value "1-5_years"} {:label "<1 年" :value "<1_year"}]
           anesthesia-type-options [{:label "全身麻醉" :value "general_anesthesia"} {:label "椎管内麻醉" :value "spinal_anesthesia"} {:label "神经阻滞" :value "nerve_block"} {:label "局部麻醉" :value "local_anesthesia"}]
           postop-complications-options [{:label "术后恶心呕吐" :value "postop_nausea_vomiting"} {:label "术后疼痛" :value "postop_pain"} {:label "声音嘶哑" :value "hoarseness"} {:label "头晕头疼" :value "dizziness_headache"} {:label "其他" :value "other_postop_complications"}]
           adverse-events-options [{:label "过敏反应" :value "allergic_reaction"} {:label "困难气道" :value "difficult_airway"} {:label "气管切开" :value "tracheostomy"} {:label "术中知晓" :value "intraop_awareness"} {:label "术后认知功能障碍" :value "postop_cognitive_dysfunction"} {:label "恶性高热" :value "malignant_hyperthermia"} {:label "其他" :value "other_adverse_events"}]
           form-items [:<>
-                    [:> Form.Item {:label "手术麻醉史" :name [:history :present]}
-                     [:> Radio.Group {}
-                      [:> Radio {:value "无"} "无"]
-                      [:> Radio {:value "有"} "有"]
-                      [:> Radio {:value "不祥"} "不祥"]]]
+                      [:> Form.Item {:label "手术麻醉史" :name [:history :present]}
+                       [:> Radio.Group {}
+                        [:> Radio {:value "无"} "无"]
+                        [:> Radio {:value "有"} "有"]
+                        [:> Radio {:value "不祥"} "不祥"]]]
 
-                    (when (= history-present-watch "有")
-                      [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
-                       [:> Form.Item {:label "上次麻醉日期范围" :name [:history :last_anesthesia_date_range]}
-                        [:> Select {:placeholder "选择范围" :style {:width "100%"} :allowClear true
-                                    :options last-anesthesia-date-options}]]
-                       [:> Form.Item {:label "具体上次麻醉日期 (可选)" :name [:history :last_anesthesia_date_specific]}
-                        [:> DatePicker {:style {:width "100%"} :placeholder "选择具体日期"}]]
-                       [:> Form.Item {:label "麻醉方式" :name [:history :anesthesia_types]}
-                        [:> Checkbox.Group {:options anesthesia-type-options
-                                            :style {:display "flex" :flexDirection "column"}}]]
-                       [:> Form.Item {:label "术后并发症" :name [:history :postop_complications]}
-                        [:> Checkbox.Group {:options postop-complications-options
-                                            :style {:display "flex" :flexDirection "column"}}]]
-                       (when (some #{"other_postop_complications"} postop-complications-watch)
-                         [:> Form.Item {:label "其他术后并发症详情" :name [:history :postop_complications_other_details] :style {:marginLeft "20px"}}
-                          [:> Input {:placeholder "请描述其他术后并发症"}]])
-                       [:> Form.Item {:label "不良事件" :name [:history :adverse_events]}
-                        [:> Checkbox.Group {:options adverse-events-options
-                                            :style {:display "flex" :flexDirection "column"}}]]
-                       (when (some #{"other_adverse_events"} adverse-events-watch)
-                         [:> Form.Item {:label "其他不良事件详情" :name [:history :adverse_events_other_details] :style {:marginLeft "20px"}}
-                          [:> Input {:placeholder "请描述其他不良事件"}]])
-                       [:> Form.Item {:label "已行手术" :name [:history :previous_surgeries]}
-                        [:> Input.TextArea {:placeholder "请列出既往手术名称和日期" :rows 3}]]])
+                      (when (= history-present-watch "有")
+                        [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+                         [:> Form.Item {:label "上次麻醉日期范围" :name [:history :last_anesthesia_date_range]}
+                          [:> Select {:placeholder "选择范围" :style {:width "100%"} :allowClear true
+                                      :options last-anesthesia-date-options}]]
+                         [:> Form.Item {:label "具体上次麻醉日期 (可选)" :name [:history :last_anesthesia_date_specific]}
+                          [:> DatePicker {:style {:width "100%"} :placeholder "选择具体日期"}]]
+                         [:> Form.Item {:label "麻醉方式" :name [:history :anesthesia_types]}
+                          [:> Checkbox.Group {:options anesthesia-type-options
+                                              :style {:display "flex" :flexDirection "column"}}]]
+                         [:> Form.Item {:label "术后并发症" :name [:history :postop_complications]}
+                          [:> Checkbox.Group {:options postop-complications-options
+                                              :style {:display "flex" :flexDirection "column"}}]]
+                         (when (some #{"other_postop_complications"} postop-complications-watch)
+                           [:> Form.Item {:label "其他术后并发症详情" :name [:history :postop_complications_other_details] :style {:marginLeft "20px"}}
+                            [:> Input {:placeholder "请描述其他术后并发症"}]])
+                         [:> Form.Item {:label "不良事件" :name [:history :adverse_events]}
+                          [:> Checkbox.Group {:options adverse-events-options
+                                              :style {:display "flex" :flexDirection "column"}}]]
+                         (when (some #{"other_adverse_events"} adverse-events-watch)
+                           [:> Form.Item {:label "其他不良事件详情" :name [:history :adverse_events_other_details] :style {:marginLeft "20px"}}
+                            [:> Input {:placeholder "请描述其他不良事件"}]])
+                         [:> Form.Item {:label "已行手术" :name [:history :previous_surgeries]}
+                          [:> Input.TextArea {:placeholder "请列出既往手术名称和日期" :rows 3}]]])
 
-                    [:> Form.Item {:label "有血缘关系的人发生过恶性高热史" :name [:family_history_malignant_hyperthermia :present]}
-                     [:> Radio.Group {}
-                      [:> Radio {:value "无"} "无"]
-                      [:> Radio {:value "有"} "有"]]]
-                    (when (= family-hyperthermia-watch "有")
-                      [:> Form.Item {:label "关系人" :name [:family_history_malignant_hyperthermia :relationship] :style {:marginLeft "20px"}}
-                       [:> Input {:placeholder "请说明与患者关系"}]])
+                      [:> Form.Item {:label "有血缘关系的人发生过恶性高热史" :name [:family_history_malignant_hyperthermia :present]}
+                       [:> Radio.Group {}
+                        [:> Radio {:value "无"} "无"]
+                        [:> Radio {:value "有"} "有"]]]
+                      (when (= family-hyperthermia-watch "有")
+                        [:> Form.Item {:label "关系人" :name [:family_history_malignant_hyperthermia :relationship] :style {:marginLeft "20px"}}
+                         [:> Input {:placeholder "请说明与患者关系"}]])
 
-                    [:> Form.Item {:label "其他手术麻醉史相关情况" :name [:other_surgical_anesthesia_conditions]}
-                     [:> Input.TextArea {:placeholder "如有其他手术麻醉史相关情况请在此注明" :rows 3}]]]]
-    [afc/patient-assessment-card-wrapper
-     {:icon [:> HistoryOutlined {:style {:marginRight "8px"}}]
-      :title "手术麻醉史"
-      :header-color "#e6f7ff" ; Light blue background
-      :patient-id patient-id
-      :form-instance form
-      :form-key (str patient-id "-surgical-anesthesia-history")
-      :initial-data initial-form-values
-      :on-finish-handler on-finish-fn
-      :on-values-change-handler on-values-change-fn
-      :children form-items}]))
+                      [:> Form.Item {:label "其他手术麻醉史相关情况" :name [:other_surgical_anesthesia_conditions]}
+                       [:> Input.TextArea {:placeholder "如有其他手术麻醉史相关情况请在此注明" :rows 3}]]]]
+      [afc/patient-assessment-card-wrapper
+       {:icon [:> HistoryOutlined {:style {:marginRight "8px"}}]
+        :title "手术麻醉史"
+        :header-color "#e6f7ff" ; Light blue background
+        :patient-id patient-id
+        :form-instance form
+        :form-key (str patient-id "-surgical-anesthesia-history")
+        :initial-data initial-form-values
+        :on-finish-handler on-finish-fn
+        :on-values-change-handler on-values-change-fn
+        :children form-items}])))
 
 
 (defn airway-assessment-card "气道评估" [props]
@@ -1573,160 +1579,160 @@
                                   (when (not= (av [:detailed_assessment :esophageal_surgery_history :has]) "有")
                                     (set-val {:detailed_assessment {:esophageal_surgery_history {:reflux_status nil}}})))
                                 ))]
-    (r/useEffect (fn []
+    (React/useEffect (fn []
                    (when report-form-instance-fn
                      (report-form-instance-fn :airway_assessment form))
                    js/undefined)
                  #js [])
     (let [form-items [:<>
-                    [:h4 {:style {:fontStyle "italic"}} "甲颏距离图示与说明"]
-                    [:p "甲颏距离 (TMD): 指下颌角到颏结节的距离。"]
-                    [:table {:style {:width "100%" :borderCollapse "collapse" :marginBottom "10px"}}
-                     [:thead
-                      [:tr [:th {:style {:border "1px solid #ddd" :padding "4px"}} "分级"]
-                       [:th {:style {:border "1px solid #ddd" :padding "4px"}} "距离"]
-                       [:th {:style {:border "1px solid #ddd" :padding "4px"}} "临床意义"]]]
-                     [:tbody
-                      [:tr [:td {:style {:border "1px solid #ddd" :padding "4px"}} "Ⅰ级"] [:td {:style {:border "1px solid #ddd" :padding "4px"}} ">6.5 cm"] [:td {:style {:border "1px solid #ddd" :padding "4px"}} "插管通常无困难"]]
-                      [:tr [:td {:style {:border "1px solid #ddd" :padding "4px"}} "Ⅱ级"] [:td {:style {:border "1px solid #ddd" :padding "4px"}} "6.0-6.5 cm"] [:td {:style {:border "1px solid #ddd" :padding "4px"}} "可能存在一定困难"]]
-                      [:tr [:td {:style {:border "1px solid #ddd" :padding "4px"}} "Ⅲ级"] [:td {:style {:border "1px solid #ddd" :padding "4px"}} "<6.0 cm"] [:td {:style {:border "1px solid #ddd" :padding "4px"}} "提示插管困难"]]]]
+                      [:h4 {:style {:fontStyle "italic"}} "甲颏距离图示与说明"]
+                      [:p "甲颏距离 (TMD): 指下颌角到颏结节的距离。"]
+                      [:table {:style {:width "100%" :borderCollapse "collapse" :marginBottom "10px"}}
+                       [:thead
+                        [:tr [:th {:style {:border "1px solid #ddd" :padding "4px"}} "分级"]
+                         [:th {:style {:border "1px solid #ddd" :padding "4px"}} "距离"]
+                         [:th {:style {:border "1px solid #ddd" :padding "4px"}} "临床意义"]]]
+                       [:tbody
+                        [:tr [:td {:style {:border "1px solid #ddd" :padding "4px"}} "Ⅰ级"] [:td {:style {:border "1px solid #ddd" :padding "4px"}} ">6.5 cm"] [:td {:style {:border "1px solid #ddd" :padding "4px"}} "插管通常无困难"]]
+                        [:tr [:td {:style {:border "1px solid #ddd" :padding "4px"}} "Ⅱ级"] [:td {:style {:border "1px solid #ddd" :padding "4px"}} "6.0-6.5 cm"] [:td {:style {:border "1px solid #ddd" :padding "4px"}} "可能存在一定困难"]]
+                        [:tr [:td {:style {:border "1px solid #ddd" :padding "4px"}} "Ⅲ级"] [:td {:style {:border "1px solid #ddd" :padding "4px"}} "<6.0 cm"] [:td {:style {:border "1px solid #ddd" :padding "4px"}} "提示插管困难"]]]]
 
-                    [:h4 {:style {:fontStyle "italic" :marginTop "10px"}} "改良Mallampati分级图示与说明表"]
-                    [:p "改良Mallampati分级 (Modified Mallampati Score): 患者取坐位，头保持中立位，张口伸舌，观察咽部结构。"]
-                    [:table {:style {:width "100%" :borderCollapse "collapse" :marginBottom "15px"}}
-                     [:thead
-                      [:tr [:th {:style {:border "1px solid #ddd" :padding "4px"}} "分级"] [:th {:style {:border "1px solid #ddd" :padding "4px"}} "可见结构"]]]
-                     [:tbody
-                      [:tr [:td {:style {:border "1px solid #ddd" :padding "4px"}} "Ⅰ级"] [:td {:style {:border "1px solid #ddd" :padding "4px"}} "软腭、腭垂、腭弓、扁桃体均可见"]]
-                      [:tr [:td {:style {:border "1px solid #ddd" :padding "4px"}} "Ⅱ级"] [:td {:style {:border "1px solid #ddd" :padding "4px"}} "软腭、腭垂、腭弓可见，扁桃体被舌根部分遮盖"]]
-                      [:tr [:td {:style {:border "1px solid #ddd" :padding "4px"}} "Ⅲ级"] [:td {:style {:border "1px solid #ddd" :padding "4px"}} "软腭、腭垂根部可见"]]
-                      [:tr [:td {:style {:border "1px solid #ddd" :padding "4px"}} "Ⅳ级"] [:td {:style {:border "1px solid #ddd" :padding "4px"}} "仅可见硬腭"]]]]
+                      [:h4 {:style {:fontStyle "italic" :marginTop "10px"}} "改良Mallampati分级图示与说明表"]
+                      [:p "改良Mallampati分级 (Modified Mallampati Score): 患者取坐位，头保持中立位，张口伸舌，观察咽部结构。"]
+                      [:table {:style {:width "100%" :borderCollapse "collapse" :marginBottom "15px"}}
+                       [:thead
+                        [:tr [:th {:style {:border "1px solid #ddd" :padding "4px"}} "分级"] [:th {:style {:border "1px solid #ddd" :padding "4px"}} "可见结构"]]]
+                       [:tbody
+                        [:tr [:td {:style {:border "1px solid #ddd" :padding "4px"}} "Ⅰ级"] [:td {:style {:border "1px solid #ddd" :padding "4px"}} "软腭、腭垂、腭弓、扁桃体均可见"]]
+                        [:tr [:td {:style {:border "1px solid #ddd" :padding "4px"}} "Ⅱ级"] [:td {:style {:border "1px solid #ddd" :padding "4px"}} "软腭、腭垂、腭弓可见，扁桃体被舌根部分遮盖"]]
+                        [:tr [:td {:style {:border "1px solid #ddd" :padding "4px"}} "Ⅲ级"] [:td {:style {:border "1px solid #ddd" :padding "4px"}} "软腭、腭垂根部可见"]]
+                        [:tr [:td {:style {:border "1px solid #ddd" :padding "4px"}} "Ⅳ级"] [:td {:style {:border "1px solid #ddd" :padding "4px"}} "仅可见硬腭"]]]]
 
-                    [:h4 {:style {:marginTop "16px" :borderTop "1px solid #eee" :paddingTop "10px"}} "详细评估项"]
+                      [:h4 {:style {:marginTop "16px" :borderTop "1px solid #eee" :paddingTop "10px"}} "详细评估项"]
 
-                    [:> Form.Item {:label "既往困难通气史" :name [:detailed_assessment :difficult_ventilation_history]}
-                     [:> Radio.Group {:options yes-no-suspected-unknown-options}]]
-                    [:> Form.Item {:label "既往困难插管史" :name [:detailed_assessment :difficult_intubation_history]}
-                     [:> Radio.Group {:options yes-no-suspected-unknown-options}]]
+                      [:> Form.Item {:label "既往困难通气史" :name [:detailed_assessment :difficult_ventilation_history]}
+                       [:> Radio.Group {:options yes-no-suspected-unknown-options}]]
+                      [:> Form.Item {:label "既往困难插管史" :name [:detailed_assessment :difficult_intubation_history]}
+                       [:> Radio.Group {:options yes-no-suspected-unknown-options}]]
 
-                    [:> Form.Item {:label "张口度" :name [:detailed_assessment :mouth_opening :degree]}
-                     [:> Select {:placeholder "选择张口度" :style {:width "100%"} :allowClear true
-                                 :options mouth-opening-options}]]
-                    (when (and mouth-opening-degree-watch (not= mouth-opening-degree-watch "gte_3_fingers"))
-                      [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
-                       [:> Form.Item {:label "受限原因" :name [:detailed_assessment :mouth_opening :limit_reasons]}
-                        [:> Checkbox.Group {:options mouth-opening-limit-reason-options}]]
-                       (when (some #{"other_mouth_opening_limit"} mouth-opening-limit-reasons-watch)
-                         [:> Form.Item {:label "其他原因详情" :name [:detailed_assessment :mouth_opening :limit_reasons_other]}
-                          [:> Input {:placeholder "描述其他原因"}]])])
+                      [:> Form.Item {:label "张口度" :name [:detailed_assessment :mouth_opening :degree]}
+                       [:> Select {:placeholder "选择张口度" :style {:width "100%"} :allowClear true
+                                   :options mouth-opening-options}]]
+                      (when (and mouth-opening-degree-watch (not= mouth-opening-degree-watch "gte_3_fingers"))
+                        [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+                         [:> Form.Item {:label "受限原因" :name [:detailed_assessment :mouth_opening :limit_reasons]}
+                          [:> Checkbox.Group {:options mouth-opening-limit-reason-options}]]
+                         (when (some #{"other_mouth_opening_limit"} mouth-opening-limit-reasons-watch)
+                           [:> Form.Item {:label "其他原因详情" :name [:detailed_assessment :mouth_opening :limit_reasons_other]}
+                            [:> Input {:placeholder "描述其他原因"}]])])
 
-                    [:> Form.Item {:label "甲颏距离 (cm)" :name [:detailed_assessment :thyromental_distance_cm]}
-                     [:> InputNumber {:placeholder "输入距离(cm)" :style {:width "100%"} :min 0}]]
-                    [:> Form.Item {:label "甲颏距离 (分级)" :name [:detailed_assessment :thyromental_distance_class]}
-                     [:> Select {:placeholder "选择分级" :style {:width "100%"} :allowClear true
-                                 :options thyromental-distance-class-options}]]
+                      [:> Form.Item {:label "甲颏距离 (cm)" :name [:detailed_assessment :thyromental_distance_cm]}
+                       [:> InputNumber {:placeholder "输入距离(cm)" :style {:width "100%"} :min 0}]]
+                      [:> Form.Item {:label "甲颏距离 (分级)" :name [:detailed_assessment :thyromental_distance_class]}
+                       [:> Select {:placeholder "选择分级" :style {:width "100%"} :allowClear true
+                                   :options thyromental-distance-class-options}]]
 
-                    [:> Form.Item {:label "头颈活动度" :name [:detailed_assessment :head_neck_mobility :status]}
-                     [:> Select {:placeholder "选择活动度" :style {:width "100%"} :allowClear true
-                                 :options head-neck-mobility-options}]]
-                    (when (= head-neck-mobility-status-watch "cervical_fusion_fixation")
-                      [:> Form.Item {:label "颈椎融合/固定详情" :name [:detailed_assessment :head_neck_mobility :details] :style {:marginLeft "20px"}}
-                       [:> Input {:placeholder "描述详情"}]])
+                      [:> Form.Item {:label "头颈活动度" :name [:detailed_assessment :head_neck_mobility :status]}
+                       [:> Select {:placeholder "选择活动度" :style {:width "100%"} :allowClear true
+                                   :options head-neck-mobility-options}]]
+                      (when (= head-neck-mobility-status-watch "cervical_fusion_fixation")
+                        [:> Form.Item {:label "颈椎融合/固定详情" :name [:detailed_assessment :head_neck_mobility :details] :style {:marginLeft "20px"}}
+                         [:> Input {:placeholder "描述详情"}]])
 
-                    [:> Form.Item {:label "Mallampati分级" :name [:detailed_assessment :mallampati_classification]}
-                     [:> Select {:placeholder "选择Mallampati分级" :style {:width "100%"} :allowClear true
-                                 :options mallampati-classification-options}]]
-                    [:> Form.Item {:label "上唇咬合试验 (ULBT)" :name [:detailed_assessment :upper_lip_bite_test]}
-                     [:> Select {:placeholder "选择ULBT分级" :style {:width "100%"} :allowClear true
-                                 :options upper-lip-bite-test-options}]]
+                      [:> Form.Item {:label "Mallampati分级" :name [:detailed_assessment :mallampati_classification]}
+                       [:> Select {:placeholder "选择Mallampati分级" :style {:width "100%"} :allowClear true
+                                   :options mallampati-classification-options}]]
+                      [:> Form.Item {:label "上唇咬合试验 (ULBT)" :name [:detailed_assessment :upper_lip_bite_test]}
+                       [:> Select {:placeholder "选择ULBT分级" :style {:width "100%"} :allowClear true
+                                   :options upper-lip-bite-test-options}]]
 
-                    [:> Form.Item {:label "牙齿评估" :name [:detailed_assessment :teeth_assessment :conditions]}
-                     [:> Checkbox.Group {:options teeth-assessment-options
-                                         :style {:display "flex" :flexDirection "column"}}]]
-                    (when (some #{"other_teeth_assessment"} teeth-conditions-watch)
-                      [:> Form.Item {:label "其他牙齿评估详情" :name [:detailed_assessment :teeth_assessment :other_details] :style {:marginLeft "20px"}}
-                       [:> Input {:placeholder "描述其他牙齿情况"}]])
+                      [:> Form.Item {:label "牙齿评估" :name [:detailed_assessment :teeth_assessment :conditions]}
+                       [:> Checkbox.Group {:options teeth-assessment-options
+                                           :style {:display "flex" :flexDirection "column"}}]]
+                      (when (some #{"other_teeth_assessment"} teeth-conditions-watch)
+                        [:> Form.Item {:label "其他牙齿评估详情" :name [:detailed_assessment :teeth_assessment :other_details] :style {:marginLeft "20px"}}
+                         [:> Input {:placeholder "描述其他牙齿情况"}]])
 
-                    [:> Form.Item {:label "特殊面部特征 (可多选)" :name [:detailed_assessment :special_facial_features :features]}
-                     [:> Checkbox.Group {:options special-facial-features-options
-                                         :style {:display "flex" :flexDirection "column"}}]]
-                    (when (some #{"other_facial_features"} special-facial-features-watch)
-                      [:> Form.Item {:label "其他特殊面部特征详情" :name [:detailed_assessment :special_facial_features :other_details] :style {:marginLeft "20px"}}
-                       [:> Input {:placeholder "描述其他特征"}]])
+                      [:> Form.Item {:label "特殊面部特征 (可多选)" :name [:detailed_assessment :special_facial_features :features]}
+                       [:> Checkbox.Group {:options special-facial-features-options
+                                           :style {:display "flex" :flexDirection "column"}}]]
+                      (when (some #{"other_facial_features"} special-facial-features-watch)
+                        [:> Form.Item {:label "其他特殊面部特征详情" :name [:detailed_assessment :special_facial_features :other_details] :style {:marginLeft "20px"}}
+                         [:> Input {:placeholder "描述其他特征"}]])
 
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "鼾症"
-                      :radio-name [:detailed_assessment :snoring :has]
-                      :radio-options yes-no-unknown-options
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "症状 (可多选)" :name [:detailed_assessment :snoring :symptoms]}
-                      [:> Checkbox.Group {:options snoring-symptoms-options}]]
-                     (when (some #{"other_snoring_symptoms"} snoring-symptoms-watch)
-                       [:> Form.Item {:label "其他鼾症症状详情" :name [:detailed_assessment :snoring :symptoms_other_details]}
-                        [:> Input {:placeholder "描述其他症状"}]])]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "鼾症"
+                        :radio-name [:detailed_assessment :snoring :has]
+                        :radio-options yes-no-unknown-options
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "症状 (可多选)" :name [:detailed_assessment :snoring :symptoms]}
+                        [:> Checkbox.Group {:options snoring-symptoms-options}]]
+                       (when (some #{"other_snoring_symptoms"} snoring-symptoms-watch)
+                         [:> Form.Item {:label "其他鼾症症状详情" :name [:detailed_assessment :snoring :symptoms_other_details]}
+                          [:> Input {:placeholder "描述其他症状"}]])]
 
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "气道相关疾病"
-                      :radio-name [:detailed_assessment :airway_related_diseases :has]
-                      :radio-options yes-no-unknown-options
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "部位 (可多选)" :name [:detailed_assessment :airway_related_diseases :locations]}
-                      [:> Checkbox.Group {:options airway-disease-location-options}]]
-                     (when (some #{"upper_airway"} airway-diseases-locations-watch)
-                       [:> Form.Item {:label "上呼吸道详情" :name [:detailed_assessment :airway_related_diseases :upper_airway_details]} [:> Input.TextArea {:placeholder "描述上呼吸道疾病详情" :rows 2}]])
-                     (when (some #{"lower_airway"} airway-diseases-locations-watch)
-                       [:> Form.Item {:label "下呼吸道详情" :name [:detailed_assessment :airway_related_diseases :lower_airway_details]} [:> Input.TextArea {:placeholder "描述下呼吸道疾病详情" :rows 2}]])
-                     (when (some #{"other_airway_location"} airway-diseases-locations-watch)
-                       [:> Form.Item {:label "其他部位详情" :name [:detailed_assessment :airway_related_diseases :other_location_details]} [:> Input.TextArea {:placeholder "描述其他部位疾病详情" :rows 2}]])]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "气道相关疾病"
+                        :radio-name [:detailed_assessment :airway_related_diseases :has]
+                        :radio-options yes-no-unknown-options
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "部位 (可多选)" :name [:detailed_assessment :airway_related_diseases :locations]}
+                        [:> Checkbox.Group {:options airway-disease-location-options}]]
+                       (when (some #{"upper_airway"} airway-diseases-locations-watch)
+                         [:> Form.Item {:label "上呼吸道详情" :name [:detailed_assessment :airway_related_diseases :upper_airway_details]} [:> Input.TextArea {:placeholder "描述上呼吸道疾病详情" :rows 2}]])
+                       (when (some #{"lower_airway"} airway-diseases-locations-watch)
+                         [:> Form.Item {:label "下呼吸道详情" :name [:detailed_assessment :airway_related_diseases :lower_airway_details]} [:> Input.TextArea {:placeholder "描述下呼吸道疾病详情" :rows 2}]])
+                       (when (some #{"other_airway_location"} airway-diseases-locations-watch)
+                         [:> Form.Item {:label "其他部位详情" :name [:detailed_assessment :airway_related_diseases :other_location_details]} [:> Input.TextArea {:placeholder "描述其他部位疾病详情" :rows 2}]])]
 
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "纵隔病史 (如肿瘤、放疗等)"
-                      :radio-name [:detailed_assessment :mediastinal_history :has]
-                      :radio-options yes-no-unknown-options
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "详情" :name [:detailed_assessment :mediastinal_history :details]}
-                      [:> Input.TextArea {:placeholder "描述纵隔病史详情" :rows 2}]]]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "纵隔病史 (如肿瘤、放疗等)"
+                        :radio-name [:detailed_assessment :mediastinal_history :has]
+                        :radio-options yes-no-unknown-options
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "详情" :name [:detailed_assessment :mediastinal_history :details]}
+                        [:> Input.TextArea {:placeholder "描述纵隔病史详情" :rows 2}]]]
 
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "现存气道症状"
-                      :radio-name [:detailed_assessment :current_airway_symptoms :has]
-                      :radio-options yes-no-unknown-options
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "症状 (可多选)" :name [:detailed_assessment :current_airway_symptoms :symptoms]}
-                      [:> Checkbox.Group {:options current-airway-symptoms-options}]]
-                     (when (some #{"other_current_symptoms"} current-symptoms-watch)
-                       [:> Form.Item {:label "其他症状详情" :name [:detailed_assessment :current_airway_symptoms :symptoms_other_details]}
-                        [:> Input {:placeholder "描述其他症状"}]])
-                     (when (some #{"stridor"} current-symptoms-watch)
-                       [:> Form.Item {:label "喉梗阻分级 (若有喘鸣)" :name [:detailed_assessment :current_airway_symptoms :laryngeal_obstruction_grade]}
-                        [:> Select {:placeholder "选择喉梗阻分级" :style {:width "100%"} :allowClear true
-                                    :options laryngeal-obstruction-grade-options}]])]
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "食管手术史"
-                      :radio-name [:detailed_assessment :esophageal_surgery_history :has]
-                      :radio-options yes-no-unknown-options
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "是否存在返流" :name [:detailed_assessment :esophageal_surgery_history :reflux_status]}
-                      [:> Radio.Group {:options esophageal-reflux-options}]]]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "现存气道症状"
+                        :radio-name [:detailed_assessment :current_airway_symptoms :has]
+                        :radio-options yes-no-unknown-options
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "症状 (可多选)" :name [:detailed_assessment :current_airway_symptoms :symptoms]}
+                        [:> Checkbox.Group {:options current-airway-symptoms-options}]]
+                       (when (some #{"other_current_symptoms"} current-symptoms-watch)
+                         [:> Form.Item {:label "其他症状详情" :name [:detailed_assessment :current_airway_symptoms :symptoms_other_details]}
+                          [:> Input {:placeholder "描述其他症状"}]])
+                       (when (some #{"stridor"} current-symptoms-watch)
+                         [:> Form.Item {:label "喉梗阻分级 (若有喘鸣)" :name [:detailed_assessment :current_airway_symptoms :laryngeal_obstruction_grade]}
+                          [:> Select {:placeholder "选择喉梗阻分级" :style {:width "100%"} :allowClear true
+                                      :options laryngeal-obstruction-grade-options}]])]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "食管手术史"
+                        :radio-name [:detailed_assessment :esophageal_surgery_history :has]
+                        :radio-options yes-no-unknown-options
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "是否存在返流" :name [:detailed_assessment :esophageal_surgery_history :reflux_status]}
+                        [:> Radio.Group {:options esophageal-reflux-options}]]]
 
-                    [:> Form.Item {:label "其他气道相关情况" :name [:other_airway_conditions]}
-                     [:> Input.TextArea {:placeholder "如有其他气道相关情况请在此注明" :rows 3}]]]]
-    [afc/patient-assessment-card-wrapper
-     {:icon [:> NodeIndexOutlined {:style {:marginRight "8px"}}]
-      :title "气道评估"
-      :header-color "#fff7e6" ; Light orange/yellowish background
-      :patient-id patient-id
-      :form-instance form
-      :form-key (str patient-id "-airway-assessment")
-      :initial-data initial-form-values
-      :on-finish-handler on-finish-fn
-      :on-values-change-handler on-values-change-fn
-      :children form-items}]))
+                      [:> Form.Item {:label "其他气道相关情况" :name [:other_airway_conditions]}
+                       [:> Input.TextArea {:placeholder "如有其他气道相关情况请在此注明" :rows 3}]]]]
+      [afc/patient-assessment-card-wrapper
+       {:icon [:> NodeIndexOutlined {:style {:marginRight "8px"}}]
+        :title "气道评估"
+        :header-color "#fff7e6" ; Light orange/yellowish background
+        :patient-id patient-id
+        :form-instance form
+        :form-key (str patient-id "-airway-assessment")
+        :initial-data initial-form-values
+        :on-finish-handler on-finish-fn
+        :on-values-change-handler on-values-change-fn
+        :children form-items}])))
 
 
 (defn spinal-anesthesia-assessment-card "椎管内麻醉相关评估" [props]
@@ -1748,72 +1754,72 @@
                                 (when (contains? changed-values (clj->js {:cardiovascular_system {:anticoagulants_present nil}}))
                                   (when (not= (get-in all-values-clj [:cardiovascular_system :anticoagulants_present]) "有")
                                     (.setFieldsValue form-instance (clj->js {:cardiovascular_system {:anticoagulants_details nil}}))))
-                                )))]
-    (r/useEffect (fn []
+                                ))]
+    (React/useEffect (fn []
                    (when report-form-instance-fn
                      (report-form-instance-fn :spinal_anesthesia_assessment form))
                    js/undefined)
                  #js [])
     (let [render-radio-group (fn [main-key item-key label-text]
-                             [:> Form.Item {:label label-text :name [main-key item-key] :key (str (name main-key) "-" (name item-key))}
-                              [:> Radio.Group {:options yes-no-options}]])
+                               [:> Form.Item {:label label-text :name [main-key item-key] :key (str (name main-key) "-" (name item-key))}
+                                [:> Radio.Group {:options yes-no-options}]])
           render-subsection-title (fn [title]
-                                  [:h4 {:style {:marginTop "16px" :marginBottom "8px" :borderBottom "1px solid #f0f0f0" :paddingBottom "4px"}} title])
+                                    [:h4 {:style {:marginTop "16px" :marginBottom "8px" :borderBottom "1px solid #f0f0f0" :paddingBottom "4px"}} title])
           form-items [:<>
-                    (render-subsection-title "中枢神经系统")
-                    (render-radio-group :central_nervous_system :brain_tumor "脑肿瘤")
-                    (render-radio-group :central_nervous_system :cerebral_hemorrhage "脑出血")
-                    (render-radio-group :central_nervous_system :severe_head_trauma "严重颅脑外伤")
-                    (render-radio-group :central_nervous_system :epilepsy "癫痫")
+                      (render-subsection-title "中枢神经系统")
+                      (render-radio-group :central_nervous_system :brain_tumor "脑肿瘤")
+                      (render-radio-group :central_nervous_system :cerebral_hemorrhage "脑出血")
+                      (render-radio-group :central_nervous_system :severe_head_trauma "严重颅脑外伤")
+                      (render-radio-group :central_nervous_system :epilepsy "癫痫")
 
-                    (render-subsection-title "外周神经系统")
-                    (render-radio-group :peripheral_nervous_system :multiple_sclerosis "多发性硬化")
-                    (render-radio-group :peripheral_nervous_system :spinal_cord_injury "脊髓损伤")
-                    (render-radio-group :peripheral_nervous_system :scoliosis "脊柱侧弯")
-                    (render-radio-group :peripheral_nervous_system :spinal_deformity "脊柱畸形")
-                    (render-radio-group :peripheral_nervous_system :intraspinal_tumor "椎管内肿瘤")
-                    (render-radio-group :peripheral_nervous_system :ankylosing_spondylitis "强制性脊柱炎")
-                    (render-radio-group :peripheral_nervous_system :lumbar_surgery_history "腰椎手术史")
+                      (render-subsection-title "外周神经系统")
+                      (render-radio-group :peripheral_nervous_system :multiple_sclerosis "多发性硬化")
+                      (render-radio-group :peripheral_nervous_system :spinal_cord_injury "脊髓损伤")
+                      (render-radio-group :peripheral_nervous_system :scoliosis "脊柱侧弯")
+                      (render-radio-group :peripheral_nervous_system :spinal_deformity "脊柱畸形")
+                      (render-radio-group :peripheral_nervous_system :intraspinal_tumor "椎管内肿瘤")
+                      (render-radio-group :peripheral_nervous_system :ankylosing_spondylitis "强制性脊柱炎")
+                      (render-radio-group :peripheral_nervous_system :lumbar_surgery_history "腰椎手术史")
 
-                    (render-subsection-title "腰椎间盘突出")
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "腰椎间盘突出"
-                      :radio-name [:lumbar_disc_herniation :present]
-                      :radio-options yes-no-options
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "下肢麻木症状" :name [:lumbar_disc_herniation :lower_limb_numbness_symptoms] :key "ldh-symptoms"}
-                      [:> Radio.Group {:options yes-no-options}]]]
+                      (render-subsection-title "腰椎间盘突出")
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "腰椎间盘突出"
+                        :radio-name [:lumbar_disc_herniation :present]
+                        :radio-options yes-no-options
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "下肢麻木症状" :name [:lumbar_disc_herniation :lower_limb_numbness_symptoms] :key "ldh-symptoms"}
+                        [:> Radio.Group {:options yes-no-options}]]]
 
-                    (render-subsection-title "心血管系统")
-                    (render-radio-group :cardiovascular_system :aortic_stenosis "主动脉瓣狭窄")
-                    (render-radio-group :cardiovascular_system :hypertrophic_obstructive_cardiomyopathy "肥厚型梗阻型心肌病")
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "抗凝 / 抗血小板药物"
-                      :radio-name [:cardiovascular_system :anticoagulants_present]
-                      :radio-options yes-no-options
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "详情" :name [:cardiovascular_system :anticoagulants_details] :key "cvs-anticoag-details"}
-                      [:> Input.TextArea {:placeholder "请描述药物名称、剂量、频率、末次用药时间" :rows 2}]]]
+                      (render-subsection-title "心血管系统")
+                      (render-radio-group :cardiovascular_system :aortic_stenosis "主动脉瓣狭窄")
+                      (render-radio-group :cardiovascular_system :hypertrophic_obstructive_cardiomyopathy "肥厚型梗阻型心肌病")
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "抗凝 / 抗血小板药物"
+                        :radio-name [:cardiovascular_system :anticoagulants_present]
+                        :radio-options yes-no-options
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "详情" :name [:cardiovascular_system :anticoagulants_details] :key "cvs-anticoag-details"}
+                        [:> Input.TextArea {:placeholder "请描述药物名称、剂量、频率、末次用药时间" :rows 2}]]]
 
-                    (render-subsection-title "穿刺点检查")
-                    (render-radio-group :puncture_site_inspection :difficult_puncture_history "既往穿刺困难史")
-                    (render-radio-group :puncture_site_inspection :local_infection "局部感染")
-                    (render-radio-group :puncture_site_inspection :deformity "畸形")
+                      (render-subsection-title "穿刺点检查")
+                      (render-radio-group :puncture_site_inspection :difficult_puncture_history "既往穿刺困难史")
+                      (render-radio-group :puncture_site_inspection :local_infection "局部感染")
+                      (render-radio-group :puncture_site_inspection :deformity "畸形")
 
-                    (render-subsection-title "局麻药过敏")
-                    [:> Form.Item {:label "局麻药过敏史" :name :local_anesthetic_allergy :key "la-allergy"}
-                     [:> Radio.Group {:options yes-no-options}]]
-                    ]]
-    [afc/patient-assessment-card-wrapper
-     {:icon [:> GatewayOutlined {:style {:marginRight "8px"}}]
-      :title "椎管内麻醉相关评估"
-      :header-color "#f0f5ff" ; Light blue background
-      :patient-id patient-id
-      :form-instance form
-      :form-key (str patient-id "-spinal-anesthesia")
-      :initial-data initial-form-values
-      :on-finish-handler on-finish-fn
-      :on-values-change-handler on-values-change-fn
-      :children form-items}]))
+                      (render-subsection-title "局麻药过敏")
+                      [:> Form.Item {:label "局麻药过敏史" :name :local_anesthetic_allergy :key "la-allergy"}
+                       [:> Radio.Group {:options yes-no-options}]]
+                      ]]
+      [afc/patient-assessment-card-wrapper
+       {:icon [:> GatewayOutlined {:style {:marginRight "8px"}}]
+        :title "椎管内麻醉相关评估"
+        :header-color "#f0f5ff" ; Light blue background
+        :patient-id patient-id
+        :form-instance form
+        :form-key (str patient-id "-spinal-anesthesia")
+        :initial-data initial-form-values
+        :on-finish-handler on-finish-fn
+        :on-values-change-handler on-values-change-fn
+        :children form-items}])))

@@ -107,6 +107,7 @@
     (assoc-in db (concat [:anesthesia :current-assessment-canonical] path) value)))
 
 (rf/reg-event-db ::update-canonical-assessment-section
+  [(when ^boolean goog.DEBUG re-frame.core/debug)]
   (fn [db [_ section-key section-data]]
     ;; Ensure the section-key exists before trying to merge
     (if (get-in db [:anesthesia :current-assessment-canonical section-key])
@@ -178,7 +179,12 @@
 (rf/reg-event-fx ::reject-patient (fn [{:keys [db]} _] (js/alert (str "驳回患者: " (get-in db [:anesthesia :current-patient-id]))) {}))
 
 ;; --- Save Final Assessment ---
+(rf/reg-event-fx ::save-final-assessment-later
+  (fn [_ _]
+    {:dispatch-later [{:ms 30 :dispatch [::save-final-assessment]}]}))
+
 (rf/reg-event-fx ::save-final-assessment
+  [(when ^boolean goog.DEBUG re-frame.core/debug)]
   (fn [{:keys [db]} _]
     (let [current-patient-id (get-in db [:anesthesia :current-patient-id])
           ;; The entire canonical assessment is now the payload

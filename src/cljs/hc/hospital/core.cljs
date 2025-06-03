@@ -16,9 +16,6 @@
 ;; 导入 Ant Design CSS
 ;;(js/require "antd/dist/reset.css")
 
-;; -------------------------
-;; 视图
-
 (defn app-root
   "应用的主UI组件。根据用户登录状态和会话检查状态来渲染不同视图。"
   []
@@ -52,9 +49,6 @@
         [:div {:style {:textAlign "center" :paddingTop "50px"}}
          "正在重定向到登录页面..."]))))
 
-
-;; -------------------------
-;; 初始化应用
 
 (defn ^:dev/after-load mount-root
   "重新挂载根React组件到DOM中。通常在开发环境代码热重载后调用。"
