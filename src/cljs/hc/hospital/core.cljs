@@ -1,4 +1,6 @@
 (ns hc.hospital.core
+  "医院ClojureScript应用的主入口点。
+  负责UI渲染、事件处理和应用初始化。"
   (:require
    ["react" :as react]
    [reagent.core :as r]
@@ -8,66 +10,71 @@
    [hc.hospital.subs :as subs]
    [taoensso.timbre :as timbre]
    [hc.hospital.pages.anesthesia-home :refer [anesthesia-home-page]]
-   ;; Removed login page require: [hc.hospital.pages.login :refer [login-page]]
-   ["antd" :as antd :refer [Button Spin]])) ; Added Spin for loading indicator
+   ;; 已移除登录页面引用: [hc.hospital.pages.login :refer [login-page]]
+   ["antd" :as antd :refer [Button Spin]])) ; 已添加 Spin 作为加载指示器
 
-;; Import Ant Design CSS
+;; 导入 Ant Design CSS
 ;;(js/require "antd/dist/reset.css")
 
 ;; -------------------------
-;; Views
+;; 视图
 
-(defn app-root []
+(defn app-root
+  "应用的主UI组件。根据用户登录状态和会话检查状态来渲染不同视图。"
+  []
   (let [session-check-pending? @(rf/subscribe [::subs/session-check-pending?])
         is-logged-in? @(rf/subscribe [::subs/is-logged-in])
         current-path (.-pathname js/window.location)]
-    (timbre/info (str "App root: Session pending? " session-check-pending? ", Logged in? " is-logged-in? ", Current path: " current-path))
+    (timbre/info (str "应用根组件：会话检查中？" session-check-pending? "，已登录？" is-logged-in? "，当前路径：" current-path))
     (react/useEffect
      #(rf/dispatch-sync [::events/fetch-all-assessments])
      #js [])
 
     (if session-check-pending?
       [:div {:style {:display "flex" :justifyContent "center" :alignItems "center" :height "100vh"}}
-       [:> antd/Spin {:tip "Loading session..." :size "large"}
+       [:> antd/Spin {:tip "正在加载会话..." :size "large"}
         [:div {:style {:width "100%" :height "100%"}}]]]
       (if is-logged-in?
         (do
-          ;; If logged in, but somehow on /login or /login.html, redirect to main app page.
-          ;; This is an edge case, as /login should be a backend-rendered page.
-          ;; However, if the user manually navigates or state gets inconsistent, this handles it.
+          ;; 如果已登录，但当前路径为 /login 或 /login.html，则重定向到主应用页面。
+          ;; 这是一个边缘情况，因为 /login 应该是后端渲染的页面。
+          ;; 但是，如果用户手动导航或状态不一致，此逻辑会处理该情况。
           (when (or (= current-path "/login") (= current-path "/login.html"))
-            (timbre/info "Logged in, but on login page. Redirecting to /")
+            (timbre/info "已登录，但位于登录页面。正在重定向到 /")
             (js/window.location.assign "/"))
-          ;; Fetch assessments only when logged in and viewing main app
+          ;; 仅在登录并查看主应用时获取评估数据
 
-          [anesthesia-home-page]) ; Render main application page
-        ;; If not logged in (and session check is complete):
-        ;; The ::session-check-failed event should have already initiated a redirect to /login.
-        ;; This part of app-root will briefly render while the browser navigates.
-        ;; No need to render [login-page] here as the /login path is handled by the backend.
+          [anesthesia-home-page]) ; 渲染主应用页面
+        ;; 如果未登录（且会话检查已完成）：
+        ;; ::session-check-failed 事件应该已经启动了到 /login 的重定向。
+        ;; 当浏览器导航时，app-root 的这部分会短暂渲染。
+        ;; 此处无需渲染 [login-page]，因为 /login 路径由后端处理。
         [:div {:style {:textAlign "center" :paddingTop "50px"}}
-         "Redirecting to login..."]))))
+         "正在重定向到登录页面..."]))))
 
 
 ;; -------------------------
-;; Initialize app
+;; 初始化应用
 
-(defn ^:dev/after-load mount-root []
+(defn ^:dev/after-load mount-root
+  "重新挂载根React组件到DOM中。通常在开发环境代码热重载后调用。"
+  []
   (timbre/info "重新挂载应用")
   (d/render [:f> app-root] (.getElementById js/document "app")))
 
-(defn ^:export ^:dev/once init! []
-  ;; 初始化日志系统
-  (timbre/info "Initializing application...")
-  (timbre/debug "DEBUG mode enabled.")
+(defn ^:export ^:dev/once init!
+  "应用初始化函数。设置日志，处理登录状态，并挂载根组件。"
+  []
+  (timbre/info "正在初始化应用...")
+  (timbre/debug "调试模式已启用。")
 
   (if (identical? "true" (js/localStorage.getItem "justLoggedIn"))
     (do
-      (timbre/info "Initializing after login: clearing flag and dispatching handle-just-logged-in.")
+      (timbre/info "登录后初始化：清除标记并派发 handle-just-logged-in 事件。")
       (js/localStorage.removeItem "justLoggedIn")
       (rf/dispatch [::events/handle-just-logged-in]))
     (do
-      (timbre/info "Normal application initialization: dispatching initialize-db and check-session.")
+      (timbre/info "正常应用初始化：派发 initialize-db 和 check-session 事件。")
       (rf/dispatch-sync [::events/initialize-db])
       (rf/dispatch [::events/check-session])))
 
