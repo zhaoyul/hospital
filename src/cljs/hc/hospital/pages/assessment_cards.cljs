@@ -774,18 +774,9 @@
           (str "精神及神经肌肉系统: " (str/join ", " persistent_findings)))))))
 
 (defn mental-neuromuscular-system-summary-view [props]
-  (let [{:keys [on-show-detailed mn-data]} props
-        props-map {:icon [:> UserOutlined {:style {:marginRight "8px"}}]
-                   :title "精神及神经肌肉系统"
-                   :header-color "#fffbe6"
-                   :on-double-click on-show-detailed
-                   :card-style {:cursor "pointer"}
-                   :card-body-style {:padding "10px"}}
-        content (generate-mental-neuromuscular-summary mn-data)]
-    [ui-helpers/custom-styled-card
-     (:icon props-map)
-     (:title props-map)
-     (:header-color props-map)
+  (let [{:keys [endo-data]} props
+        content (generate-mental-neuromuscular-summary endo-data)]
+    [:div {:style {:padding "10px"}}
      content]))
 
 (defn mental-neuromuscular-system-detailed-view [props]
@@ -974,7 +965,6 @@
 
 (defn mental-neuromuscular-system-card "精神及神经肌肉系统" [props]
   (let [view-state (r/atom :summary)
-        show-detailed-fn #(reset! view-state :detailed)
         show-summary-fn #(reset! view-state :summary)
         toggle-view-fn #(reset! view-state (if (= @view-state :summary) :detailed :summary))
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
@@ -987,8 +977,8 @@
        (if (= @view-state :summary)
          [mental-neuromuscular-system-summary-view {:mn-data mn-data}]
          [:f> mental-neuromuscular-system-detailed-view (merge props {:patient-id patient-id
-                                                                     :mn-data mn-data
-                                                                     :on-show-summary show-summary-fn})])
+                                                                      :mn-data mn-data
+                                                                      :on-show-summary show-summary-fn})])
        :on-double-click toggle-view-fn
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
