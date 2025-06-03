@@ -17,15 +17,37 @@
    [re-frame.core :as rf]
    [reagent.core :as r]))
 
-(defn circulatory-system-card "循环系统" [props]
-  (let [{:keys [report-form-instance-fn]} props
-        patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
-        circulatory-data @(rf/subscribe [::subs/circulatory-system-data])
+(defn generate-circulatory-summary [data]
+  (if (or (nil? data) (empty? data))
+    "循环系统: 无数据"
+    (let [parts (transient [])
+          cardiac-history (get-in data [:cardiac_disease_history :has])
+          pacemaker-history (get-in data [:pacemaker_history :has])
+          cardiac-function (get-in data [:cardiac_function_assessment :class])
+          exercise-capacity (get-in data [:exercise_capacity_assessment :level])]
+      (conj! parts (if (= cardiac-history "有") "心脏病史:异常" "心脏病史:无"))
+      (conj! parts (if (= pacemaker-history "有") "起搏器:有" "起搏器:无"))
+      (conj! parts (cond
+                     (nil? cardiac-function) "心功能:未评估"
+                     (= cardiac-function "Ⅰ 级") "心功能:正常"
+                     :else (str "心功能:" cardiac-function)))
+      (conj! parts (cond
+                     (nil? exercise-capacity) "运动能力:未评估"
+                     (= exercise-capacity "运动能力正常") "运动能力:正常"
+                     :else (str "运动能力:" exercise-capacity)))
+      (str "循环系统: " (clojure.string/join ", " (persistent! parts))))))
+
+(defn circulatory-system-summary-view [props]
+  (let [{:keys [on-show-detailed circulatory-data]} props]
+    [:div {:on-double-click on-show-detailed
+           :style {:cursor "pointer" :padding "10px" :border "1px solid #eee"}}
+     (generate-circulatory-summary circulatory-data)]))
+
+(defn circulatory-system-detailed-view [props]
+  (let [{:keys [report-form-instance-fn patient-id circulatory-data on-show-summary]} props
         [form] (Form.useForm)
-        ;; Removed Form.useWatch for radio groups that will be handled by form-item-radio-conditional
-        ;; Watchers for nested conditions or conditions not directly tied to a radio group handled by the new component remain.
-        arrhythmia-has (Form.useWatch [:cardiac_disease_history :arrhythmia :has] form) ; Still needed for complex children logic
-        pacemaker-type (Form.useWatch [:pacemaker_history :type] form) ; Example of a nested condition
+        arrhythmia-has (Form.useWatch [:cardiac_disease_history :arrhythmia :has] form)
+        pacemaker-type (Form.useWatch [:pacemaker_history :type] form)
 
         yes-no-options [{:label "无" :value "无"} {:label "有" :value "有"}]
         yes-no-unknown-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
@@ -223,7 +245,17 @@
                       [:> Form.Item {:label "其他循环系统相关情况" :name [:other_cardiac_info :details]}
                        [:> Input.TextArea {:placeholder "请描述其他循环系统相关情况"
                                            :rows 4}]]
-                      ]]
+                      [:> Row {:justify "end" :style {:marginTop "20px"}}
+                       [:> Col
+                        [:> Form.Item
+                         [:button {:type "button"
+                                   :on-click on-show-summary
+                                   :style {:padding "5px 10px"
+                                           :background-color "#f0f0f0"
+                                           :border "1px solid #ccc"
+                                           :border-radius "4px"
+                                           :cursor "pointer"}}
+                          "返回总结"]]]]]]]
       [afc/patient-assessment-card-wrapper
        {:icon [:> HeartOutlined {:style {:marginRight "8px"}}]
         :title "循环系统"
@@ -234,16 +266,46 @@
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :on-values-change-handler nil ; No onValuesChange for this card yet
-        :children form-items}])))
+        :children form-items}]))
 
-
-(defn respiratory-system-card "呼吸系统" [props]
-  (let [{:keys [report-form-instance-fn]} props
+(defn circulatory-system-card "循环系统" [props]
+  (let [view-state (r/atom :summary) ; Manages :summary or :detailed view
+        show-detailed-fn #(reset! view-state :detailed)
+        show-summary-fn #(reset! view-state :summary)
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
-        respiratory-data @(rf/subscribe [::subs/respiratory-system-data])
-        [form] (Form.useForm)
-        ;; Removed Form.useWatch calls that are now handled by form-item-radio-conditional
+        circulatory-data @(rf/subscribe [::subs/circulatory-system-data])]
+    (if (= @view-state :summary)
+      [circulatory-system-summary-view {:on-show-detailed show-detailed-fn
+                                        :circulatory-data circulatory-data}]
+      [circulatory-system-detailed-view (merge props {:patient-id patient-id
+                                                      :circulatory-data circulatory-data
+                                                      :on-show-summary show-summary-fn})])))
 
+(defn generate-respiratory-summary [data]
+  (if (or (nil? data) (empty? data))
+    "呼吸系统: 无数据"
+    (let [parts (transient [])
+          cold-history (get-in data [:cold_history_last_2_weeks :present])
+          bronchitis-pneumonia (get-in data [:bronchitis_pneumonia_last_month :present])
+          asthma-history (get-in data [:asthma_history :present])
+          copd-history (get-in data [:copd_history :present])
+          tb-history (get-in data [:tuberculosis_history :present])]
+      (conj! parts (if (= cold-history "有") "近期感冒:有" "近期感冒:无"))
+      (conj! parts (if (= bronchitis-pneumonia "有") "近期支气管炎/肺炎:有" "近期支气管炎/肺炎:无"))
+      (conj! parts (if (= asthma-history "有") "哮喘病史:有" "哮喘病史:无"))
+      (conj! parts (if (= copd-history "有") "COPD病史:有" "COPD病史:无"))
+      (conj! parts (if (= tb-history "有") "肺结核:有" "肺结核:无"))
+      (str "呼吸系统: " (clojure.string/join ", " (persistent! parts))))))
+
+(defn respiratory-system-summary-view [props]
+  (let [{:keys [on-show-detailed respiratory-data]} props]
+    [:div {:on-double-click on-show-detailed
+           :style {:cursor "pointer" :padding "10px" :border "1px solid #eee"}}
+     (generate-respiratory-summary respiratory-data)]))
+
+(defn respiratory-system-detailed-view [props]
+  (let [{:keys [report-form-instance-fn patient-id respiratory-data on-show-summary]} props
+        [form] (Form.useForm)
         cold-symptom-options [{:label "咳嗽" :value "cough"}
                               {:label "流涕" :value "runny_nose"}
                               {:label "发热" :value "fever"}
@@ -392,8 +454,18 @@
                          [:> Radio {:value "有"} "有"]
                          [:> Radio {:value "不详"} "不祥"]]]]
                       [:> Form.Item {:label "其他呼吸系统相关情况" :name [:other_respiratory_conditions]}
-                       [:> Input.TextArea {:placeholder "如有其他呼吸系统相关情况请在此注明" :rows 3}]]]]
-
+                       [:> Input.TextArea {:placeholder "如有其他呼吸系统相关情况请在此注明" :rows 3}]]
+                      [:> Row {:justify "end" :style {:marginTop "20px"}}
+                       [:> Col
+                        [:> Form.Item
+                         [:button {:type "button"
+                                   :on-click on-show-summary
+                                   :style {:padding "5px 10px"
+                                           :background-color "#f0f0f0"
+                                           :border "1px solid #ccc"
+                                           :border-radius "4px"
+                                           :cursor "pointer"}}
+                          "返回总结"]]]]]]]
       [afc/patient-assessment-card-wrapper
        {:icon [:> CloudOutlined {:style {:marginRight "8px"}}]
         :title "呼吸系统"
@@ -404,18 +476,46 @@
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :on-values-change-handler nil
-        :children form-items}])))
+        :children form-items}]))
 
-(defn mental-neuromuscular-system-card "精神及神经肌肉系统" [props]
-  (let [{:keys [report-form-instance-fn]} props
+(defn respiratory-system-card "呼吸系统" [props]
+  (let [view-state (r/atom :summary)
+        show-detailed-fn #(reset! view-state :detailed)
+        show-summary-fn #(reset! view-state :summary)
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
-        mn-data @(rf/subscribe [::subs/mental-neuromuscular-system-data])
+        respiratory-data @(rf/subscribe [::subs/respiratory-system-data])]
+    (if (= @view-state :summary)
+      [respiratory-system-summary-view {:on-show-detailed show-detailed-fn
+                                        :respiratory-data respiratory-data}]
+      [respiratory-system-detailed-view (merge props {:patient-id patient-id
+                                                      :respiratory-data respiratory-data
+                                                      :on-show-summary show-summary-fn})])))
+
+;; Mental Neuromuscular System Card
+(defn generate-mental-neuromuscular-summary [data]
+  (if (or (nil? data) (empty? data))
+    "精神及神经肌肉系统: 无数据"
+    (let [parts (transient [])
+          psycho-cognitive (get-in data [:psycho_cognitive_history :present])
+          epilepsy (get-in data [:epilepsy_history :present])
+          cerebral-infarction (get-in data [:cerebral_infarction_history :present])]
+      (conj! parts (str "精神认知史:" (if (= psycho-cognitive "有") "有" "无")))
+      (conj! parts (str "癫痫史:" (if (= epilepsy "有") "有" "无")))
+      (conj! parts (str "脑梗史:" (if (= cerebral-infarction "有") "有" "无")))
+      (str "精神及神经肌肉系统: " (clojure.string/join ", " (persistent! parts))))))
+
+(defn mental-neuromuscular-system-summary-view [props]
+  (let [{:keys [on-show-detailed mn-data]} props]
+    [:div {:on-double-click on-show-detailed
+           :style {:cursor "pointer" :padding "10px" :border "1px solid #eee"}}
+     (generate-mental-neuromuscular-summary mn-data)]))
+
+(defn mental-neuromuscular-system-detailed-view [props]
+  (let [{:keys [report-form-instance-fn patient-id mn-data on-show-summary]} props
         [form] (Form.useForm)
-        ;; Watchers that are still needed for complex conditional logic within children
         psycho-cognitive-symptoms (Form.useWatch [:psycho_cognitive_history :symptoms] form)
         other-neuromuscular-symptoms (Form.useWatch [:other_neuromuscular_conditions :symptoms] form)
-        cranial-stenosis-present (Form.useWatch [:cranial_carotid_stenosis :present] form) ; For inline conditional input
-
+        cranial-stenosis-present (Form.useWatch [:cranial_carotid_stenosis :present] form)
         psycho-cog-symptom-options [{:label "智力发育迟缓" :value "intellectual_disability"}
                                     {:label "焦虑症" :value "anxiety_disorder"}
                                     {:label "抑郁症" :value "depression"}
@@ -545,15 +645,13 @@
                                     :options general-treatment-status-options}]]
                        [:> Form.Item {:label "用药情况" :name [:parkinsons_syndrome :medication]}
                         [:> Input.TextArea {:placeholder "请描述用药情况" :rows 2}]]]
-                      ;; Cranial Carotid Stenosis - an Input appears if "有", not a div block.
-                      ;; This pattern is simpler and might not need the form-item-radio-conditional component unless we want to standardize all.
-                      ;; For now, leaving as is, as per instructions to prioritize div-revealing patterns.
+
                       [:> Form.Item {:label "颅脑和颈动脉狭窄" :name [:cranial_carotid_stenosis :present]}
                        [:> Radio.Group {}
                         [:> Radio {:value "无"} "无"]
                         [:> Radio {:value "有"} "有"]
                         [:> Radio {:value "不祥"} "不祥"]]
-                       (when (= cranial-stenosis-present "有") ; Still use useWatch for this inline conditional input
+                       (when (= cranial-stenosis-present "有")
                          [:> Form.Item {:name [:cranial_carotid_stenosis :details]}
                           [:> Input {:placeholder "请描述狭窄详情" :style {:marginLeft "10px" :width "calc(100% - 150px)"}}]])]
 
@@ -563,7 +661,6 @@
                         :radio-name [:other_neuromuscular_conditions :present]
                         :radio-options [{:label "无" :value "无"} {:label "有" :value "有"}]
                         :conditional-value "有"}
-                       ;; The entire let form becomes a child argument
                        (let [other-symptom-options [{:label "重症肌无力" :value "myasthenia_gravis"}
                                                     {:label "格林巴利综合征" :value "guillain_barre"}
                                                     {:label "帕金森病史" :value "parkinsons_disease"}
@@ -576,7 +673,18 @@
                            [:> Checkbox.Group {:options other-symptom-options}]]
                           (when (some #{"other_specific_conditions"} other-neuromuscular-symptoms)
                             [:> Form.Item {:label "其他症状详情" :name [:other_neuromuscular_conditions :symptoms_other_details]}
-                             [:> Input {:placeholder "请描述其他具体情况"}]])])]]]
+                             [:> Input {:placeholder "请描述其他具体情况"}]])])]
+                      [:> Row {:justify "end" :style {:marginTop "20px"}}
+                       [:> Col
+                        [:> Form.Item
+                         [:button {:type "button"
+                                   :on-click on-show-summary
+                                   :style {:padding "5px 10px"
+                                           :background-color "#f0f0f0"
+                                           :border "1px solid #ccc"
+                                           :border-radius "4px"
+                                           :cursor "pointer"}}
+                          "返回总结"]]]]]]]
       [afc/patient-assessment-card-wrapper
        {:icon [:> UserOutlined {:style {:marginRight "8px"}}]
         :title "精神及神经肌肉系统"
@@ -586,29 +694,56 @@
         :form-key (str patient-id "-mental-neuromuscular")
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
-        :on-values-change-handler nil ; No onValuesChange for this card
-        :children form-items}])))
+        :on-values-change-handler nil
+        :children form-items}]))
 
-
-(defn endocrine-system-card "内分泌系统" [props]
-  (let [{:keys [report-form-instance-fn]} props
+(defn mental-neuromuscular-system-card "精神及神经肌肉系统" [props]
+  (let [view-state (r/atom :summary)
+        show-detailed-fn #(reset! view-state :detailed)
+        show-summary-fn #(reset! view-state :summary)
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
-        endo-data @(rf/subscribe [::subs/endocrine-system-data])
+        mn-data @(rf/subscribe [::subs/mental-neuromuscular-system-data])]
+    (if (= @view-state :summary)
+      [mental-neuromuscular-system-summary-view {:on-show-detailed show-detailed-fn
+                                                 :mn-data mn-data}]
+      [mental-neuromuscular-system-detailed-view (merge props {:patient-id patient-id
+                                                               :mn-data mn-data
+                                                               :on-show-summary show-summary-fn})])))
+
+;; Endocrine System Card
+(defn generate-endocrine-summary [data]
+  (if (or (nil? data) (empty? data))
+    "内分泌系统: 无数据"
+    (let [parts (transient [])
+          thyroid-history (get-in data [:thyroid_disease_history :present])
+          diabetes-history (get-in data [:diabetes_history :present])
+          pheochromocytoma (get-in data [:pheochromocytoma :present])]
+      (conj! parts (str "甲状腺疾病:" (if (= thyroid-history "有") "有" "无")))
+      (conj! parts (str "糖尿病:" (if (= diabetes-history "有") "有" "无")))
+      (conj! parts (str "嗜铬细胞瘤:" (if (= pheochromocytoma "有") "有" "无")))
+      (str "内分泌系统: " (clojure.string/join ", " (persistent! parts))))))
+
+(defn endocrine-system-summary-view [props]
+  (let [{:keys [on-show-detailed endo-data]} props]
+    [:div {:on-double-click on-show-detailed
+           :style {:cursor "pointer" :padding "10px" :border "1px solid #eee"}}
+     (generate-endocrine-summary endo-data)]))
+
+(defn endocrine-system-detailed-view [props]
+  (let [{:keys [report-form-instance-fn patient-id endo-data on-show-summary]} props
         [form] (Form.useForm)
-        ;; Watchers for nested/internal conditional logic
         thyroid-types (Form.useWatch [:thyroid_disease_history :types] form)
         diabetes-control-method (Form.useWatch [:diabetes_history :control_method] form)
         pheo-control-status (Form.useWatch [:pheochromocytoma :control_status] form)
-        gout-present (Form.useWatch [:gout :present] form) ; For inline conditional input
-        hypopituitarism-present (Form.useWatch [:hypopituitarism :present] form) ; For inline conditional input
-
+        gout-present (Form.useWatch [:gout :present] form)
+        hypopituitarism-present (Form.useWatch [:hypopituitarism :present] form)
         thyroid-type-options [{:label "甲亢" :value "hyperthyroidism"}
                               {:label "甲减" :value "hypothyroidism"}
                               {:label "甲状腺术后甲状腺素替代治疗" :value "post_surgery_replacement_therapy"}
                               {:label "桥本" :value "hashimotos"}
                               {:label "其他" :value "other_thyroid_type"}]
         general-treatment-status-options [{:value "治愈" :label "治愈"} {:value "好转" :label "好转"} {:value "仍有症状" :label "仍有症状"} {:value "未治疗" :label "未治疗"} {:value "病情稳定" :label "病情稳定"} {:value "其他" :label "其他"}]
-        initial-form-values endo-data ; No date parsing needed for this card
+        initial-form-values endo-data
         on-finish-fn (fn [values]
                        (rf/dispatch [::events/update-canonical-assessment-section :endocrine_system (js->clj values :keywordize-keys true)]))]
     (React/useEffect (fn []
@@ -708,7 +843,7 @@
                       [:> Radio {:value "无"} "无"]
                       [:> Radio {:value "有"} "有"]
                       [:> Radio {:value "不祥"} "不祥"]]
-                     (when (= gout-present "有") ; Inline conditional input, not using form-item-radio-conditional
+                     (when (= gout-present "有")
                        [:> Form.Item {:name [:gout :details]}
                         [:> Input {:placeholder "请描述痛风详情" :style {:marginLeft "10px" :width "calc(100% - 150px)"}}]])]
 
@@ -717,13 +852,23 @@
                       [:> Radio {:value "无"} "无"]
                       [:> Radio {:value "有"} "有"]
                       [:> Radio {:value "不祥"} "不祥"]]
-                     (when (= hypopituitarism-present "有") ; Inline conditional input
+                     (when (= hypopituitarism-present "有")
                        [:> Form.Item {:name [:hypopituitarism :details]}
                         [:> Input {:placeholder "请描述垂体功能减退症详情" :style {:marginLeft "10px" :width "calc(100% - 150px)"}}]])]
 
                     [:> Form.Item {:label "其他内分泌系统相关情况" :name [:other_endocrine_conditions]}
                      [:> Input.TextArea {:placeholder "如有其他内分泌系统相关情况请在此注明" :rows 3}]]
-                    ]]
+                    [:> Row {:justify "end" :style {:marginTop "20px"}}
+                     [:> Col
+                      [:> Form.Item
+                       [:button {:type "button"
+                                 :on-click on-show-summary
+                                 :style {:padding "5px 10px"
+                                         :background-color "#f0f0f0"
+                                         :border "1px solid #ccc"
+                                         :border-radius "4px"
+                                         :cursor "pointer"}}
+                        "返回总结"]]]]]]]
     [afc/patient-assessment-card-wrapper
      {:icon [:> ExperimentOutlined {:style {:marginRight "8px"}}]
       :title "内分泌系统"
@@ -734,16 +879,45 @@
       :initial-data initial-form-values
       :on-finish-handler on-finish-fn
       :on-values-change-handler nil
-      :children form-items}])))
+      :children form-items}]))
 
-
-(defn liver-kidney-system-card "肝肾病史" [props]
-  (let [{:keys [report-form-instance-fn]} props
+(defn endocrine-system-card "内分泌系统" [props]
+  (let [view-state (r/atom :summary)
+        show-detailed-fn #(reset! view-state :detailed)
+        show-summary-fn #(reset! view-state :summary)
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
-        lk-data @(rf/subscribe [::subs/liver-kidney-system-data])
+        endo-data @(rf/subscribe [::subs/endocrine-system-data])]
+    (if (= @view-state :summary)
+      [endocrine-system-summary-view {:on-show-detailed show-detailed-fn
+                                      :endo-data endo-data}]
+      [endocrine-system-detailed-view (merge props {:patient-id patient-id
+                                                    :endo-data endo-data
+                                                    :on-show-summary show-summary-fn})])))
+
+;; Liver Kidney System Card
+(defn generate-liver-kidney-summary [data]
+  (if (or (nil? data) (empty? data))
+    "肝肾病史: 无数据"
+    (let [parts (transient [])
+          liver-status (get-in data [:liver_function :status])
+          liver-disease-types (get-in data [:liver_disease_history :types])]
+      (conj! parts (if (= liver-status "异常") "肝功能:异常" "肝功能:正常"))
+      (conj! parts (if (and (seq liver-disease-types) (not (every? #{"none"} liver-disease-types)))
+                     "肝脏疾病:有"
+                     "肝脏疾病:无"))
+      ;; Add kidney summary points here if data structure becomes clear
+      (str "肝肾病史: " (clojure.string/join ", " (persistent! parts))))))
+
+(defn liver-kidney-system-summary-view [props]
+  (let [{:keys [on-show-detailed lk-data]} props]
+    [:div {:on-double-click on-show-detailed
+           :style {:cursor "pointer" :padding "10px" :border "1px solid #eee"}}
+     (generate-liver-kidney-summary lk-data)]))
+
+(defn liver-kidney-system-detailed-view [props]
+  (let [{:keys [report-form-instance-fn patient-id lk-data on-show-summary]} props
         [form] (Form.useForm)
         initial-form-values lk-data
-
         liver-disease-type-options [{:label "无" :value "none"}
                                     {:label "药物性肝炎" :value "drug_induced_hepatitis"}
                                     {:label "自身免疫性肝病" :value "autoimmune_liver_disease"}
@@ -780,7 +954,17 @@
                       [:h4 {:style {:marginTop "16px"}} "其他情况"]
                       [:> Form.Item {:label "其他肝肾系统相关情况" :name [:other_liver_kidney_conditions]}
                        [:> Input.TextArea {:placeholder "如有其他肝肾系统相关情况请在此注明" :rows 3}]]
-                      ]]
+                      [:> Row {:justify "end" :style {:marginTop "20px"}}
+                       [:> Col
+                        [:> Form.Item
+                         [:button {:type "button"
+                                   :on-click on-show-summary
+                                   :style {:padding "5px 10px"
+                                           :background-color "#f0f0f0"
+                                           :border "1px solid #ccc"
+                                           :border-radius "4px"
+                                           :cursor "pointer"}}
+                          "返回总结"]]]]]]]
       [afc/patient-assessment-card-wrapper
        {:icon [:> ProjectOutlined {:style {:marginRight "8px"}}]
         :title "肝肾病史"
@@ -791,23 +975,50 @@
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :on-values-change-handler nil
-        :children form-items}])))
+        :children form-items}]))
 
-(defn digestive-system-card  "消化系统" [props]
-  (let [{:keys [report-form-instance-fn]} props
+(defn liver-kidney-system-card "肝肾病史" [props]
+  (let [view-state (r/atom :summary)
+        show-detailed-fn #(reset! view-state :detailed)
+        show-summary-fn #(reset! view-state :summary)
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
-        ds-data @(rf/subscribe [::subs/digestive-system-data])
-        [form] (Form.useForm)
-        ;; Watcher for nested condition
-        chronic-digestive-symptoms (Form.useWatch [:chronic_digestive_history :symptoms] form)
+        lk-data @(rf/subscribe [::subs/liver-kidney-system-data])]
+    (if (= @view-state :summary)
+      [liver-kidney-system-summary-view {:on-show-detailed show-detailed-fn
+                                         :lk-data lk-data}]
+      [liver-kidney-system-detailed-view (merge props {:patient-id patient-id
+                                                       :lk-data lk-data
+                                                       :on-show-summary show-summary-fn})])))
 
+;; Digestive System Card
+(defn generate-digestive-summary [data]
+  (if (or (nil? data) (empty? data))
+    "消化系统: 无数据"
+    (let [parts (transient [])
+          acute-gastro (get-in data [:acute_gastroenteritis_history :has])
+          esoph-gast-duo (get-in data [:esophageal_gastric_duodenal_history :has])
+          chronic-digest (get-in data [:chronic_digestive_history :has])]
+      (conj! parts (str "急性胃肠炎:" (if (= acute-gastro "有") "有" "无")))
+      (conj! parts (str "食管胃十二指肠疾病:" (if (= esoph-gast-duo "有") "有" "无")))
+      (conj! parts (str "慢性消化疾病:" (if (= chronic-digest "有") "有" "无")))
+      (str "消化系统: " (clojure.string/join ", " (persistent! parts))))))
+
+(defn digestive-system-summary-view [props]
+  (let [{:keys [on-show-detailed ds-data]} props]
+    [:div {:on-double-click on-show-detailed
+           :style {:cursor "pointer" :padding "10px" :border "1px solid #eee"}}
+     (generate-digestive-summary ds-data)]))
+
+(defn digestive-system-detailed-view [props]
+  (let [{:keys [report-form-instance-fn patient-id ds-data on-show-summary]} props
+        [form] (Form.useForm)
+        chronic-digestive-symptoms (Form.useWatch [:chronic_digestive_history :symptoms] form)
         yes-no-options [{:label "无" :value "无"} {:label "有" :value "有"}]
         yes-no-unknown-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
         treatment-status-options [
                                   {:label "治愈" :value "治愈"} {:label "好转" :value "好转"}
                                   {:label "仍有症状" :value "仍有症状"} {:label "未治疗" :value "未治疗"}
                                   ]
-
         acute-gastroenteritis-symptom-options [{:label "恶心" :value "nausea"}
                                                {:label "呕吐" :value "vomiting"}
                                                {:label "腹泻" :value "diarrhea"}]
@@ -885,30 +1096,67 @@
                         [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
                                     :options treatment-status-options}]]]
 
-                      ;; 4. 其他情况 (Other Conditions)
                       [:> Form.Item {:label "其他消化系统相关情况" :name [:other_conditions]}
                        [:> Input.TextArea {:placeholder "请描述其他消化系统相关情况"
                                            :rows 4}]]
-                      ]]
+                      [:> Row {:justify "end" :style {:marginTop "20px"}}
+                       [:> Col
+                        [:> Form.Item
+                         [:button {:type "button"
+                                   :on-click on-show-summary
+                                   :style {:padding "5px 10px"
+                                           :background-color "#f0f0f0"
+                                           :border "1px solid #ccc"
+                                           :border-radius "4px"
+                                           :cursor "pointer"}}
+                          "返回总结"]]]]]]]
       [afc/patient-assessment-card-wrapper
        {:icon [:> CoffeeOutlined {:style {:marginRight "8px"}}]
         :title "消化系统"
-        :header-color "#eff8ff" ; Adjusted color to be slightly different from respiratory for distinction
+        :header-color "#eff8ff"
         :patient-id patient-id
         :form-instance form
         :form-key (str patient-id "-digestive-system")
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :on-values-change-handler nil
-        :children form-items}])))
+        :children form-items}]))
 
-(defn hematologic-system-card "血液系统" [props]
-  (let [{:keys [report-form-instance-fn]} props
+(defn digestive-system-card  "消化系统" [props]
+  (let [view-state (r/atom :summary)
+        show-detailed-fn #(reset! view-state :detailed)
+        show-summary-fn #(reset! view-state :summary)
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
-        hs-data @(rf/subscribe [::subs/hematologic-system-data])
-        [form] (Form.useForm)
-        ;; Removed Form.useWatch calls for radio groups now handled by form-item-radio-conditional
+        ds-data @(rf/subscribe [::subs/digestive-system-data])]
+    (if (= @view-state :summary)
+      [digestive-system-summary-view {:on-show-detailed show-detailed-fn
+                                      :ds-data ds-data}]
+      [digestive-system-detailed-view (merge props {:patient-id patient-id
+                                                    :ds-data ds-data
+                                                    :on-show-summary show-summary-fn})])))
 
+;; Hematologic System Card
+(defn generate-hematologic-summary [data]
+  (if (or (nil? data) (empty? data))
+    "血液系统: 无数据"
+    (let [parts (transient [])
+          anemia (get-in data [:anemia :has])
+          coagulation-dysfunction (get-in data [:coagulation_dysfunction :has])
+          thrombosis-history (get-in data [:thrombosis_history :has])]
+      (conj! parts (str "贫血:" (if (= anemia "有") "有" "无")))
+      (conj! parts (str "凝血功能障碍:" (if (= coagulation-dysfunction "有") "有" "无")))
+      (conj! parts (str "血栓史:" (if (= thrombosis-history "有") "有" "无")))
+      (str "血液系统: " (clojure.string/join ", " (persistent! parts))))))
+
+(defn hematologic-system-summary-view [props]
+  (let [{:keys [on-show-detailed hs-data]} props]
+    [:div {:on-double-click on-show-detailed
+           :style {:cursor "pointer" :padding "10px" :border "1px solid #eee"}}
+     (generate-hematologic-summary hs-data)]))
+
+(defn hematologic-system-detailed-view [props]
+  (let [{:keys [report-form-instance-fn patient-id hs-data on-show-summary]} props
+        [form] (Form.useForm)
         yes-no-options [{:label "无" :value "无"} {:label "有" :value "有"}]
         yes-no-unknown-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
         initial-form-values hs-data
@@ -967,7 +1215,18 @@
                         [:> Input {:placeholder "描述下肢深静脉血栓详情"}]]]
 
                       [:> Form.Item {:label "血管超声" :name [:vascular_ultrasound_results]}
-                       [:> Input.TextArea {:placeholder "请描述血管超声结果" :rows 3}]]]]
+                       [:> Input.TextArea {:placeholder "请描述血管超声结果" :rows 3}]]
+                      [:> Row {:justify "end" :style {:marginTop "20px"}}
+                       [:> Col
+                        [:> Form.Item
+                         [:button {:type "button"
+                                   :on-click on-show-summary
+                                   :style {:padding "5px 10px"
+                                           :background-color "#f0f0f0"
+                                           :border "1px solid #ccc"
+                                           :border-radius "4px"
+                                           :cursor "pointer"}}
+                          "返回总结"]]]]]]]
       [afc/patient-assessment-card-wrapper
        {:icon [:> ExperimentOutlined {:style {:marginRight "8px"}}]
         :title "血液系统"
@@ -978,17 +1237,43 @@
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :on-values-change-handler nil
-        :children form-items}])))
+        :children form-items}]))
 
-(defn immune-system-card        "免疫系统" [props]
-  (let [{:keys [report-form-instance-fn]} props
+(defn hematologic-system-card "血液系统" [props]
+  (let [view-state (r/atom :summary)
+        show-detailed-fn #(reset! view-state :detailed)
+        show-summary-fn #(reset! view-state :summary)
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
-        is-data @(rf/subscribe [::subs/immune-system-data])
+        hs-data @(rf/subscribe [::subs/hematologic-system-data])]
+    (if (= @view-state :summary)
+      [hematologic-system-summary-view {:on-show-detailed show-detailed-fn
+                                        :hs-data hs-data}]
+      [hematologic-system-detailed-view (merge props {:patient-id patient-id
+                                                      :hs-data hs-data
+                                                      :on-show-summary show-summary-fn})])))
+
+;; Immune System Card
+(defn generate-immune-summary [data]
+  (if (or (nil? data) (empty? data))
+    "免疫系统: 无数据"
+    (let [parts (transient [])
+          immune-dysfunction (get-in data [:immune_dysfunction :has])
+          autoimmune-disease (get-in data [:autoimmune_disease :has])]
+      (conj! parts (str "免疫功能障碍:" (if (= immune-dysfunction "有") "有" "无")))
+      (conj! parts (str "自身免疫性疾病:" (if (= autoimmune-disease "有") "有" "无")))
+      (str "免疫系统: " (clojure.string/join ", " (persistent! parts))))))
+
+(defn immune-system-summary-view [props]
+  (let [{:keys [on-show-detailed is-data]} props]
+    [:div {:on-double-click on-show-detailed
+           :style {:cursor "pointer" :padding "10px" :border "1px solid #eee"}}
+     (generate-immune-summary is-data)]))
+
+(defn immune-system-detailed-view [props]
+  (let [{:keys [report-form-instance-fn patient-id is-data on-show-summary]} props
         [form] (Form.useForm)
-        ;; Watchers for nested conditions
         immune-dysfunction-type (Form.useWatch [:immune_dysfunction :type] form)
         autoimmune-symptoms (Form.useWatch [:autoimmune_disease :symptoms] form)
-
         yes-no-unknown-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
         immune-dysfunction-type-options [{:label "获得性免疫缺陷" :value "acquired_immunodeficiency"}
                                          {:label "先天性免疫缺陷" :value "congenital_immunodeficiency"}
@@ -1002,7 +1287,7 @@
         on-finish-fn (fn [values]
                        (rf/dispatch [::events/update-canonical-assessment-section :immune_system (js->clj values :keywordize-keys true)]))
         on-values-change-fn (fn [changed-values all-values]
-                              (let [form-instance form ; Use the form instance from the outer let
+                              (let [form-instance form
                                     all-values-clj (js->clj all-values :keywordize-keys true)]
                                 (when (contains? changed-values [:immune_dysfunction :has])
                                   (when (not= (get-in all-values-clj [:immune_dysfunction :has]) "有")
@@ -1048,10 +1333,19 @@
                          [:> Form.Item {:label "其他症状详情" :name [:autoimmune_disease :symptoms_other_details]}
                           [:> Input {:placeholder "请描述其他自身免疫性疾病症状"}]])]
 
-                      ;; 3. 其他情况 (Other Conditions)
                       [:> Form.Item {:label "其他免疫系统相关情况" :name [:other_immune_conditions]}
                        [:> Input.TextArea {:placeholder "如有其他免疫系统相关情况请在此注明" :rows 3}]]
-                      ]]
+                      [:> Row {:justify "end" :style {:marginTop "20px"}}
+                       [:> Col
+                        [:> Form.Item
+                         [:button {:type "button"
+                                   :on-click on-show-summary
+                                   :style {:padding "5px 10px"
+                                           :background-color "#f0f0f0"
+                                           :border "1px solid #ccc"
+                                           :border-radius "4px"
+                                           :cursor "pointer"}}
+                          "返回总结"]]]]]]]
       [afc/patient-assessment-card-wrapper
        {:icon [:> SecurityScanOutlined {:style {:marginRight "8px"}}]
         :title "免疫系统"
@@ -1062,22 +1356,52 @@
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :on-values-change-handler on-values-change-fn
-        :children form-items}])))
+        :children form-items}]))
 
-(defn special-medication-history-card "特殊用药史" [props]
-  (let [{:keys [report-form-instance-fn]} props
+(defn immune-system-card        "免疫系统" [props]
+  (let [view-state (r/atom :summary)
+        show-detailed-fn #(reset! view-state :detailed)
+        show-summary-fn #(reset! view-state :summary)
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
-        smh-data @(rf/subscribe [::subs/special-medication-history-data])
+        is-data @(rf/subscribe [::subs/immune-system-data])]
+    (if (= @view-state :summary)
+      [immune-system-summary-view {:on-show-detailed show-detailed-fn
+                                   :is-data is-data}]
+      [immune-system-detailed-view (merge props {:patient-id patient-id
+                                                 :is-data is-data
+                                                 :on-show-summary show-summary-fn})])))
+
+;; Special Medication History Card
+(defn generate-special-medication-summary [data]
+  (if (or (nil? data) (empty? data))
+    "特殊用药史: 无数据"
+    (let [parts (transient [])
+          anticoagulant (get-in data [:anticoagulant_antiplatelet :present])
+          glucocorticoids (get-in data [:glucocorticoids :present])
+          cancer-treatment (get-in data [:cancer_treatment :present])
+          drug-abuse (get-in data [:drug_abuse_dependence :present])]
+      (conj! parts (str "抗凝/抗血小板:" (if (= anticoagulant "有") "有" "无")))
+      (conj! parts (str "糖皮质激素:" (if (= glucocorticoids "有") "有" "无")))
+      (conj! parts (str "肿瘤治疗:" (if (= cancer-treatment "有") "有" "无")))
+      (conj! parts (str "药物滥用:" (if (= drug-abuse "有") "有" "无")))
+      (str "特殊用药史: " (clojure.string/join ", " (persistent! parts))))))
+
+(defn special-medication-history-summary-view [props]
+  (let [{:keys [on-show-detailed smh-data]} props]
+    [:div {:on-double-click on-show-detailed
+           :style {:cursor "pointer" :padding "10px" :border "1px solid #eee"}}
+     (generate-special-medication-summary smh-data)]))
+
+(defn special-medication-history-detailed-view [props]
+  (let [{:keys [report-form-instance-fn patient-id smh-data on-show-summary]} props
         [form] (Form.useForm)
         initial-form-values smh-data
-
         watch-anticoagulant-present (Form.useWatch [:anticoagulant_antiplatelet :present] form)
         watch-glucocorticoids-present (Form.useWatch [:glucocorticoids :present] form)
         watch-cancer-treatment-present (Form.useWatch [:cancer_treatment :present] form)
         watch-drug-abuse-present (Form.useWatch [:drug_abuse_dependence :present] form)
         watch-neuroleptic-present (Form.useWatch [:neuroleptic_drugs :present] form)
         watch-glp1-agonists-present (Form.useWatch [:glp1_agonists :present] form)
-
         on-finish-fn (fn [values]
                        (rf/dispatch [::events/update-canonical-assessment-section :special_medication_history (js->clj values :keywordize-keys true)]))
         on-values-change-fn (fn [changed-values all-values]
@@ -1117,7 +1441,17 @@
 
                       [:> Form.Item {:label "其他药物使用" :name [:other_drug_use]}
                        [:> Input.TextArea {:placeholder "请描述其他特殊药物使用情况" :rows 3}]]
-                      ]]
+                      [:> Row {:justify "end" :style {:marginTop "20px"}}
+                       [:> Col
+                        [:> Form.Item
+                         [:button {:type "button"
+                                   :on-click on-show-summary
+                                   :style {:padding "5px 10px"
+                                           :background-color "#f0f0f0"
+                                           :border "1px solid #ccc"
+                                           :border-radius "4px"
+                                           :cursor "pointer"}}
+                          "返回总结"]]]]]]]
       [afc/patient-assessment-card-wrapper
        {:icon [:> MedicineBoxOutlined {:style {:marginRight "8px"}}]
         :title "特殊用药史"
@@ -1128,16 +1462,44 @@
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :on-values-change-handler on-values-change-fn
-        :children form-items}])))
+        :children form-items}]))
 
-(defn special-disease-history-card "特殊疾病病史" [props]
-  (let [{:keys [report-form-instance-fn]} props
+(defn special-medication-history-card "特殊用药史" [props]
+  (let [view-state (r/atom :summary)
+        show-detailed-fn #(reset! view-state :detailed)
+        show-summary-fn #(reset! view-state :summary)
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
-        sdh-data @(rf/subscribe [::subs/special-disease-history-data])
-        [form] (Form.useForm)
-        marfan-lesions (Form.useWatch [:marfan_syndrome :related_lesions] form) ; Watched for conditional rendering of details
-        initial-form-values sdh-data ; No date parsing needed
+        smh-data @(rf/subscribe [::subs/special-medication-history-data])]
+    (if (= @view-state :summary)
+      [special-medication-history-summary-view {:on-show-detailed show-detailed-fn
+                                                :smh-data smh-data}]
+      [special-medication-history-detailed-view (merge props {:patient-id patient-id
+                                                              :smh-data smh-data
+                                                              :on-show-summary show-summary-fn})])))
 
+;; Special Disease History Card
+(defn generate-special-disease-summary [data]
+  (if (or (nil? data) (empty? data))
+    "特殊疾病病史: 无数据"
+    (let [parts (transient [])
+          marfan-present (get-in data [:marfan_syndrome :present])
+          other-diseases (get data :other_special_diseases)]
+      (conj! parts (str "马方综合征:" (if (= marfan-present "有") "有" "无")))
+      (when (and (some? other-diseases) (not (clojure.string/blank? other-diseases)))
+        (conj! parts "其他特殊疾病:有"))
+      (str "特殊疾病病史: " (clojure.string/join ", " (persistent! parts))))))
+
+(defn special-disease-history-summary-view [props]
+  (let [{:keys [on-show-detailed sdh-data]} props]
+    [:div {:on-double-click on-show-detailed
+           :style {:cursor "pointer" :padding "10px" :border "1px solid #eee"}}
+     (generate-special-disease-summary sdh-data)]))
+
+(defn special-disease-history-detailed-view [props]
+  (let [{:keys [report-form-instance-fn patient-id sdh-data on-show-summary]} props
+        [form] (Form.useForm)
+        marfan-lesions (Form.useWatch [:marfan_syndrome :related_lesions] form)
+        initial-form-values sdh-data
         marfan-related-lesions-options [{:label "眼部病变（晶状体脱位）" :value "eye_lesion_lens_dislocation"}
                                         {:label "心血管病变（主动脉瘤）" :value "cardiovascular_aortic_aneurysm"}
                                         {:label "心血管病变（主动脉夹层）" :value "cardiovascular_aortic_dissection"}
@@ -1151,17 +1513,14 @@
         on-values-change-fn (fn [changed-values all-values]
                               (let [form-instance form
                                     all-values-clj (js->clj all-values :keywordize-keys true)]
-                                ;; Clear Marfan details if Marfan syndrome is not present
                                 (when (and (contains? changed-values (clj->js {:marfan_syndrome {:present nil}}))
                                            (not= (get-in all-values-clj [:marfan_syndrome :present]) "有"))
                                   (.setFieldsValue form-instance (clj->js {:marfan_syndrome {:related_lesions []
                                                                                              :cardiovascular_other_details nil
                                                                                              :skeletal_other_details nil}})))
-                                ;; Clear cardiovascular_other_details if "cardiovascular_other" is not in related_lesions
                                 (when (contains? changed-values (clj->js {:marfan_syndrome {:related_lesions nil}}))
                                   (when (not (some #{"cardiovascular_other"} (get-in all-values-clj [:marfan_syndrome :related_lesions])))
                                     (.setFieldsValue form-instance (clj->js {:marfan_syndrome {:cardiovascular_other_details nil}}))))
-                                ;; Clear skeletal_other_details if "skeletal_other" is not in related_lesions
                                 (when (contains? changed-values (clj->js {:marfan_syndrome {:related_lesions nil}}))
                                   (when (not (some #{"skeletal_other"} (get-in all-values-clj [:marfan_syndrome :related_lesions])))
                                     (.setFieldsValue form-instance (clj->js {:marfan_syndrome {:skeletal_other_details nil}}))))
@@ -1190,7 +1549,17 @@
 
                       [:> Form.Item {:label "其他特殊疾病" :name [:other_special_diseases]}
                        [:> Input.TextArea {:placeholder "请描述其他特殊疾病情况" :rows 3}]]
-                      ]]
+                      [:> Row {:justify "end" :style {:marginTop "20px"}}
+                       [:> Col
+                        [:> Form.Item
+                         [:button {:type "button"
+                                   :on-click on-show-summary
+                                   :style {:padding "5px 10px"
+                                           :background-color "#f0f0f0"
+                                           :border "1px solid #ccc"
+                                           :border-radius "4px"
+                                           :cursor "pointer"}}
+                          "返回总结"]]]]]]]
       [afc/patient-assessment-card-wrapper
        {:icon [:> WarningOutlined {:style {:marginRight "8px"}}]
         :title "特殊疾病病史"
@@ -1201,16 +1570,49 @@
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :on-values-change-handler on-values-change-fn
-        :children form-items}])))
+        :children form-items}]))
 
-
-(defn nutritional-assessment-card "营养评估" [props]
-  (let [{:keys [report-form-instance-fn]} props
-        na-data @(rf/subscribe [::subs/nutritional-assessment-data])
+(defn special-disease-history-card "特殊疾病病史" [props]
+  (let [view-state (r/atom :summary)
+        show-detailed-fn #(reset! view-state :detailed)
+        show-summary-fn #(reset! view-state :summary)
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
+        sdh-data @(rf/subscribe [::subs/special-disease-history-data])]
+    (if (= @view-state :summary)
+      [special-disease-history-summary-view {:on-show-detailed show-detailed-fn
+                                             :sdh-data sdh-data}]
+      [special-disease-history-detailed-view (merge props {:patient-id patient-id
+                                                           :sdh-data sdh-data
+                                                           :on-show-summary show-summary-fn})])))
+
+;; Nutritional Assessment Card
+(defn generate-nutritional-summary [data]
+  (if (or (nil? data) (empty? data))
+    "营养评估: 无数据"
+    (let [parts (transient [])
+          nutritional-score-risk (or (= "有" (get-in data [:nutritional_score :bmi_lt_20_5]))
+                                     (= "有" (get-in data [:nutritional_score :weight_loss_last_3_months]))
+                                     (= "有" (get-in data [:nutritional_score :reduced_intake_last_week]))
+                                     (= "有" (get-in data [:nutritional_score :severe_illness])))
+          frail-score-risk (or (= "有" (get-in data [:frail_score :fatigue]))
+                                 (= "有" (get-in data [:frail_score :resistance]))
+                                 (= "有" (get-in data [:frail_score :ambulation]))
+                                 (= "有" (get-in data [:frail_score :illness_gt_5]))
+                                 (= "有" (get-in data [:frail_score :loss_of_weight_gt_5_percent])))]
+      (conj! parts (if nutritional-score-risk "营养评分风险:有" "营养评分风险:无"))
+      (conj! parts (if frail-score-risk "FRAIL评估风险:有" "FRAIL评估风险:无"))
+      (str "营养评估: " (clojure.string/join ", " (persistent! parts))))))
+
+(defn nutritional-assessment-summary-view [props]
+  (let [{:keys [on-show-detailed na-data]} props]
+    [:div {:on-double-click on-show-detailed
+           :style {:cursor "pointer" :padding "10px" :border "1px solid #eee"}}
+     (generate-nutritional-summary na-data)]))
+
+(defn nutritional-assessment-detailed-view [props]
+  (let [{:keys [report-form-instance-fn patient-id na-data on-show-summary]} props
         [form] (Form.useForm)
         initial-form-values na-data
-
         yes-no-options [{:label "无" :value "无"} {:label "有" :value "有"}]
         on-finish-fn (fn [values]
                        (rf/dispatch [::events/update-canonical-assessment-section :nutritional_assessment (js->clj values :keywordize-keys true)]))]
@@ -1251,28 +1653,70 @@
                        [:p {:style {:fontSize "12px" :color "gray"}}
                         "0 分：健康；" [:br]
                         "1-2 分：衰弱前期；" [:br]
-                        "≥3 分：衰弱。"]]]]
+                        "≥3 分：衰弱。"]]
+                      [:> Row {:justify "end" :style {:marginTop "20px"}}
+                       [:> Col
+                        [:> Form.Item
+                         [:button {:type "button"
+                                   :on-click on-show-summary
+                                   :style {:padding "5px 10px"
+                                           :background-color "#f0f0f0"
+                                           :border "1px solid #ccc"
+                                           :border-radius "4px"
+                                           :cursor "pointer"}}
+                          "返回总结"]]]]]]]
       [afc/patient-assessment-card-wrapper
        {:icon [:> AppleOutlined {:style {:marginRight "8px"}}]
         :title "营养评估"
-        :header-color "#f0fff0" ; Light green background
+        :header-color "#f0fff0"
         :patient-id patient-id
         :form-instance form
         :form-key (str patient-id "-nutritional-assessment")
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :on-values-change-handler nil
-        :children form-items}])))
+        :children form-items}]))
 
-
-(defn pregnancy-assessment-card "妊娠" [props]
-  (let [{:keys [report-form-instance-fn]} props
-        pa-data @(rf/subscribe [::subs/pregnancy-assessment-data])
+(defn nutritional-assessment-card "营养评估" [props]
+  (let [view-state (r/atom :summary)
+        show-detailed-fn #(reset! view-state :detailed)
+        show-summary-fn #(reset! view-state :summary)
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
-        [form] (Form.useForm)
-        comorbid-conditions-watch (Form.useWatch [:comorbid_obstetric_conditions] form) ; Watcher for nested condition
-        initial-form-values pa-data
+        na-data @(rf/subscribe [::subs/nutritional-assessment-data])]
+    (if (= @view-state :summary)
+      [nutritional-assessment-summary-view {:on-show-detailed show-detailed-fn
+                                            :na-data na-data}]
+      [nutritional-assessment-detailed-view (merge props {:patient-id patient-id
+                                                          :na-data na-data
+                                                          :on-show-summary show-summary-fn})])))
 
+;; Pregnancy Assessment Card
+(defn generate-pregnancy-summary [data]
+  (if (or (nil? data) (empty? data))
+    "妊娠: 无数据"
+    (let [is-pregnant (get data :is_pregnant)]
+      (cond
+        (= is-pregnant "有")
+        (let [parts (transient ["妊娠:是"])
+              gestational-week (get data :gestational_week "未提供")
+              comorbid-conditions (seq (get data :comorbid_obstetric_conditions))]
+          (conj! parts (str "孕周:" gestational-week))
+          (conj! parts (if comorbid-conditions "合并情况:有" "合并情况:无"))
+          (clojure.string/join ", " (persistent! parts)))
+        (= is-pregnant "无") "妊娠:否"
+        :else "妊娠:不祥"))))
+
+(defn pregnancy-assessment-summary-view [props]
+  (let [{:keys [on-show-detailed pa-data]} props]
+    [:div {:on-double-click on-show-detailed
+           :style {:cursor "pointer" :padding "10px" :border "1px solid #eee"}}
+     (generate-pregnancy-summary pa-data)]))
+
+(defn pregnancy-assessment-detailed-view [props]
+  (let [{:keys [report-form-instance-fn patient-id pa-data on-show-summary]} props
+        [form] (Form.useForm)
+        comorbid-conditions-watch (Form.useWatch [:comorbid_obstetric_conditions] form)
+        initial-form-values pa-data
         yes-no-unknown-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
         gestational-week-options [{:label "0-12 周" :value "0-12_weeks"}
                                   {:label "13-28 周" :value "13-28_weeks"}
@@ -1295,14 +1739,12 @@
         on-values-change-fn (fn [changed-values all-values]
                               (let [form-instance form
                                     all-values-clj (js->clj all-values :keywordize-keys true)]
-                                ;; Clear pregnancy sub-fields if not pregnant
                                 (when (contains? changed-values (clj->js {:is_pregnant nil}))
                                   (when (not= (get-in all-values-clj [:is_pregnant]) "有")
                                     (.setFieldsValue form-instance (clj->js {:gestational_week nil
                                                                              :obstetric_history nil
                                                                              :comorbid_obstetric_conditions []
                                                                              :comorbid_obstetric_conditions_other_details nil}))))
-                                ;; Clear other details if "other_obstetric_conditions" is not selected
                                 (when (contains? changed-values (clj->js {:comorbid_obstetric_conditions nil}))
                                   (when (not (some #{"other_obstetric_conditions"} (get-in all-values-clj [:comorbid_obstetric_conditions])))
                                     (.setFieldsValue form-instance (clj->js {:comorbid_obstetric_conditions_other_details nil}))))
@@ -1333,31 +1775,66 @@
 
                       [:> Form.Item {:label "其他妊娠相关情况" :name [:other_pregnancy_conditions]}
                        [:> Input.TextArea {:placeholder "如有其他妊娠相关情况请在此注明" :rows 3}]]
-                      ]]
+                      [:> Row {:justify "end" :style {:marginTop "20px"}}
+                       [:> Col
+                        [:> Form.Item
+                         [:button {:type "button"
+                                   :on-click on-show-summary
+                                   :style {:padding "5px 10px"
+                                           :background-color "#f0f0f0"
+                                           :border "1px solid #ccc"
+                                           :border-radius "4px"
+                                           :cursor "pointer"}}
+                          "返回总结"]]]]]]]
       [afc/patient-assessment-card-wrapper
        {:icon [:> WomanOutlined {:style {:marginRight "8px"}}]
         :title "妊娠"
-        :header-color "#fff0f6" ; Light pink background
+        :header-color "#fff0f6"
         :patient-id patient-id
         :form-instance form
         :form-key (str patient-id "-pregnancy-assessment")
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :on-values-change-handler on-values-change-fn
-        :children form-items}])))
+        :children form-items}]))
 
-
-(defn surgical-anesthesia-history-card "手术麻醉史" [props]
-  (let [{:keys [report-form-instance-fn]} props
-        sah-data @(rf/subscribe [::subs/surgical-anesthesia-history-data])
+(defn pregnancy-assessment-card "妊娠" [props]
+  (let [view-state (r/atom :summary)
+        show-detailed-fn #(reset! view-state :detailed)
+        show-summary-fn #(reset! view-state :summary)
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
+        pa-data @(rf/subscribe [::subs/pregnancy-assessment-data])]
+    (if (= @view-state :summary)
+      [pregnancy-assessment-summary-view {:on-show-detailed show-detailed-fn
+                                          :pa-data pa-data}]
+      [pregnancy-assessment-detailed-view (merge props {:patient-id patient-id
+                                                        :pa-data pa-data
+                                                        :on-show-summary show-summary-fn})])))
+
+;; Surgical Anesthesia History Card
+(defn generate-surgical-anesthesia-summary [data]
+  (if (or (nil? data) (empty? data))
+    "手术麻醉史: 无数据"
+    (let [parts (transient [])
+          history-present (get-in data [:history :present])
+          family-hyperthermia (get-in data [:family_history_malignant_hyperthermia :present])]
+      (conj! parts (str "手术麻醉史:" (cond (= history-present "有") "有" (= history-present "不祥") "不祥" :else "无")))
+      (conj! parts (str "恶性高热家族史:" (if (= family-hyperthermia "有") "有" "无")))
+      (str "手术麻醉史: " (clojure.string/join ", " (persistent! parts))))))
+
+(defn surgical-anesthesia-history-summary-view [props]
+  (let [{:keys [on-show-detailed sah-data]} props]
+    [:div {:on-double-click on-show-detailed
+           :style {:cursor "pointer" :padding "10px" :border "1px solid #eee"}}
+     (generate-surgical-anesthesia-summary sah-data)]))
+
+(defn surgical-anesthesia-history-detailed-view [props]
+  (let [{:keys [report-form-instance-fn patient-id sah-data on-show-summary]} props
         [form] (Form.useForm)
         history-present-watch (Form.useWatch [:history :present] form)
         family-hyperthermia-watch (Form.useWatch [:family_history_malignant_hyperthermia :present] form)
-        ;; Watchers for nested conditions, not directly handled by the form-item-radio-conditional itself
         postop-complications-watch (Form.useWatch [:history :postop_complications] form)
         adverse-events-watch (Form.useWatch [:history :adverse_events] form)
-
         initial-form-values (when sah-data
                               (-> sah-data
                                   (assoc-in [:history :last_anesthesia_date_specific]
@@ -1442,28 +1919,75 @@
                          [:> Input {:placeholder "请说明与患者关系"}]])
 
                       [:> Form.Item {:label "其他手术麻醉史相关情况" :name [:other_surgical_anesthesia_conditions]}
-                       [:> Input.TextArea {:placeholder "如有其他手术麻醉史相关情况请在此注明" :rows 3}]]]]
+                       [:> Input.TextArea {:placeholder "如有其他手术麻醉史相关情况请在此注明" :rows 3}]]
+                      [:> Row {:justify "end" :style {:marginTop "20px"}}
+                       [:> Col
+                        [:> Form.Item
+                         [:button {:type "button"
+                                   :on-click on-show-summary
+                                   :style {:padding "5px 10px"
+                                           :background-color "#f0f0f0"
+                                           :border "1px solid #ccc"
+                                           :border-radius "4px"
+                                           :cursor "pointer"}}
+                          "返回总结"]]]]]]]
       [afc/patient-assessment-card-wrapper
        {:icon [:> HistoryOutlined {:style {:marginRight "8px"}}]
         :title "手术麻醉史"
-        :header-color "#e6f7ff" ; Light blue background
+        :header-color "#e6f7ff"
         :patient-id patient-id
         :form-instance form
         :form-key (str patient-id "-surgical-anesthesia-history")
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :on-values-change-handler on-values-change-fn
-        :children form-items}])))
+        :children form-items}]))
 
-
-(defn airway-assessment-card "气道评估" [props]
-  (let [{:keys [report-form-instance-fn]} props
-        aa-data @(rf/subscribe [::subs/airway-assessment-data])
+(defn surgical-anesthesia-history-card "手术麻醉史" [props]
+  (let [view-state (r/atom :summary)
+        show-detailed-fn #(reset! view-state :detailed)
+        show-summary-fn #(reset! view-state :summary)
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
+        sah-data @(rf/subscribe [::subs/surgical-anesthesia-history-data])]
+    (if (= @view-state :summary)
+      [surgical-anesthesia-history-summary-view {:on-show-detailed show-detailed-fn
+                                                 :sah-data sah-data}]
+      [surgical-anesthesia-history-detailed-view (merge props {:patient-id patient-id
+                                                               :sah-data sah-data
+                                                               :on-show-summary show-summary-fn})])))
+
+;; Airway Assessment Card
+(defn generate-airway-summary [data]
+  (if (or (nil? data) (empty? data) (nil? (:detailed_assessment data)))
+    "气道评估: 无数据"
+    (let [parts (transient [])
+          assessment (:detailed_assessment data)
+          diff-intubation (get assessment :difficult_intubation_history)
+          mallampati (get assessment :mallampati_classification)
+          mouth-opening (get-in assessment [:mouth_opening :degree])
+          thyromental-dist (get-in assessment [:thyromental_distance_class])]
+      (when (and diff-intubation (not= diff-intubation "无") (not (nil? diff-intubation)))
+        (conj! parts (str "困难插管史:" diff-intubation)))
+      (when mallampati
+        (conj! parts (str "Mallampati:" mallampati)))
+      (when (and mouth-opening (not= mouth-opening "gte_3_fingers"))
+        (conj! parts (str "张口度:" mouth-opening)))
+      (when (and thyromental-dist (not= thyromental-dist "gt_6_5_cm"))
+        (conj! parts (str "甲颏距离:" thyromental-dist)))
+      (if (empty? (persistent! parts))
+        "气道评估: 未见明显异常"
+        (str "气道评估: " (clojure.string/join ", " (persistent! parts)))))))
+
+(defn airway-assessment-summary-view [props]
+  (let [{:keys [on-show-detailed aa-data]} props]
+    [:div {:on-double-click on-show-detailed
+           :style {:cursor "pointer" :padding "10px" :border "1px solid #eee"}}
+     (generate-airway-summary aa-data)]))
+
+(defn airway-assessment-detailed-view [props]
+  (let [{:keys [report-form-instance-fn patient-id aa-data on-show-summary]} props
         [form] (Form.useForm)
         initial-form-values aa-data
-
-        ;; Watchers for conditional rendering and clearing fields
         mouth-opening-degree-watch (Form.useWatch [:detailed_assessment :mouth_opening :degree] form)
         mouth-opening-limit-reasons-watch (Form.useWatch [:detailed_assessment :mouth_opening :limit_reasons] form)
         head-neck-mobility-status-watch (Form.useWatch [:detailed_assessment :head_neck_mobility :status] form)
@@ -1472,12 +1996,9 @@
         snoring-symptoms-watch (Form.useWatch [:detailed_assessment :snoring :symptoms] form)
         airway-diseases-locations-watch (Form.useWatch [:detailed_assessment :airway_related_diseases :locations] form)
         current-symptoms-watch (Form.useWatch [:detailed_assessment :current_airway_symptoms :symptoms] form)
-        ;; esophageal-surgery-has-watch is removed as its direct usage is replaced
-
         yes-no-options [{:label "无" :value "无"} {:label "有" :value "有"}]
         yes-no-unknown-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
         yes-no-suspected-unknown-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "疑似" :value "疑似"} {:label "不祥" :value "不祥"}]
-
         mouth-opening-options [{:label "≥3横指" :value "gte_3_fingers"}
                                {:label "<3横指" :value "lt_3_fingers"}
                                {:label "无法张口" :value "cannot_open"}]
@@ -1534,10 +2055,9 @@
         on-values-change-fn (fn [changed-values all-values]
                               (let [form-instance form
                                     all-values-clj (js->clj all-values :keywordize-keys true)
-                                    cv (fn [path] (get-in changed-values path)) ; helper to get changed value
-                                    av (fn [path] (get-in all-values-clj path)) ; helper to get current value from all_values_clj
+                                    cv (fn [path] (get-in changed-values path))
+                                    av (fn [path] (get-in all-values-clj path))
                                     set-val (fn [path-val-map] (.setFieldsValue form-instance (clj->js path-val-map)))]
-
                                 (when (cv [:detailed_assessment :mouth_opening :degree])
                                   (when (or (= (av [:detailed_assessment :mouth_opening :degree]) "gte_3_fingers") (nil? (av [:detailed_assessment :mouth_opening :degree])))
                                     (set-val {:detailed_assessment {:mouth_opening {:limit_reasons [] :limit_reasons_other nil}}})))
@@ -1721,28 +2241,72 @@
                         [:> Radio.Group {:options esophageal-reflux-options}]]]
 
                       [:> Form.Item {:label "其他气道相关情况" :name [:other_airway_conditions]}
-                       [:> Input.TextArea {:placeholder "如有其他气道相关情况请在此注明" :rows 3}]]]]
+                       [:> Input.TextArea {:placeholder "如有其他气道相关情况请在此注明" :rows 3}]]
+                       [:> Row {:justify "end" :style {:marginTop "20px"}}
+                        [:> Col
+                         [:> Form.Item
+                          [:button {:type "button"
+                                    :on-click on-show-summary
+                                    :style {:padding "5px 10px"
+                                            :background-color "#f0f0f0"
+                                            :border "1px solid #ccc"
+                                            :border-radius "4px"
+                                            :cursor "pointer"}}
+                           "返回总结"]]]]]]]
       [afc/patient-assessment-card-wrapper
        {:icon [:> NodeIndexOutlined {:style {:marginRight "8px"}}]
         :title "气道评估"
-        :header-color "#fff7e6" ; Light orange/yellowish background
+        :header-color "#fff7e6"
         :patient-id patient-id
         :form-instance form
         :form-key (str patient-id "-airway-assessment")
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :on-values-change-handler on-values-change-fn
-        :children form-items}])))
+        :children form-items}]))
 
-
-(defn spinal-anesthesia-assessment-card "椎管内麻醉相关评估" [props]
-  (let [{:keys [report-form-instance-fn]} props
-        saa-data @(rf/subscribe [::subs/spinal-anesthesia-assessment-data])
+(defn airway-assessment-card "气道评估" [props]
+  (let [view-state (r/atom :summary)
+        show-detailed-fn #(reset! view-state :detailed)
+        show-summary-fn #(reset! view-state :summary)
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
+        aa-data @(rf/subscribe [::subs/airway-assessment-data])]
+    (if (= @view-state :summary)
+      [airway-assessment-summary-view {:on-show-detailed show-detailed-fn
+                                       :aa-data aa-data}]
+      [airway-assessment-detailed-view (merge props {:patient-id patient-id
+                                                     :aa-data aa-data
+                                                     :on-show-summary show-summary-fn})])))
+
+;; Spinal Anesthesia Assessment Card
+(defn generate-spinal-anesthesia-summary [data]
+  (if (or (nil? data) (empty? data))
+    "椎管内麻醉相关评估: 无数据"
+    (let [risk-factors (transient [])
+          critical-fields {[:central_nervous_system :brain_tumor] "脑肿瘤"
+                           [:peripheral_nervous_system :spinal_cord_injury] "脊髓损伤"
+                           [:lumbar_disc_herniation :present] "腰椎间盘突出"
+                           [:cardiovascular_system :aortic_stenosis] "主动脉瓣狭窄"
+                           [:puncture_site_inspection :local_infection] "穿刺点感染"
+                           [:local_anesthetic_allergy] "局麻药过敏"}]
+      (doseq [[path label] critical-fields]
+        (when (= (get-in data path) "有")
+          (conj! risk-factors label)))
+      (if (seq (persistent! risk-factors))
+        (str "椎管内麻醉风险: " (clojure.string/join ", " (persistent! risk-factors)))
+        "椎管内麻醉风险: 无明确风险因素"))))
+
+(defn spinal-anesthesia-assessment-summary-view [props]
+  (let [{:keys [on-show-detailed saa-data]} props]
+    [:div {:on-double-click on-show-detailed
+           :style {:cursor "pointer" :padding "10px" :border "1px solid #eee"}}
+     (generate-spinal-anesthesia-summary saa-data)]))
+
+(defn spinal-anesthesia-assessment-detailed-view [props]
+  (let [{:keys [report-form-instance-fn patient-id saa-data on-show-summary]} props
         [form] (Form.useForm)
         initial-form-values saa-data
         yes-no-options [{:label "无" :value "无"} {:label "有" :value "有"}]
-        ;; Removed ldh-present-watch and anticoagulants-present-watch
         on-finish-fn (fn [values]
                        (rf/dispatch [::events/update-canonical-assessment-section :spinal_anesthesia_assessment (js->clj values :keywordize-keys true)]))
         on-values-change-fn (fn [changed-values all-values]
@@ -1811,15 +2375,40 @@
                       (render-subsection-title "局麻药过敏")
                       [:> Form.Item {:label "局麻药过敏史" :name :local_anesthetic_allergy :key "la-allergy"}
                        [:> Radio.Group {:options yes-no-options}]]
-                      ]]
+                      [:> Row {:justify "end" :style {:marginTop "20px"}}
+                       [:> Col
+                        [:> Form.Item
+                         [:button {:type "button"
+                                   :on-click on-show-summary
+                                   :style {:padding "5px 10px"
+                                           :background-color "#f0f0f0"
+                                           :border "1px solid #ccc"
+                                           :border-radius "4px"
+                                           :cursor "pointer"}}
+                          "返回总结"]]]]]]]
       [afc/patient-assessment-card-wrapper
        {:icon [:> GatewayOutlined {:style {:marginRight "8px"}}]
         :title "椎管内麻醉相关评估"
-        :header-color "#f0f5ff" ; Light blue background
+        :header-color "#f0f5ff"
         :patient-id patient-id
         :form-instance form
         :form-key (str patient-id "-spinal-anesthesia")
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :on-values-change-handler on-values-change-fn
-        :children form-items}])))
+        :children form-items}]))
+
+(defn spinal-anesthesia-assessment-card "椎管内麻醉相关评估" [props]
+  (let [view-state (r/atom :summary)
+        show-detailed-fn #(reset! view-state :detailed)
+        show-summary-fn #(reset! view-state :summary)
+        patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
+        saa-data @(rf/subscribe [::subs/spinal-anesthesia-assessment-data])]
+    (if (= @view-state :summary)
+      [spinal-anesthesia-assessment-summary-view {:on-show-detailed show-detailed-fn
+                                                  :saa-data saa-data}]
+      [spinal-anesthesia-assessment-detailed-view (merge props {:patient-id patient-id
+                                                                :saa-data saa-data
+                                                                :on-show-summary show-summary-fn})])))
+
+[end of src/cljs/hc/hospital/pages/assessment_cards.cljs]
