@@ -255,7 +255,7 @@
                                            :border "1px solid #ccc"
                                            :border-radius "4px"
                                            :cursor "pointer"}}
-                          "返回总结"]]]]]]]
+                          "返回总结"]]]]]]
       [afc/patient-assessment-card-wrapper
        {:icon [:> HeartOutlined {:style {:marginRight "8px"}}]
         :title "循环系统"
@@ -266,7 +266,7 @@
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :on-values-change-handler nil ; No onValuesChange for this card yet
-        :children form-items}]))
+        :children form-items}])))
 
 (defn circulatory-system-card "循环系统" [props]
   (let [view-state (r/atom :summary) ; Manages :summary or :detailed view
@@ -274,12 +274,13 @@
         show-summary-fn #(reset! view-state :summary)
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         circulatory-data @(rf/subscribe [::subs/circulatory-system-data])]
-    (if (= @view-state :summary)
-      [circulatory-system-summary-view {:on-show-detailed show-detailed-fn
-                                        :circulatory-data circulatory-data}]
-      [circulatory-system-detailed-view (merge props {:patient-id patient-id
-                                                      :circulatory-data circulatory-data
-                                                      :on-show-summary show-summary-fn})])))
+    (fn []
+      (if (= @view-state :summary)
+        [circulatory-system-summary-view {:on-show-detailed show-detailed-fn
+                                          :circulatory-data circulatory-data}]
+        [:f> circulatory-system-detailed-view (merge props {:patient-id patient-id
+                                                            :circulatory-data circulatory-data
+                                                            :on-show-summary show-summary-fn})]))))
 
 (defn generate-respiratory-summary [data]
   (if (or (nil? data) (empty? data))
@@ -465,7 +466,7 @@
                                            :border "1px solid #ccc"
                                            :border-radius "4px"
                                            :cursor "pointer"}}
-                          "返回总结"]]]]]]]
+                          "返回总结"]]]]]]
       [afc/patient-assessment-card-wrapper
        {:icon [:> CloudOutlined {:style {:marginRight "8px"}}]
         :title "呼吸系统"
@@ -476,7 +477,7 @@
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :on-values-change-handler nil
-        :children form-items}]))
+        :children form-items}])))
 
 (defn respiratory-system-card "呼吸系统" [props]
   (let [view-state (r/atom :summary)
@@ -684,7 +685,7 @@
                                            :border "1px solid #ccc"
                                            :border-radius "4px"
                                            :cursor "pointer"}}
-                          "返回总结"]]]]]]]
+                          "返回总结"]]]]]]
       [afc/patient-assessment-card-wrapper
        {:icon [:> UserOutlined {:style {:marginRight "8px"}}]
         :title "精神及神经肌肉系统"
@@ -695,7 +696,7 @@
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :on-values-change-handler nil
-        :children form-items}]))
+        :children form-items}])))
 
 (defn mental-neuromuscular-system-card "精神及神经肌肉系统" [props]
   (let [view-state (r/atom :summary)
@@ -747,139 +748,139 @@
         on-finish-fn (fn [values]
                        (rf/dispatch [::events/update-canonical-assessment-section :endocrine_system (js->clj values :keywordize-keys true)]))]
     (React/useEffect (fn []
-                   (when report-form-instance-fn
-                     (report-form-instance-fn :endocrine_system form))
-                   js/undefined)
-                 #js [])
+                       (when report-form-instance-fn
+                         (report-form-instance-fn :endocrine_system form))
+                       js/undefined)
+                     #js [])
     (let [form-items [:<>
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "甲状腺疾病病史"
-                      :radio-name [:thyroid_disease_history :present]
-                      :radio-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "类型" :name [:thyroid_disease_history :types]}
-                      [:> Checkbox.Group {:options thyroid-type-options}]]
-                     (when (some #{"other_thyroid_type"} thyroid-types)
-                       [:> Form.Item {:label "其他类型详情" :name [:thyroid_disease_history :type_other_details]}
-                        [:> Input {:placeholder "请描述其他甲状腺疾病类型"}]])
-                     [:> Form.Item {:label "甲状腺功能检查" :name [:thyroid_disease_history :function_test_results]}
-                      [:> Input.TextArea {:placeholder "请描述甲状腺功能检查结果" :rows 2}]]
-                     [:> Form.Item {:label "治疗情况" :name [:thyroid_disease_history :treatment_status]}
-                      [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
-                                  :options general-treatment-status-options}]]
-                     [:> Form.Item {:label "甲状腺是否肿大压迫气管，是否存在困难气道？" :name [:thyroid_disease_history :airway_compression]}
-                      [:> Radio.Group {}
-                       [:> Radio {:value "无"} "无"]
-                       [:> Radio {:value "有"} "有"]]]
-                     [:> Form.Item {:label "是否合并甲状腺心脏病" :name [:thyroid_disease_history :thyroid_heart_disease]}
-                      [:> Radio.Group {}
-                       [:> Radio {:value "无"} "无"]
-                       [:> Radio {:value "有"} "有"]]]]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "甲状腺疾病病史"
+                        :radio-name [:thyroid_disease_history :present]
+                        :radio-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "类型" :name [:thyroid_disease_history :types]}
+                        [:> Checkbox.Group {:options thyroid-type-options}]]
+                       (when (some #{"other_thyroid_type"} thyroid-types)
+                         [:> Form.Item {:label "其他类型详情" :name [:thyroid_disease_history :type_other_details]}
+                          [:> Input {:placeholder "请描述其他甲状腺疾病类型"}]])
+                       [:> Form.Item {:label "甲状腺功能检查" :name [:thyroid_disease_history :function_test_results]}
+                        [:> Input.TextArea {:placeholder "请描述甲状腺功能检查结果" :rows 2}]]
+                       [:> Form.Item {:label "治疗情况" :name [:thyroid_disease_history :treatment_status]}
+                        [:> Select {:placeholder "选择治疗情况" :style {:width "100%"} :allowClear true
+                                    :options general-treatment-status-options}]]
+                       [:> Form.Item {:label "甲状腺是否肿大压迫气管，是否存在困难气道？" :name [:thyroid_disease_history :airway_compression]}
+                        [:> Radio.Group {}
+                         [:> Radio {:value "无"} "无"]
+                         [:> Radio {:value "有"} "有"]]]
+                       [:> Form.Item {:label "是否合并甲状腺心脏病" :name [:thyroid_disease_history :thyroid_heart_disease]}
+                        [:> Radio.Group {}
+                         [:> Radio {:value "无"} "无"]
+                         [:> Radio {:value "有"} "有"]]]]
 
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "糖尿病病史"
-                      :radio-name [:diabetes_history :present]
-                      :radio-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
-                      :conditional-value "有"}
-                     (let [diabetes-type-options [{:value "1型糖尿病" :label "1 型糖尿病"} {:value "2型糖尿病" :label "2 型糖尿病"}]
-                           diabetes-control-options [{:value "饮食控制" :label "饮食控制"}
-                                                     {:value "药物控制" :label "药物控制"}
-                                                     {:value "胰岛素控制" :label "胰岛素控制"}
-                                                     {:value "未控制" :label "未控制"}]]
-                       [:<>
-                        [:> Form.Item {:label "类型" :name [:diabetes_history :type]}
-                         [:> Select {:placeholder "选择类型" :style {:width "100%"} :allowClear true
-                                     :options diabetes-type-options}]]
-                        [:> Form.Item {:label "控制方式" :name [:diabetes_history :control_method]}
-                         [:> Select {:placeholder "选择控制方式" :style {:width "100%"} :allowClear true
-                                     :options diabetes-control-options}]]
-                        (when (= diabetes-control-method "药物控制")
-                          [:> Form.Item {:label "药物详情" :name [:diabetes_history :medication_details]}
-                           [:> Input {:placeholder "请输入药物控制详情"}]])
-                        [:> Form.Item {:label "血糖（Glu）" :name [:diabetes_history :blood_glucose_level]}
-                         [:> InputNumber {:placeholder "mmol/L" :style {:width "100%"}
-                                          :addonAfter "mmol/L"}]]
-                        [:> Form.Item {:label "糖化血红蛋白（HbA1c）" :name [:diabetes_history :hba1c_level]}
-                         [:> InputNumber {:placeholder "%" :style {:width "100%"}
-                                          :addonAfter "%"}]]])]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "糖尿病病史"
+                        :radio-name [:diabetes_history :present]
+                        :radio-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
+                        :conditional-value "有"}
+                       (let [diabetes-type-options [{:value "1型糖尿病" :label "1 型糖尿病"} {:value "2型糖尿病" :label "2 型糖尿病"}]
+                             diabetes-control-options [{:value "饮食控制" :label "饮食控制"}
+                                                       {:value "药物控制" :label "药物控制"}
+                                                       {:value "胰岛素控制" :label "胰岛素控制"}
+                                                       {:value "未控制" :label "未控制"}]]
+                         [:<>
+                          [:> Form.Item {:label "类型" :name [:diabetes_history :type]}
+                           [:> Select {:placeholder "选择类型" :style {:width "100%"} :allowClear true
+                                       :options diabetes-type-options}]]
+                          [:> Form.Item {:label "控制方式" :name [:diabetes_history :control_method]}
+                           [:> Select {:placeholder "选择控制方式" :style {:width "100%"} :allowClear true
+                                       :options diabetes-control-options}]]
+                          (when (= diabetes-control-method "药物控制")
+                            [:> Form.Item {:label "药物详情" :name [:diabetes_history :medication_details]}
+                             [:> Input {:placeholder "请输入药物控制详情"}]])
+                          [:> Form.Item {:label "血糖（Glu）" :name [:diabetes_history :blood_glucose_level]}
+                           [:> InputNumber {:placeholder "mmol/L" :style {:width "100%"}
+                                            :addonAfter "mmol/L"}]]
+                          [:> Form.Item {:label "糖化血红蛋白（HbA1c）" :name [:diabetes_history :hba1c_level]}
+                           [:> InputNumber {:placeholder "%" :style {:width "100%"}
+                                            :addonAfter "%"}]]])]
 
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "嗜铬细胞瘤"
-                      :radio-name [:pheochromocytoma :present]
-                      :radio-options [{:label "无" :value "无"} {:label "有" :value "有"}]
-                      :conditional-value "有"}
-                     (let [pheo-control-options [{:value "药物控制<2周" :label "药物控制 <2 周"}
-                                                 {:value "药物控制>2周" :label "药物控制 >2 周"}
-                                                 {:value "无症状" :label "无症状"}
-                                                 {:value "当前存在症状" :label "当前存在下列症状"}]
-                           pheo-symptom-options [{:label "高血压" :value "hypertension"}
-                                                 {:label "心悸" :value "palpitations"}
-                                                 {:label "头痛" :value "headache"}
-                                                 {:label "多汗" :value "hyperhidrosis"}]]
-                       [:<>
-                        [:> Form.Item {:label "控制情况" :name [:pheochromocytoma :control_status]}
-                         [:> Select {:placeholder "选择控制情况" :style {:width "100%"} :allowClear true
-                                     :options pheo-control-options}]]
-                        (when (= pheo-control-status "当前存在症状")
-                          [:> Form.Item {:label "症状" :name [:pheochromocytoma :symptoms]}
-                           [:> Checkbox.Group {:options pheo-symptom-options}]])])]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "嗜铬细胞瘤"
+                        :radio-name [:pheochromocytoma :present]
+                        :radio-options [{:label "无" :value "无"} {:label "有" :value "有"}]
+                        :conditional-value "有"}
+                       (let [pheo-control-options [{:value "药物控制<2周" :label "药物控制 <2 周"}
+                                                   {:value "药物控制>2周" :label "药物控制 >2 周"}
+                                                   {:value "无症状" :label "无症状"}
+                                                   {:value "当前存在症状" :label "当前存在下列症状"}]
+                             pheo-symptom-options [{:label "高血压" :value "hypertension"}
+                                                   {:label "心悸" :value "palpitations"}
+                                                   {:label "头痛" :value "headache"}
+                                                   {:label "多汗" :value "hyperhidrosis"}]]
+                         [:<>
+                          [:> Form.Item {:label "控制情况" :name [:pheochromocytoma :control_status]}
+                           [:> Select {:placeholder "选择控制情况" :style {:width "100%"} :allowClear true
+                                       :options pheo-control-options}]]
+                          (when (= pheo-control-status "当前存在症状")
+                            [:> Form.Item {:label "症状" :name [:pheochromocytoma :symptoms]}
+                             [:> Checkbox.Group {:options pheo-symptom-options}]])])]
 
-                    [:f> afc/form-item-radio-conditional
-                     {:form-instance form
-                      :label "皮质醇增多症"
-                      :radio-name [:hypercortisolism :present]
-                      :radio-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
-                      :conditional-value "有"}
-                     [:> Form.Item {:label "具体情况" :name [:hypercortisolism :details]}
-                      [:> Select {:placeholder "选择具体情况" :style {:width "100%"} :allowClear true
-                                  :options [{:value "肾上腺皮质功能不全" :label "肾上腺皮质功能不全"}
-                                            {:value "皮质醇增多症" :label "皮质醇增多症"}]}]]]
+                      [:f> afc/form-item-radio-conditional
+                       {:form-instance form
+                        :label "皮质醇增多症"
+                        :radio-name [:hypercortisolism :present]
+                        :radio-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
+                        :conditional-value "有"}
+                       [:> Form.Item {:label "具体情况" :name [:hypercortisolism :details]}
+                        [:> Select {:placeholder "选择具体情况" :style {:width "100%"} :allowClear true
+                                    :options [{:value "肾上腺皮质功能不全" :label "肾上腺皮质功能不全"}
+                                              {:value "皮质醇增多症" :label "皮质醇增多症"}]}]]]
 
-                    [:> Form.Item {:label "痛风" :name [:gout :present]}
-                     [:> Radio.Group {}
-                      [:> Radio {:value "无"} "无"]
-                      [:> Radio {:value "有"} "有"]
-                      [:> Radio {:value "不祥"} "不祥"]]
-                     (when (= gout-present "有")
-                       [:> Form.Item {:name [:gout :details]}
-                        [:> Input {:placeholder "请描述痛风详情" :style {:marginLeft "10px" :width "calc(100% - 150px)"}}]])]
+                      [:> Form.Item {:label "痛风" :name [:gout :present]}
+                       [:> Radio.Group {}
+                        [:> Radio {:value "无"} "无"]
+                        [:> Radio {:value "有"} "有"]
+                        [:> Radio {:value "不祥"} "不祥"]]
+                       (when (= gout-present "有")
+                         [:> Form.Item {:name [:gout :details]}
+                          [:> Input {:placeholder "请描述痛风详情" :style {:marginLeft "10px" :width "calc(100% - 150px)"}}]])]
 
-                    [:> Form.Item {:label "垂体功能减退症" :name [:hypopituitarism :present]}
-                     [:> Radio.Group {}
-                      [:> Radio {:value "无"} "无"]
-                      [:> Radio {:value "有"} "有"]
-                      [:> Radio {:value "不祥"} "不祥"]]
-                     (when (= hypopituitarism-present "有")
-                       [:> Form.Item {:name [:hypopituitarism :details]}
-                        [:> Input {:placeholder "请描述垂体功能减退症详情" :style {:marginLeft "10px" :width "calc(100% - 150px)"}}]])]
+                      [:> Form.Item {:label "垂体功能减退症" :name [:hypopituitarism :present]}
+                       [:> Radio.Group {}
+                        [:> Radio {:value "无"} "无"]
+                        [:> Radio {:value "有"} "有"]
+                        [:> Radio {:value "不祥"} "不祥"]]
+                       (when (= hypopituitarism-present "有")
+                         [:> Form.Item {:name [:hypopituitarism :details]}
+                          [:> Input {:placeholder "请描述垂体功能减退症详情" :style {:marginLeft "10px" :width "calc(100% - 150px)"}}]])]
 
-                    [:> Form.Item {:label "其他内分泌系统相关情况" :name [:other_endocrine_conditions]}
-                     [:> Input.TextArea {:placeholder "如有其他内分泌系统相关情况请在此注明" :rows 3}]]
-                    [:> Row {:justify "end" :style {:marginTop "20px"}}
-                     [:> Col
-                      [:> Form.Item
-                       [:button {:type "button"
-                                 :on-click on-show-summary
-                                 :style {:padding "5px 10px"
-                                         :background-color "#f0f0f0"
-                                         :border "1px solid #ccc"
-                                         :border-radius "4px"
-                                         :cursor "pointer"}}
-                        "返回总结"]]]]]]]
-    [afc/patient-assessment-card-wrapper
-     {:icon [:> ExperimentOutlined {:style {:marginRight "8px"}}]
-      :title "内分泌系统"
-      :header-color "#f9f0ff"
-      :patient-id patient-id
-      :form-instance form
-      :form-key (str patient-id "-endocrine")
-      :initial-data initial-form-values
-      :on-finish-handler on-finish-fn
-      :on-values-change-handler nil
-      :children form-items}]))
+                      [:> Form.Item {:label "其他内分泌系统相关情况" :name [:other_endocrine_conditions]}
+                       [:> Input.TextArea {:placeholder "如有其他内分泌系统相关情况请在此注明" :rows 3}]]
+                      [:> Row {:justify "end" :style {:marginTop "20px"}}
+                       [:> Col
+                        [:> Form.Item
+                         [:button {:type "button"
+                                   :on-click on-show-summary
+                                   :style {:padding "5px 10px"
+                                           :background-color "#f0f0f0"
+                                           :border "1px solid #ccc"
+                                           :border-radius "4px"
+                                           :cursor "pointer"}}
+                          "返回总结"]]]]]]
+      [afc/patient-assessment-card-wrapper
+       {:icon [:> ExperimentOutlined {:style {:marginRight "8px"}}]
+        :title "内分泌系统"
+        :header-color "#f9f0ff"
+        :patient-id patient-id
+        :form-instance form
+        :form-key (str patient-id "-endocrine")
+        :initial-data initial-form-values
+        :on-finish-handler on-finish-fn
+        :on-values-change-handler nil
+        :children form-items}])))
 
 (defn endocrine-system-card "内分泌系统" [props]
   (let [view-state (r/atom :summary)
@@ -926,10 +927,10 @@
         on-finish-fn (fn [values]
                        (rf/dispatch [::events/update-canonical-assessment-section :liver_kidney_system (js->clj values :keywordize-keys true)]))]
     (React/useEffect (fn []
-                   (when report-form-instance-fn
-                     (report-form-instance-fn :liver_kidney_system form))
-                   js/undefined)
-                 #js [])
+                       (when report-form-instance-fn
+                         (report-form-instance-fn :liver_kidney_system form))
+                       js/undefined)
+                     #js [])
     (let [form-items [:<>
                       [:h4 "肝功能"]
                       [:f> afc/form-item-radio-conditional
@@ -964,7 +965,7 @@
                                            :border "1px solid #ccc"
                                            :border-radius "4px"
                                            :cursor "pointer"}}
-                          "返回总结"]]]]]]]
+                          "返回总结"]]]]]]
       [afc/patient-assessment-card-wrapper
        {:icon [:> ProjectOutlined {:style {:marginRight "8px"}}]
         :title "肝肾病史"
@@ -975,7 +976,7 @@
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :on-values-change-handler nil
-        :children form-items}]))
+        :children form-items}])))
 
 (defn liver-kidney-system-card "肝肾病史" [props]
   (let [view-state (r/atom :summary)
@@ -1050,10 +1051,10 @@
         on-finish-fn (fn [values]
                        (rf/dispatch [::events/update-canonical-assessment-section :digestive_system (js->clj values :keywordize-keys true)]))]
     (React/useEffect (fn []
-                   (when report-form-instance-fn
-                     (report-form-instance-fn :digestive_system form))
-                   js/undefined)
-                 #js [])
+                       (when report-form-instance-fn
+                         (report-form-instance-fn :digestive_system form))
+                       js/undefined)
+                     #js [])
     (let [form-items [:<>
                       [:f> afc/form-item-radio-conditional
                        {:form-instance form
@@ -1109,7 +1110,7 @@
                                            :border "1px solid #ccc"
                                            :border-radius "4px"
                                            :cursor "pointer"}}
-                          "返回总结"]]]]]]]
+                          "返回总结"]]]]]]
       [afc/patient-assessment-card-wrapper
        {:icon [:> CoffeeOutlined {:style {:marginRight "8px"}}]
         :title "消化系统"
@@ -1120,7 +1121,7 @@
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :on-values-change-handler nil
-        :children form-items}]))
+        :children form-items}])))
 
 (defn digestive-system-card  "消化系统" [props]
   (let [view-state (r/atom :summary)
@@ -1163,10 +1164,10 @@
         on-finish-fn (fn [values]
                        (rf/dispatch [::events/update-canonical-assessment-section :hematologic_system (js->clj values :keywordize-keys true)]))]
     (React/useEffect (fn []
-                   (when report-form-instance-fn
-                     (report-form-instance-fn :hematologic_system form))
-                   js/undefined)
-                 #js [])
+                       (when report-form-instance-fn
+                         (report-form-instance-fn :hematologic_system form))
+                       js/undefined)
+                     #js [])
     (let [form-items [:<>
                       [:f> afc/form-item-radio-conditional
                        {:form-instance form
@@ -1226,7 +1227,7 @@
                                            :border "1px solid #ccc"
                                            :border-radius "4px"
                                            :cursor "pointer"}}
-                          "返回总结"]]]]]]]
+                          "返回总结"]]]]]]
       [afc/patient-assessment-card-wrapper
        {:icon [:> ExperimentOutlined {:style {:marginRight "8px"}}]
         :title "血液系统"
@@ -1237,7 +1238,7 @@
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :on-values-change-handler nil
-        :children form-items}]))
+        :children form-items}])))
 
 (defn hematologic-system-card "血液系统" [props]
   (let [view-state (r/atom :summary)
@@ -1303,10 +1304,10 @@
                                     (.setFieldsValue form-instance (clj->js {:autoimmune_disease {:symptoms_other_details nil}}))))
                                 ))]
     (React/useEffect (fn []
-                   (when report-form-instance-fn
-                     (report-form-instance-fn :immune_system form))
-                   js/undefined)
-                 #js [])
+                       (when report-form-instance-fn
+                         (report-form-instance-fn :immune_system form))
+                       js/undefined)
+                     #js [])
     (let [form-items [:<>
                       [:f> afc/form-item-radio-conditional
                        {:form-instance form
@@ -1345,7 +1346,7 @@
                                            :border "1px solid #ccc"
                                            :border-radius "4px"
                                            :cursor "pointer"}}
-                          "返回总结"]]]]]]]
+                          "返回总结"]]]]]]
       [afc/patient-assessment-card-wrapper
        {:icon [:> SecurityScanOutlined {:style {:marginRight "8px"}}]
         :title "免疫系统"
@@ -1356,7 +1357,7 @@
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :on-values-change-handler on-values-change-fn
-        :children form-items}]))
+        :children form-items}])))
 
 (defn immune-system-card        "免疫系统" [props]
   (let [view-state (r/atom :summary)
@@ -1418,10 +1419,10 @@
                                              (not= (get-in all-values-clj [med-key :present]) "有"))
                                     (.setFieldsValue form-instance (clj->js {med-key {:details nil}}))))))]
     (React/useEffect (fn []
-                   (when report-form-instance-fn
-                     (report-form-instance-fn :special_medication_history form))
-                   js/undefined)
-                 #js [])
+                       (when report-form-instance-fn
+                         (report-form-instance-fn :special_medication_history form))
+                       js/undefined)
+                     #js [])
     (let [render-medication-item (fn [field-key label-text placeholder-text show-details?]
                                    [:div {:key (name field-key)}
                                     [:> Form.Item {:label label-text :name [field-key :present]}
@@ -1451,7 +1452,7 @@
                                            :border "1px solid #ccc"
                                            :border-radius "4px"
                                            :cursor "pointer"}}
-                          "返回总结"]]]]]]]
+                          "返回总结"]]]]]]
       [afc/patient-assessment-card-wrapper
        {:icon [:> MedicineBoxOutlined {:style {:marginRight "8px"}}]
         :title "特殊用药史"
@@ -1462,7 +1463,7 @@
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :on-values-change-handler on-values-change-fn
-        :children form-items}]))
+        :children form-items}])))
 
 (defn special-medication-history-card "特殊用药史" [props]
   (let [view-state (r/atom :summary)
@@ -1526,10 +1527,10 @@
                                     (.setFieldsValue form-instance (clj->js {:marfan_syndrome {:skeletal_other_details nil}}))))
                                 ))]
     (React/useEffect (fn []
-                   (when report-form-instance-fn
-                     (report-form-instance-fn :special_disease_history form))
-                   js/undefined)
-                 #js [])
+                       (when report-form-instance-fn
+                         (report-form-instance-fn :special_disease_history form))
+                       js/undefined)
+                     #js [])
     (let [form-items [:<>
                       [:f> afc/form-item-radio-conditional
                        {:form-instance form
@@ -1559,7 +1560,7 @@
                                            :border "1px solid #ccc"
                                            :border-radius "4px"
                                            :cursor "pointer"}}
-                          "返回总结"]]]]]]]
+                          "返回总结"]]]]]]
       [afc/patient-assessment-card-wrapper
        {:icon [:> WarningOutlined {:style {:marginRight "8px"}}]
         :title "特殊疾病病史"
@@ -1570,7 +1571,7 @@
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :on-values-change-handler on-values-change-fn
-        :children form-items}]))
+        :children form-items}])))
 
 (defn special-disease-history-card "特殊疾病病史" [props]
   (let [view-state (r/atom :summary)
@@ -1617,10 +1618,10 @@
         on-finish-fn (fn [values]
                        (rf/dispatch [::events/update-canonical-assessment-section :nutritional_assessment (js->clj values :keywordize-keys true)]))]
     (React/useEffect (fn []
-                   (when report-form-instance-fn
-                     (report-form-instance-fn :nutritional_assessment form))
-                   js/undefined)
-                 #js [])
+                       (when report-form-instance-fn
+                         (report-form-instance-fn :nutritional_assessment form))
+                       js/undefined)
+                     #js [])
     (let [form-items [:<>
                       [:h4 "1. 营养评分"]
                       [:> Form.Item {:label "是否 BMI < 20.5" :name [:nutritional_score :bmi_lt_20_5]}
@@ -1664,7 +1665,7 @@
                                            :border "1px solid #ccc"
                                            :border-radius "4px"
                                            :cursor "pointer"}}
-                          "返回总结"]]]]]]]
+                          "返回总结"]]]]]]
       [afc/patient-assessment-card-wrapper
        {:icon [:> AppleOutlined {:style {:marginRight "8px"}}]
         :title "营养评估"
@@ -1675,7 +1676,7 @@
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :on-values-change-handler nil
-        :children form-items}]))
+        :children form-items}])))
 
 (defn nutritional-assessment-card "营养评估" [props]
   (let [view-state (r/atom :summary)
@@ -1750,10 +1751,10 @@
                                     (.setFieldsValue form-instance (clj->js {:comorbid_obstetric_conditions_other_details nil}))))
                                 ))]
     (React/useEffect (fn []
-                   (when report-form-instance-fn
-                     (report-form-instance-fn :pregnancy_assessment form))
-                   js/undefined)
-                 #js [])
+                       (when report-form-instance-fn
+                         (report-form-instance-fn :pregnancy_assessment form))
+                       js/undefined)
+                     #js [])
     (let [form-items [:<>
                       [:f> afc/form-item-radio-conditional
                        {:form-instance form
@@ -1785,7 +1786,7 @@
                                            :border "1px solid #ccc"
                                            :border-radius "4px"
                                            :cursor "pointer"}}
-                          "返回总结"]]]]]]]
+                          "返回总结"]]]]]]
       [afc/patient-assessment-card-wrapper
        {:icon [:> WomanOutlined {:style {:marginRight "8px"}}]
         :title "妊娠"
@@ -1796,7 +1797,7 @@
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :on-values-change-handler on-values-change-fn
-        :children form-items}]))
+        :children form-items}])))
 
 (defn pregnancy-assessment-card "妊娠" [props]
   (let [view-state (r/atom :summary)
@@ -1930,7 +1931,7 @@
                                            :border "1px solid #ccc"
                                            :border-radius "4px"
                                            :cursor "pointer"}}
-                          "返回总结"]]]]]]]
+                          "返回总结"]]]]]]
       [afc/patient-assessment-card-wrapper
        {:icon [:> HistoryOutlined {:style {:marginRight "8px"}}]
         :title "手术麻醉史"
@@ -1941,7 +1942,7 @@
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :on-values-change-handler on-values-change-fn
-        :children form-items}]))
+        :children form-items}])))
 
 (defn surgical-anesthesia-history-card "手术麻醉史" [props]
   (let [view-state (r/atom :summary)
@@ -2100,10 +2101,10 @@
                                     (set-val {:detailed_assessment {:esophageal_surgery_history {:reflux_status nil}}})))
                                 ))]
     (React/useEffect (fn []
-                   (when report-form-instance-fn
-                     (report-form-instance-fn :airway_assessment form))
-                   js/undefined)
-                 #js [])
+                       (when report-form-instance-fn
+                         (report-form-instance-fn :airway_assessment form))
+                       js/undefined)
+                     #js [])
     (let [form-items [:<>
                       [:h4 {:style {:fontStyle "italic"}} "甲颏距离图示与说明"]
                       [:p "甲颏距离 (TMD): 指下颌角到颏结节的距离。"]
@@ -2242,17 +2243,17 @@
 
                       [:> Form.Item {:label "其他气道相关情况" :name [:other_airway_conditions]}
                        [:> Input.TextArea {:placeholder "如有其他气道相关情况请在此注明" :rows 3}]]
-                       [:> Row {:justify "end" :style {:marginTop "20px"}}
-                        [:> Col
-                         [:> Form.Item
-                          [:button {:type "button"
-                                    :on-click on-show-summary
-                                    :style {:padding "5px 10px"
-                                            :background-color "#f0f0f0"
-                                            :border "1px solid #ccc"
-                                            :border-radius "4px"
-                                            :cursor "pointer"}}
-                           "返回总结"]]]]]]]
+                      [:> Row {:justify "end" :style {:marginTop "20px"}}
+                       [:> Col
+                        [:> Form.Item
+                         [:button {:type "button"
+                                   :on-click on-show-summary
+                                   :style {:padding "5px 10px"
+                                           :background-color "#f0f0f0"
+                                           :border "1px solid #ccc"
+                                           :border-radius "4px"
+                                           :cursor "pointer"}}
+                          "返回总结"]]]]]]
       [afc/patient-assessment-card-wrapper
        {:icon [:> NodeIndexOutlined {:style {:marginRight "8px"}}]
         :title "气道评估"
@@ -2263,7 +2264,7 @@
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :on-values-change-handler on-values-change-fn
-        :children form-items}]))
+        :children form-items}])))
 
 (defn airway-assessment-card "气道评估" [props]
   (let [view-state (r/atom :summary)
@@ -2320,10 +2321,10 @@
                                     (.setFieldsValue form-instance (clj->js {:cardiovascular_system {:anticoagulants_details nil}}))))
                                 ))]
     (React/useEffect (fn []
-                   (when report-form-instance-fn
-                     (report-form-instance-fn :spinal_anesthesia_assessment form))
-                   js/undefined)
-                 #js [])
+                       (when report-form-instance-fn
+                         (report-form-instance-fn :spinal_anesthesia_assessment form))
+                       js/undefined)
+                     #js [])
     (let [render-radio-group (fn [main-key item-key label-text]
                                [:> Form.Item {:label label-text :name [main-key item-key] :key (str (name main-key) "-" (name item-key))}
                                 [:> Radio.Group {:options yes-no-options}]])
@@ -2385,7 +2386,7 @@
                                            :border "1px solid #ccc"
                                            :border-radius "4px"
                                            :cursor "pointer"}}
-                          "返回总结"]]]]]]]
+                          "返回总结"]]]]]]
       [afc/patient-assessment-card-wrapper
        {:icon [:> GatewayOutlined {:style {:marginRight "8px"}}]
         :title "椎管内麻醉相关评估"
@@ -2396,7 +2397,7 @@
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :on-values-change-handler on-values-change-fn
-        :children form-items}]))
+        :children form-items}])))
 
 (defn spinal-anesthesia-assessment-card "椎管内麻醉相关评估" [props]
   (let [view-state (r/atom :summary)
@@ -2410,5 +2411,3 @@
       [spinal-anesthesia-assessment-detailed-view (merge props {:patient-id patient-id
                                                                 :saa-data saa-data
                                                                 :on-show-summary show-summary-fn})])))
-
-[end of src/cljs/hc/hospital/pages/assessment_cards.cljs]
