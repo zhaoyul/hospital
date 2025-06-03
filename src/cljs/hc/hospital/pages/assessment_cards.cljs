@@ -48,10 +48,13 @@
                    :card-body-style {:padding "10px"}}
         content (generate-circulatory-summary circulatory-data)]
     [ui-helpers/custom-styled-card
-     (:icon props-map)
-     (:title props-map)
-     (:header-color props-map)
-     content]))
+     {:icon (:icon props-map)
+      :title-text (:title props-map)
+      :header-bg-color (:header-color props-map)
+      :content content
+      :on-double-click (:on-double-click props-map)
+      :card-style (:card-style props-map)
+      :card-body-style (:card-body-style props-map)}]))
 
 (defn circulatory-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id circulatory-data on-show-summary]} props
@@ -317,10 +320,13 @@
                    :card-body-style {:padding "10px"}}
         content (generate-respiratory-summary respiratory-data)]
     [ui-helpers/custom-styled-card
-     (:icon props-map)
-     (:title props-map)
-     (:header-color props-map)
-     content]))
+     {:icon (:icon props-map)
+      :title-text (:title props-map)
+      :header-bg-color (:header-color props-map)
+      :content content
+      :on-double-click (:on-double-click props-map)
+      :card-style (:card-style props-map)
+      :card-body-style (:card-body-style props-map)}]))
 
 (defn respiratory-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id respiratory-data on-show-summary]} props
@@ -533,10 +539,13 @@
                    :card-body-style {:padding "10px"}}
         content (generate-mental-neuromuscular-summary mn-data)]
     [ui-helpers/custom-styled-card
-     (:icon props-map)
-     (:title props-map)
-     (:header-color props-map)
-     content]))
+     {:icon (:icon props-map)
+      :title-text (:title props-map)
+      :header-bg-color (:header-color props-map)
+      :content content
+      :on-double-click (:on-double-click props-map)
+      :card-style (:card-style props-map)
+      :card-body-style (:card-body-style props-map)}]))
 
 (defn mental-neuromuscular-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id mn-data on-show-summary]} props
@@ -761,10 +770,13 @@
                    :card-body-style {:padding "10px"}}
         content (generate-endocrine-summary endo-data)]
     [ui-helpers/custom-styled-card
-     (:icon props-map)
-     (:title props-map)
-     (:header-color props-map)
-     content]))
+     {:icon (:icon props-map)
+      :title-text (:title props-map)
+      :header-bg-color (:header-color props-map)
+      :content content
+      :on-double-click (:on-double-click props-map)
+      :card-style (:card-style props-map)
+      :card-body-style (:card-body-style props-map)}]))
 
 (defn endocrine-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id endo-data on-show-summary]} props
@@ -956,10 +968,13 @@
                    :card-body-style {:padding "10px"}}
         content (generate-liver-kidney-summary lk-data)]
     [ui-helpers/custom-styled-card
-     (:icon props-map)
-     (:title props-map)
-     (:header-color props-map)
-     content]))
+     {:icon (:icon props-map)
+      :title-text (:title props-map)
+      :header-bg-color (:header-color props-map)
+      :content content
+      :on-double-click (:on-double-click props-map)
+      :card-style (:card-style props-map)
+      :card-body-style (:card-body-style props-map)}]))
 
 (defn liver-kidney-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id lk-data on-show-summary]} props
@@ -1060,10 +1075,13 @@
                    :card-body-style {:padding "10px"}}
         content (generate-digestive-summary ds-data)]
     [ui-helpers/custom-styled-card
-     (:icon props-map)
-     (:title props-map)
-     (:header-color props-map)
-     content]))
+     {:icon (:icon props-map)
+      :title-text (:title props-map)
+      :header-bg-color (:header-color props-map)
+      :content content
+      :on-double-click (:on-double-click props-map)
+      :card-style (:card-style props-map)
+      :card-body-style (:card-body-style props-map)}]))
 
 (defn digestive-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id ds-data on-show-summary]} props
@@ -1214,10 +1232,13 @@
                    :card-body-style {:padding "10px"}}
         content (generate-hematologic-summary hs-data)]
     [ui-helpers/custom-styled-card
-     (:icon props-map)
-     (:title props-map)
-     (:header-color props-map)
-     content]))
+     {:icon (:icon props-map)
+      :title-text (:title props-map)
+      :header-bg-color (:header-color props-map)
+      :content content
+      :on-double-click (:on-double-click props-map)
+      :card-style (:card-style props-map)
+      :card-body-style (:card-body-style props-map)}]))
 
 (defn hematologic-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id hs-data on-show-summary]} props
@@ -1338,10 +1359,13 @@
                    :card-body-style {:padding "10px"}}
         content (generate-immune-summary is-data)]
     [ui-helpers/custom-styled-card
-     (:icon props-map)
-     (:title props-map)
-     (:header-color props-map)
-     content]))
+     {:icon (:icon props-map)
+      :title-text (:title props-map)
+      :header-bg-color (:header-color props-map)
+      :content content
+      :on-double-click (:on-double-click props-map)
+      :card-style (:card-style props-map)
+      :card-body-style (:card-body-style props-map)}]))
 
 (defn immune-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id is-data on-show-summary]} props
@@ -1470,10 +1494,13 @@
                    :card-body-style {:padding "10px"}}
         content (generate-special-medication-summary smh-data)]
     [ui-helpers/custom-styled-card
-     (:icon props-map)
-     (:title props-map)
-     (:header-color props-map)
-     content]))
+     {:icon (:icon props-map)
+      :title-text (:title props-map)
+      :header-bg-color (:header-color props-map)
+      :content content
+      :on-double-click (:on-double-click props-map)
+      :card-style (:card-style props-map)
+      :card-body-style (:card-body-style props-map)}]))
 
 (defn special-medication-history-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id smh-data on-show-summary]} props
@@ -1582,10 +1609,13 @@
                    :card-body-style {:padding "10px"}}
         content (generate-special-disease-summary sdh-data)]
     [ui-helpers/custom-styled-card
-     (:icon props-map)
-     (:title props-map)
-     (:header-color props-map)
-     content]))
+     {:icon (:icon props-map)
+      :title-text (:title props-map)
+      :header-bg-color (:header-color props-map)
+      :content content
+      :on-double-click (:on-double-click props-map)
+      :card-style (:card-style props-map)
+      :card-body-style (:card-body-style props-map)}]))
 
 (defn special-disease-history-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id sdh-data on-show-summary]} props
@@ -1705,10 +1735,13 @@
                    :card-body-style {:padding "10px"}}
         content (generate-nutritional-summary na-data)]
     [ui-helpers/custom-styled-card
-     (:icon props-map)
-     (:title props-map)
-     (:header-color props-map)
-     content]))
+     {:icon (:icon props-map)
+      :title-text (:title props-map)
+      :header-bg-color (:header-color props-map)
+      :content content
+      :on-double-click (:on-double-click props-map)
+      :card-style (:card-style props-map)
+      :card-body-style (:card-body-style props-map)}]))
 
 (defn nutritional-assessment-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id na-data on-show-summary]} props
@@ -1818,10 +1851,13 @@
                    :card-body-style {:padding "10px"}}
         content (generate-pregnancy-summary pa-data)]
     [ui-helpers/custom-styled-card
-     (:icon props-map)
-     (:title props-map)
-     (:header-color props-map)
-     content]))
+     {:icon (:icon props-map)
+      :title-text (:title props-map)
+      :header-bg-color (:header-color props-map)
+      :content content
+      :on-double-click (:on-double-click props-map)
+      :card-style (:card-style props-map)
+      :card-body-style (:card-body-style props-map)}]))
 
 (defn pregnancy-assessment-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id pa-data on-show-summary]} props
@@ -1943,10 +1979,13 @@
                    :card-body-style {:padding "10px"}}
         content (generate-surgical-anesthesia-summary sah-data)]
     [ui-helpers/custom-styled-card
-     (:icon props-map)
-     (:title props-map)
-     (:header-color props-map)
-     content]))
+     {:icon (:icon props-map)
+      :title-text (:title props-map)
+      :header-bg-color (:header-color props-map)
+      :content content
+      :on-double-click (:on-double-click props-map)
+      :card-style (:card-style props-map)
+      :card-body-style (:card-body-style props-map)}]))
 
 (defn surgical-anesthesia-history-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id sah-data on-show-summary]} props
@@ -2109,10 +2148,13 @@
                    :card-body-style {:padding "10px"}}
         content (generate-airway-summary aa-data)]
     [ui-helpers/custom-styled-card
-     (:icon props-map)
-     (:title props-map)
-     (:header-color props-map)
-     content]))
+     {:icon (:icon props-map)
+      :title-text (:title props-map)
+      :header-bg-color (:header-color props-map)
+      :content content
+      :on-double-click (:on-double-click props-map)
+      :card-style (:card-style props-map)
+      :card-body-style (:card-body-style props-map)}]))
 
 (defn airway-assessment-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id aa-data on-show-summary]} props
@@ -2439,10 +2481,13 @@
                    :card-body-style {:padding "10px"}}
         content (generate-spinal-anesthesia-summary saa-data)]
     [ui-helpers/custom-styled-card
-     (:icon props-map)
-     (:title props-map)
-     (:header-color props-map)
-     content]))
+     {:icon (:icon props-map)
+      :title-text (:title props-map)
+      :header-bg-color (:header-color props-map)
+      :content content
+      :on-double-click (:on-double-click props-map)
+      :card-style (:card-style props-map)
+      :card-body-style (:card-body-style props-map)}]))
 
 (defn spinal-anesthesia-assessment-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id saa-data on-show-summary]} props
