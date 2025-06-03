@@ -51,7 +51,10 @@
      (:icon props-map)
      (:title props-map)
      (:header-color props-map)
-     content]))
+     content
+     {:onDoubleClick (:on-double-click props-map)
+      :style (:card-style props-map)
+      :bodyStyle (:card-body-style props-map)}]))
 
 (defn circulatory-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id circulatory-data on-show-summary]} props
@@ -320,7 +323,10 @@
      (:icon props-map)
      (:title props-map)
      (:header-color props-map)
-     content]))
+     content
+     {:onDoubleClick (:on-double-click props-map)
+      :style (:card-style props-map)
+      :bodyStyle (:card-body-style props-map)}]))
 
 (defn respiratory-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id respiratory-data on-show-summary]} props
@@ -536,7 +542,10 @@
      (:icon props-map)
      (:title props-map)
      (:header-color props-map)
-     content]))
+     content
+     {:onDoubleClick (:on-double-click props-map)
+      :style (:card-style props-map)
+      :bodyStyle (:card-body-style props-map)}]))
 
 (defn mental-neuromuscular-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id mn-data on-show-summary]} props
@@ -764,7 +773,10 @@
      (:icon props-map)
      (:title props-map)
      (:header-color props-map)
-     content]))
+     content
+     {:onDoubleClick (:on-double-click props-map)
+      :style (:card-style props-map)
+      :bodyStyle (:card-body-style props-map)}]))
 
 (defn endocrine-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id endo-data on-show-summary]} props
@@ -959,7 +971,10 @@
      (:icon props-map)
      (:title props-map)
      (:header-color props-map)
-     content]))
+     content
+     {:onDoubleClick (:on-double-click props-map)
+      :style (:card-style props-map)
+      :bodyStyle (:card-body-style props-map)}]))
 
 (defn liver-kidney-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id lk-data on-show-summary]} props
@@ -1063,7 +1078,10 @@
      (:icon props-map)
      (:title props-map)
      (:header-color props-map)
-     content]))
+     content
+     {:onDoubleClick (:on-double-click props-map)
+      :style (:card-style props-map)
+      :bodyStyle (:card-body-style props-map)}]))
 
 (defn digestive-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id ds-data on-show-summary]} props
@@ -1217,7 +1235,10 @@
      (:icon props-map)
      (:title props-map)
      (:header-color props-map)
-     content]))
+     content
+     {:onDoubleClick (:on-double-click props-map)
+      :style (:card-style props-map)
+      :bodyStyle (:card-body-style props-map)}]))
 
 (defn hematologic-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id hs-data on-show-summary]} props
@@ -1341,7 +1362,10 @@
      (:icon props-map)
      (:title props-map)
      (:header-color props-map)
-     content]))
+     content
+     {:onDoubleClick (:on-double-click props-map)
+      :style (:card-style props-map)
+      :bodyStyle (:card-body-style props-map)}]))
 
 (defn immune-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id is-data on-show-summary]} props
@@ -1473,7 +1497,10 @@
      (:icon props-map)
      (:title props-map)
      (:header-color props-map)
-     content]))
+     content
+     {:onDoubleClick (:on-double-click props-map)
+      :style (:card-style props-map)
+      :bodyStyle (:card-body-style props-map)}]))
 
 (defn special-medication-history-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id smh-data on-show-summary]} props
@@ -1585,7 +1612,10 @@
      (:icon props-map)
      (:title props-map)
      (:header-color props-map)
-     content]))
+     content
+     {:onDoubleClick (:on-double-click props-map)
+      :style (:card-style props-map)
+      :bodyStyle (:card-body-style props-map)}]))
 
 (defn special-disease-history-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id sdh-data on-show-summary]} props
@@ -1708,7 +1738,10 @@
      (:icon props-map)
      (:title props-map)
      (:header-color props-map)
-     content]))
+     content
+     {:onDoubleClick (:on-double-click props-map)
+      :style (:card-style props-map)
+      :bodyStyle (:card-body-style props-map)}]))
 
 (defn nutritional-assessment-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id na-data on-show-summary]} props
@@ -1821,7 +1854,10 @@
      (:icon props-map)
      (:title props-map)
      (:header-color props-map)
-     content]))
+     content
+     {:onDoubleClick (:on-double-click props-map)
+      :style (:card-style props-map)
+      :bodyStyle (:card-body-style props-map)}]))
 
 (defn pregnancy-assessment-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id pa-data on-show-summary]} props
@@ -1946,7 +1982,10 @@
      (:icon props-map)
      (:title props-map)
      (:header-color props-map)
-     content]))
+     content
+     {:onDoubleClick (:on-double-click props-map)
+      :style (:card-style props-map)
+      :bodyStyle (:card-body-style props-map)}]))
 
 (defn surgical-anesthesia-history-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id sah-data on-show-summary]} props
@@ -2112,7 +2151,10 @@
      (:icon props-map)
      (:title props-map)
      (:header-color props-map)
-     content]))
+     content
+     {:onDoubleClick (:on-double-click props-map)
+      :style (:card-style props-map)
+      :bodyStyle (:card-body-style props-map)}]))
 
 (defn airway-assessment-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id aa-data on-show-summary]} props
@@ -2442,7 +2484,10 @@
      (:icon props-map)
      (:title props-map)
      (:header-color props-map)
-     content]))
+     content
+     {:onDoubleClick (:on-double-click props-map)
+      :style (:card-style props-map)
+      :bodyStyle (:card-body-style props-map)}]))
 
 (defn spinal-anesthesia-assessment-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id saa-data on-show-summary]} props
