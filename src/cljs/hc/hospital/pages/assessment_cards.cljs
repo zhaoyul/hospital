@@ -138,10 +138,23 @@
         exercise-capacity-options [{:value "运动能力正常" :label "运动能力正常。可耐受慢跑、跳绳等较高强度的身体训练 >6MET"}
                                    {:value "运动能力轻度下降" :label "运动能力轻度下降。可胜任日常家务工作或骑自行车 3-6MET"}
                                    {:value "运动能力明显下降" :label "运动能力明显下降。仅能从事文书工作或缓慢步行 <3MET"}]
-        initial-form-values (when circulatory-data
-                              (-> circulatory-data
-                                  (assoc-in [:cardiac_disease_history :congestive_heart_failure :last_episode_date]
-                                            (utils/parse-date (get-in circulatory-data [:cardiac_disease_history :congestive_heart_failure :last_episode_date])))))
+        initial-form-values (let [base-data (when circulatory-data
+                                              (-> circulatory-data
+                                                  (assoc-in [:cardiac_disease_history :congestive_heart_failure :last_episode_date]
+                                                            (utils/parse-date (get-in circulatory-data [:cardiac_disease_history :congestive_heart_failure :last_episode_date])))))]
+                              (-> (or base-data {}) ; Start with base-data or an empty map
+                                  (update-in [:cardiac_disease_history :has] #(or % "无"))
+                                  (update-in [:cardiac_disease_history :coronary_artery_disease :has] #(or % "无"))
+                                  (update-in [:cardiac_disease_history :coronary_artery_disease :stent] #(or % "无"))
+                                  (update-in [:cardiac_disease_history :arrhythmia :has] #(or % "无"))
+                                  (update-in [:cardiac_disease_history :cardiomyopathy :has] #(or % "无"))
+                                  (update-in [:cardiac_disease_history :valvular_heart_disease :has] #(or % "无"))
+                                  (update-in [:cardiac_disease_history :congenital_heart_disease :has] #(or % "无"))
+                                  (update-in [:cardiac_disease_history :congestive_heart_failure :has] #(or % "无"))
+                                  (update-in [:cardiac_disease_history :pulmonary_hypertension :has] #(or % "无"))
+                                  (update-in [:pacemaker_history :has] #(or % "无"))
+                                  (update-in [:cardiac_function_assessment :class] #(or % "Ⅰ 级"))
+                                  (update-in [:exercise_capacity_assessment :level] #(or % "运动能力正常"))))
         on-finish-fn (fn [values]
                        (let [values (js->clj values :keywordize-keys true)
                              transformed-values (-> values
@@ -513,14 +526,24 @@
                            {:value "药物治疗" :label "药物治疗"}
                            {:value "已痊愈" :label "已痊愈"}
                            {:value "其他" :label "其他"}]
-        initial-form-values (when respiratory-data
-                              (-> respiratory-data
-                                  (assoc-in [:cold_history_last_2_weeks :onset_date]
-                                            (utils/parse-date (get-in respiratory-data [:cold_history_last_2_weeks :onset_date])))
-                                  (assoc-in [:bronchitis_pneumonia_last_month :onset_date]
-                                            (utils/parse-date (get-in respiratory-data [:bronchitis_pneumonia_last_month :onset_date])))
-                                  (assoc-in [:asthma_history :last_episode_date]
-                                            (utils/parse-date (get-in respiratory-data [:asthma_history :last_episode_date])))))
+        initial-form-values (let [base-data (when respiratory-data
+                                              (-> respiratory-data
+                                                  (assoc-in [:cold_history_last_2_weeks :onset_date]
+                                                            (utils/parse-date (get-in respiratory-data [:cold_history_last_2_weeks :onset_date])))
+                                                  (assoc-in [:bronchitis_pneumonia_last_month :onset_date]
+                                                            (utils/parse-date (get-in respiratory-data [:bronchitis_pneumonia_last_month :onset_date])))
+                                                  (assoc-in [:asthma_history :last_episode_date]
+                                                            (utils/parse-date (get-in respiratory-data [:asthma_history :last_episode_date])))))]
+                              (-> (or base-data {})
+                                  (update-in [:cold_history_last_2_weeks :present] #(or % "无"))
+                                  (update-in [:bronchitis_pneumonia_last_month :present] #(or % "无"))
+                                  (update-in [:asthma_history :present] #(or % "无"))
+                                  (update-in [:copd_history :present] #(or % "无"))
+                                  (update-in [:bronchiectasis_history :present] #(or % "无"))
+                                  (update-in [:pulmonary_nodules_history :present] #(or % "无"))
+                                  (update-in [:lung_tumor_history :present] #(or % "无"))
+                                  (update-in [:tuberculosis_history :present] #(or % "无"))
+                                  (update-in [:tuberculosis_history :infectious] #(or % "无"))))
         on-finish-fn (fn [values]
                        (let [values (js->clj values :keywordize-keys true)
                              transformed-values (-> values
@@ -799,12 +822,22 @@
                                           {:value "未治疗" :label "未治疗"}
                                           {:value "病情稳定" :label "病情稳定"}
                                           {:value "其他" :label "其他"}]
-        initial-form-values (when mn-data
-                              (-> mn-data
-                                  (assoc-in [:epilepsy_history :last_seizure_date] (utils/parse-date (get-in mn-data [:epilepsy_history :last_seizure_date])))
-                                  (assoc-in [:vertigo_history :last_episode_date] (utils/parse-date (get-in mn-data [:vertigo_history :last_episode_date])))
-                                  (assoc-in [:cerebral_infarction_history :last_episode_date] (utils/parse-date (get-in mn-data [:cerebral_infarction_history :last_episode_date])))
-                                  (assoc-in [:cerebral_hemorrhage_history :last_episode_date] (utils/parse-date (get-in mn-data [:cerebral_hemorrhage_history :last_episode_date])))))
+         initial-form-values (let [base-data (when mn-data
+                                               (-> mn-data
+                                                   (assoc-in [:epilepsy_history :last_seizure_date] (utils/parse-date (get-in mn-data [:epilepsy_history :last_seizure_date])))
+                                                   (assoc-in [:vertigo_history :last_episode_date] (utils/parse-date (get-in mn-data [:vertigo_history :last_episode_date])))
+                                                   (assoc-in [:cerebral_infarction_history :last_episode_date] (utils/parse-date (get-in mn-data [:cerebral_infarction_history :last_episode_date])))
+                                                   (assoc-in [:cerebral_hemorrhage_history :last_episode_date] (utils/parse-date (get-in mn-data [:cerebral_hemorrhage_history :last_episode_date])))))]
+                               (-> (or base-data {})
+                                   (update-in [:psycho_cognitive_history :present] #(or % "无"))
+                                   (update-in [:epilepsy_history :present] #(or % "无"))
+                                   (update-in [:vertigo_history :present] #(or % "无"))
+                                   (update-in [:tia_history :present] #(or % "无"))
+                                   (update-in [:cerebral_infarction_history :present] #(or % "无"))
+                                   (update-in [:cerebral_hemorrhage_history :present] #(or % "无"))
+                                   (update-in [:parkinsons_syndrome :present] #(or % "无"))
+                                   (update-in [:cranial_carotid_stenosis :present] #(or % "无"))
+                                   (update-in [:other_neuromuscular_conditions :present] #(or % "无"))))
         on-finish-fn (fn [values]
                        (let [transformed-values (-> (js->clj values :keywordize-keys true)
                                                     (assoc-in [:epilepsy_history :last_seizure_date] (when-let [d (get-in values [:epilepsy_history :last_seizure_date])] (utils/date->iso-string d)))
@@ -1067,7 +1100,15 @@
                               {:label "桥本" :value "hashimotos"}
                               {:label "其他" :value "other_thyroid_type"}]
         general-treatment-status-options [{:value "治愈" :label "治愈"} {:value "好转" :label "好转"} {:value "仍有症状" :label "仍有症状"} {:value "未治疗" :label "未治疗"} {:value "病情稳定" :label "病情稳定"} {:value "其他" :label "其他"}]
-        initial-form-values endo-data
+        initial-form-values (-> (or endo-data {})
+                                (update-in [:thyroid_disease_history :present] #(or % "无"))
+                                (update-in [:thyroid_disease_history :airway_compression] #(or % "无"))
+                                (update-in [:thyroid_disease_history :thyroid_heart_disease] #(or % "无"))
+                                (update-in [:diabetes_history :present] #(or % "无"))
+                                (update-in [:pheochromocytoma :present] #(or % "无"))
+                                (update-in [:hypercortisolism :present] #(or % "无"))
+                                (update-in [:gout :present] #(or % "无"))
+                                (update-in [:hypopituitarism :present] #(or % "无")))
         on-finish-fn (fn [values]
                        (rf/dispatch [::events/update-canonical-assessment-section :endocrine_system (js->clj values :keywordize-keys true)]))]
     (React/useEffect (fn []
@@ -1265,7 +1306,8 @@
 (defn liver-kidney-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id lk-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values lk-data
+         initial-form-values (-> (or lk-data {})
+                                 (update-in [:liver_function :status] #(or % "正常")))
         liver-disease-type-options [{:label "无" :value "none"}
                                     {:label "药物性肝炎" :value "drug_induced_hepatitis"}
                                     {:label "自身免疫性肝病" :value "autoimmune_liver_disease"}
@@ -1423,7 +1465,10 @@
                                            {:label "胆囊结石" :value "gallstones"}
                                            {:label "胰腺肿瘤" :value "pancreatic_tumor"}
                                            {:label "其他" :value "other_chronic_digestive"}]
-        initial-form-values ds-data
+        initial-form-values (-> (or ds-data {})
+                                (update-in [:acute_gastroenteritis_history :has] #(or % "无"))
+                                (update-in [:esophageal_gastric_duodenal_history :has] #(or % "无"))
+                                (update-in [:chronic_digestive_history :has] #(or % "无")))
         on-finish-fn (fn [values]
                        (rf/dispatch [::events/update-canonical-assessment-section :digestive_system (js->clj values :keywordize-keys true)]))]
     (React/useEffect (fn []
@@ -1583,7 +1628,11 @@
         [form] (Form.useForm)
         yes-no-options [{:label "无" :value "无"} {:label "有" :value "有"}]
         yes-no-unknown-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
-        initial-form-values hs-data
+        initial-form-values (-> (or hs-data {})
+                                (update-in [:anemia :has] #(or % "无"))
+                                (update-in [:coagulation_dysfunction :has] #(or % "无"))
+                                (update-in [:thrombosis_history :has] #(or % "无"))
+                                (update-in [:lower_limb_dvt :has] #(or % "无")))
         on-finish-fn (fn [values]
                        (rf/dispatch [::events/update-canonical-assessment-section :hematologic_system (js->clj values :keywordize-keys true)]))]
     (React/useEffect (fn []
@@ -1746,7 +1795,9 @@
                                             {:label "强直性脊柱炎" :value "ankylosing_spondylitis"}
                                             {:label "过敏性紫癜" :value "allergic_purpura"}
                                             {:label "其他" :value "other_autoimmune_symptom"}]
-        initial-form-values is-data
+        initial-form-values (-> (or is-data {})
+                                (update-in [:immune_dysfunction :has] #(or % "无"))
+                                (update-in [:autoimmune_disease :has] #(or % "无")))
         on-finish-fn (fn [values]
                        (rf/dispatch [::events/update-canonical-assessment-section :immune_system (js->clj values :keywordize-keys true)]))
         on-values-change-fn (fn [changed-values all-values]
@@ -1873,7 +1924,13 @@
 (defn special-medication-history-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id smh-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values smh-data
+        initial-form-values (-> (or smh-data {})
+                                (update-in [:anticoagulant_antiplatelet :present] #(or % "无"))
+                                (update-in [:glucocorticoids :present] #(or % "无"))
+                                (update-in [:cancer_treatment :present] #(or % "无"))
+                                (update-in [:drug_abuse_dependence :present] #(or % "无"))
+                                (update-in [:neuroleptic_drugs :present] #(or % "无"))
+                                (update-in [:glp1_agonists :present] #(or % "无")))
         watch-anticoagulant-present (Form.useWatch [:anticoagulant_antiplatelet :present] form)
         watch-glucocorticoids-present (Form.useWatch [:glucocorticoids :present] form)
         watch-cancer-treatment-present (Form.useWatch [:cancer_treatment :present] form)
@@ -2004,7 +2061,8 @@
   (let [{:keys [report-form-instance-fn patient-id sdh-data on-show-summary]} props
         [form] (Form.useForm)
         marfan-lesions (Form.useWatch [:marfan_syndrome :related_lesions] form)
-        initial-form-values sdh-data
+        initial-form-values (-> (or sdh-data {})
+                                (update-in [:marfan_syndrome :present] #(or % "无")))
         marfan-related-lesions-options [{:label "眼部病变（晶状体脱位）" :value "eye_lesion_lens_dislocation"}
                                         {:label "心血管病变（主动脉瘤）" :value "cardiovascular_aortic_aneurysm"}
                                         {:label "心血管病变（主动脉夹层）" :value "cardiovascular_aortic_dissection"}
@@ -2141,7 +2199,16 @@
 (defn nutritional-assessment-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id na-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values na-data
+        initial-form-values (-> (or na-data {})
+                                (update-in [:nutritional_score :bmi_lt_20_5] #(or % "无"))
+                                (update-in [:nutritional_score :weight_loss_last_3_months] #(or % "无"))
+                                (update-in [:nutritional_score :reduced_intake_last_week] #(or % "无"))
+                                (update-in [:nutritional_score :severe_illness] #(or % "无"))
+                                (update-in [:frail_score :fatigue] #(or % "无"))
+                                (update-in [:frail_score :resistance] #(or % "无"))
+                                (update-in [:frail_score :ambulation] #(or % "无"))
+                                (update-in [:frail_score :illness_gt_5] #(or % "无"))
+                                (update-in [:frail_score :loss_of_weight_gt_5_percent] #(or % "无")))
         yes-no-options [{:label "无" :value "无"} {:label "有" :value "有"}]
         on-finish-fn (fn [values]
                        (rf/dispatch [::events/update-canonical-assessment-section :nutritional_assessment (js->clj values :keywordize-keys true)]))]
@@ -2270,7 +2337,8 @@
   (let [{:keys [report-form-instance-fn patient-id pa-data on-show-summary]} props
         [form] (Form.useForm)
         comorbid-conditions-watch (Form.useWatch [:comorbid_obstetric_conditions] form)
-        initial-form-values pa-data
+        initial-form-values (-> (or pa-data {})
+                                (update-in [:is_pregnant] #(or % "无")))
         yes-no-unknown-options [{:label "无" :value "无"} {:label "有" :value "有"} {:label "不祥" :value "不祥"}]
         gestational-week-options [{:label "0-12 周" :value "0-12_weeks"}
                                   {:label "13-28 周" :value "13-28_weeks"}
@@ -2391,10 +2459,13 @@
         family-hyperthermia-watch (Form.useWatch [:family_history_malignant_hyperthermia :present] form)
         postop-complications-watch (Form.useWatch [:history :postop_complications] form)
         adverse-events-watch (Form.useWatch [:history :adverse_events] form)
-        initial-form-values (when sah-data
-                              (-> sah-data
-                                  (assoc-in [:history :last_anesthesia_date_specific]
-                                            (utils/parse-date (get-in sah-data [:history :last_anesthesia_date_specific])))))
+        initial-form-values (let [base-data (when sah-data
+                                              (-> sah-data
+                                                  (assoc-in [:history :last_anesthesia_date_specific]
+                                                            (utils/parse-date (get-in sah-data [:history :last_anesthesia_date_specific])))))]
+                              (-> (or base-data {})
+                                  (update-in [:history :present] #(or % "无"))
+                                  (update-in [:family_history_malignant_hyperthermia :present] #(or % "无"))))
         on-finish-fn
         (fn [values]
           (let [values (js->clj values :keywordize-keys true)
@@ -2546,7 +2617,20 @@
 (defn airway-assessment-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id aa-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values aa-data
+        initial-form-values (-> (or aa-data {})
+                                (update-in [:detailed_assessment :difficult_ventilation_history] #(or % "无"))
+                                (update-in [:detailed_assessment :difficult_intubation_history] #(or % "无"))
+                                (update-in [:detailed_assessment :mouth_opening :degree] #(or % "gte_3_fingers"))
+                                (update-in [:detailed_assessment :thyromental_distance_class] #(or % "gt_6_5_cm"))
+                                (update-in [:detailed_assessment :head_neck_mobility :status] #(or % "normal"))
+                                (update-in [:detailed_assessment :mallampati_classification] #(or % "grade_1"))
+                                (update-in [:detailed_assessment :upper_lip_bite_test] #(or % "grade_1_ulbt"))
+                                (update-in [:detailed_assessment :snoring :has] #(or % "无"))
+                                (update-in [:detailed_assessment :airway_related_diseases :has] #(or % "无"))
+                                (update-in [:detailed_assessment :mediastinal_history :has] #(or % "无"))
+                                (update-in [:detailed_assessment :current_airway_symptoms :has] #(or % "无"))
+                                (update-in [:detailed_assessment :esophageal_surgery_history :has] #(or % "无"))
+                                (update-in [:detailed_assessment :esophageal_surgery_history :reflux_status] #(or % "no_reflux")))
         mouth-opening-degree-watch (Form.useWatch [:detailed_assessment :mouth_opening :degree] form)
         mouth-opening-limit-reasons-watch (Form.useWatch [:detailed_assessment :mouth_opening :limit_reasons] form)
         head-neck-mobility-status-watch (Form.useWatch [:detailed_assessment :head_neck_mobility :status] form)
@@ -2869,7 +2953,27 @@
 (defn spinal-anesthesia-assessment-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id saa-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values saa-data
+        initial-form-values (-> (or saa-data {})
+                                (update-in [:central_nervous_system :brain_tumor] #(or % "无"))
+                                (update-in [:central_nervous_system :cerebral_hemorrhage] #(or % "无"))
+                                (update-in [:central_nervous_system :severe_head_trauma] #(or % "无"))
+                                (update-in [:central_nervous_system :epilepsy] #(or % "无"))
+                                (update-in [:peripheral_nervous_system :multiple_sclerosis] #(or % "无"))
+                                (update-in [:peripheral_nervous_system :spinal_cord_injury] #(or % "无"))
+                                (update-in [:peripheral_nervous_system :scoliosis] #(or % "无"))
+                                (update-in [:peripheral_nervous_system :spinal_deformity] #(or % "无"))
+                                (update-in [:peripheral_nervous_system :intraspinal_tumor] #(or % "无"))
+                                (update-in [:peripheral_nervous_system :ankylosing_spondylitis] #(or % "无"))
+                                (update-in [:peripheral_nervous_system :lumbar_surgery_history] #(or % "无"))
+                                (update-in [:lumbar_disc_herniation :present] #(or % "无"))
+                                (update-in [:lumbar_disc_herniation :lower_limb_numbness_symptoms] #(or % "无"))
+                                (update-in [:cardiovascular_system :aortic_stenosis] #(or % "无"))
+                                (update-in [:cardiovascular_system :hypertrophic_obstructive_cardiomyopathy] #(or % "无"))
+                                (update-in [:cardiovascular_system :anticoagulants_present] #(or % "无"))
+                                (update-in [:puncture_site_inspection :difficult_puncture_history] #(or % "无"))
+                                (update-in [:puncture_site_inspection :local_infection] #(or % "无"))
+                                (update-in [:puncture_site_inspection :deformity] #(or % "无"))
+                                (update-in [:local_anesthetic_allergy] #(or % "无")))
         yes-no-options [{:label "无" :value "无"} {:label "有" :value "有"}]
         on-finish-fn (fn [values]
                        (rf/dispatch [::events/update-canonical-assessment-section :spinal_anesthesia_assessment (js->clj values :keywordize-keys true)]))
@@ -2959,7 +3063,7 @@
         :on-values-change-handler on-values-change-fn
         :children form-items}])))
 
-(defn spinal-anesthesia-assessment-card "椎管内麻醉相关评估" [props]
+(defn spinal-anesthesia_assessment-card "椎管内麻醉相关评估" [props]
   (let [view-state (r/atom :summary)
         show-summary-fn #(reset! view-state :summary)
         toggle-view-fn #(reset! view-state (if (= @view-state :summary) :detailed :summary))
@@ -2978,3 +3082,5 @@
        :on-double-click toggle-view-fn
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
+
+[end of src/cljs/hc/hospital/pages/assessment_cards.cljs]
