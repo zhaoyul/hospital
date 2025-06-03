@@ -273,15 +273,6 @@
            ;; Do not set session-check-pending here, as login might fail and we'd want to stay on login page
            )))
 
-(rf/reg-event-fx ::handle-login
-  (fn [{:keys [db]} [_ {:keys [username password]}]]
-    {:http-xhrio {:method          :post
-                  :uri             "/api/users/login"
-                  :params          {:username username :password password}
-                  :response-format (ajax/json-response-format {:keywords? true})
-                  :on-success      [::login-success]
-                  :on-failure      [::login-failure]}}))
-
 ;; Helper event for login success to handle multiple dispatches
 (rf/reg-event-fx ::login-success
   (fn [{:keys [db]} [_ response-data]]
@@ -317,9 +308,11 @@
            :session-check-pending? false))) ; Ensure session check is marked complete
 
 (rf/reg-event-fx ::handle-logout
+  [(when ^boolean goog.DEBUG re-frame.core/debug)]
   (fn [{:keys [db]} _]
     {:http-xhrio {:method          :post
                   :uri             "/api/users/logout"
+                  :format          (ajax/json-request-format)
                   :response-format (ajax/json-response-format {:keywords? true})
                   :on-success      [::logout-finished]
                   :on-failure      [::logout-finished]} ; Always proceed to clear client session

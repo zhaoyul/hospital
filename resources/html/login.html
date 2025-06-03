@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Doctor Login - Hospital System</title>
+    <title>医生登陆</title>
     <link href="/css/screen.css" rel="stylesheet" type="text/css" />
     <style>
         body {
@@ -67,22 +67,22 @@
 </head>
 <body>
     <div class="login-container">
-        <h1>Doctor Login</h1>
+        <h1>医生登陆</h1>
         {% if error %}
             <p class="error-message">{{ error }}</p>
         {% endif %}
         <form method="POST" action="/login">
             <input type="hidden" name="__anti-forgery-token" value="{{csrf-token}}">
             <div>
-                <label for="username">Username:</label>
+                <label for="username">用户名:</label>
                 <input type="text" id="username" name="username" required>
             </div>
             <div>
-                <label for="password">Password:</label>
+                <label for="password">密码:</label>
                 <input type="password" id="password" name="password" required>
             </div>
             <div>
-                <button type="submit">Login</button>
+                <button type="submit">登陆</button>
             </div>
         </form>
     </div>
