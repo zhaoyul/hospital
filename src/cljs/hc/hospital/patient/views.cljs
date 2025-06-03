@@ -135,7 +135,7 @@
        [:input {:type "radio"
                 :name group-name
                 :value "no" ; Standardized to "no" for false
-                :checked (false? bool-value)
+                :checked (not (true? bool-value)) ; Default to false if bool-value is nil or false
                 :onChange #(rf/dispatch [::events/update-form-field full-path false])}]
        [:span " 无"]]]
      (when error-msg
@@ -191,7 +191,7 @@
      [:label.form-label {:data-index data-index} label]
      [:div.radio-group
       [:label.radio-label
-       [:input {:type "radio" :name group-name :value "normal" :checked (= base-value "normal")
+       [:input {:type "radio" :name group-name :value "normal" :checked (not= base-value "abnormal") ; Default to normal
                 :onChange #(rf/dispatch [::events/update-form-field base-path "normal"])}]
        [:span " 正常"]]
       [:label.radio-label
