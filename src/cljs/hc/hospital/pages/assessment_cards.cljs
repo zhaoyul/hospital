@@ -713,6 +713,7 @@
                                                              :respiratory-data respiratory-data
                                                              :on-show-summary show-summary-fn})])
        :on-click toggle-view-fn
+       :view-state @view-state
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
 
@@ -1012,6 +1013,7 @@
                                                                       :mn-data mn-data
                                                                       :on-show-summary show-summary-fn})])
        :on-click toggle-view-fn
+       :view-state @view-state
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
 
@@ -1256,9 +1258,10 @@
        (if (= @view-state :summary)
          [endocrine-system-summary-view {:endo-data endo-data}]
          [:f> endocrine-system-detailed-view (merge props {:patient-id patient-id
-                                                          :endo-data endo-data
-                                                          :on-show-summary show-summary-fn})])
+                                                           :endo-data endo-data
+                                                           :on-show-summary show-summary-fn})])
        :on-click toggle-view-fn
+       :view-state @view-state
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
 
@@ -1377,9 +1380,10 @@
        (if (= @view-state :summary)
          [liver-kidney-system-summary-view {:lk-data lk-data}]
          [:f> liver-kidney-system-detailed-view (merge props {:patient-id patient-id
-                                                             :lk-data lk-data
-                                                             :on-show-summary show-summary-fn})])
+                                                              :lk-data lk-data
+                                                              :on-show-summary show-summary-fn})])
        :on-click toggle-view-fn
+       :view-state @view-state
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
 
@@ -1555,9 +1559,10 @@
        (if (= @view-state :summary)
          [digestive-system-summary-view {:ds-data ds-data}]
          [:f> digestive-system-detailed-view (merge props {:patient-id patient-id
-                                                          :ds-data ds-data
-                                                          :on-show-summary show-summary-fn})])
+                                                           :ds-data ds-data
+                                                           :on-show-summary show-summary-fn})])
        :on-click toggle-view-fn
+       :view-state @view-state
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
 
@@ -1722,9 +1727,10 @@
        (if (= @view-state :summary)
          [hematologic-system-summary-view {:hs-data hs-data}]
          [:f> hematologic-system-detailed-view (merge props {:patient-id patient-id
-                                                            :hs-data hs-data
-                                                            :on-show-summary show-summary-fn})])
+                                                             :hs-data hs-data
+                                                             :on-show-summary show-summary-fn})])
        :on-click toggle-view-fn
+       :view-state @view-state
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
 
@@ -1882,9 +1888,10 @@
        (if (= @view-state :summary)
          [immune-system-summary-view {:is-data is-data}]
          [:f> immune-system-detailed-view (merge props {:patient-id patient-id
-                                                       :is-data is-data
-                                                       :on-show-summary show-summary-fn})])
+                                                        :is-data is-data
+                                                        :on-show-summary show-summary-fn})])
        :on-click toggle-view-fn
+       :view-state @view-state
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
 
@@ -2009,9 +2016,10 @@
        (if (= @view-state :summary)
          [special-medication-history-summary-view {:smh-data smh-data}]
          [:f> special-medication-history-detailed-view (merge props {:patient-id patient-id
-                                                                    :smh-data smh-data
-                                                                    :on-show-summary show-summary-fn})])
+                                                                     :smh-data smh-data
+                                                                     :on-show-summary show-summary-fn})])
        :on-click toggle-view-fn
+       :view-state @view-state
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
 
@@ -2145,9 +2153,10 @@
        (if (= @view-state :summary)
          [special-disease-history-summary-view {:sdh-data sdh-data}]
          [:f> special-disease-history-detailed-view (merge props {:patient-id patient-id
-                                                                 :sdh-data sdh-data
-                                                                 :on-show-summary show-summary-fn})])
+                                                                  :sdh-data sdh-data
+                                                                  :on-show-summary show-summary-fn})])
        :on-click toggle-view-fn
+       :view-state @view-state
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
 
@@ -2283,9 +2292,10 @@
        (if (= @view-state :summary)
          [nutritional-assessment-summary-view {:na-data na-data}]
          [:f> nutritional-assessment-detailed-view (merge props {:patient-id patient-id
-                                                                :na-data na-data
-                                                                :on-show-summary show-summary-fn})])
+                                                                 :na-data na-data
+                                                                 :on-show-summary show-summary-fn})])
        :on-click toggle-view-fn
+       :view-state @view-state
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
 
@@ -2430,9 +2440,10 @@
        (if (= @view-state :summary)
          [pregnancy-assessment-summary-view {:pa-data pa-data}]
          [:f> pregnancy-assessment-detailed-view (merge props {:patient-id patient-id
-                                                              :pa-data pa-data
-                                                              :on-show-summary show-summary-fn})])
+                                                               :pa-data pa-data
+                                                               :on-show-summary show-summary-fn})])
        :on-click toggle-view-fn
+       :view-state @view-state
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
 
@@ -2580,9 +2591,10 @@
        (if (= @view-state :summary)
          [surgical-anesthesia-history-summary-view {:sah-data sah-data}]
          [:f> surgical-anesthesia-history-detailed-view (merge props {:patient-id patient-id
-                                                                     :sah-data sah-data
-                                                                     :on-show-summary show-summary-fn})])
+                                                                      :sah-data sah-data
+                                                                      :on-show-summary show-summary-fn})])
        :on-click toggle-view-fn
+       :view-state @view-state
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
 
@@ -2918,9 +2930,10 @@
        (if (= @view-state :summary)
          [airway-assessment-summary-view {:aa-data aa-data}]
          [:f> airway-assessment-detailed-view (merge props {:patient-id patient-id
-                                                           :aa-data aa-data
-                                                           :on-show-summary show-summary-fn})])
+                                                            :aa-data aa-data
+                                                            :on-show-summary show-summary-fn})])
        :on-click toggle-view-fn
+       :view-state @view-state
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
 
@@ -3079,5 +3092,6 @@
                                                                        :saa-data saa-data
                                                                        :on-show-summary show-summary-fn})])
        :on-click toggle-view-fn
+       :view-state @view-state
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
