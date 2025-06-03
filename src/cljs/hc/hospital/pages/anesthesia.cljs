@@ -386,59 +386,59 @@
                     [:> Input {;; :value (get-in comorbidities-data [field-key :details]) ; Let Form handle
                                :placeholder "请填写具体内容"
                                :onChange #(rf/dispatch [::events/update-canonical-assessment-field (conj base-path :details) (-> % .-target .-value)])}]])]))]
-      [custom-styled-card
-       [:> MedicineBoxOutlined]
-       "并存疾病"
-       "#f9f0ff" ; Header background color
-       (if (seq comorbidities-data)
-         [:> Form {:layout "horizontal" :labelCol {:span 10} :wrapperCol {:span 14} :labelAlign "left"
-                   :initialValues (clj->js (update-in comorbidities-data
-                                                      [:special_medications :last_dose_time]
-                                                      (fn [str] (dayjs str))))
-                   :key patient-id}
-          [:> Row {:gutter [16 0]}
-           (comorbidity-item :respiratory "呼吸系统疾病")
-           (comorbidity-item :cardiovascular "心血管疾病")
-           (comorbidity-item :endocrine "内分泌疾病")
-           (comorbidity-item :neuro_psychiatric "神经精神疾病")
-           (comorbidity-item :neuromuscular "神经肌肉疾病")
-           (comorbidity-item :hepatic "肝脏疾病")
-           (comorbidity-item :renal "肾脏疾病")
-           (comorbidity-item :musculoskeletal "关节骨骼系统")
-           (comorbidity-item :malignant_hyperthermia_fh "家族恶性高热史") ; Canonical key
-           (comorbidity-item :anesthesia_surgery_history "既往麻醉、手术史") ; Canonical key
+      #_[custom-styled-card
+         [:> MedicineBoxOutlined]
+         "并存疾病"
+         "#f9f0ff" ; Header background color
+         (if (seq comorbidities-data)
+           [:> Form {:layout "horizontal" :labelCol {:span 10} :wrapperCol {:span 14} :labelAlign "left"
+                     :initialValues (clj->js (update-in comorbidities-data
+                                                        [:special_medications :last_dose_time]
+                                                        (fn [str] (dayjs str))))
+                     :key patient-id}
+            [:> Row {:gutter [16 0]}
+             (comorbidity-item :respiratory "呼吸系统疾病")
+             (comorbidity-item :cardiovascular "心血管疾病")
+             (comorbidity-item :endocrine "内分泌疾病")
+             (comorbidity-item :neuro_psychiatric "神经精神疾病")
+             (comorbidity-item :neuromuscular "神经肌肉疾病")
+             (comorbidity-item :hepatic "肝脏疾病")
+             (comorbidity-item :renal "肾脏疾病")
+             (comorbidity-item :musculoskeletal "关节骨骼系统")
+             (comorbidity-item :malignant_hyperthermia_fh "家族恶性高热史") ; Canonical key
+             (comorbidity-item :anesthesia_surgery_history "既往麻醉、手术史") ; Canonical key
 
-           ;; 使用的特殊药物 - canonical path is [:comorbidities :special_medications]
-           (let [base-path [:comorbidities :special_medications] ; Path for dispatch
-                 form-item-base [:special_medications] ; Path for Form.Item name relative to comorbidities_data
-                 has-taken-path (conj base-path :has_taken)
-                 details-path (conj base-path :details)
-                 last-dose-time-path (conj base-path :last_dose_time)
+             ;; 使用的特殊药物 - canonical path is [:comorbidities :special_medications]
+             (let [base-path [:comorbidities :special_medications] ; Path for dispatch
+                   form-item-base [:special_medications] ; Path for Form.Item name relative to comorbidities_data
+                   has-taken-path (conj base-path :has_taken)
+                   details-path (conj base-path :details)
+                   last-dose-time-path (conj base-path :last_dose_time)
 
-                 has-taken-value (get-in comorbidities-data [:special_medications :has_taken])]
-             [:> Col {:span 24} ; 占据整行
-              [:> Form.Item {:label "使用的特殊药物" :name (conj form-item-base :has_taken)}
-               [:> Radio.Group {;; :value has-taken-value ; Let Form handle
-                                :onChange #(let [val (-> % .-target .-value)]
-                                             (rf/dispatch [::events/update-canonical-assessment-field has-taken-path val])
-                                             (when-not val
-                                               (rf/dispatch [::events/update-canonical-assessment-field details-path nil])
-                                               (rf/dispatch [::events/update-canonical-assessment-field last-dose-time-path nil])))}
-                [:> Radio {:value true} "有"]
-                [:> Radio {:value false} "无"]]
-               (when has-taken-value
-                 [:div {:style {:marginTop "8px"}}
-                  [:> Form.Item {:name (conj form-item-base :details) :label "药物名称及剂量" :labelCol {:span 6} :wrapperCol {:span 18}}
-                   [:> Input {:placeholder "药物名称及剂量"
-                              :style {:marginBottom "8px"}
-                              :onChange #(rf/dispatch [::events/update-canonical-assessment-field details-path (-> % .-target .-value)])}]]
-                  [:> Form.Item {:name (conj form-item-base :last_dose_time) :label "最近用药时间" :labelCol {:span 6} :wrapperCol {:span 18}}
-                   [:> DatePicker {:showTime true
-                                   :format "YYYY-MM-DD HH:mm"
-                                   :placeholder "选择日期和时间"
-                                   :style {:width "100%"}
-                                   :onChange #(rf/dispatch [::events/update-canonical-assessment-field last-dose-time-path (utils/datetime->string % "YYYY-MM-DD HH:mm")])}]]])]])]]
-         [:> Empty {:description "暂无并存疾病信息或未选择患者"}])])))
+                   has-taken-value (get-in comorbidities-data [:special_medications :has_taken])]
+               [:> Col {:span 24} ; 占据整行
+                [:> Form.Item {:label "使用的特殊药物" :name (conj form-item-base :has_taken)}
+                 [:> Radio.Group {;; :value has-taken-value ; Let Form handle
+                                  :onChange #(let [val (-> % .-target .-value)]
+                                               (rf/dispatch [::events/update-canonical-assessment-field has-taken-path val])
+                                               (when-not val
+                                                 (rf/dispatch [::events/update-canonical-assessment-field details-path nil])
+                                                 (rf/dispatch [::events/update-canonical-assessment-field last-dose-time-path nil])))}
+                  [:> Radio {:value true} "有"]
+                  [:> Radio {:value false} "无"]]
+                 (when has-taken-value
+                   [:div {:style {:marginTop "8px"}}
+                    [:> Form.Item {:name (conj form-item-base :details) :label "药物名称及剂量" :labelCol {:span 6} :wrapperCol {:span 18}}
+                     [:> Input {:placeholder "药物名称及剂量"
+                                :style {:marginBottom "8px"}
+                                :onChange #(rf/dispatch [::events/update-canonical-assessment-field details-path (-> % .-target .-value)])}]]
+                    [:> Form.Item {:name (conj form-item-base :last_dose_time) :label "最近用药时间" :labelCol {:span 6} :wrapperCol {:span 18}}
+                     [:> DatePicker {:showTime true
+                                     :format "YYYY-MM-DD HH:mm"
+                                     :placeholder "选择日期和时间"
+                                     :style {:width "100%"}
+                                     :onChange #(rf/dispatch [::events/update-canonical-assessment-field last-dose-time-path (utils/datetime->string % "YYYY-MM-DD HH:mm")])}]]])]])]]
+           [:> Empty {:description "暂无并存疾病信息或未选择患者"}])])))
 
 (defn- physical-examination-card []
   (let [phys-exam-data @(rf/subscribe [::subs/canonical-physical-examination])
