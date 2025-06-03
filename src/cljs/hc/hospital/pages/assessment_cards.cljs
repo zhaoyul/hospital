@@ -1652,7 +1652,7 @@
                                            :cursor "pointer"}}
                           "返回总结"]]]]]]
       [afc/patient-assessment-card-wrapper
-       {patient-id patient-id
+       {:patient-id patient-id
         :form-instance form
         :form-key (str patient-id "-hematologic-system")
         :initial-data initial-form-values
