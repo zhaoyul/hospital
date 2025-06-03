@@ -3,15 +3,15 @@
    [re-frame.core :as rf]
    [taoensso.timbre :as timbre :refer [spy]]
    [hc.hospital.patient.events :as events]
-   ["antd" :refer [Form Empty Radio]]
+   ["antd" :refer [Form Empty Radio Card]]
    [hc.hospital.ui-helpers :refer [custom-styled-card]]
    [reagent.core :as r]))
 
 (defn patient-assessment-card-wrapper
-  [{:keys [icon title header-color patient-id
+  [{:keys [patient-id
            form-instance form-key initial-data on-finish-handler on-values-change-handler
            children]}]
-  [custom-styled-card icon title header-color
+  [:> Card
    (if patient-id
      [:> Form (cond-> {:form form-instance
                        :key form-key
