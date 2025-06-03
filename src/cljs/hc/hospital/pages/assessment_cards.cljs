@@ -3063,7 +3063,7 @@
         :on-values-change-handler on-values-change-fn
         :children form-items}])))
 
-(defn spinal-anesthesia_assessment-card "椎管内麻醉相关评估" [props]
+(defn spinal-anesthesia-assessment-card "椎管内麻醉相关评估" [props]
   (let [view-state (r/atom :summary)
         show-summary-fn #(reset! view-state :summary)
         toggle-view-fn #(reset! view-state (if (= @view-state :summary) :detailed :summary))
@@ -3082,5 +3082,3 @@
        :on-double-click toggle-view-fn
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
-
-[end of src/cljs/hc/hospital/pages/assessment_cards.cljs]
