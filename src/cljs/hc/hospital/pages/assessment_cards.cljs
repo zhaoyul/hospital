@@ -14,33 +14,38 @@
    [hc.hospital.events :as events]
    [hc.hospital.subs :as subs]
    [hc.hospital.utils :as utils]
+   [hc.hospital.ui-helpers :as ui-helpers]
    [re-frame.core :as rf]
    [reagent.core :as r]))
 
 (defn generate-circulatory-summary [data]
   (if (or (nil? data) (empty? data))
-    "循环系统: 无数据"
-    (let [parts (transient [])
-          cardiac-history (get-in data [:cardiac_disease_history :has])
+    "无数据"
+    (let [cardiac-history (get-in data [:cardiac_disease_history :has])
           pacemaker-history (get-in data [:pacemaker_history :has])
           cardiac-function (get-in data [:cardiac_function_assessment :class])
-          exercise-capacity (get-in data [:exercise_capacity_assessment :level])]
-      (conj! parts (if (= cardiac-history "有") "心脏病史:异常" "心脏病史:无"))
-      (conj! parts (if (= pacemaker-history "有") "起搏器:有" "起搏器:无"))
-      (conj! parts (cond
-                     (nil? cardiac-function) "心功能:未评估"
-                     (= cardiac-function "Ⅰ 级") "心功能:正常"
-                     :else (str "心功能:" cardiac-function)))
-      (conj! parts (cond
-                     (nil? exercise-capacity) "运动能力:未评估"
-                     (= exercise-capacity "运动能力正常") "运动能力:正常"
-                     :else (str "运动能力:" exercise-capacity)))
-      (str "循环系统: " (clojure.string/join ", " (persistent! parts))))))
+          exercise-capacity (get-in data [:exercise_capacity_assessment :level])
+          parts [(if (= cardiac-history "有") "心脏病史:异常" "心脏病史:无")
+                 (if (= pacemaker-history "有") "起搏器:有" "起搏器:无")
+                 (cond
+                   (nil? cardiac-function) "心功能:未评估"
+                   (= cardiac-function "Ⅰ 级") "心功能:正常"
+                   :else (str "心功能:" cardiac-function))
+                 (cond
+                   (nil? exercise-capacity) "运动能力:未评估"
+                   (= exercise-capacity "运动能力正常") "运动能力:正常"
+                   :else (str "运动能力:" exercise-capacity))]]
+      (clojure.string/join ", " parts))))
 
 (defn circulatory-system-summary-view [props]
   (let [{:keys [on-show-detailed circulatory-data]} props]
-    [:div {:on-double-click on-show-detailed
-           :style {:cursor "pointer" :padding "10px" :border "1px solid #eee"}}
+    [ui-helpers/custom-styled-card
+     {:icon [:> HeartOutlined {:style {:marginRight "8px"}}]
+      :title "循环系统"
+      :header-color "#e6f7ff"
+      :on-double-click on-show-detailed
+      :card-style {:cursor "pointer"}
+      :card-body-style {:padding "10px"}}
      (generate-circulatory-summary circulatory-data)]))
 
 (defn circulatory-system-detailed-view [props]
@@ -284,24 +289,28 @@
 
 (defn generate-respiratory-summary [data]
   (if (or (nil? data) (empty? data))
-    "呼吸系统: 无数据"
-    (let [parts (transient [])
-          cold-history (get-in data [:cold_history_last_2_weeks :present])
+    "无数据"
+    (let [cold-history (get-in data [:cold_history_last_2_weeks :present])
           bronchitis-pneumonia (get-in data [:bronchitis_pneumonia_last_month :present])
           asthma-history (get-in data [:asthma_history :present])
           copd-history (get-in data [:copd_history :present])
-          tb-history (get-in data [:tuberculosis_history :present])]
-      (conj! parts (if (= cold-history "有") "近期感冒:有" "近期感冒:无"))
-      (conj! parts (if (= bronchitis-pneumonia "有") "近期支气管炎/肺炎:有" "近期支气管炎/肺炎:无"))
-      (conj! parts (if (= asthma-history "有") "哮喘病史:有" "哮喘病史:无"))
-      (conj! parts (if (= copd-history "有") "COPD病史:有" "COPD病史:无"))
-      (conj! parts (if (= tb-history "有") "肺结核:有" "肺结核:无"))
-      (str "呼吸系统: " (clojure.string/join ", " (persistent! parts))))))
+          tb-history (get-in data [:tuberculosis_history :present])
+          parts [(if (= cold-history "有") "近期感冒:有" "近期感冒:无")
+                 (if (= bronchitis-pneumonia "有") "近期支气管炎/肺炎:有" "近期支气管炎/肺炎:无")
+                 (if (= asthma-history "有") "哮喘病史:有" "哮喘病史:无")
+                 (if (= copd-history "有") "COPD病史:有" "COPD病史:无")
+                 (if (= tb-history "有") "肺结核:有" "肺结核:无")]]
+      (clojure.string/join ", " parts))))
 
 (defn respiratory-system-summary-view [props]
   (let [{:keys [on-show-detailed respiratory-data]} props]
-    [:div {:on-double-click on-show-detailed
-           :style {:cursor "pointer" :padding "10px" :border "1px solid #eee"}}
+    [ui-helpers/custom-styled-card
+     {:icon [:> CloudOutlined {:style {:marginRight "8px"}}]
+      :title "呼吸系统"
+      :header-color "#e6fffb"
+      :on-double-click on-show-detailed
+      :card-style {:cursor "pointer"}
+      :card-body-style {:padding "10px"}}
      (generate-respiratory-summary respiratory-data)]))
 
 (defn respiratory-system-detailed-view [props]
@@ -495,20 +504,24 @@
 ;; Mental Neuromuscular System Card
 (defn generate-mental-neuromuscular-summary [data]
   (if (or (nil? data) (empty? data))
-    "精神及神经肌肉系统: 无数据"
-    (let [parts (transient [])
-          psycho-cognitive (get-in data [:psycho_cognitive_history :present])
+    "无数据"
+    (let [psycho-cognitive (get-in data [:psycho_cognitive_history :present])
           epilepsy (get-in data [:epilepsy_history :present])
-          cerebral-infarction (get-in data [:cerebral_infarction_history :present])]
-      (conj! parts (str "精神认知史:" (if (= psycho-cognitive "有") "有" "无")))
-      (conj! parts (str "癫痫史:" (if (= epilepsy "有") "有" "无")))
-      (conj! parts (str "脑梗史:" (if (= cerebral-infarction "有") "有" "无")))
-      (str "精神及神经肌肉系统: " (clojure.string/join ", " (persistent! parts))))))
+          cerebral-infarction (get-in data [:cerebral_infarction_history :present])
+          parts [(str "精神认知史:" (if (= psycho-cognitive "有") "有" "无"))
+                 (str "癫痫史:" (if (= epilepsy "有") "有" "无"))
+                 (str "脑梗史:" (if (= cerebral-infarction "有") "有" "无"))]]
+      (clojure.string/join ", " parts))))
 
 (defn mental-neuromuscular-system-summary-view [props]
   (let [{:keys [on-show-detailed mn-data]} props]
-    [:div {:on-double-click on-show-detailed
-           :style {:cursor "pointer" :padding "10px" :border "1px solid #eee"}}
+    [ui-helpers/custom-styled-card
+     {:icon [:> UserOutlined {:style {:marginRight "8px"}}]
+      :title "精神及神经肌肉系统"
+      :header-color "#fffbe6"
+      :on-double-click on-show-detailed
+      :card-style {:cursor "pointer"}
+      :card-body-style {:padding "10px"}}
      (generate-mental-neuromuscular-summary mn-data)]))
 
 (defn mental-neuromuscular-system-detailed-view [props]
@@ -714,20 +727,24 @@
 ;; Endocrine System Card
 (defn generate-endocrine-summary [data]
   (if (or (nil? data) (empty? data))
-    "内分泌系统: 无数据"
-    (let [parts (transient [])
-          thyroid-history (get-in data [:thyroid_disease_history :present])
+    "无数据"
+    (let [thyroid-history (get-in data [:thyroid_disease_history :present])
           diabetes-history (get-in data [:diabetes_history :present])
-          pheochromocytoma (get-in data [:pheochromocytoma :present])]
-      (conj! parts (str "甲状腺疾病:" (if (= thyroid-history "有") "有" "无")))
-      (conj! parts (str "糖尿病:" (if (= diabetes-history "有") "有" "无")))
-      (conj! parts (str "嗜铬细胞瘤:" (if (= pheochromocytoma "有") "有" "无")))
-      (str "内分泌系统: " (clojure.string/join ", " (persistent! parts))))))
+          pheochromocytoma (get-in data [:pheochromocytoma :present])
+          parts [(str "甲状腺疾病:" (if (= thyroid-history "有") "有" "无"))
+                 (str "糖尿病:" (if (= diabetes-history "有") "有" "无"))
+                 (str "嗜铬细胞瘤:" (if (= pheochromocytoma "有") "有" "无"))]]
+      (clojure.string/join ", " parts))))
 
 (defn endocrine-system-summary-view [props]
   (let [{:keys [on-show-detailed endo-data]} props]
-    [:div {:on-double-click on-show-detailed
-           :style {:cursor "pointer" :padding "10px" :border "1px solid #eee"}}
+    [ui-helpers/custom-styled-card
+     {:icon [:> ExperimentOutlined {:style {:marginRight "8px"}}]
+      :title "内分泌系统"
+      :header-color "#f9f0ff"
+      :on-double-click on-show-detailed
+      :card-style {:cursor "pointer"}
+      :card-body-style {:padding "10px"}}
      (generate-endocrine-summary endo-data)]))
 
 (defn endocrine-system-detailed-view [props]
@@ -898,21 +915,26 @@
 ;; Liver Kidney System Card
 (defn generate-liver-kidney-summary [data]
   (if (or (nil? data) (empty? data))
-    "肝肾病史: 无数据"
-    (let [parts (transient [])
-          liver-status (get-in data [:liver_function :status])
-          liver-disease-types (get-in data [:liver_disease_history :types])]
-      (conj! parts (if (= liver-status "异常") "肝功能:异常" "肝功能:正常"))
-      (conj! parts (if (and (seq liver-disease-types) (not (every? #{"none"} liver-disease-types)))
-                     "肝脏疾病:有"
-                     "肝脏疾病:无"))
-      ;; Add kidney summary points here if data structure becomes clear
-      (str "肝肾病史: " (clojure.string/join ", " (persistent! parts))))))
+    "无数据"
+    (let [liver-status (get-in data [:liver_function :status])
+          liver-disease-types (get-in data [:liver_disease_history :types])
+          parts [(if (= liver-status "异常") "肝功能:异常" "肝功能:正常")
+                 (if (and (seq liver-disease-types) (not (every? #{"none"} liver-disease-types)))
+                   "肝脏疾病:有"
+                   "肝脏疾病:无")
+                 ;; Add kidney summary points here if data structure becomes clear
+                 ]]
+      (clojure.string/join ", " parts))))
 
 (defn liver-kidney-system-summary-view [props]
   (let [{:keys [on-show-detailed lk-data]} props]
-    [:div {:on-double-click on-show-detailed
-           :style {:cursor "pointer" :padding "10px" :border "1px solid #eee"}}
+    [ui-helpers/custom-styled-card
+     {:icon [:> ProjectOutlined {:style {:marginRight "8px"}}]
+      :title "肝肾病史"
+      :header-color "#fff7e6"
+      :on-double-click on-show-detailed
+      :card-style {:cursor "pointer"}
+      :card-body-style {:padding "10px"}}
      (generate-liver-kidney-summary lk-data)]))
 
 (defn liver-kidney-system-detailed-view [props]
@@ -994,20 +1016,24 @@
 ;; Digestive System Card
 (defn generate-digestive-summary [data]
   (if (or (nil? data) (empty? data))
-    "消化系统: 无数据"
-    (let [parts (transient [])
-          acute-gastro (get-in data [:acute_gastroenteritis_history :has])
+    "无数据"
+    (let [acute-gastro (get-in data [:acute_gastroenteritis_history :has])
           esoph-gast-duo (get-in data [:esophageal_gastric_duodenal_history :has])
-          chronic-digest (get-in data [:chronic_digestive_history :has])]
-      (conj! parts (str "急性胃肠炎:" (if (= acute-gastro "有") "有" "无")))
-      (conj! parts (str "食管胃十二指肠疾病:" (if (= esoph-gast-duo "有") "有" "无")))
-      (conj! parts (str "慢性消化疾病:" (if (= chronic-digest "有") "有" "无")))
-      (str "消化系统: " (clojure.string/join ", " (persistent! parts))))))
+          chronic-digest (get-in data [:chronic_digestive_history :has])
+          parts [(str "急性胃肠炎:" (if (= acute-gastro "有") "有" "无"))
+                 (str "食管胃十二指肠疾病:" (if (= esoph-gast-duo "有") "有" "无"))
+                 (str "慢性消化疾病:" (if (= chronic-digest "有") "有" "无"))]]
+      (clojure.string/join ", " parts))))
 
 (defn digestive-system-summary-view [props]
   (let [{:keys [on-show-detailed ds-data]} props]
-    [:div {:on-double-click on-show-detailed
-           :style {:cursor "pointer" :padding "10px" :border "1px solid #eee"}}
+    [ui-helpers/custom-styled-card
+     {:icon [:> CoffeeOutlined {:style {:marginRight "8px"}}]
+      :title "消化系统"
+      :header-color "#eff8ff"
+      :on-double-click on-show-detailed
+      :card-style {:cursor "pointer"}
+      :card-body-style {:padding "10px"}}
      (generate-digestive-summary ds-data)]))
 
 (defn digestive-system-detailed-view [props]
@@ -1139,20 +1165,24 @@
 ;; Hematologic System Card
 (defn generate-hematologic-summary [data]
   (if (or (nil? data) (empty? data))
-    "血液系统: 无数据"
-    (let [parts (transient [])
-          anemia (get-in data [:anemia :has])
+    "无数据"
+    (let [anemia (get-in data [:anemia :has])
           coagulation-dysfunction (get-in data [:coagulation_dysfunction :has])
-          thrombosis-history (get-in data [:thrombosis_history :has])]
-      (conj! parts (str "贫血:" (if (= anemia "有") "有" "无")))
-      (conj! parts (str "凝血功能障碍:" (if (= coagulation-dysfunction "有") "有" "无")))
-      (conj! parts (str "血栓史:" (if (= thrombosis-history "有") "有" "无")))
-      (str "血液系统: " (clojure.string/join ", " (persistent! parts))))))
+          thrombosis-history (get-in data [:thrombosis_history :has])
+          parts [(str "贫血:" (if (= anemia "有") "有" "无"))
+                 (str "凝血功能障碍:" (if (= coagulation-dysfunction "有") "有" "无"))
+                 (str "血栓史:" (if (= thrombosis-history "有") "有" "无"))]]
+      (clojure.string/join ", " parts))))
 
 (defn hematologic-system-summary-view [props]
   (let [{:keys [on-show-detailed hs-data]} props]
-    [:div {:on-double-click on-show-detailed
-           :style {:cursor "pointer" :padding "10px" :border "1px solid #eee"}}
+    [ui-helpers/custom-styled-card
+     {:icon [:> ExperimentOutlined {:style {:marginRight "8px"}}]
+      :title "血液系统"
+      :header-color "#fff0f6"
+      :on-double-click on-show-detailed
+      :card-style {:cursor "pointer"}
+      :card-body-style {:padding "10px"}}
      (generate-hematologic-summary hs-data)]))
 
 (defn hematologic-system-detailed-view [props]
@@ -1256,18 +1286,22 @@
 ;; Immune System Card
 (defn generate-immune-summary [data]
   (if (or (nil? data) (empty? data))
-    "免疫系统: 无数据"
-    (let [parts (transient [])
-          immune-dysfunction (get-in data [:immune_dysfunction :has])
-          autoimmune-disease (get-in data [:autoimmune_disease :has])]
-      (conj! parts (str "免疫功能障碍:" (if (= immune-dysfunction "有") "有" "无")))
-      (conj! parts (str "自身免疫性疾病:" (if (= autoimmune-disease "有") "有" "无")))
-      (str "免疫系统: " (clojure.string/join ", " (persistent! parts))))))
+    "无数据"
+    (let [immune-dysfunction (get-in data [:immune_dysfunction :has])
+          autoimmune-disease (get-in data [:autoimmune_disease :has])
+          parts [(str "免疫功能障碍:" (if (= immune-dysfunction "有") "有" "无"))
+                 (str "自身免疫性疾病:" (if (= autoimmune-disease "有") "有" "无"))]]
+      (clojure.string/join ", " parts))))
 
 (defn immune-system-summary-view [props]
   (let [{:keys [on-show-detailed is-data]} props]
-    [:div {:on-double-click on-show-detailed
-           :style {:cursor "pointer" :padding "10px" :border "1px solid #eee"}}
+    [ui-helpers/custom-styled-card
+     {:icon [:> SecurityScanOutlined {:style {:marginRight "8px"}}]
+      :title "免疫系统"
+      :header-color "#f6ffed"
+      :on-double-click on-show-detailed
+      :card-style {:cursor "pointer"}
+      :card-body-style {:padding "10px"}}
      (generate-immune-summary is-data)]))
 
 (defn immune-system-detailed-view [props]
@@ -1375,22 +1409,26 @@
 ;; Special Medication History Card
 (defn generate-special-medication-summary [data]
   (if (or (nil? data) (empty? data))
-    "特殊用药史: 无数据"
-    (let [parts (transient [])
-          anticoagulant (get-in data [:anticoagulant_antiplatelet :present])
+    "无数据"
+    (let [anticoagulant (get-in data [:anticoagulant_antiplatelet :present])
           glucocorticoids (get-in data [:glucocorticoids :present])
           cancer-treatment (get-in data [:cancer_treatment :present])
-          drug-abuse (get-in data [:drug_abuse_dependence :present])]
-      (conj! parts (str "抗凝/抗血小板:" (if (= anticoagulant "有") "有" "无")))
-      (conj! parts (str "糖皮质激素:" (if (= glucocorticoids "有") "有" "无")))
-      (conj! parts (str "肿瘤治疗:" (if (= cancer-treatment "有") "有" "无")))
-      (conj! parts (str "药物滥用:" (if (= drug-abuse "有") "有" "无")))
-      (str "特殊用药史: " (clojure.string/join ", " (persistent! parts))))))
+          drug-abuse (get-in data [:drug_abuse_dependence :present])
+          parts [(str "抗凝/抗血小板:" (if (= anticoagulant "有") "有" "无"))
+                 (str "糖皮质激素:" (if (= glucocorticoids "有") "有" "无"))
+                 (str "肿瘤治疗:" (if (= cancer-treatment "有") "有" "无"))
+                 (str "药物滥用:" (if (= drug-abuse "有") "有" "无"))]]
+      (clojure.string/join ", " parts))))
 
 (defn special-medication-history-summary-view [props]
   (let [{:keys [on-show-detailed smh-data]} props]
-    [:div {:on-double-click on-show-detailed
-           :style {:cursor "pointer" :padding "10px" :border "1px solid #eee"}}
+    [ui-helpers/custom-styled-card
+     {:icon [:> MedicineBoxOutlined {:style {:marginRight "8px"}}]
+      :title "特殊用药史"
+      :header-color "#fffbe6"
+      :on-double-click on-show-detailed
+      :card-style {:cursor "pointer"}
+      :card-body-style {:padding "10px"}}
      (generate-special-medication-summary smh-data)]))
 
 (defn special-medication-history-detailed-view [props]
@@ -1481,19 +1519,23 @@
 ;; Special Disease History Card
 (defn generate-special-disease-summary [data]
   (if (or (nil? data) (empty? data))
-    "特殊疾病病史: 无数据"
-    (let [parts (transient [])
-          marfan-present (get-in data [:marfan_syndrome :present])
-          other-diseases (get data :other_special_diseases)]
-      (conj! parts (str "马方综合征:" (if (= marfan-present "有") "有" "无")))
-      (when (and (some? other-diseases) (not (clojure.string/blank? other-diseases)))
-        (conj! parts "其他特殊疾病:有"))
-      (str "特殊疾病病史: " (clojure.string/join ", " (persistent! parts))))))
+    "无数据"
+    (let [marfan-present (get-in data [:marfan_syndrome :present])
+          other-diseases (get data :other_special_diseases)
+          parts (cond-> []
+                  true (conj (str "马方综合征:" (if (= marfan-present "有") "有" "无")))
+                  (and (some? other-diseases) (not (clojure.string/blank? other-diseases))) (conj "其他特殊疾病:有"))]
+      (clojure.string/join ", " parts))))
 
 (defn special-disease-history-summary-view [props]
   (let [{:keys [on-show-detailed sdh-data]} props]
-    [:div {:on-double-click on-show-detailed
-           :style {:cursor "pointer" :padding "10px" :border "1px solid #eee"}}
+    [ui-helpers/custom-styled-card
+     {:icon [:> WarningOutlined {:style {:marginRight "8px"}}]
+      :title "特殊疾病病史"
+      :header-color "#fff1f0"
+      :on-double-click on-show-detailed
+      :card-style {:cursor "pointer"}
+      :card-body-style {:padding "10px"}}
      (generate-special-disease-summary sdh-data)]))
 
 (defn special-disease-history-detailed-view [props]
@@ -1589,9 +1631,8 @@
 ;; Nutritional Assessment Card
 (defn generate-nutritional-summary [data]
   (if (or (nil? data) (empty? data))
-    "营养评估: 无数据"
-    (let [parts (transient [])
-          nutritional-score-risk (or (= "有" (get-in data [:nutritional_score :bmi_lt_20_5]))
+    "无数据"
+    (let [nutritional-score-risk (or (= "有" (get-in data [:nutritional_score :bmi_lt_20_5]))
                                      (= "有" (get-in data [:nutritional_score :weight_loss_last_3_months]))
                                      (= "有" (get-in data [:nutritional_score :reduced_intake_last_week]))
                                      (= "有" (get-in data [:nutritional_score :severe_illness])))
@@ -1599,15 +1640,20 @@
                                  (= "有" (get-in data [:frail_score :resistance]))
                                  (= "有" (get-in data [:frail_score :ambulation]))
                                  (= "有" (get-in data [:frail_score :illness_gt_5]))
-                                 (= "有" (get-in data [:frail_score :loss_of_weight_gt_5_percent])))]
-      (conj! parts (if nutritional-score-risk "营养评分风险:有" "营养评分风险:无"))
-      (conj! parts (if frail-score-risk "FRAIL评估风险:有" "FRAIL评估风险:无"))
-      (str "营养评估: " (clojure.string/join ", " (persistent! parts))))))
+                                 (= "有" (get-in data [:frail_score :loss_of_weight_gt_5_percent])))
+          parts [(if nutritional-score-risk "营养评分风险:有" "营养评分风险:无")
+                 (if frail-score-risk "FRAIL评估风险:有" "FRAIL评估风险:无")]]
+      (clojure.string/join ", " parts))))
 
 (defn nutritional-assessment-summary-view [props]
   (let [{:keys [on-show-detailed na-data]} props]
-    [:div {:on-double-click on-show-detailed
-           :style {:cursor "pointer" :padding "10px" :border "1px solid #eee"}}
+    [ui-helpers/custom-styled-card
+     {:icon [:> AppleOutlined {:style {:marginRight "8px"}}]
+      :title "营养评估"
+      :header-color "#f0fff0"
+      :on-double-click on-show-detailed
+      :card-style {:cursor "pointer"}
+      :card-body-style {:padding "10px"}}
      (generate-nutritional-summary na-data)]))
 
 (defn nutritional-assessment-detailed-view [props]
@@ -1694,23 +1740,28 @@
 ;; Pregnancy Assessment Card
 (defn generate-pregnancy-summary [data]
   (if (or (nil? data) (empty? data))
-    "妊娠: 无数据"
+    "无数据"
     (let [is-pregnant (get data :is_pregnant)]
       (cond
         (= is-pregnant "有")
-        (let [parts (transient ["妊娠:是"])
-              gestational-week (get data :gestational_week "未提供")
-              comorbid-conditions (seq (get data :comorbid_obstetric_conditions))]
-          (conj! parts (str "孕周:" gestational-week))
-          (conj! parts (if comorbid-conditions "合并情况:有" "合并情况:无"))
-          (clojure.string/join ", " (persistent! parts)))
+        (let [gestational-week (get data :gestational_week "未提供")
+              comorbid-conditions (seq (get data :comorbid_obstetric_conditions))
+              parts ["妊娠:是"
+                     (str "孕周:" gestational-week)
+                     (if comorbid-conditions "合并情况:有" "合并情况:无")]]
+          (clojure.string/join ", " parts))
         (= is-pregnant "无") "妊娠:否"
         :else "妊娠:不祥"))))
 
 (defn pregnancy-assessment-summary-view [props]
   (let [{:keys [on-show-detailed pa-data]} props]
-    [:div {:on-double-click on-show-detailed
-           :style {:cursor "pointer" :padding "10px" :border "1px solid #eee"}}
+    [ui-helpers/custom-styled-card
+     {:icon [:> WomanOutlined {:style {:marginRight "8px"}}]
+      :title "妊娠"
+      :header-color "#fff0f6"
+      :on-double-click on-show-detailed
+      :card-style {:cursor "pointer"}
+      :card-body-style {:padding "10px"}}
      (generate-pregnancy-summary pa-data)]))
 
 (defn pregnancy-assessment-detailed-view [props]
@@ -1815,18 +1866,22 @@
 ;; Surgical Anesthesia History Card
 (defn generate-surgical-anesthesia-summary [data]
   (if (or (nil? data) (empty? data))
-    "手术麻醉史: 无数据"
-    (let [parts (transient [])
-          history-present (get-in data [:history :present])
-          family-hyperthermia (get-in data [:family_history_malignant_hyperthermia :present])]
-      (conj! parts (str "手术麻醉史:" (cond (= history-present "有") "有" (= history-present "不祥") "不祥" :else "无")))
-      (conj! parts (str "恶性高热家族史:" (if (= family-hyperthermia "有") "有" "无")))
-      (str "手术麻醉史: " (clojure.string/join ", " (persistent! parts))))))
+    "无数据"
+    (let [history-present (get-in data [:history :present])
+          family-hyperthermia (get-in data [:family_history_malignant_hyperthermia :present])
+          parts [(str "手术麻醉史:" (cond (= history-present "有") "有" (= history-present "不祥") "不祥" :else "无"))
+                 (str "恶性高热家族史:" (if (= family-hyperthermia "有") "有" "无"))]]
+      (clojure.string/join ", " parts))))
 
 (defn surgical-anesthesia-history-summary-view [props]
   (let [{:keys [on-show-detailed sah-data]} props]
-    [:div {:on-double-click on-show-detailed
-           :style {:cursor "pointer" :padding "10px" :border "1px solid #eee"}}
+    [ui-helpers/custom-styled-card
+     {:icon [:> HistoryOutlined {:style {:marginRight "8px"}}]
+      :title "手术麻醉史"
+      :header-color "#e6f7ff"
+      :on-double-click on-show-detailed
+      :card-style {:cursor "pointer"}
+      :card-body-style {:padding "10px"}}
      (generate-surgical-anesthesia-summary sah-data)]))
 
 (defn surgical-anesthesia-history-detailed-view [props]
@@ -1960,29 +2015,34 @@
 ;; Airway Assessment Card
 (defn generate-airway-summary [data]
   (if (or (nil? data) (empty? data) (nil? (:detailed_assessment data)))
-    "气道评估: 无数据"
-    (let [parts (transient [])
-          assessment (:detailed_assessment data)
+    "无数据"
+    (let [assessment (:detailed_assessment data)
           diff-intubation (get assessment :difficult_intubation_history)
           mallampati (get assessment :mallampati_classification)
           mouth-opening (get-in assessment [:mouth_opening :degree])
-          thyromental-dist (get-in assessment [:thyromental_distance_class])]
-      (when (and diff-intubation (not= diff-intubation "无") (not (nil? diff-intubation)))
-        (conj! parts (str "困难插管史:" diff-intubation)))
-      (when mallampati
-        (conj! parts (str "Mallampati:" mallampati)))
-      (when (and mouth-opening (not= mouth-opening "gte_3_fingers"))
-        (conj! parts (str "张口度:" mouth-opening)))
-      (when (and thyromental-dist (not= thyromental-dist "gt_6_5_cm"))
-        (conj! parts (str "甲颏距离:" thyromental-dist)))
-      (if (empty? (persistent! parts))
-        "气道评估: 未见明显异常"
-        (str "气道评估: " (clojure.string/join ", " (persistent! parts)))))))
+          thyromental-dist (get-in assessment [:thyromental_distance_class])
+          parts (cond-> []
+                  (and diff-intubation (not= diff-intubation "无") (not (nil? diff-intubation)))
+                  (conj (str "困难插管史:" diff-intubation))
+                  mallampati
+                  (conj (str "Mallampati:" mallampati))
+                  (and mouth-opening (not= mouth-opening "gte_3_fingers"))
+                  (conj (str "张口度:" mouth-opening))
+                  (and thyromental-dist (not= thyromental-dist "gt_6_5_cm"))
+                  (conj (str "甲颏距离:" thyromental-dist)))]
+      (if (empty? parts)
+        "未见明显异常"
+        (clojure.string/join ", " parts)))))
 
 (defn airway-assessment-summary-view [props]
   (let [{:keys [on-show-detailed aa-data]} props]
-    [:div {:on-double-click on-show-detailed
-           :style {:cursor "pointer" :padding "10px" :border "1px solid #eee"}}
+    [ui-helpers/custom-styled-card
+     {:icon [:> NodeIndexOutlined {:style {:marginRight "8px"}}]
+      :title "气道评估"
+      :header-color "#fff7e6"
+      :on-double-click on-show-detailed
+      :card-style {:cursor "pointer"}
+      :card-body-style {:padding "10px"}}
      (generate-airway-summary aa-data)]))
 
 (defn airway-assessment-detailed-view [props]
@@ -2282,25 +2342,32 @@
 ;; Spinal Anesthesia Assessment Card
 (defn generate-spinal-anesthesia-summary [data]
   (if (or (nil? data) (empty? data))
-    "椎管内麻醉相关评估: 无数据"
-    (let [risk-factors (transient [])
-          critical-fields {[:central_nervous_system :brain_tumor] "脑肿瘤"
+    "无数据"
+    (let [critical-fields {[:central_nervous_system :brain_tumor] "脑肿瘤"
                            [:peripheral_nervous_system :spinal_cord_injury] "脊髓损伤"
                            [:lumbar_disc_herniation :present] "腰椎间盘突出"
                            [:cardiovascular_system :aortic_stenosis] "主动脉瓣狭窄"
                            [:puncture_site_inspection :local_infection] "穿刺点感染"
-                           [:local_anesthetic_allergy] "局麻药过敏"}]
-      (doseq [[path label] critical-fields]
-        (when (= (get-in data path) "有")
-          (conj! risk-factors label)))
-      (if (seq (persistent! risk-factors))
-        (str "椎管内麻醉风险: " (clojure.string/join ", " (persistent! risk-factors)))
-        "椎管内麻醉风险: 无明确风险因素"))))
+                           [:local_anesthetic_allergy] "局麻药过敏"}
+          risk-factors (reduce (fn [acc [path label]]
+                                 (if (= (get-in data path) "有")
+                                   (conj acc label)
+                                   acc))
+                               []
+                               critical-fields)]
+      (if (seq risk-factors)
+        (clojure.string/join ", " risk-factors)
+        "无明确风险因素"))))
 
 (defn spinal-anesthesia-assessment-summary-view [props]
   (let [{:keys [on-show-detailed saa-data]} props]
-    [:div {:on-double-click on-show-detailed
-           :style {:cursor "pointer" :padding "10px" :border "1px solid #eee"}}
+    [ui-helpers/custom-styled-card
+     {:icon [:> GatewayOutlined {:style {:marginRight "8px"}}]
+      :title "椎管内麻醉相关评估"
+      :header-color "#f0f5ff"
+      :on-double-click on-show-detailed
+      :card-style {:cursor "pointer"}
+      :card-body-style {:padding "10px"}}
      (generate-spinal-anesthesia-summary saa-data)]))
 
 (defn spinal-anesthesia-assessment-detailed-view [props]
