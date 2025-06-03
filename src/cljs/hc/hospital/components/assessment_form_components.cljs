@@ -28,10 +28,10 @@
            extra-condition-values value-for-children-wrapper]}
    & children]
 
-  (let [field-identifier (clj->js (spy :info radio-name))
+  (let [field-identifier (clj->js radio-name)
         watched-value (Form.useWatch field-identifier form-instance) ; Use new name for watching
-        show-children? (or (= (spy :info watched-value) (spy :info conditional-value))
-                           (when (spy :info extra-condition-values)
+        show-children? (or (= watched-value conditional-value)
+                           (when extra-condition-values
                              (some #(= watched-value %) extra-condition-values)))
         wrap? (if value-for-children-wrapper
                 (= watched-value value-for-children-wrapper)

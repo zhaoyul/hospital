@@ -18,7 +18,6 @@
    [reagent.core :as r]
    [re-frame.core :as rf]))
 
-
 (defn circulatory-system-card "循环系统" []
   (let [patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         circulatory-data @(rf/subscribe [::subs/circulatory-system-data])

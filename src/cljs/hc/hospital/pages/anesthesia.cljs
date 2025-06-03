@@ -392,9 +392,9 @@
        "#f9f0ff" ; Header background color
        (if (seq comorbidities-data)
          [:> Form {:layout "horizontal" :labelCol {:span 10} :wrapperCol {:span 14} :labelAlign "left"
-                   :initialValues (clj->js (update-in (timbre/spy :info comorbidities-data)
+                   :initialValues (clj->js (update-in comorbidities-data
                                                       [:special_medications :last_dose_time]
-                                                      (fn [str]  (timbre/spy :info (dayjs str)))))
+                                                      (fn [str] (dayjs str))))
                    :key patient-id}
           [:> Row {:gutter [16 0]}
            (comorbidity-item :respiratory "呼吸系统疾病")
