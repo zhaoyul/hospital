@@ -1,21 +1,17 @@
 (ns hc.hospital.pages.assessment-cards
   (:require
-   ["antd" :refer [Checkbox Col DatePicker Empty Form Input InputNumber Radio
-                   Row Select]]
-   ["dayjs" :as dayjs]
-   ["@ant-design/icons"  :refer [AppleOutlined CloudOutlined
-                                 CoffeeOutlined ExperimentOutlined
-                                 GatewayOutlined HeartOutlined
-                                 HistoryOutlined MedicineBoxOutlined
-                                 NodeIndexOutlined ProjectOutlined
-                                 SecurityScanOutlined UserOutlined
-                                 WarningOutlined WomanOutlined]]
+   ["@ant-design/icons"  :refer [AppleOutlined CloudOutlined CoffeeOutlined
+                                 ExperimentOutlined GatewayOutlined
+                                 HeartOutlined HistoryOutlined
+                                 MedicineBoxOutlined NodeIndexOutlined
+                                 ProjectOutlined SecurityScanOutlined
+                                 UserOutlined WarningOutlined WomanOutlined]]
+   ["antd" :refer [Checkbox Col DatePicker Form Input InputNumber Radio Row
+                   Select]]
    [hc.hospital.components.assessment-form-components :as afc]
    [hc.hospital.events :as events]
    [hc.hospital.subs :as subs]
-   [hc.hospital.ui-helpers :refer [custom-styled-card]]
    [hc.hospital.utils :as utils]
-   [reagent.core :as r]
    [re-frame.core :as rf]))
 
 (defn circulatory-system-card "循环系统" []
