@@ -9,6 +9,7 @@
    ["antd" :refer [Checkbox Col DatePicker Form Input InputNumber Radio Row
                    Select]]
    ["react" :as React]
+   [clojure.string :as str]
    [taoensso.timbre :as timbre :refer [spy]]
    [hc.hospital.components.assessment-form-components :as afc]
    [hc.hospital.events :as events]
@@ -35,7 +36,7 @@
                    (nil? exercise-capacity) "运动能力:未评估"
                    (= exercise-capacity "运动能力正常") "运动能力:正常"
                    :else (str "运动能力:" exercise-capacity))]]
-      (clojure.string/join ", " parts))))
+      (str/join ", " parts))))
 
 (defn circulatory-system-summary-view [props]
   (let [{:keys [on-show-detailed circulatory-data]} props]
@@ -300,7 +301,7 @@
                  (if (= asthma-history "有") "哮喘病史:有" "哮喘病史:无")
                  (if (= copd-history "有") "COPD病史:有" "COPD病史:无")
                  (if (= tb-history "有") "肺结核:有" "肺结核:无")]]
-      (clojure.string/join ", " parts))))
+      (str/join ", " parts))))
 
 (defn respiratory-system-summary-view [props]
   (let [{:keys [on-show-detailed respiratory-data]} props]
@@ -494,12 +495,13 @@
         show-summary-fn #(reset! view-state :summary)
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         respiratory-data @(rf/subscribe [::subs/respiratory-system-data])]
-    (if (= @view-state :summary)
-      [respiratory-system-summary-view {:on-show-detailed show-detailed-fn
-                                        :respiratory-data respiratory-data}]
-      [respiratory-system-detailed-view (merge props {:patient-id patient-id
-                                                      :respiratory-data respiratory-data
-                                                      :on-show-summary show-summary-fn})])))
+    (fn []
+      (if (= @view-state :summary)
+        [respiratory-system-summary-view {:on-show-detailed show-detailed-fn
+                                          :respiratory-data respiratory-data}]
+        [:f> respiratory-system-detailed-view (merge props {:patient-id patient-id
+                                                            :respiratory-data respiratory-data
+                                                            :on-show-summary show-summary-fn})]))))
 
 ;; Mental Neuromuscular System Card
 (defn generate-mental-neuromuscular-summary [data]
@@ -511,7 +513,7 @@
           parts [(str "精神认知史:" (if (= psycho-cognitive "有") "有" "无"))
                  (str "癫痫史:" (if (= epilepsy "有") "有" "无"))
                  (str "脑梗史:" (if (= cerebral-infarction "有") "有" "无"))]]
-      (clojure.string/join ", " parts))))
+      (str/join ", " parts))))
 
 (defn mental-neuromuscular-system-summary-view [props]
   (let [{:keys [on-show-detailed mn-data]} props]
@@ -717,12 +719,13 @@
         show-summary-fn #(reset! view-state :summary)
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         mn-data @(rf/subscribe [::subs/mental-neuromuscular-system-data])]
-    (if (= @view-state :summary)
-      [mental-neuromuscular-system-summary-view {:on-show-detailed show-detailed-fn
-                                                 :mn-data mn-data}]
-      [mental-neuromuscular-system-detailed-view (merge props {:patient-id patient-id
-                                                               :mn-data mn-data
-                                                               :on-show-summary show-summary-fn})])))
+    (fn []
+      (if (= @view-state :summary)
+        [mental-neuromuscular-system-summary-view {:on-show-detailed show-detailed-fn
+                                                   :mn-data mn-data}]
+        [:f> mental-neuromuscular-system-detailed-view (merge props {:patient-id patient-id
+                                                                     :mn-data mn-data
+                                                                     :on-show-summary show-summary-fn})]))))
 
 ;; Endocrine System Card
 (defn generate-endocrine-summary [data]
@@ -734,7 +737,7 @@
           parts [(str "甲状腺疾病:" (if (= thyroid-history "有") "有" "无"))
                  (str "糖尿病:" (if (= diabetes-history "有") "有" "无"))
                  (str "嗜铬细胞瘤:" (if (= pheochromocytoma "有") "有" "无"))]]
-      (clojure.string/join ", " parts))))
+      (str/join ", " parts))))
 
 (defn endocrine-system-summary-view [props]
   (let [{:keys [on-show-detailed endo-data]} props]
@@ -905,12 +908,13 @@
         show-summary-fn #(reset! view-state :summary)
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         endo-data @(rf/subscribe [::subs/endocrine-system-data])]
-    (if (= @view-state :summary)
-      [endocrine-system-summary-view {:on-show-detailed show-detailed-fn
-                                      :endo-data endo-data}]
-      [endocrine-system-detailed-view (merge props {:patient-id patient-id
-                                                    :endo-data endo-data
-                                                    :on-show-summary show-summary-fn})])))
+    (fn []
+      (if (= @view-state :summary)
+        [endocrine-system-summary-view {:on-show-detailed show-detailed-fn
+                                        :endo-data endo-data}]
+        [:f> endocrine-system-detailed-view (merge props {:patient-id patient-id
+                                                          :endo-data endo-data
+                                                          :on-show-summary show-summary-fn})]))))
 
 ;; Liver Kidney System Card
 (defn generate-liver-kidney-summary [data]
@@ -924,7 +928,7 @@
                    "肝脏疾病:无")
                  ;; Add kidney summary points here if data structure becomes clear
                  ]]
-      (clojure.string/join ", " parts))))
+      (str/join ", " parts))))
 
 (defn liver-kidney-system-summary-view [props]
   (let [{:keys [on-show-detailed lk-data]} props]
@@ -1006,12 +1010,13 @@
         show-summary-fn #(reset! view-state :summary)
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         lk-data @(rf/subscribe [::subs/liver-kidney-system-data])]
-    (if (= @view-state :summary)
-      [liver-kidney-system-summary-view {:on-show-detailed show-detailed-fn
-                                         :lk-data lk-data}]
-      [liver-kidney-system-detailed-view (merge props {:patient-id patient-id
-                                                       :lk-data lk-data
-                                                       :on-show-summary show-summary-fn})])))
+    (fn []
+      (if (= @view-state :summary)
+        [liver-kidney-system-summary-view {:on-show-detailed show-detailed-fn
+                                           :lk-data lk-data}]
+        [:f> liver-kidney-system-detailed-view (merge props {:patient-id patient-id
+                                                             :lk-data lk-data
+                                                             :on-show-summary show-summary-fn})]))))
 
 ;; Digestive System Card
 (defn generate-digestive-summary [data]
@@ -1023,7 +1028,7 @@
           parts [(str "急性胃肠炎:" (if (= acute-gastro "有") "有" "无"))
                  (str "食管胃十二指肠疾病:" (if (= esoph-gast-duo "有") "有" "无"))
                  (str "慢性消化疾病:" (if (= chronic-digest "有") "有" "无"))]]
-      (clojure.string/join ", " parts))))
+      (str/join ", " parts))))
 
 (defn digestive-system-summary-view [props]
   (let [{:keys [on-show-detailed ds-data]} props]
@@ -1155,12 +1160,13 @@
         show-summary-fn #(reset! view-state :summary)
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         ds-data @(rf/subscribe [::subs/digestive-system-data])]
-    (if (= @view-state :summary)
-      [digestive-system-summary-view {:on-show-detailed show-detailed-fn
-                                      :ds-data ds-data}]
-      [digestive-system-detailed-view (merge props {:patient-id patient-id
-                                                    :ds-data ds-data
-                                                    :on-show-summary show-summary-fn})])))
+    (fn []
+      (if (= @view-state :summary)
+        [digestive-system-summary-view {:on-show-detailed show-detailed-fn
+                                        :ds-data ds-data}]
+        [:f> digestive-system-detailed-view (merge props {:patient-id patient-id
+                                                          :ds-data ds-data
+                                                          :on-show-summary show-summary-fn})]))))
 
 ;; Hematologic System Card
 (defn generate-hematologic-summary [data]
@@ -1172,7 +1178,7 @@
           parts [(str "贫血:" (if (= anemia "有") "有" "无"))
                  (str "凝血功能障碍:" (if (= coagulation-dysfunction "有") "有" "无"))
                  (str "血栓史:" (if (= thrombosis-history "有") "有" "无"))]]
-      (clojure.string/join ", " parts))))
+      (str/join ", " parts))))
 
 (defn hematologic-system-summary-view [props]
   (let [{:keys [on-show-detailed hs-data]} props]
@@ -1276,12 +1282,13 @@
         show-summary-fn #(reset! view-state :summary)
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         hs-data @(rf/subscribe [::subs/hematologic-system-data])]
-    (if (= @view-state :summary)
-      [hematologic-system-summary-view {:on-show-detailed show-detailed-fn
-                                        :hs-data hs-data}]
-      [hematologic-system-detailed-view (merge props {:patient-id patient-id
-                                                      :hs-data hs-data
-                                                      :on-show-summary show-summary-fn})])))
+    (fn []
+      (if (= @view-state :summary)
+        [hematologic-system-summary-view {:on-show-detailed show-detailed-fn
+                                          :hs-data hs-data}]
+        [:f> hematologic-system-detailed-view (merge props {:patient-id patient-id
+                                                            :hs-data hs-data
+                                                            :on-show-summary show-summary-fn})]))))
 
 ;; Immune System Card
 (defn generate-immune-summary [data]
@@ -1291,7 +1298,7 @@
           autoimmune-disease (get-in data [:autoimmune_disease :has])
           parts [(str "免疫功能障碍:" (if (= immune-dysfunction "有") "有" "无"))
                  (str "自身免疫性疾病:" (if (= autoimmune-disease "有") "有" "无"))]]
-      (clojure.string/join ", " parts))))
+      (str/join ", " parts))))
 
 (defn immune-system-summary-view [props]
   (let [{:keys [on-show-detailed is-data]} props]
@@ -1399,12 +1406,13 @@
         show-summary-fn #(reset! view-state :summary)
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         is-data @(rf/subscribe [::subs/immune-system-data])]
-    (if (= @view-state :summary)
-      [immune-system-summary-view {:on-show-detailed show-detailed-fn
-                                   :is-data is-data}]
-      [immune-system-detailed-view (merge props {:patient-id patient-id
-                                                 :is-data is-data
-                                                 :on-show-summary show-summary-fn})])))
+    (fn []
+      (if (= @view-state :summary)
+        [immune-system-summary-view {:on-show-detailed show-detailed-fn
+                                     :is-data is-data}]
+        [:f> immune-system-detailed-view (merge props {:patient-id patient-id
+                                                       :is-data is-data
+                                                       :on-show-summary show-summary-fn})]))))
 
 ;; Special Medication History Card
 (defn generate-special-medication-summary [data]
@@ -1418,7 +1426,7 @@
                  (str "糖皮质激素:" (if (= glucocorticoids "有") "有" "无"))
                  (str "肿瘤治疗:" (if (= cancer-treatment "有") "有" "无"))
                  (str "药物滥用:" (if (= drug-abuse "有") "有" "无"))]]
-      (clojure.string/join ", " parts))))
+      (str/join ", " parts))))
 
 (defn special-medication-history-summary-view [props]
   (let [{:keys [on-show-detailed smh-data]} props]
@@ -1509,12 +1517,13 @@
         show-summary-fn #(reset! view-state :summary)
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         smh-data @(rf/subscribe [::subs/special-medication-history-data])]
-    (if (= @view-state :summary)
-      [special-medication-history-summary-view {:on-show-detailed show-detailed-fn
-                                                :smh-data smh-data}]
-      [special-medication-history-detailed-view (merge props {:patient-id patient-id
-                                                              :smh-data smh-data
-                                                              :on-show-summary show-summary-fn})])))
+    (fn []
+      (if (= @view-state :summary)
+        [special-medication-history-summary-view {:on-show-detailed show-detailed-fn
+                                                  :smh-data smh-data}]
+        [:f> special-medication-history-detailed-view (merge props {:patient-id patient-id
+                                                                    :smh-data smh-data
+                                                                    :on-show-summary show-summary-fn})]))))
 
 ;; Special Disease History Card
 (defn generate-special-disease-summary [data]
@@ -1525,7 +1534,7 @@
           parts (cond-> []
                   true (conj (str "马方综合征:" (if (= marfan-present "有") "有" "无")))
                   (and (some? other-diseases) (not (clojure.string/blank? other-diseases))) (conj "其他特殊疾病:有"))]
-      (clojure.string/join ", " parts))))
+      (str/join ", " parts))))
 
 (defn special-disease-history-summary-view [props]
   (let [{:keys [on-show-detailed sdh-data]} props]
@@ -1621,12 +1630,13 @@
         show-summary-fn #(reset! view-state :summary)
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         sdh-data @(rf/subscribe [::subs/special-disease-history-data])]
-    (if (= @view-state :summary)
-      [special-disease-history-summary-view {:on-show-detailed show-detailed-fn
-                                             :sdh-data sdh-data}]
-      [special-disease-history-detailed-view (merge props {:patient-id patient-id
-                                                           :sdh-data sdh-data
-                                                           :on-show-summary show-summary-fn})])))
+    (fn []
+      (if (= @view-state :summary)
+        [special-disease-history-summary-view {:on-show-detailed show-detailed-fn
+                                               :sdh-data sdh-data}]
+        [:f> special-disease-history-detailed-view (merge props {:patient-id patient-id
+                                                                 :sdh-data sdh-data
+                                                                 :on-show-summary show-summary-fn})]))))
 
 ;; Nutritional Assessment Card
 (defn generate-nutritional-summary [data]
@@ -1643,7 +1653,7 @@
                                  (= "有" (get-in data [:frail_score :loss_of_weight_gt_5_percent])))
           parts [(if nutritional-score-risk "营养评分风险:有" "营养评分风险:无")
                  (if frail-score-risk "FRAIL评估风险:有" "FRAIL评估风险:无")]]
-      (clojure.string/join ", " parts))))
+      (str/join ", " parts))))
 
 (defn nutritional-assessment-summary-view [props]
   (let [{:keys [on-show-detailed na-data]} props]
@@ -1730,12 +1740,13 @@
         show-summary-fn #(reset! view-state :summary)
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         na-data @(rf/subscribe [::subs/nutritional-assessment-data])]
-    (if (= @view-state :summary)
-      [nutritional-assessment-summary-view {:on-show-detailed show-detailed-fn
-                                            :na-data na-data}]
-      [nutritional-assessment-detailed-view (merge props {:patient-id patient-id
-                                                          :na-data na-data
-                                                          :on-show-summary show-summary-fn})])))
+    (fn []
+      (if (= @view-state :summary)
+        [nutritional-assessment-summary-view {:on-show-detailed show-detailed-fn
+                                              :na-data na-data}]
+        [:f> nutritional-assessment-detailed-view (merge props {:patient-id patient-id
+                                                                :na-data na-data
+                                                                :on-show-summary show-summary-fn})]))))
 
 ;; Pregnancy Assessment Card
 (defn generate-pregnancy-summary [data]
@@ -1749,7 +1760,7 @@
               parts ["妊娠:是"
                      (str "孕周:" gestational-week)
                      (if comorbid-conditions "合并情况:有" "合并情况:无")]]
-          (clojure.string/join ", " parts))
+          (str/join ", " parts))
         (= is-pregnant "无") "妊娠:否"
         :else "妊娠:不祥"))))
 
@@ -1856,12 +1867,13 @@
         show-summary-fn #(reset! view-state :summary)
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         pa-data @(rf/subscribe [::subs/pregnancy-assessment-data])]
-    (if (= @view-state :summary)
-      [pregnancy-assessment-summary-view {:on-show-detailed show-detailed-fn
-                                          :pa-data pa-data}]
-      [pregnancy-assessment-detailed-view (merge props {:patient-id patient-id
-                                                        :pa-data pa-data
-                                                        :on-show-summary show-summary-fn})])))
+    (fn []
+      (if (= @view-state :summary)
+        [pregnancy-assessment-summary-view {:on-show-detailed show-detailed-fn
+                                            :pa-data pa-data}]
+        [:f> pregnancy-assessment-detailed-view (merge props {:patient-id patient-id
+                                                              :pa-data pa-data
+                                                              :on-show-summary show-summary-fn})]))))
 
 ;; Surgical Anesthesia History Card
 (defn generate-surgical-anesthesia-summary [data]
@@ -1871,7 +1883,7 @@
           family-hyperthermia (get-in data [:family_history_malignant_hyperthermia :present])
           parts [(str "手术麻醉史:" (cond (= history-present "有") "有" (= history-present "不祥") "不祥" :else "无"))
                  (str "恶性高热家族史:" (if (= family-hyperthermia "有") "有" "无"))]]
-      (clojure.string/join ", " parts))))
+      (str/join ", " parts))))
 
 (defn surgical-anesthesia-history-summary-view [props]
   (let [{:keys [on-show-detailed sah-data]} props]
@@ -2005,12 +2017,13 @@
         show-summary-fn #(reset! view-state :summary)
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         sah-data @(rf/subscribe [::subs/surgical-anesthesia-history-data])]
-    (if (= @view-state :summary)
-      [surgical-anesthesia-history-summary-view {:on-show-detailed show-detailed-fn
-                                                 :sah-data sah-data}]
-      [surgical-anesthesia-history-detailed-view (merge props {:patient-id patient-id
-                                                               :sah-data sah-data
-                                                               :on-show-summary show-summary-fn})])))
+    (fn []
+      (if (= @view-state :summary)
+        [surgical-anesthesia-history-summary-view {:on-show-detailed show-detailed-fn
+                                                   :sah-data sah-data}]
+        [:f> surgical-anesthesia-history-detailed-view (merge props {:patient-id patient-id
+                                                                     :sah-data sah-data
+                                                                     :on-show-summary show-summary-fn})]))))
 
 ;; Airway Assessment Card
 (defn generate-airway-summary [data]
@@ -2032,7 +2045,7 @@
                   (conj (str "甲颏距离:" thyromental-dist)))]
       (if (empty? parts)
         "未见明显异常"
-        (clojure.string/join ", " parts)))))
+        (str/join ", " parts)))))
 
 (defn airway-assessment-summary-view [props]
   (let [{:keys [on-show-detailed aa-data]} props]
@@ -2332,12 +2345,13 @@
         show-summary-fn #(reset! view-state :summary)
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         aa-data @(rf/subscribe [::subs/airway-assessment-data])]
-    (if (= @view-state :summary)
-      [airway-assessment-summary-view {:on-show-detailed show-detailed-fn
-                                       :aa-data aa-data}]
-      [airway-assessment-detailed-view (merge props {:patient-id patient-id
-                                                     :aa-data aa-data
-                                                     :on-show-summary show-summary-fn})])))
+    (fn []
+      (if (= @view-state :summary)
+        [airway-assessment-summary-view {:on-show-detailed show-detailed-fn
+                                         :aa-data aa-data}]
+        [:f> airway-assessment-detailed-view (merge props {:patient-id patient-id
+                                                           :aa-data aa-data
+                                                           :on-show-summary show-summary-fn})]))))
 
 ;; Spinal Anesthesia Assessment Card
 (defn generate-spinal-anesthesia-summary [data]
@@ -2356,7 +2370,7 @@
                                []
                                critical-fields)]
       (if (seq risk-factors)
-        (clojure.string/join ", " risk-factors)
+        (str/join ", " risk-factors)
         "无明确风险因素"))))
 
 (defn spinal-anesthesia-assessment-summary-view [props]
@@ -2472,9 +2486,10 @@
         show-summary-fn #(reset! view-state :summary)
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         saa-data @(rf/subscribe [::subs/spinal-anesthesia-assessment-data])]
-    (if (= @view-state :summary)
-      [spinal-anesthesia-assessment-summary-view {:on-show-detailed show-detailed-fn
-                                                  :saa-data saa-data}]
-      [spinal-anesthesia-assessment-detailed-view (merge props {:patient-id patient-id
-                                                                :saa-data saa-data
-                                                                :on-show-summary show-summary-fn})])))
+    (fn []
+      (if (= @view-state :summary)
+        [spinal-anesthesia-assessment-summary-view {:on-show-detailed show-detailed-fn
+                                                    :saa-data saa-data}]
+        [:f> spinal-anesthesia-assessment-detailed-view (merge props {:patient-id patient-id
+                                                                      :saa-data saa-data
+                                                                      :on-show-summary show-summary-fn})]))))
