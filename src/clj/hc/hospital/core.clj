@@ -5,6 +5,7 @@
    [hc.hospital.web.routes.pages]
    [hc.hospital.config :as config]
    [hc.hospital.env :refer [defaults]]
+   [clojure.java.io :as io]
 
    ;; Edges
    [kit.edge.server.undertow]
@@ -16,6 +17,7 @@
    [hc.hospital.web.routes.patient-api]
    [kit.edge.db.sql.conman]
    [kit.edge.db.sql.migratus])
+  (:import [java.util Properties])
   (:gen-class))
 
 ;; log uncaught exceptions in threads
@@ -39,5 +41,21 @@
        (reset! system)))
 
 (defn -main [& _]
+  (let [properties-path "hc/hospital/version.properties"]
+    (try
+      (if-let [resource-url (io/resource properties-path)]
+        (with-open [is (io/input-stream resource-url)]
+          (let [props (Properties.)]
+            (.load props is)
+            (println "Starting hc.hospital application...")
+            (println (str "Build Timestamp: " (.getProperty props "build.timestamp" "UNKNOWN")))
+            (println (str "Git Commit Hash: " (.getProperty props "git.commit.hash" "UNKNOWN")))))
+        (do ;; Explicitly use do for multiple expressions in if's false branch if needed, though here only one.
+          (println "Starting hc.hospital application...") ;; Print this regardless of version file
+          (println (str "WARNING: Version properties file not found at " properties-path))))
+      (catch Exception e
+        (println "Starting hc.hospital application...") ;; Print this regardless of version file
+        (println (str "ERROR: Could not load version information from " properties-path))
+        (println (.getMessage e)))))
   (start-app)
   (.addShutdownHook (Runtime/getRuntime) (Thread. (fn [] (stop-app) (shutdown-agents)))))

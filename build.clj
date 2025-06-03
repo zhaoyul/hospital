@@ -1,10 +1,14 @@
 (ns build
   (:require [clojure.string :as string]
             [clojure.tools.build.api :as b]
-    [babashka.fs :refer [copy-tree]]
-    [babashka.process :refer [shell]]))
+            [babashka.fs :as fs :refer [copy-tree]]
+            [babashka.process :refer [shell]]
+            [clojure.java.io :as io])
+  (:import [java.util Date Properties]
+           [java.text SimpleDateFormat]
+           [java.io FileOutputStream]))
 
- (defn build-cljs [] (println "npx shadow-cljs release app patient-app...") (let [{:keys [exit], :as s} (shell "npx shadow-cljs release app patient-app")] (when-not (zero? exit) (throw (ex-info "could not compile cljs" s))) (copy-tree "target/classes/cljsbuild/public" "target/classes/public")))
+(defn build-cljs [] (println "npx shadow-cljs release app patient-app...") (let [{:keys [exit], :as s} (shell "npx shadow-cljs release app patient-app")] (when-not (zero? exit) (throw (ex-info "could not compile cljs" s))) (copy-tree "target/classes/cljsbuild/public" "target/classes/public")))
 
 (def lib 'hc/hospital)
 (def main-cls (string/join "." (filter some? [(namespace lib) (name lib) "core"])))
@@ -14,6 +18,27 @@
 (def uber-file (format "%s/%s-standalone.jar" target-dir (name lib)))
 (def basis (b/create-basis {:project "deps.edn"}))
 
+(defn write-version-file []
+  (println "Writing version.properties file...")
+  (let [props (Properties.)
+        commit-hash (try
+                      (-> (shell {:out :string} "git rev-parse --short HEAD")
+                          :out
+                          string/trim)
+                      (catch Exception e
+                        (println "Error getting git commit hash:" (.getMessage e))
+                        "UNKNOWN"))
+        timestamp (-> (SimpleDateFormat. "yyyy-MM-dd HH:mm:ss Z")
+                      (.format (Date.)))
+        version-file-dir "resources/hc/hospital"
+        version-file-path (str version-file-dir "/version.properties")]
+    (fs/create-dirs version-file-dir)
+    (.setProperty props "git.commit.hash" commit-hash)
+    (.setProperty props "build.timestamp" timestamp)
+    (with-open [fos (FileOutputStream. version-file-path)]
+      (.store props fos "Build version information"))
+    (println (str "Version properties written to " version-file-path))))
+
 (defn clean
   "Delete the build target directory"
   [_]
@@ -21,6 +46,7 @@
   (b/delete {:path target-dir}))
 
 (defn prep [_]
+  (write-version-file)
   (println "Writing Pom...")
   (b/write-pom {:class-dir class-dir
                 :lib lib
