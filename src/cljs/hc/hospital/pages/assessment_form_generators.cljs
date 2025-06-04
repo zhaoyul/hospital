@@ -15,19 +15,26 @@
 (declare render-conditional-map-section)
 
 ;; --- Custom Utility Functions --- ;; --- 自定义工具函数 ---
-(defn keyword->label [k]
+(defn keyword->label
+  "Convert a keyword to a human readable label. Handles both hyphen and underscore
+  separators so that keywords like :foo-bar and :foo_bar are treated the same.
+  If the keyword itself is already a string of Chinese characters this is a
+  no-op, but the function is generic enough to cover all cases."
+  [k]
   (when k
     (-> (name k)
-        (str/replace #"-" " ")
+        (str/replace #"[-_]" " ")
         (str/capitalize))))
 
 (defn- get-entry-details [map-schema key-to-find]
-  (when (and map-schema key-to-find (m/schema? map-schema) (m/type map-schema)) ;; Check if it's a schema first
-    (if (= :map (m/type map-schema)) ;; Only proceed if it's a map schema
-      (when-let [entry-pair (clojure.core/find (fn [[k _]] (= k key-to-find)) (m/entries map-schema))]
-        (let [val-schema-wrapper (second entry-pair)]
-          {:schema (if (m/schema? val-schema-wrapper) (m/schema val-schema-wrapper) nil) ;; ensure val-schema-wrapper is a schema
-           :optional? (if (m/schema? val-schema-wrapper) (:optional (m/properties val-schema-wrapper) false) false)}))
+  (when (and map-schema key-to-find (m/schema? map-schema) (m/type map-schema))
+    (if (= :map (m/type map-schema))
+      (when-let [[_ val-schema]
+                 (some #(when (= (first %) key-to-find) %)
+                       (m/entries map-schema))]
+        {:schema    (when (m/schema? val-schema) (m/schema val-schema))
+         :optional? (when (m/schema? val-schema)
+                      (:optional (m/properties val-schema) false))})
       (timbre/warn "get-entry-details called with non-map schema:" (m/type map-schema) "for key:" key-to-find))))
 
 ;; --- Malli Introspection Helpers (Inferred & Custom) --- ;; --- Malli 内省辅助函数 (推断和自定义) ---
