@@ -23,11 +23,6 @@
 
 ;; --- Malli Introspection Helpers (Inferred & Custom) --- ;; --- Malli 内省辅助函数 (推断和自定义) ---
 (defn is-conditional-map-schema?
-  "Checks if a schema is a map with a conditional structure.
-   Heuristic: a map where the first child's schema is an :enum,
-   and subsequent keys in the map correspond to the enum values,
-   representing the conditional branches.
-   Example: [:map [:condition-key [:enum :a :b]] [:a map-a-schema] [:b map-b-schema]]"
   "检查一个 schema 是否是具有条件结构的 map。
    启发式规则：一个 map，其中第一个子项的 schema 是一个 :enum，
    并且 map 中的后续键对应于枚举值，表示条件分支。
@@ -46,8 +41,6 @@
     false))
 
 (defn get-map-schema-conditional-key
-  "Gets the keyword of the conditional key from a conditional map schema.
-   Assumes the first key in the map definition is the conditional one."
   "从条件 map schema 中获取条件键的关键字。
    假设 map 定义中的第一个键是条件键。"
   [schema]
@@ -55,8 +48,6 @@
     (-> (m/children schema) first first)))
 
 (defn get-map-schema-conditional-options-map
-  "Extracts the map of conditional options {enum-value schema} from a conditional map schema.
-   Assumes the schema is structured like [:map [:cond-key [:enum :val1 ..]] [:val1 schema1] ...]"
   "从条件 map schema 中提取条件选项的 map {枚举值 schema}。
    假设 schema 的结构类似于 [:map [:cond-key [:enum :val1 ..]] [:val1 schema1] ...]"
   [schema]
@@ -69,8 +60,6 @@
 
 
 (defn is-map-schema-with-conditional-key?
-  "Checks for the common pattern like [:map [:有无 ...] [:详情 ...]]
-   where :有无 is an enum and :详情 is a map schema."
   "检查常见的模式，例如 [:map [:有无 ...] [:详情 ...]]，
    其中 :有无 是一个枚举，:详情 是一个 map schema。"
   [schema]
@@ -85,9 +74,6 @@
     false))
 
 (defn is-date-string-schema?
-  "Checks if a schema is likely a date string schema.
-   Heuristic: schema name is '日期字符串Spec' or 'Optional日期字符串',
-   or it's a regex schema matching YYYY-MM-DD."
   "检查一个 schema 是否可能是日期字符串 schema。
    启发式规则：schema 名称为 '日期字符串Spec' 或 'Optional日期字符串'，
    或者它是一个匹配 YYYY-MM-DD 的正则表达式 schema。"
@@ -104,7 +90,6 @@
     false))
 
 (defn get-key-optional-status
-  "Finds if a key within a map schema is optional using m/entries."
   "使用 m/entries 查找 map schema 中的某个键是否是可选的。"
   [map-schema key-to-find]
   (if (and map-schema (m/schema? map-schema) key-to-find)
