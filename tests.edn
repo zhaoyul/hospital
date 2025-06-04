@@ -1,0 +1,11 @@
+#kaocha/v1
+{:tests [{:id :cljs-tests
+          :type :kaocha.type/clojurescript
+          :kaocha.build/target-kw :test ; This should match a build ID in shadow-cljs.edn
+          :kaocha.build/shadow-cljs {:build :test} ; Explicitly tell Kaocha to use the :test build
+          :ns-patterns ["-test$"] ; Standard pattern for test namespaces
+          :source-paths ["test/cljs" "src/cljs" "src/cljc"] ; Match source-paths in shadow-cljs.edn
+          :kaocha.report/docs? false
+          :namespaces [hc.hospital.pages.assessment-form-generators-test] ; Focus on this specific namespace
+          }]
+ :reporter [kaocha.report/documentation]}

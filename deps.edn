@@ -57,7 +57,9 @@
                                 cider/cider-nrepl {:mvn/version "0.45.0"}}
                    :main-opts  ["-m" "nrepl.cmdline" "--middleware" "[cider.nrepl/cider-middleware]" "-i"]}
 
-           :test {:extra-deps  {criterium/criterium                  {:mvn/version "0.4.6"}
+           :test {:mvn/repos {"clojars" {:url "https://repo.clojars.org/"}}
+                  :extra-deps  {lambdaisland/kaocha {:mvn/version "1.88.1376"}
+                                criterium/criterium                  {:mvn/version "0.4.6"}
                                 expound/expound                      {:mvn/version "0.9.0"}
                                 integrant/repl                       {:mvn/version "0.3.3"}
                                 io.github.cognitect-labs/test-runner {:git/url "https://github.com/cognitect-labs/test-runner.git"
@@ -71,11 +73,15 @@
                                 peridot/peridot                      {:mvn/version "0.5.4"}
                                 org.clj-commons/byte-streams         {:mvn/version "0.3.4"}
                                 com.lambdaisland/classpath           {:mvn/version "0.5.48"}
-                                com.gfredericks/test.chuck           {:mvn/version "0.2.15"}} ; Added test.chuck
+                                com.gfredericks/test.chuck           {:mvn/version "0.2.15"} ; Added test.chuck
+                                lambdaisland/kaocha-cljs             {:mvn/version "1.0.107"}
+                                lambdaisland/kaocha-cljs2            {:mvn/version "0.2.72"}
+                                lambdaisland/funnel                  {:mvn/version "1.6.93"}}
                   :exec-fn      cognitect.test-runner.api/test
                   :extra-paths ["env/dev/clj" "env/dev/resources" "env/test/resources" "test/clj"]
                   :main-opts   ["-e" "(require 'pjstadig.humane-test-output) (pjstadig.humane-test-output/activate!)"
                                 "-m" "cognitect.test-runner"]}}
  :mvn/repos
- {"central" {:url "https://repo1.maven.org/maven2/"}
+ {"clojars" {:url "https://repo.clojars.org/"}
+  "central" {:url "https://repo1.maven.org/maven2/"}
   "jitpack" {:url "https://jitpack.io"}}}
