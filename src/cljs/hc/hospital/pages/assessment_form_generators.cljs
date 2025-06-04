@@ -21,6 +21,15 @@
         (str/replace #"-" " ")
         (str/capitalize))))
 
+(defn- get-entry-details [map-schema key-to-find]
+  (when (and map-schema key-to-find (m/schema? map-schema) (m/type map-schema)) ;; Check if it's a schema first
+    (if (= :map (m/type map-schema)) ;; Only proceed if it's a map schema
+      (when-let [entry-pair (clojure.core/find (fn [[k _]] (= k key-to-find)) (m/entries map-schema))]
+        (let [val-schema-wrapper (second entry-pair)]
+          {:schema (if (m/schema? val-schema-wrapper) (m/schema val-schema-wrapper) nil) ;; ensure val-schema-wrapper is a schema
+           :optional? (if (m/schema? val-schema-wrapper) (:optional (m/properties val-schema-wrapper) false) false)}))
+      (timbre/warn "get-entry-details called with non-map schema:" (m/type map-schema) "for key:" key-to-find))))
+
 ;; --- Malli Introspection Helpers (Inferred & Custom) --- ;; --- Malli 内省辅助函数 (推断和自定义) ---
 (defn is-conditional-map-schema?
   "检查一个 schema 是否是具有条件结构的 map。
@@ -177,7 +186,7 @@
         conditional-form-path (conj parent-form-path field-key conditional-key)
         conditional-value-watch (Form.useWatch (clj->js conditional-form-path) (:form-instance form-instance))
         label-text (or (:label entry-props) (keyword->label field-key))
-        actual-conditional-key-schema (:schema (m/entry field-schema conditional-key))] ;; Get the actual schema for the conditional key ;; 获取条件键的实际 schema
+        actual-conditional-key-schema (:schema (get-entry-details field-schema conditional-key))] ;; Get the actual schema for the conditional key ;; 获取条件键的实际 schema
     (when (nil? conditional-key)
       (throw (js/Error. (str "render-conditional-map-section: conditional-key is nil for " field-key))))
     (when (nil? options-map)
@@ -213,8 +222,8 @@
             has-value-watch (Form.useWatch (clj->js has-form-path) (:form-instance form-instance))
 
             ;; Directly get schemas using m/entry ;; 使用 m/entry 直接获取 schema
-            has-field-data (m/entry child-map-schema has-key)
-            detail-field-data (m/entry child-map-schema detail-key)
+            has-field-data (get-entry-details child-map-schema has-key)
+            detail-field-data (get-entry-details child-map-schema detail-key)
 
             has-field-schema (:schema has-field-data)
             is-has-optional (:optional? has-field-data false) ;; m/entry provides optional status directly ;; m/entry 直接提供可选状态
