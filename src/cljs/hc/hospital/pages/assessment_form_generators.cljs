@@ -1,7 +1,7 @@
 (ns hc.hospital.pages.assessment-form-generators
   (:require
    [malli.core :as m]
-   ;; Removed [malli.util :as mu]
+   ;; Removed [malli.util :as mu] ;; 已移除 [malli.util :as mu]
    [reagent.core :as r]
    ["antd" :refer [Form Input InputNumber DatePicker Radio Select Checkbox]]
    ["react" :as React]
@@ -9,37 +9,47 @@
    [clojure.string :as str]
    [taoensso.timbre :as timbre]))
 
-;; Declare mutually recursive functions
+;; Declare mutually recursive functions ;; 声明相互递归函数
 (declare render-form-item-from-spec)
 (declare render-map-schema-fields)
 (declare render-conditional-map-section)
 
-;; --- Custom Utility Functions ---
+;; --- Custom Utility Functions --- ;; --- 自定义工具函数 ---
 (defn keyword->label [k]
   (when k
     (-> (name k)
         (str/replace #"-" " ")
         (str/capitalize))))
 
-;; --- Malli Introspection Helpers (Inferred & Custom) ---
+;; --- Malli Introspection Helpers (Inferred & Custom) --- ;; --- Malli 内省辅助函数 (推断和自定义) ---
 (defn is-conditional-map-schema?
   "Checks if a schema is a map with a conditional structure.
    Heuristic: a map where the first child's schema is an :enum,
    and subsequent keys in the map correspond to the enum values,
    representing the conditional branches.
    Example: [:map [:condition-key [:enum :a :b]] [:a map-a-schema] [:b map-b-schema]]"
+  "检查一个 schema 是否是具有条件结构的 map。
+   启发式规则：一个 map，其中第一个子项的 schema 是一个 :enum，
+   并且 map 中的后续键对应于枚举值，表示条件分支。
+   例如：[:map [:condition-key [:enum :a :b]] [:a map-a-schema] [:b map-b-schema]]"
   [schema]
-  (if (and schema (= :map (m/type schema)))
+  (if (and schema (m/schema? schema) (= :map (m/type schema)))
     (let [children (m/children schema)]
       (if (seq children)
         (let [first-child-props (second (first children))]
-          (= :enum (m/type first-child-props)))
+          ;; Ensure first-child-props is a schema before calling m/type
+          ;; 在调用 m/type 之前确保 first-child-props 是一个 schema
+          (if (m/schema? first-child-props)
+            (= :enum (m/type first-child-props))
+            false))
         false))
     false))
 
 (defn get-map-schema-conditional-key
   "Gets the keyword of the conditional key from a conditional map schema.
    Assumes the first key in the map definition is the conditional one."
+  "从条件 map schema 中获取条件键的关键字。
+   假设 map 定义中的第一个键是条件键。"
   [schema]
   (when (is-conditional-map-schema? schema)
     (-> (m/children schema) first first)))
@@ -47,6 +57,8 @@
 (defn get-map-schema-conditional-options-map
   "Extracts the map of conditional options {enum-value schema} from a conditional map schema.
    Assumes the schema is structured like [:map [:cond-key [:enum :val1 ..]] [:val1 schema1] ...]"
+  "从条件 map schema 中提取条件选项的 map {枚举值 schema}。
+   假设 schema 的结构类似于 [:map [:cond-key [:enum :val1 ..]] [:val1 schema1] ...]"
   [schema]
   (when (is-conditional-map-schema? schema)
     (let [children (m/children schema)
@@ -59,40 +71,50 @@
 (defn is-map-schema-with-conditional-key?
   "Checks for the common pattern like [:map [:有无 ...] [:详情 ...]]
    where :有无 is an enum and :详情 is a map schema."
+  "检查常见的模式，例如 [:map [:有无 ...] [:详情 ...]]，
+   其中 :有无 是一个枚举，:详情 是一个 map schema。"
   [schema]
-  (if (and schema (= :map (m/type schema)))
-    (let [props (into {} (m/entries schema))]
+  (if (and schema (m/schema? schema) (= :map (m/type schema)))
+    (let [props (into {} (m/entries schema))
+          prop-ynu (get props :有无)
+          prop-detail (get props :详情)]
       (and (contains? props :有无)
            (contains? props :详情)
-           (= :enum (m/type (get props :有无)))
-           (= :map (m/type (get props :详情)))))
+           (if (m/schema? prop-ynu) (= :enum (m/type prop-ynu)) false)
+           (if (m/schema? prop-detail) (= :map (m/type prop-detail)) false)))
     false))
 
 (defn is-date-string-schema?
   "Checks if a schema is likely a date string schema.
    Heuristic: schema name is '日期字符串Spec' or 'Optional日期字符串',
    or it's a regex schema matching YYYY-MM-DD."
+  "检查一个 schema 是否可能是日期字符串 schema。
+   启发式规则：schema 名称为 '日期字符串Spec' 或 'Optional日期字符串'，
+   或者它是一个匹配 YYYY-MM-DD 的正则表达式 schema。"
   [schema]
-  (if schema
+  (if (and schema (m/schema? schema)) ;; Added m/schema? check ;; 添加了 m/schema? 检查
     (or
-     (if (= :re (m/type schema))
-       (let [children (m/children schema)]
+     (if (= :re (m/type schema)) ;; m/type is safe now ;; m/type 现在是安全的
+       (let [children (m/children schema)] ;; m/children is safe if m/type was :re ;; 如果 m/type 是 :re，则 m/children 是安全的
          (and (first children) (instance? js/RegExp (first children))
               (or (= (str (first children)) "/\\d{4}-\\d{2}-\\d{2}/")
                   (= (str (first children)) "/\\d{4}-\\d{2}-\\d{2}T\\d{2}:\\d{2}(:\\d{2}(\\.\\d+)?)?Z?/"))))
        false)
-     (:type/date? (m/properties schema)))
+     (:type/date? (m/properties schema))) ;; m/properties is safe ;; m/properties 是安全的
     false))
 
 (defn get-key-optional-status
   "Finds if a key within a map schema is optional using m/entries."
+  "使用 m/entries 查找 map schema 中的某个键是否是可选的。"
   [map-schema key-to-find]
-  (let [entries (m/entries map-schema)]
-    (if-let [entry (some (fn [[k _ optional? _]] (when (= k key-to-find) optional?)) entries)]
-      entry
-      false)))
+  (if (and map-schema (m/schema? map-schema) key-to-find)
+    (let [entries (m/entries map-schema)] ;; m/entries is safe now ;; m/entries 现在是安全的
+      (if-let [entry (some (fn [[k _ optional? _]] (when (= k key-to-find) optional?)) entries)]
+        entry
+        false))
+    false)) ;; Return false if map-schema is nil, not a schema, or key-to-find is nil ;; 如果 map-schema 为 nil、不是 schema 或 key-to-find 为 nil，则返回 false
 
-;; --- Malli Helper Functions (Original from subtask) ---
+;; --- Malli Helper Functions (Original from subtask) --- ;; --- Malli 辅助函数 (来自子任务的原始版本) ---
 (defn get-malli-type [schema]
   (if (m/schema? schema)
     (m/type schema)
@@ -118,7 +140,7 @@
                       :label (if (keyword? opt) (name opt) (str opt))})
             children))))
 
-;; Initial Rendering Functions (specific input types)
+;; Initial Rendering Functions (specific input types) ;; 初始渲染函数 (特定输入类型)
 (defn render-text-input [field-schema form-path label-text]
   [:> Form.Item {:name (clj->js form-path) :label label-text}
    [:> Input {:placeholder (str "请输入" label-text)}]])
@@ -156,7 +178,7 @@
     [:> Form.Item {:name (clj->js form-path) :label label-text}
      [:> Checkbox.Group {:options (clj->js options)}]]))
 
-;; --- Core Data-Driven Rendering Functions ---
+;; --- Core Data-Driven Rendering Functions --- ;; --- 核心数据驱动渲染函数 ---
 (defn render-map-schema-fields [map-schema parent-form-path form-instance]
   (let [entries (m/entries map-schema)]
     (mapv (fn [[field-key field-schema optional? entry-props]]
@@ -169,7 +191,8 @@
         options-map (get-map-schema-conditional-options-map field-schema)
         conditional-form-path (conj parent-form-path field-key conditional-key)
         conditional-value-watch (Form.useWatch (clj->js conditional-form-path) (:form-instance form-instance))
-        label-text (or (:label entry-props) (keyword->label field-key))]
+        label-text (or (:label entry-props) (keyword->label field-key))
+        actual-conditional-key-schema (:schema (m/entry field-schema conditional-key))] ;; Get the actual schema for the conditional key ;; 获取条件键的实际 schema
     (when (nil? conditional-key)
       (throw (js/Error. (str "render-conditional-map-section: conditional-key is nil for " field-key))))
     (when (nil? options-map)
@@ -178,7 +201,7 @@
       (timbre/info "Conditional value for " conditional-form-path " is nil, section may not render if not intended.")
       )
     [:<> {:key (str (name field-key) "-conditional-section")}
-     [render-form-item-from-spec [conditional-key (get options-map conditional-key) false parent-form-path form-instance {:label label-text}]]
+     [render-form-item-from-spec [conditional-key actual-conditional-key-schema false parent-form-path form-instance {:label label-text}]]
      (when-let [detail-schema (get options-map conditional-value-watch)]
        (let [detail-path (conj parent-form-path field-key :详情)]
          [:div {:key (str (name field-key) "-details-" conditional-value-watch)
@@ -199,14 +222,21 @@
 
       is-map-with-cond-key
       (let [child-map-schema field-schema
-            has-key (get-map-schema-conditional-key child-map-schema)
-            detail-key :详情
+            has-key :有无 ;; Assuming this is the primary key for this pattern ;; 假设这是此模式的主键
+            detail-key :详情 ;; Assuming this is the details key ;; 假设这是详情键
             has-form-path (conj form-path has-key)
             has-value-watch (Form.useWatch (clj->js has-form-path) (:form-instance form-instance))
-            options-map (get-map-schema-conditional-options-map child-map-schema)
-            detail-map-schema (get options-map detail-key)
-            is-has-optional (get-key-optional-status child-map-schema has-key) ; Using workaround
-            has-field-schema (get options-map has-key)]
+
+            ;; Directly get schemas using m/entry ;; 使用 m/entry 直接获取 schema
+            has-field-data (m/entry child-map-schema has-key)
+            detail-field-data (m/entry child-map-schema detail-key)
+
+            has-field-schema (:schema has-field-data)
+            is-has-optional (:optional? has-field-data false) ;; m/entry provides optional status directly ;; m/entry 直接提供可选状态
+
+            detail-map-schema (:schema detail-field-data)
+            ;; is-detail-optional could also be retrieved if needed: (:optional? detail-field-data false) ;; 如果需要，也可以检索 is-detail-optional：(:optional? detail-field-data false)
+            ]
         [:<> {:key (str (name field-key))}
          [render-form-item-from-spec [has-key has-field-schema is-has-optional form-path form-instance {:label label-text}]]
          (when (and (= has-value-watch :有) detail-map-schema)
