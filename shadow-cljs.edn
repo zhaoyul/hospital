@@ -21,4 +21,8 @@
                               :asset-path "/js/patient"
                               :modules    {:patient-app {:entries [hc.hospital.patient.core]
                                                          :init-fn hc.hospital.patient.core/init!}}
-                              :devtools   {:after-load hc.hospital.patient.core/mount-root}}}}
+                              :devtools   {:after-load hc.hospital.patient.core/mount-root}}
+                :test {:target :node-test
+                       :output-dir "target/test/js"
+                       :output-to "target/test/js/test.js"
+                       :ns-regexp "-test$"}}}
