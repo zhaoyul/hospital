@@ -24,10 +24,16 @@
 (defn- get-entry-details [map-schema key-to-find]
   (when (and map-schema key-to-find (m/schema? map-schema) (m/type map-schema)) ;; Check if it's a schema first
     (if (= :map (m/type map-schema)) ;; Only proceed if it's a map schema
-      (when-let [entry-pair (clojure.core/find (fn [[k _]] (= k key-to-find)) (m/entries map-schema))]
-        (let [val-schema-wrapper (second entry-pair)]
-          {:schema (if (m/schema? val-schema-wrapper) (m/schema val-schema-wrapper) nil) ;; ensure val-schema-wrapper is a schema
-           :optional? (if (m/schema? val-schema-wrapper) (:optional (m/properties val-schema-wrapper) false) false)}))
+      ;; m/entries returns a sequence of [k schema] pairs. Use `some` to find the
+      ;; matching key instead of `clojure.core/find`, which expects a map and a
+      ;; key. `some` safely traverses the sequence and returns the associated
+      ;; schema when the key matches.
+      (when-let [val-schema-wrapper (some (fn [[k v]] (when (= k key-to-find) v))
+                                          (m/entries map-schema))]
+        {:schema    (when (m/schema? val-schema-wrapper)
+                      (m/schema val-schema-wrapper))
+         :optional? (when (m/schema? val-schema-wrapper)
+                      (:optional (m/properties val-schema-wrapper) false))}))
       (timbre/warn "get-entry-details called with non-map schema:" (m/type map-schema) "for key:" key-to-find))))
 
 ;; --- Malli Introspection Helpers (Inferred & Custom) --- ;; --- Malli 内省辅助函数 (推断和自定义) ---
