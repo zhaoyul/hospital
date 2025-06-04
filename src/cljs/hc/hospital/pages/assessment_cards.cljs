@@ -21,7 +21,6 @@
    [hc.hospital.utils :as utils]
    [hc.hospital.ui-helpers :as ui-helpers]
    [re-frame.core :as rf]
-   [re-frame.core :as rf]
    [reagent.core :as r]))
 
 ;; Data-driven rendering helpers have been moved to hc.hospital.pages.assessment-form-generators

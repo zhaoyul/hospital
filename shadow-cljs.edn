@@ -1,5 +1,5 @@
 {:nrepl {:port 7002}
- :source-paths ["src/cljs" "src/cljc"]
+ :source-paths ["src/cljs" "src/cljc" "test/cljs"]
  :dependencies [[binaryage/devtools "1.0.3"]
                 [nrepl "0.8.3"]
                 [cider/cider-nrepl "0.30.0"]
@@ -22,7 +22,7 @@
                               :modules    {:patient-app {:entries [hc.hospital.patient.core]
                                                          :init-fn hc.hospital.patient.core/init!}}
                               :devtools   {:after-load hc.hospital.patient.core/mount-root}}
-                :test {:target :node-test
+                :test {:target :browser
                        :output-dir "target/test/js"
                        :output-to "target/test/js/test.js"
                        :ns-regexp "-test$"}}}
