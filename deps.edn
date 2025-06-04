@@ -1,5 +1,4 @@
-{:paths   ["src/clj"
-           "resources" "src/cljs"]
+{:paths   ["src/clj" "resources" "src/cljc"]
 
  :deps    {org.clojure/clojure {:mvn/version "1.12.0"}
 
