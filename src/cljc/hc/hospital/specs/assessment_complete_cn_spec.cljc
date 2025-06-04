@@ -2,9 +2,6 @@
   (:require [malli.core :as m]
             [malli.util :as mu]))
 
-;;gic, make sure this file can be loaded in cljs
-#?(:clj (do ))
-
 ;; --- 可复用的 Predicates 或 Schemas ---
 (def NonEmptyString (m/schema [:string {:min 1}]))
 (def OptionalString (m/schema [:maybe :string]))

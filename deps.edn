@@ -18,7 +18,7 @@
            luminus-transit/luminus-transit {:mvn/version "0.1.6"
                                             :exclusions [com.cognitect/transit-clj]}
            metosin/muuntaja {:mvn/version "0.6.8"}
-           metosin/malli {:mvn/version "0.13.0"}
+           metosin/malli {:mvn/version "0.18.0"}
 
            ;; kit Libs
            io.github.kit-clj/kit-core {:mvn/version "1.0.9"}
