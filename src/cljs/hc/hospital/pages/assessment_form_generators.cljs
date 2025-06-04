@@ -161,7 +161,7 @@
   (let [entries (m/entries map-schema)]
     (mapv (fn [[field-key field-schema optional? entry-props]]
             (let [current-path (conj parent-form-path field-key)]
-              (render-form-item-from-spec [field-key field-schema optional? parent-form-path form-instance entry-props])))
+              [render-form-item-from-spec [field-key field-schema optional? parent-form-path form-instance entry-props]]))
           entries)))
 
 (defn render-conditional-map-section [field-key field-schema parent-form-path form-instance entry-props]
@@ -177,18 +177,18 @@
     (when (nil? conditional-value-watch)
       (timbre/info "Conditional value for " conditional-form-path " is nil, section may not render if not intended.")
       )
-    [React/Fragment {:key (str (name field-key) "-conditional-section")}
-     (render-form-item-from-spec [conditional-key (get options-map conditional-key) false parent-form-path form-instance {:label label-text}])
+    [:<> {:key (str (name field-key) "-conditional-section")}
+     [render-form-item-from-spec [conditional-key (get options-map conditional-key) false parent-form-path form-instance {:label label-text}]]
      (when-let [detail-schema (get options-map conditional-value-watch)]
        (let [detail-path (conj parent-form-path field-key :详情)]
          [:div {:key (str (name field-key) "-details-" conditional-value-watch)
                 :style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
-          (render-map-schema-fields detail-schema detail-path form-instance)]))]))
+          [render-map-schema-fields detail-schema detail-path form-instance]]))]))
 
 (defn render-form-item-from-spec [[field-key field-schema optional? parent-form-path form-instance entry-props]]
   (let [form-path (conj parent-form-path field-key)
         label-text (or (:label entry-props) (keyword->label field-key))
-        malli-type (get-malli-type field-schema)
+        malli-type (timbre/spy :info (get-malli-type field-schema))
         malli-props (get-malli-properties field-schema)
         is-cond-map (is-conditional-map-schema? field-schema)
         is-map-with-cond-key (is-map-schema-with-conditional-key? field-schema)]
@@ -207,16 +207,16 @@
             detail-map-schema (get options-map detail-key)
             is-has-optional (get-key-optional-status child-map-schema has-key) ; Using workaround
             has-field-schema (get options-map has-key)]
-        [React/Fragment {:key (str (name field-key))}
-         (render-form-item-from-spec [has-key has-field-schema is-has-optional form-path form-instance {:label label-text}])
+        [:<> {:key (str (name field-key))}
+         [render-form-item-from-spec [has-key has-field-schema is-has-optional form-path form-instance {:label label-text}]]
          (when (and (= has-value-watch :有) detail-map-schema)
            [:div {:key (str (name field-key) "-details") :style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
-            (render-map-schema-fields detail-map-schema (conj form-path detail-key) form-instance)])])
+            [render-map-schema-fields detail-map-schema (conj form-path detail-key) form-instance]])])
 
       (= malli-type :map)
       [:div {:key (str (name field-key) "-map-section") :style {:marginBottom "10px"}}
        [:h4 {:style {:fontSize "15px" :marginBottom "8px" :borderBottom "1px solid #f0f0f0" :paddingBottom "4px"}} label-text]
-       (render-map-schema-fields field-schema form-path form-instance)]
+       [render-map-schema-fields field-schema form-path form-instance]]
 
       (= malli-type :string)
       [render-text-input field-schema form-path label-text]
@@ -232,8 +232,8 @@
 
       (= malli-type :vector)
       (if (= :enum (get-malli-type (first (get-malli-children field-schema))))
-         [render-checkbox-group field-schema form-path label-text]
-         (do (timbre/warn "Unsupported vector child type for field " field-key) nil))
+        [render-checkbox-group field-schema form-path label-text]
+        (do (timbre/warn "Unsupported vector child type for field " field-key) nil))
 
       (is-date-string-schema? field-schema)
       [render-datepicker field-schema form-path label-text]

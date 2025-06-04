@@ -134,18 +134,18 @@
         initial-form-values (let [base-data (when circulatory-data
                                               (-> circulatory-data
                                                   (update-in [:心脏疾病史 :详情 :充血性心力衰竭史 :上次发作日期] #(when % (utils/parse-date %)))))
-                                default-values {:心脏疾病史 {:有无 "无"
-                                                          :详情 {:冠心病 {:有无 "无"}
-                                                                 :心律失常 {:有无 "无"}
-                                                                 :心肌病 {:有无 "无"}
-                                                                 :瓣膜性心脏病 {:有无 "无"}
-                                                                 :先天性心脏病 {:有无 "无"}
-                                                                 :充血性心力衰竭史 {:有无 "无"}
-                                                                 :肺动脉高压 {:有无 "无"}}}
-                                                :心脏起搏器植入史 {:有无 "无"}
-                                                :心脏功能评估 {:NYHA分级 "Ⅰ级"}
-                                                :运动能力评估 {:METs水平 "运动能力正常"}}
-                                merged-data (merge default-values (or base-data {}))]
+                                  default-values {:心脏疾病史 {:有无 "无"
+                                                               :详情 {:冠心病 {:有无 "无"}
+                                                                      :心律失常 {:有无 "无"}
+                                                                      :心肌病 {:有无 "无"}
+                                                                      :瓣膜性心脏病 {:有无 "无"}
+                                                                      :先天性心脏病 {:有无 "无"}
+                                                                      :充血性心力衰竭史 {:有无 "无"}
+                                                                      :肺动脉高压 {:有无 "无"}}}
+                                                  :心脏起搏器植入史 {:有无 "无"}
+                                                  :心脏功能评估 {:NYHA分级 "Ⅰ级"}
+                                                  :运动能力评估 {:METs水平 "运动能力正常"}}
+                                  merged-data (merge default-values (or base-data {}))]
                               ;; Apply defaults specifically for :有无 fields if details exist but :有无 is nil
                               (cond-> merged-data
                                 (and (get-in merged-data [:心脏疾病史 :详情]) (nil? (get-in merged-data [:心脏疾病史 :有无])))
@@ -177,9 +177,9 @@
                        js/undefined)
                      #js [])
     (let [section-spec assessment-specs/循环系统Spec
-          form-items (mapv (fn [[field-key field-schema optional? _]]
-                             (afg/render-form-item-from-spec [field-key field-schema optional? [:循环系统] form])) ; <--- UPDATED TO afg/
-                           (m/entries section-spec))]
+          form-items (timbre/spy :info (mapv (fn [[field-key field-schema optional? _]]
+                                               (afg/render-form-item-from-spec [field-key field-schema optional? [:循环系统] form]))
+                                             (m/entries section-spec)))]
       [afc/patient-assessment-card-wrapper
        {:patient-id patient-id
         :form-instance form
@@ -528,23 +528,23 @@
   (let [{:keys [report-form-instance-fn patient-id mn-data on-show-summary]} props
         [form] (Form.useForm)
         ;; Removed useWatch calls and local option lists
-         initial-form-values (let [base-data (when mn-data
-                                               (-> mn-data
-                                                   (assoc-in [:epilepsy_history :last_seizure_date] (utils/parse-date (get-in mn-data [:epilepsy_history :last_seizure_date])))
-                                                   (assoc-in [:vertigo_history :last_episode_date] (utils/parse-date (get-in mn-data [:vertigo_history :last_episode_date])))
-                                                   (assoc-in [:cerebral_infarction_history :last_episode_date] (utils/parse-date (get-in mn-data [:cerebral_infarction_history :last_episode_date])))
-                                                   (assoc-in [:cerebral_hemorrhage_history :last_episode_date] (utils/parse-date (get-in mn-data [:cerebral_hemorrhage_history :last_episode_date])))))]
-                               (-> (or base-data {})
-                                   (update-in [:psycho_cognitive_history :present] #(or % "无"))
-                                   (update-in [:epilepsy_history :present] #(or % "无"))
-                                   (update-in [:vertigo_history :present] #(or % "无"))
-                                   (update-in [:tia_history :present] #(or % "无"))
-                                   (update-in [:cerebral_infarction_history :present] #(or % "无"))
-                                   (update-in [:cerebral_hemorrhage_history :present] #(or % "无"))
-                                   (update-in [:parkinsons_syndrome :present] #(or % "无"))
-                                   (update-in [:cranial_carotid_stenosis :present] #(or % "无"))
-                                   (update-in [:颅脑及颈动脉狭窄情况 :有无] #(or % "无"))
-                                   (update-in [:其他神经肌肉系统相关情况 :有无] #(or % "无"))))
+        initial-form-values (let [base-data (when mn-data
+                                              (-> mn-data
+                                                  (assoc-in [:epilepsy_history :last_seizure_date] (utils/parse-date (get-in mn-data [:epilepsy_history :last_seizure_date])))
+                                                  (assoc-in [:vertigo_history :last_episode_date] (utils/parse-date (get-in mn-data [:vertigo_history :last_episode_date])))
+                                                  (assoc-in [:cerebral_infarction_history :last_episode_date] (utils/parse-date (get-in mn-data [:cerebral_infarction_history :last_episode_date])))
+                                                  (assoc-in [:cerebral_hemorrhage_history :last_episode_date] (utils/parse-date (get-in mn-data [:cerebral_hemorrhage_history :last_episode_date])))))]
+                              (-> (or base-data {})
+                                  (update-in [:psycho_cognitive_history :present] #(or % "无"))
+                                  (update-in [:epilepsy_history :present] #(or % "无"))
+                                  (update-in [:vertigo_history :present] #(or % "无"))
+                                  (update-in [:tia_history :present] #(or % "无"))
+                                  (update-in [:cerebral_infarction_history :present] #(or % "无"))
+                                  (update-in [:cerebral_hemorrhage_history :present] #(or % "无"))
+                                  (update-in [:parkinsons_syndrome :present] #(or % "无"))
+                                  (update-in [:cranial_carotid_stenosis :present] #(or % "无"))
+                                  (update-in [:颅脑及颈动脉狭窄情况 :有无] #(or % "无"))
+                                  (update-in [:其他神经肌肉系统相关情况 :有无] #(or % "无"))))
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)
                              transformed-values (-> values-clj
@@ -785,8 +785,8 @@
   (let [{:keys [report-form-instance-fn patient-id lk-data on-show-summary]} props
         [form] (Form.useForm)
         initial-form-values (let [defaults {:肝功能 {:状态 "正常"}
-                                           :既往肾功能不全史 "否"
-                                           :目前是否规律透析 "否"}]
+                                            :既往肾功能不全史 "否"
+                                            :目前是否规律透析 "否"}]
                               (merge defaults (or lk-data {})))
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)]
@@ -896,7 +896,7 @@
                                 (update-in [:慢性消化系统疾病病史 :有无] #(or % "无"))) ; Corrected: Single parenthesis
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)]
-                        (rf/dispatch [::events/update-canonical-assessment-section :消化系统 values-clj])))]
+                         (rf/dispatch [::events/update-canonical-assessment-section :消化系统 values-clj])))]
     (React/useEffect (fn []
                        (when report-form-instance-fn
                          (report-form-instance-fn :消化系统 form))
@@ -1198,8 +1198,8 @@
 
       ;; Other Drug Use
       (let [other_drug_use_details (get data :other_drug_use)]
-       (when (not (str/blank? other_drug_use_details))
-         (conj! findings (str "其他药物使用:" other_drug_use_details))))
+        (when (not (str/blank? other_drug_use_details))
+          (conj! findings (str "其他药物使用:" other_drug_use_details))))
 
       (let [persistent_findings (persistent! findings)]
         (if (empty? persistent_findings)
@@ -1217,11 +1217,11 @@
         [form] (Form.useForm)
         ;; Removed useWatch calls
         initial-form-values (let [defaults {:抗凝或抗血小板药物 {:有无 "无"}
-                                           :糖皮质激素 {:有无 "无"}
-                                           :肿瘤治疗药物 {:有无 "无"}
-                                           :毒麻及精神类药物滥用或依赖 {:有无 "无"}
-                                           :神经安定类药物 {:有无 "无"}
-                                           :GLP1受体激动剂 {:有无 "无"}}]
+                                            :糖皮质激素 {:有无 "无"}
+                                            :肿瘤治疗药物 {:有无 "无"}
+                                            :毒麻及精神类药物滥用或依赖 {:有无 "无"}
+                                            :神经安定类药物 {:有无 "无"}
+                                            :GLP1受体激动剂 {:有无 "无"}}]
                               (merge defaults (or smh-data {})))
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)]
@@ -1560,7 +1560,7 @@
         ;; Spec path: [:妊娠]
         ;; Removed local option lists and useWatch calls
         initial-form-values (let [base-data (or pa-data {})
-                                default-values {:是否妊娠 "无"}] ; Default from original logic
+                                  default-values {:是否妊娠 "无"}] ; Default from original logic
                               (merge default-values base-data))
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)]
@@ -1639,8 +1639,8 @@
         initial-form-values (let [base-data (when sah-data
                                               (-> sah-data
                                                   (update-in [:手术麻醉史 :详情 :具体上次麻醉日期] #(when % (utils/parse-date %)))))
-                                default-values {:手术麻醉史 {:有无 "无"}
-                                                :有血缘关系的人发生过恶性高热史 {:有无 "无"}}]
+                                  default-values {:手术麻醉史 {:有无 "无"}
+                                                  :有血缘关系的人发生过恶性高热史 {:有无 "无"}}]
                               (merge default-values (or base-data {})))
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)
@@ -1730,17 +1730,17 @@
         [form] (Form.useForm)
         ;; Removed local option lists and useWatch calls from original implementation
         initial-form-values (let [base-data (or aa-data {})
-                                defaults {:既往困难通气史 :不详
-                                          :既往困难插管史 :不详
-                                          :张口度 {:分级 :大于等于3横指}
-                                          :甲颏距离cm nil
-                                          :头颈活动度 {:分级 :正常活动}
-                                          :改良Mallampati分级 :Ⅰ级
-                                          :上唇咬合试验ULBT :1级
-                                          :鼾症 {:有无 :不详}
-                                          :气道相关疾病 {:有无 :不详}
-                                          :现存气道症状 {:有无 :不详}
-                                          :食管手术史 {:有无 :不详 :是否存在返流 false}}]
+                                  defaults {:既往困难通气史 :不详
+                                            :既往困难插管史 :不详
+                                            :张口度 {:分级 :大于等于3横指}
+                                            :甲颏距离cm nil
+                                            :头颈活动度 {:分级 :正常活动}
+                                            :改良Mallampati分级 :Ⅰ级
+                                            :上唇咬合试验ULBT :1级
+                                            :鼾症 {:有无 :不详}
+                                            :气道相关疾病 {:有无 :不详}
+                                            :现存气道症状 {:有无 :不详}
+                                            :食管手术史 {:有无 :不详 :是否存在返流 false}}]
                               (merge defaults base-data))
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)]
@@ -1850,21 +1850,21 @@
   (let [{:keys [report-form-instance-fn patient-id saa-data on-show-summary]} props
         [form] (Form.useForm)
         initial-form-values (let [base-data (or saa-data {})
-                                ;; Map original defaults to new spec paths.
-                                ;; Original: [:central_nervous_system :brain_tumor] "无"
-                                ;; New: [:椎管内麻醉相关评估 :中枢神经系统 :脑肿瘤] :无 (assuming enum uses keywords)
-                                defaults {:中枢神经系统 {:脑肿瘤 :无, :脑出血 :无, :严重颅脑外伤 :无, :癫痫 :无}
-                                          :外周神经系统 {:多发性硬化 :无, :脊髓损伤 :无, :脊柱侧弯 :无, :脊柱畸形 :无,
-                                                       :椎管内肿瘤 :无, :强制性脊柱炎 :无, :腰椎手术史 :无}
-                                          :腰椎间盘突出 {:有无 :无, :下肢麻木症状 :无}
-                                          :心血管系统 {:主动脉瓣狭窄 :无, :肥厚型梗阻型心肌病 :无,
-                                                      :抗凝或抗血小板药物 {:有无 :无}}
-                                          :穿刺点检查 {:既往穿刺困难史 :无, :局部感染 :无, :畸形 :无}
-                                          :局麻药过敏 :无}]
+                                  ;; Map original defaults to new spec paths.
+                                  ;; Original: [:central_nervous_system :brain_tumor] "无"
+                                  ;; New: [:椎管内麻醉相关评估 :中枢神经系统 :脑肿瘤] :无 (assuming enum uses keywords)
+                                  defaults {:中枢神经系统 {:脑肿瘤 :无, :脑出血 :无, :严重颅脑外伤 :无, :癫痫 :无}
+                                            :外周神经系统 {:多发性硬化 :无, :脊髓损伤 :无, :脊柱侧弯 :无, :脊柱畸形 :无,
+                                                           :椎管内肿瘤 :无, :强制性脊柱炎 :无, :腰椎手术史 :无}
+                                            :腰椎间盘突出 {:有无 :无, :下肢麻木症状 :无}
+                                            :心血管系统 {:主动脉瓣狭窄 :无, :肥厚型梗阻型心肌病 :无,
+                                                         :抗凝或抗血小板药物 {:有无 :无}}
+                                            :穿刺点检查 {:既往穿刺困难史 :无, :局部感染 :无, :畸形 :无}
+                                            :局麻药过敏 :无}]
                               (merge defaults base-data))
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)]
-                        (rf/dispatch [::events/update-canonical-assessment-section :椎管内麻醉相关评估 values-clj])))]
+                         (rf/dispatch [::events/update-canonical-assessment-section :椎管内麻醉相关评估 values-clj])))]
     (React/useEffect (fn []
                        (when report-form-instance-fn
                          (report-form-instance-fn :椎管内麻醉相关评估 form))
