@@ -176,9 +176,10 @@
                        js/undefined)
                      #js [])
     (let [section-spec assessment-specs/循环系统Spec
-          form-items (mapv (fn [[field-key field-schema optional? _]]
-                             (afg/render-form-item-from-spec [field-key field-schema optional? [:循环系统] form]))
-                           (m/entries section-spec))]
+          form-items (into [:<>]
+                           (mapv (fn [[field-key field-schema optional? _]]
+                                   (afg/render-form-item-from-spec [field-key field-schema optional? [:循环系统] form]))
+                                 (m/entries section-spec)))]
       [afc/patient-assessment-card-wrapper
        {:patient-id patient-id
         :form-instance form
@@ -186,19 +187,19 @@
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :children
-        (into [:<>]
-              [(into [:<>] form-items)
-               [:> Row {:justify "end" :style {:marginTop "20px"}}
-                [:> Col
-                 [:> Form.Item
-                  [:button {:type "button"
-                            :on-click on-show-summary
-                            :style {:padding "5px 10px"
-                                    :background-color "#f0f0f0"
-                                    :border "1px solid #ccc"
-                                    :border-radius "4px"
-                                    :cursor "pointer"}}
-                   "返回总结"]]]]])}])))
+        [:<>
+         form-items
+         [:> Row {:justify "end" :style {:marginTop "20px"}}
+          [:> Col
+           [:> Form.Item
+            [:button {:type "button"
+                      :on-click on-show-summary
+                      :style {:padding "5px 10px"
+                              :background-color "#f0f0f0"
+                              :border "1px solid #ccc"
+                              :border-radius "4px"
+                              :cursor "pointer"}}
+             "返回总结"]]]]]}])))
 
 (defn circulatory-system-card "循环系统" [props]
   (let [view-state (r/atom :summary) ; Manages :summary or :detailed view
@@ -393,9 +394,10 @@
                        js/undefined)
                      #js [])
     (let [section-spec assessment-specs/呼吸系统Spec
-          form-items (mapv (fn [[field-key field-schema optional? _]]
-                             (afg/render-form-item-from-spec [field-key field-schema optional? [:呼吸系统] form]))
-                           (m/entries section-spec))]
+          form-items (into [:<>]
+                           (mapv (fn [[field-key field-schema optional? _]]
+                                   (afg/render-form-item-from-spec [field-key field-schema optional? [:呼吸系统] form]))
+                                 (m/entries section-spec)))]
       [afc/patient-assessment-card-wrapper
        {:patient-id patient-id
         :form-instance form
@@ -558,9 +560,10 @@
                        js/undefined)
                      #js [])
     (let [section-spec assessment-specs/精神及神经肌肉系统Spec
-          form-items (mapv (fn [[field-key field-schema optional? _]]
-                             (afg/render-form-item-from-spec [field-key field-schema optional? [:精神及神经肌肉系统] form]))
-                           (m/entries section-spec))]
+          form-items (into [:<>]
+                           (mapv (fn [[field-key field-schema optional? _]]
+                                   (afg/render-form-item-from-spec [field-key field-schema optional? [:精神及神经肌肉系统] form]))
+                                 (m/entries section-spec)))]
       [afc/patient-assessment-card-wrapper
        {:patient-id patient-id
         :form-instance form
@@ -695,9 +698,11 @@
                        js/undefined)
                      #js [])
     (let [section-spec assessment-specs/内分泌系统Spec
-          form-items (mapv (fn [[field-key field-schema optional? _]]
-                             (afg/render-form-item-from-spec [field-key field-schema optional? [:内分泌系统] form]))
-                           (m/entries section-spec))]
+          form-items (into
+                      [:<>]
+                      (mapv (fn [[field-key field-schema optional? _]]
+                              (afg/render-form-item-from-spec [field-key field-schema optional? [:内分泌系统] form]))
+                            (m/entries section-spec)))]
       [afc/patient-assessment-card-wrapper
        {:patient-id patient-id
         :form-instance form
@@ -796,9 +801,11 @@
                        js/undefined)
                      #js [])
     (let [section-spec assessment-specs/肝肾病史Spec
-          form-items (mapv (fn [[field-key field-schema optional? _]]
-                             (afg/render-form-item-from-spec [field-key field-schema optional? [:肝肾病史] form]))
-                           (m/entries section-spec))]
+          form-items (into
+                      [:<>]
+                      (mapv (fn [[field-key field-schema optional? _]]
+                              (afg/render-form-item-from-spec [field-key field-schema optional? [:肝肾病史] form]))
+                            (m/entries section-spec)))]
       [afc/patient-assessment-card-wrapper
        {:patient-id patient-id
         :form-instance form
@@ -902,9 +909,11 @@
                        js/undefined)
                      #js [])
     (let [section-spec assessment-specs/消化系统Spec
-          form-items (mapv (fn [[field-key field-schema optional? _]]
-                             (afg/render-form-item-from-spec [field-key field-schema optional? [:消化系统] form]))
-                           (m/entries section-spec))]
+          form-items (into
+                      [:<>]
+                      (mapv (fn [[field-key field-schema optional? _]]
+                              (afg/render-form-item-from-spec [field-key field-schema optional? [:消化系统] form]))
+                            (m/entries section-spec)))]
       [afc/patient-assessment-card-wrapper
        {:patient-id patient-id
         :form-instance form
@@ -1020,9 +1029,11 @@
                        js/undefined)
                      #js [])
     (let [section-spec assessment-specs/血液系统Spec ; Use the spec
-          form-items (mapv (fn [[field-key field-schema optional? _]]
-                             (afg/render-form-item-from-spec [field-key field-schema optional? [:血液系统] form])) ; <--- UPDATED TO afg/
-                           (m/entries section-spec))]
+          form-items (into
+                      [:<>]
+                      (mapv (fn [[field-key field-schema optional? _]]
+                              (afg/render-form-item-from-spec [field-key field-schema optional? [:血液系统] form])) ; <--- UPDATED TO afg/
+                            (m/entries section-spec)))]
       [afc/patient-assessment-card-wrapper
        {:patient-id patient-id
         :form-instance form
@@ -1133,9 +1144,11 @@
                        js/undefined)
                      #js [])
     (let [section-spec assessment-specs/免疫系统Spec
-          form-items (mapv (fn [[field-key field-schema optional? _]]
-                             (afg/render-form-item-from-spec [field-key field-schema optional? [:免疫系统] form]))
-                           (m/entries section-spec))]
+          form-items (into
+                      [:<>]
+                      (mapv (fn [[field-key field-schema optional? _]]
+                              (afg/render-form-item-from-spec [field-key field-schema optional? [:免疫系统] form]))
+                            (m/entries section-spec)))]
       [afc/patient-assessment-card-wrapper
        {:patient-id patient-id
         :form-instance form
@@ -1231,9 +1244,11 @@
                        js/undefined)
                      #js [])
     (let [section-spec assessment-specs/特殊用药史Spec
-          form-items (mapv (fn [[field-key field-schema optional? _]]
-                             (afg/render-form-item-from-spec [field-key field-schema optional? [:特殊用药史] form]))
-                           (m/entries section-spec))]
+          form-items (into
+                      [:<>]
+                      (mapv (fn [[field-key field-schema optional? _]]
+                              (afg/render-form-item-from-spec [field-key field-schema optional? [:特殊用药史] form]))
+                            (m/entries section-spec)))]
       [afc/patient-assessment-card-wrapper
        {:patient-id patient-id
         :form-instance form
@@ -1333,9 +1348,11 @@
                        js/undefined)
                      #js [])
     (let [section-spec assessment-specs/特殊疾病病史Spec
-          form-items (mapv (fn [[field-key field-schema optional? _]]
-                             (afg/render-form-item-from-spec [field-key field-schema optional? [:特殊疾病病史] form]))
-                           (m/entries section-spec))]
+          form-items (into
+                      [:<>]
+                      (mapv (fn [[field-key field-schema optional? _]]
+                              (afg/render-form-item-from-spec [field-key field-schema optional? [:特殊疾病病史] form]))
+                            (m/entries section-spec)))]
       [afc/patient-assessment-card-wrapper
        {:patient-id patient-id
         :form-instance form
@@ -1452,9 +1469,11 @@
                        js/undefined)
                      #js [])
     (let [section-spec assessment-specs/营养评估Spec
-          form-items (mapv (fn [[field-key field-schema optional? _]]
-                             (afg/render-form-item-from-spec [field-key field-schema optional? [:营养评估] form]))
-                           (m/entries section-spec))]
+          form-items (into
+                      [:<>]
+                      (mapv (fn [[field-key field-schema optional? _]]
+                              (afg/render-form-item-from-spec [field-key field-schema optional? [:营养评估] form]))
+                            (m/entries section-spec)))]
       ;; The spec has two main keys: :营养评分 and :FRAIL针对大于60岁病人
       ;; These will be rendered as map sections by afg/render-conditional-map-section
       ;; because they don't have the :有无/:详情 pattern, their fields will be rendered directly.
@@ -1570,9 +1589,11 @@
                        js/undefined)
                      #js [])
     (let [section-spec assessment-specs/妊娠Spec
-          form-items (mapv (fn [[field-key field-schema optional? _]]
-                             (afg/render-form-item-from-spec [field-key field-schema optional? [:妊娠] form]))
-                           (m/entries section-spec))]
+          form-items (into
+                      [:<>]
+                      (mapv (fn [[field-key field-schema optional? _]]
+                              (afg/render-form-item-from-spec [field-key field-schema optional? [:妊娠] form]))
+                            (m/entries section-spec)))]
       [afc/patient-assessment-card-wrapper
        {:patient-id patient-id
         :form-instance form
@@ -1652,9 +1673,11 @@
                        js/undefined)
                      #js [])
     (let [section-spec assessment-specs/手术麻醉史Spec
-          form-items (mapv (fn [[field-key field-schema optional? _]]
-                             (afg/render-form-item-from-spec [field-key field-schema optional? [:手术麻醉史] form]))
-                           (m/entries section-spec))]
+          form-items (into
+                      [:<>]
+                      (mapv (fn [[field-key field-schema optional? _]]
+                              (afg/render-form-item-from-spec [field-key field-schema optional? [:手术麻醉史] form]))
+                            (m/entries section-spec)))]
       [afc/patient-assessment-card-wrapper
        {:patient-id patient-id
         :form-instance form
@@ -1750,9 +1773,10 @@
                        js/undefined)
                      #js [])
     (let [section-spec assessment-specs/气道评估Spec
-          dynamically-generated-form-items (mapv (fn [[field-key field-schema optional? _]]
-                                                   (afg/render-form-item-from-spec [field-key field-schema optional? [:气道评估] form]))
-                                                 (m/entries section-spec))
+          dynamically-generated-form-items
+          (into [:<>] (mapv (fn [[field-key field-schema optional? _]]
+                              (afg/render-form-item-from-spec [field-key field-schema optional? [:气道评估] form]))
+                            (m/entries section-spec)))
           static-content [:<>
                           [:h4 {:style {:fontStyle "italic"}} "甲颏距离图示与说明"]
                           [:p "甲颏距离 (TMD): 指下颌角到颏结节的距离。"]
@@ -1870,9 +1894,11 @@
                        js/undefined)
                      #js [])
     (let [section-spec assessment-specs/椎管内麻醉相关评估Spec
-          form-items (mapv (fn [[field-key field-schema optional? _]]
-                             (afg/render-form-item-from-spec [field-key field-schema optional? [:椎管内麻醉相关评估] form]))
-                           (m/entries section-spec))]
+          form-items (into
+                      [:<>]
+                      (mapv (fn [[field-key field-schema optional? _]]
+                              (afg/render-form-item-from-spec [field-key field-schema optional? [:椎管内麻醉相关评估] form]))
+                            (m/entries section-spec)))]
       [afc/patient-assessment-card-wrapper
        {:patient-id patient-id
         :form-instance form

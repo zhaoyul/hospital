@@ -205,7 +205,7 @@
 
 (defn render-form-item-from-spec [[field-key field-schema optional? parent-form-path form-instance entry-props]]
   (let [form-path (conj parent-form-path field-key)
-        label-text (or (:label entry-props) (keyword->label field-key))
+        label-text (timbre/spy :info (or (:label entry-props) (keyword->label field-key)))
         malli-type (timbre/spy :info (get-malli-type field-schema))
         malli-props (get-malli-properties field-schema)
         is-cond-map (is-conditional-map-schema? field-schema)
