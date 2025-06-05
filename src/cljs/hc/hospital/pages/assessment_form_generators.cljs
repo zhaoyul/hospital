@@ -8,7 +8,7 @@
    [taoensso.timbre :as timbre]))
 
 ;; Declare mutually recursive functions ;; 声明相互递归函数
-(declare render-form-item-from-spec)
+(declare render-form-item-from-spec get-malli-children)
 (declare render-map-schema-fields)
 (declare render-conditional-map-section)
 
@@ -22,7 +22,7 @@
 (defn- get-entry-details [map-schema key-to-find]
   (when (and map-schema key-to-find (m/schema? map-schema) (m/type map-schema)) ;; Check if it's a schema first
     (if (= :map (m/type map-schema)) ;; Only proceed if it's a map schema
-      (when-let [entry-pair (clojure.core/find (fn [[k _]] (= k key-to-find)) (m/entries map-schema))]
+      (when-let [entry-pair (some (fn [[k v]] (when (= k key-to-find) [k v])) (m/entries map-schema))]
         (let [val-schema-wrapper (second entry-pair)]
           {:schema (if (m/schema? val-schema-wrapper) (m/schema val-schema-wrapper) nil) ;; ensure val-schema-wrapper is a schema
            :optional? (if (m/schema? val-schema-wrapper) (:optional (m/properties val-schema-wrapper) false) false)}))
@@ -65,18 +65,24 @@
           option-entries (filter #(not= (first %) conditional-key-name) children)]
       (into {} (map (fn [[k v]] [k v]) option-entries)))))
 
+(defn val->content [val]
+  (first (get-malli-children val)))
+
 (defn check-conditional-pattern
   "Checks if a schema is a map containing a specific trigger-key (enum) and a details-key (map)."
   [schema trigger-key details-key]
-  (if (and schema (m/schema? schema) (= :map (m/type schema)))
+  (when (and schema (m/schema? schema) (= :map (m/type schema)))
     (let [props (into {} (m/entries schema))
           trigger-prop (get props trigger-key)
           detail-prop (get props details-key)]
+
       (and (contains? props trigger-key)
            (contains? props details-key)
-           (if (m/schema? trigger-prop) (= :enum (m/type trigger-prop)) false)
-           (if (m/schema? detail-prop) (= :map (m/type detail-prop)) false)))
-    false))
+           (m/schema? trigger-prop)
+           (= :enum (timbre/spy :info (m/type (val->content trigger-prop))))
+           (m/schema? detail-prop)
+           (= :map (m/type (val->content detail-prop)))
+           ))))
 
 (defn is-date-string-schema?
   "检查一个 schema 是否可能是日期字符串 schema。
@@ -127,16 +133,14 @@
   (when (= :enum (get-malli-type schema))
     (let [children (get-malli-children schema)]
       (mapv (fn [opt] {:value (if (keyword? opt) (name opt) opt)
-                      :label (if (keyword? opt) (name opt) (str opt))})
+                       :label (if (keyword? opt) (name opt) (str opt))})
             children))))
 
-;; Initial Rendering Functions (specific input types) ;; 初始渲染函数 (特定输入类型)
 
 (defn render-general-conditional-details
   [field-key field-schema parent-form-path form-instance entry-props trigger-key details-key show-on-value]
-  (let [;; field-schema is the schema of the group, e.g., 血管疾病史Spec or a spec for 肝功能
-        trigger-form-path (conj parent-form-path field-key trigger-key)
-        trigger-value-watch (Form.useWatch (clj->js trigger-form-path) (:form-instance form-instance))
+  (let [trigger-form-path (conj parent-form-path field-key trigger-key)
+        trigger-value-watch (Form.useWatch (clj->js (timbre/spy :info trigger-form-path)) form-instance)
 
         trigger-field-data (get-entry-details field-schema trigger-key)
         detail-field-data (get-entry-details field-schema details-key)
@@ -145,22 +149,17 @@
         is-trigger-optional (:optional? trigger-field-data false)
 
         detail-map-schema (:schema detail-field-data)
-        group-label (or (:label entry-props) (keyword->label field-key))
-        ]
+        group-label (or (:label entry-props) (keyword->label field-key))]
     (timbre/info "Rendering general conditional for group:" field-key "trigger:" trigger-key "watch path:" trigger-form-path "current value:" trigger-value-watch)
     [:<> {:key (str (name field-key) "-" (name trigger-key) "-group")}
-     ;; Render the trigger item (e.g., :有无 or :状态 field)
-     ;; The parent-form-path for the trigger item is the group's path itself.
-     ;; The field-key for the trigger item is the trigger-key itself (e.g. :有无 or :状态).
-     ;; The label for the trigger item is the group's label.
-     (when trigger-field-schema ; Only render if the trigger schema exists
+     (when trigger-field-schema
        [render-form-item-from-spec [trigger-key trigger-field-schema is-trigger-optional (conj parent-form-path field-key) form-instance {:label group-label}]])
 
      ;; Conditionally render the details
-     (when (and (= trigger-value-watch show-on-value) detail-map-schema)
+     (when (and (= trigger-value-watch (name show-on-value)) detail-map-schema)
        [:div {:key (str (name field-key) "-" (name details-key))
               :style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
-        ;; The parent-form-path for the details items is the group's path extended with the details-key.
+        [:h1 "hahax"]
         [render-map-schema-fields detail-map-schema (conj parent-form-path field-key details-key) form-instance]])]))
 
 (defn render-text-input [field-schema form-path label-text]
@@ -188,7 +187,7 @@
 
 (defn render-select [field-schema form-path label-text]
   (let [options (get-enum-options field-schema)]
-    [:> Form.Item {:name (clj->js form-path) :label label-text}
+    [:> Form.Item {:name (clj->js (timbre/spy :info form-path)) :label label-text}
      [:> Select {:placeholder (str "请选择" label-text)
                  :options (clj->js options)
                  :allowClear true
@@ -202,7 +201,9 @@
 
 ;; --- Core Data-Driven Rendering Functions --- ;; --- 核心数据驱动渲染函数 ---
 (defn render-map-schema-fields [map-schema parent-form-path form-instance]
-  (let [entries (m/entries map-schema)]
+  (timbre/info "...." map-schema)
+  (def map-schema map-schema)
+  (let [entries (m/children map-schema)]
     (into [:<>]
           (mapv (fn [[field-key field-schema optional? entry-props]]
                   (let [current-path (conj parent-form-path field-key)]
@@ -213,7 +214,7 @@
   (let [conditional-key (get-map-schema-conditional-key field-schema)
         options-map (get-map-schema-conditional-options-map field-schema)
         conditional-form-path (conj parent-form-path field-key conditional-key)
-        conditional-value-watch (Form.useWatch (clj->js conditional-form-path) (:form-instance form-instance))
+        conditional-value-watch (Form.useWatch (clj->js conditional-form-path) form-instance)
         label-text (or (:label entry-props) (keyword->label field-key))
         actual-conditional-key-schema (:schema (get-entry-details field-schema conditional-key))] ;; Get the actual schema for the conditional key ;; 获取条件键的实际 schema
     (when (nil? conditional-key)
@@ -221,8 +222,7 @@
     (when (nil? options-map)
       (throw (js/Error. (str "render-conditional-map-section: options-map is nil for " field-key))))
     (when (nil? conditional-value-watch)
-      (timbre/info "Conditional value for " conditional-form-path " is nil, section may not render if not intended.")
-      )
+      (timbre/info "Conditional value for " conditional-form-path " is nil, section may not render if not intended."))
     [:<> {:key (str (name field-key) "-conditional-section")}
      [render-form-item-from-spec [conditional-key actual-conditional-key-schema false parent-form-path form-instance {:label label-text}]]
      (when-let [detail-schema (get options-map conditional-value-watch)]
@@ -238,15 +238,15 @@
         malli-type (get-malli-type field-schema)
         malli-props (get-malli-properties field-schema)
         is-cond-map (is-conditional-map-schema? field-schema)
-        ; Removed: is-map-with-cond-key (old function name)
+                                        ; Removed: is-map-with-cond-key (old function name)
         ]
     (cond
       is-cond-map ;; This is for a different conditional structure, leave as is
-      [render-conditional-map-section field-key field-schema parent-form-path form-instance entry-props]
+      [:f> render-conditional-map-section field-key field-schema parent-form-path form-instance entry-props]
 
       ;; New generalized conditional logic for :有无 / :详情 pattern
       (check-conditional-pattern field-schema :有无 :详情)
-      [render-general-conditional-details field-key field-schema parent-form-path form-instance entry-props :有无 :详情 :有]
+      [:f> render-general-conditional-details field-key field-schema parent-form-path form-instance entry-props :有无 :详情 :有]
 
       ;; New generalized conditional logic for :状态 / :详情 pattern
       (check-conditional-pattern field-schema :状态 :详情)
@@ -298,8 +298,7 @@
           ;; The optionality is handled by the nature of :maybe.
           [render-form-item-from-spec [field-key unwrapped-schema optional? parent-form-path form-instance unwrapped-schema-props]]
           (do (timbre/warn (str "Malli type :maybe for field " field-key " has no child schema."))
-              [:p (str "No child schema for :maybe type for " label-text)]))))
-
+              [:p (str "No child schema for :maybe type for " label-text)])))
       :else
       (do (timbre/warn (str "No renderer for malli type: " malli-type " of field " field-key " schema: " (pr-str field-schema)))
-          [:p (str "Unrecognized type: " malli-type " for " label-text)])))
+          [:p (str "Unrecognized type: " malli-type " for " label-text)]))))
