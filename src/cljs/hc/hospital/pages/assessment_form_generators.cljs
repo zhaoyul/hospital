@@ -2,9 +2,7 @@
   (:require
    [malli.core :as m]
    ;; Removed [malli.util :as mu] ;; 已移除 [malli.util :as mu]
-   [reagent.core :as r]
    ["antd" :refer [Form Input InputNumber DatePicker Radio Select Checkbox]]
-   ["react" :as React]
    [hc.hospital.specs.assessment-complete-cn-spec :as assessment-specs]
    [clojure.string :as str]
    [taoensso.timbre :as timbre]))
@@ -147,7 +145,7 @@
                       min-val (assoc :min min-val)
                       max-val (assoc :max max-val))]
     [:> Form.Item {:name (clj->js form-path) :label label-text}
-     [:> InputNumber (clj->js input-props)]]))
+     [:> InputNumber input-props]]))
 
 (defn render-datepicker [field-schema form-path label-text]
   [:> Form.Item {:name (clj->js form-path) :label label-text}
