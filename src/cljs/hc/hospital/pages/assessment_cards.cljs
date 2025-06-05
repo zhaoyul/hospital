@@ -30,44 +30,44 @@
     "无数据"
     (let [findings (transient [])]
       ;; ECG Description
-      (when (not (str/blank? (get-in data [:ecg_description])))
+      (when (not (str/blank? (get-in data [:心电图 :描述])))
         (conj! findings "ECG描述:有记录"))
 
       ;; Cardiac Disease History
-      (let [cardiac_history_data (get data :cardiac_disease_history)
-            cdh_has (get cardiac_history_data :has)]
-        (cond
+      (let [cardiac_history_data (get data :心脏疾病史)
+            cdh_has (get cardiac_history_data :有无)]
+          (cond
           (= cdh_has "有")
           (let [specific_cardiac_issues (transient [])
-                cad_data (get cardiac_history_data :coronary_artery_disease)
-                arr_data (get cardiac_history_data :arrhythmia)]
+                cad_data (get-in cardiac_history_data [:详情 :冠心病])
+                arr_data (get-in cardiac_history_data [:详情 :心律失常])]
             ;; CAD
-            (when (= (get cad_data :has) "有")
-              (let [symptoms (get cad_data :symptoms)]
+            (when (= (get cad_data :有无) "有")
+              (let [symptoms (get cad_data :症状)]
                 (cond
                   (= symptoms "心梗") (conj! specific_cardiac_issues "冠心病(心梗)")
                   (= symptoms "不稳定性心绞痛") (conj! specific_cardiac_issues "冠心病(不稳定性心绞痛)")
                   :else (conj! specific_cardiac_issues "冠心病"))))
             ;; Arrhythmia
-            (when (= (get arr_data :has) "有")
-              (let [arr_type (get arr_data :type)]
+            (when (= (get arr_data :有无) "有")
+              (let [arr_type (get arr_data :类型)]
                 (if (or (= arr_type "高危型") (= arr_type "中危型"))
                   (conj! specific_cardiac_issues (str "心律失常(" arr_type ")"))
                   (conj! specific_cardiac_issues "心律失常"))))
             ;; Cardiomyopathy
-            (when (= (get-in cardiac_history_data [:cardiomyopathy :has]) "有")
+            (when (= (get-in cardiac_history_data [:详情 :心肌病 :有无]) "有")
               (conj! specific_cardiac_issues "心肌病"))
             ;; Valvular Heart Disease
-            (when (= (get-in cardiac_history_data [:valvular_heart_disease :has]) "有")
+            (when (= (get-in cardiac_history_data [:详情 :心脏瓣膜病变 :有无]) "有")
               (conj! specific_cardiac_issues "瓣膜病"))
             ;; Congenital Heart Disease
-            (when (= (get-in cardiac_history_data [:congenital_heart_disease :has]) "有")
+            (when (= (get-in cardiac_history_data [:详情 :先天性心脏病 :有无]) "有")
               (conj! specific_cardiac_issues "先心病"))
             ;; Congestive Heart Failure
-            (when (= (get-in cardiac_history_data [:congestive_heart_failure :has]) "有")
+            (when (= (get-in cardiac_history_data [:详情 :充血性心力衰竭史 :有无]) "有")
               (conj! specific_cardiac_issues "心衰史"))
             ;; Pulmonary Hypertension
-            (when (= (get-in cardiac_history_data [:pulmonary_hypertension :has]) "有")
+            (when (= (get-in cardiac_history_data [:详情 :肺动脉高压 :有无]) "有")
               (conj! specific_cardiac_issues "肺动脉高压"))
 
             (let [persistent_specific_issues (persistent! specific_cardiac_issues)]
@@ -82,37 +82,37 @@
           (conj! findings "心脏病史:未评估")))
 
       ;; Pacemaker History
-      (let [pm_has (get-in data [:pacemaker_history :has])
-            pm_type (get-in data [:pacemaker_history :type])]
+      (let [pm_has (get-in data [:心脏起搏器植入史 :有无])
+            pm_type (get-in data [:心脏起搏器植入史 :详情 :类型])]
         (cond
           (= pm_has "有") (conj! findings (str "起搏器:有" (when pm_type (str "(" pm_type ")"))))
           (= pm_has "无") (conj! findings "起搏器:无")
           (= pm_has "不祥") (conj! findings "起搏器:不祥")))
 
       ;; Cardiac Ultrasound Findings
-      (when (not (str/blank? (get-in data [:cardiac_ultrasound_findings :details])))
+      (when (not (str/blank? (get-in data [:心脏彩超检查 :结果])))
         (conj! findings "心脏彩超:有记录"))
 
       ;; Coronary CTA/Angiography
-      (when (not (str/blank? (get-in data [:coronary_cta_angiography_results :details])))
+      (when (not (str/blank? (get-in data [:冠脉CTA或冠脉造影结果 :结果])))
         (conj! findings "冠脉CTA/造影:有记录"))
 
       ;; Cardiac Function Assessment
-      (let [cardiac_function (get-in data [:cardiac_function_assessment :class])]
+      (let [cardiac_function (get-in data [:心脏功能评估 :NYHA分级])]
         (cond
           (or (nil? cardiac_function) (= cardiac_function "未评估")) (conj! findings "心功能:未评估")
           (= cardiac_function "Ⅰ 级") (conj! findings "心功能:正常(Ⅰ级)")
           :else (conj! findings (str "心功能:" cardiac_function "(异常)"))))
 
       ;; Exercise Capacity Assessment
-      (let [exercise_capacity (get-in data [:exercise_capacity_assessment :level])]
+      (let [exercise_capacity (get-in data [:运动能力评估 :METs水平])]
         (cond
           (or (nil? exercise_capacity) (= exercise_capacity "未评估")) (conj! findings "运动能力:未评估")
           (= exercise_capacity "运动能力正常") (conj! findings "运动能力:正常")
           :else (conj! findings (str "运动能力:" exercise_capacity "(异常)"))))
 
       ;; Other Cardiac Info
-      (when (not (str/blank? (get-in data [:other_cardiac_info :details])))
+      (when (not (str/blank? (get-in data [:其他情况 :内容])))
         (conj! findings "其他循环系统情况:有记录"))
 
       ;; Final Summary

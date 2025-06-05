@@ -26,16 +26,22 @@
         (str/replace #"[-_]" " ")
         (str/capitalize))))
 
+(defn- ensure-schema [s]
+  (cond
+    (m/schema? s) s
+    (vector? s)  (m/schema s)
+    :else nil))
+
 (defn- get-entry-details [map-schema key-to-find]
-  (when (and map-schema key-to-find (m/schema? map-schema) (m/type map-schema))
-    (if (= :map (m/type map-schema))
+  (when-let [schema (ensure-schema map-schema)]
+    (if (= :map (m/type schema))
       (when-let [[_ val-schema]
                  (some #(when (= (first %) key-to-find) %)
-                       (m/entries map-schema))]
-        {:schema    (when (m/schema? val-schema) (m/schema val-schema))
+                       (m/entries schema))]
+        {:schema    (ensure-schema val-schema)
          :optional? (when (m/schema? val-schema)
                       (:optional (m/properties val-schema) false))})
-      (timbre/warn "get-entry-details called with non-map schema:" (m/type map-schema) "for key:" key-to-find))))
+      (timbre/warn "get-entry-details called with non-map schema:" (m/type schema) "for key:" key-to-find))))
 
 ;; --- Malli Introspection Helpers (Inferred & Custom) --- ;; --- Malli 内省辅助函数 (推断和自定义) ---
 (defn is-conditional-map-schema?
@@ -117,9 +123,10 @@
 
 ;; --- Malli Helper Functions (Original from subtask) --- ;; --- Malli 辅助函数 (来自子任务的原始版本) ---
 (defn get-malli-type [schema]
-  (if (m/schema? schema)
-    (m/type schema)
-    nil))
+  (cond
+    (m/schema? schema) (m/type schema)
+    (vector? schema)    (m/type (m/schema schema))
+    :else nil))
 
 (defn get-malli-properties [schema]
   (if (m/schema? schema)
