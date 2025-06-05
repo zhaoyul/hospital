@@ -176,9 +176,9 @@
                        js/undefined)
                      #js [])
     (let [section-spec assessment-specs/循环系统Spec
-          form-items (timbre/spy :info (mapv (fn [[field-key field-schema optional? _]]
-                                               (afg/render-form-item-from-spec [field-key field-schema optional? [:循环系统] form]))
-                                             (m/entries section-spec)))]
+          form-items (mapv (fn [[field-key field-schema optional? _]]
+                             (afg/render-form-item-from-spec [field-key field-schema optional? [:循环系统] form]))
+                           (m/entries section-spec))]
       [afc/patient-assessment-card-wrapper
        {:patient-id patient-id
         :form-instance form
@@ -186,19 +186,19 @@
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :children
-        [:<>
-         form-items
-         [:> Row {:justify "end" :style {:marginTop "20px"}}
-          [:> Col
-           [:> Form.Item
-            [:button {:type "button"
-                      :on-click on-show-summary
-                      :style {:padding "5px 10px"
-                              :background-color "#f0f0f0"
-                              :border "1px solid #ccc"
-                              :border-radius "4px"
-                              :cursor "pointer"}}
-             "返回总结"]]]]]}])))
+        (into [:<>]
+              [(into [:<>] form-items)
+               [:> Row {:justify "end" :style {:marginTop "20px"}}
+                [:> Col
+                 [:> Form.Item
+                  [:button {:type "button"
+                            :on-click on-show-summary
+                            :style {:padding "5px 10px"
+                                    :background-color "#f0f0f0"
+                                    :border "1px solid #ccc"
+                                    :border-radius "4px"
+                                    :cursor "pointer"}}
+                   "返回总结"]]]]])}])))
 
 (defn circulatory-system-card "循环系统" [props]
   (let [view-state (r/atom :summary) ; Manages :summary or :detailed view

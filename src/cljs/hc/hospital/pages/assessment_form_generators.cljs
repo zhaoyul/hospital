@@ -175,10 +175,11 @@
 ;; --- Core Data-Driven Rendering Functions --- ;; --- 核心数据驱动渲染函数 ---
 (defn render-map-schema-fields [map-schema parent-form-path form-instance]
   (let [entries (m/entries map-schema)]
-    (mapv (fn [[field-key field-schema optional? entry-props]]
-            (let [current-path (conj parent-form-path field-key)]
-              [render-form-item-from-spec [field-key field-schema optional? parent-form-path form-instance entry-props]]))
-          entries)))
+    (into [:<>]
+          (mapv (fn [[field-key field-schema optional? entry-props]]
+                  (let [current-path (conj parent-form-path field-key)]
+                    [render-form-item-from-spec [field-key field-schema optional? parent-form-path form-instance entry-props]]))
+                entries))))
 
 (defn render-conditional-map-section [field-key field-schema parent-form-path form-instance entry-props]
   (let [conditional-key (get-map-schema-conditional-key field-schema)
