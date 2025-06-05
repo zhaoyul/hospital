@@ -65,19 +65,17 @@
           option-entries (filter #(not= (first %) conditional-key-name) children)]
       (into {} (map (fn [[k v]] [k v]) option-entries)))))
 
-
-(defn is-map-schema-with-conditional-key?
-  "检查常见的模式，例如 [:map [:有无 ...] [:详情 ...]]，
-   其中 :有无 是一个枚举，:详情 是一个 map schema。"
-  [schema]
+(defn check-conditional-pattern
+  "Checks if a schema is a map containing a specific trigger-key (enum) and a details-key (map)."
+  [schema trigger-key details-key]
   (if (and schema (m/schema? schema) (= :map (m/type schema)))
     (let [props (into {} (m/entries schema))
-          prop-ynu (get props :有无)
-          prop-detail (get props :详情)]
-      (and (contains? props :有无)
-           (contains? props :详情)
-           (if (m/schema? prop-ynu) (= :enum (m/type prop-ynu)) false)
-           (if (m/schema? prop-detail) (= :map (m/type prop-detail)) false)))
+          trigger-prop (get props trigger-key)
+          detail-prop (get props details-key)]
+      (and (contains? props trigger-key)
+           (contains? props details-key)
+           (if (m/schema? trigger-prop) (= :enum (m/type trigger-prop)) false)
+           (if (m/schema? detail-prop) (= :map (m/type detail-prop)) false)))
     false))
 
 (defn is-date-string-schema?
@@ -133,6 +131,38 @@
             children))))
 
 ;; Initial Rendering Functions (specific input types) ;; 初始渲染函数 (特定输入类型)
+
+(defn render-general-conditional-details
+  [field-key field-schema parent-form-path form-instance entry-props trigger-key details-key show-on-value]
+  (let [;; field-schema is the schema of the group, e.g., 血管疾病史Spec or a spec for 肝功能
+        trigger-form-path (conj parent-form-path field-key trigger-key)
+        trigger-value-watch (Form.useWatch (clj->js trigger-form-path) (:form-instance form-instance))
+
+        trigger-field-data (get-entry-details field-schema trigger-key)
+        detail-field-data (get-entry-details field-schema details-key)
+
+        trigger-field-schema (:schema trigger-field-data)
+        is-trigger-optional (:optional? trigger-field-data false)
+
+        detail-map-schema (:schema detail-field-data)
+        group-label (or (:label entry-props) (keyword->label field-key))
+        ]
+    (timbre/info "Rendering general conditional for group:" field-key "trigger:" trigger-key "watch path:" trigger-form-path "current value:" trigger-value-watch)
+    [:<> {:key (str (name field-key) "-" (name trigger-key) "-group")}
+     ;; Render the trigger item (e.g., :有无 or :状态 field)
+     ;; The parent-form-path for the trigger item is the group's path itself.
+     ;; The field-key for the trigger item is the trigger-key itself (e.g. :有无 or :状态).
+     ;; The label for the trigger item is the group's label.
+     (when trigger-field-schema ; Only render if the trigger schema exists
+       [render-form-item-from-spec [trigger-key trigger-field-schema is-trigger-optional (conj parent-form-path field-key) form-instance {:label group-label}]])
+
+     ;; Conditionally render the details
+     (when (and (= trigger-value-watch show-on-value) detail-map-schema)
+       [:div {:key (str (name field-key) "-" (name details-key))
+              :style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+        ;; The parent-form-path for the details items is the group's path extended with the details-key.
+        [render-map-schema-fields detail-map-schema (conj parent-form-path field-key details-key) form-instance]])]))
+
 (defn render-text-input [field-schema form-path label-text]
   [:> Form.Item {:name (clj->js form-path) :label label-text}
    [:> Input {:placeholder (str "请输入" label-text)}]])
@@ -202,68 +232,56 @@
           [render-map-schema-fields detail-schema detail-path form-instance]]))]))
 
 (defn render-form-item-from-spec [[field-key field-schema optional? parent-form-path form-instance entry-props]]
-  (let [form-path (conj parent-form-path field-key)
-        label-text (timbre/spy :info (or (:label entry-props) (keyword->label field-key)))
-        malli-type (timbre/spy :info (get-malli-type field-schema))
+  (let [;; form-path is the full path to the current field/group being processed: (conj parent-form-path field-key)
+        ;; label-text is the label for the current field/group
+        label-text (or (:label entry-props) (keyword->label field-key))
+        malli-type (get-malli-type field-schema)
         malli-props (get-malli-properties field-schema)
         is-cond-map (is-conditional-map-schema? field-schema)
-        is-map-with-cond-key (is-map-schema-with-conditional-key? field-schema)]
-
+        ; Removed: is-map-with-cond-key (old function name)
+        ]
     (cond
-      is-cond-map
+      is-cond-map ;; This is for a different conditional structure, leave as is
       [render-conditional-map-section field-key field-schema parent-form-path form-instance entry-props]
 
-      is-map-with-cond-key
-      (let [child-map-schema field-schema
-            has-key :有无 ;; Assuming this is the primary key for this pattern ;; 假设这是此模式的主键
-            detail-key :详情 ;; Assuming this is the details key ;; 假设这是详情键
-            has-form-path (conj form-path has-key)
-            has-value-watch (Form.useWatch (clj->js has-form-path) (:form-instance form-instance))
+      ;; New generalized conditional logic for :有无 / :详情 pattern
+      (check-conditional-pattern field-schema :有无 :详情)
+      [render-general-conditional-details field-key field-schema parent-form-path form-instance entry-props :有无 :详情 :有]
 
-            ;; Directly get schemas using m/entry ;; 使用 m/entry 直接获取 schema
-            has-field-data (get-entry-details child-map-schema has-key)
-            detail-field-data (get-entry-details child-map-schema detail-key)
-
-            has-field-schema (:schema has-field-data)
-            is-has-optional (:optional? has-field-data false) ;; m/entry provides optional status directly ;; m/entry 直接提供可选状态
-
-            detail-map-schema (:schema detail-field-data)
-            ;; is-detail-optional could also be retrieved if needed: (:optional? detail-field-data false) ;; 如果需要，也可以检索 is-detail-optional：(:optional? detail-field-data false)
-            ]
-        [:<> {:key (str (name field-key))}
-         [render-form-item-from-spec [has-key has-field-schema is-has-optional form-path form-instance {:label label-text}]]
-         (when (and (= has-value-watch :有) detail-map-schema)
-           [:div {:key (str (name field-key) "-details") :style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
-            [render-map-schema-fields detail-map-schema (conj form-path detail-key) form-instance]])])
+      ;; New generalized conditional logic for :状态 / :详情 pattern
+      (check-conditional-pattern field-schema :状态 :详情)
+      [render-general-conditional-details field-key field-schema parent-form-path form-instance entry-props :状态 :详情 :异常]
 
       (= malli-type :map)
       [:div {:key (str (name field-key) "-map-section") :style {:marginBottom "10px"}}
        [:h4 {:style {:fontSize "15px" :marginBottom "8px" :borderBottom "1px solid #f0f0f0" :paddingBottom "4px"}} label-text]
-       [render-map-schema-fields field-schema form-path form-instance]]
+       ;; Pass the full path to the map for its children
+       [render-map-schema-fields field-schema (conj parent-form-path field-key) form-instance]]
 
       (= malli-type :string)
-      [render-text-input field-schema form-path label-text]
+      [render-text-input field-schema (conj parent-form-path field-key) label-text]
 
       (or (= malli-type :int) (= malli-type :double) (= malli-type :float))
-      [render-number-input field-schema form-path label-text]
+      [render-number-input field-schema (conj parent-form-path field-key) label-text]
 
       (= malli-type :enum)
       (let [enum-count (count (get-malli-children field-schema))]
         (if (> enum-count 3)
-          [render-select field-schema form-path label-text]
-          [render-radio-group field-schema form-path label-text]))
+          [render-select field-schema (conj parent-form-path field-key) label-text]
+          [render-radio-group field-schema (conj parent-form-path field-key) label-text]))
 
       (= malli-type :vector)
       (if (= :enum (get-malli-type (first (get-malli-children field-schema))))
-        [render-checkbox-group field-schema form-path label-text]
+        [render-checkbox-group field-schema (conj parent-form-path field-key) label-text]
         (do (timbre/warn "Unsupported vector child type for field " field-key) nil))
 
       (is-date-string-schema? field-schema)
-      [render-datepicker field-schema form-path label-text]
+      [render-datepicker field-schema (conj parent-form-path field-key) label-text]
 
       (= malli-type :boolean)
-      [render-radio-group assessment-specs/是否Enum form-path label-text]
+      [render-radio-group assessment-specs/是否Enum (conj parent-form-path field-key) label-text]
 
+      ;; Handling for :malli.core/val and :maybe should pass the correct parent-form-path
       (= malli-type :malli.core/val)
       (let [unwrapped-schema (first (get-malli-children field-schema))]
         (if unwrapped-schema
@@ -274,10 +292,12 @@
       (= malli-type :maybe)
       (let [unwrapped-schema (first (get-malli-children field-schema))]
         (if unwrapped-schema
+          ;; For :maybe, the item itself isn't a new path segment, so parent-form-path remains the same.
+          ;; The optionality is handled by the nature of :maybe.
           [render-form-item-from-spec [field-key unwrapped-schema optional? parent-form-path form-instance entry-props]]
           (do (timbre/warn (str "Malli type :maybe for field " field-key " has no child schema."))
-              [:p (str "No child schema for :maybe type for " label-text)])))
+              [:p (str "No child schema for :maybe type for " label-text)]))))
 
       :else
-      (do (timbre/warn (str "No renderer for malli type: " malli-type " of field " field-key))
-          [:p (str "Unrecognized type: " malli-type " for " label-text)]))))
+      (do (timbre/warn (str "No renderer for malli type: " malli-type " of field " field-key " schema: " (pr-str field-schema)))
+          [:p (str "Unrecognized type: " malli-type " for " label-text)])))
