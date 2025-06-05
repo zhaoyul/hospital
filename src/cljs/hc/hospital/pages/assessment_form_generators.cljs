@@ -265,6 +265,19 @@
       (= malli-type :boolean)
       [render-radio-group assessment-specs/是否Enum form-path label-text]
 
+      (= malli-type :malli.core/val)
+      (let [unwrapped-schema (first (get-malli-children field-schema))]
+        (if unwrapped-schema
+          [render-form-item-from-spec [field-key unwrapped-schema optional? parent-form-path form-instance entry-props]]
+          (do (timbre/warn (str "Malli type :malli.core/val for field " field-key " has no child schema."))
+              [:p (str "No child schema for :malli.core/val type for " label-text)])))
+
+      (= malli-type :maybe)
+      (let [unwrapped-schema (first (get-malli-children field-schema))]
+        (if unwrapped-schema
+          [render-form-item-from-spec [field-key unwrapped-schema optional? parent-form-path form-instance entry-props]]
+          (do (timbre/warn (str "Malli type :maybe for field " field-key " has no child schema."))
+              [:p (str "No child schema for :maybe type for " label-text)])))
 
       :else
       (do (timbre/warn (str "No renderer for malli type: " malli-type " of field " field-key))
