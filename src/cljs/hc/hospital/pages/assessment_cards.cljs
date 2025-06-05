@@ -216,10 +216,10 @@
          [:f> circulatory-system-detailed-view (merge props {:patient-id patient-id
                                                              :circulatory-data circulatory-data
                                                              :on-show-summary show-summary-fn})])
-       :on-click toggle-view-fn
-       :view-state @view-state
-       :card-style {:cursor "pointer"}
-       :card-body-style {:padding "0px"}])))
+       {:on-click toggle-view-fn
+        :view-state @view-state
+        :card-style {:cursor "pointer"}
+        :card-body-style {:padding "0px"}}])))
 
 (defn- generate-respiratory-summary [data]
   (if (or (nil? data) (empty? data))
@@ -433,10 +433,10 @@
          [:f> respiratory-system-detailed-view (merge props {:patient-id patient-id
                                                              :respiratory-data respiratory-data
                                                              :on-show-summary show-summary-fn})])
-       :on-click toggle-view-fn
-       :view-state @view-state
-       :card-style {:cursor "pointer"}
-       :card-body-style {:padding "0px"}])))
+       {:on-click toggle-view-fn
+        :view-state @view-state
+        :card-style {:cursor "pointer"}
+        :card-body-style {:padding "0px"}}])))
 
 ;; Mental Neuromuscular System Card
 (defn generate-mental-neuromuscular-summary [data]
@@ -598,10 +598,10 @@
          [:f> mental-neuromuscular-system-detailed-view (merge props {:patient-id patient-id
                                                                       :mn-data mn-data
                                                                       :on-show-summary show-summary-fn})])
-       :on-click toggle-view-fn
-       :view-state @view-state
-       :card-style {:cursor "pointer"}
-       :card-body-style {:padding "0px"}])))
+       {:on-click toggle-view-fn
+        :view-state @view-state
+        :card-style {:cursor "pointer"}
+        :card-body-style {:padding "0px"}}])))
 
 ;; Endocrine System Card
 (defn generate-endocrine-summary [data]
@@ -735,10 +735,10 @@
          [:f> endocrine-system-detailed-view (merge props {:patient-id patient-id
                                                            :endo-data endo-data
                                                            :on-show-summary show-summary-fn})])
-       :on-click toggle-view-fn
-       :view-state @view-state
-       :card-style {:cursor "pointer"}
-       :card-body-style {:padding "0px"}])))
+       {:on-click toggle-view-fn
+        :view-state @view-state
+        :card-style {:cursor "pointer"}
+        :card-body-style {:padding "0px"}}])))
 
 ;; Liver Kidney System Card
 (defn generate-liver-kidney-summary [data]
@@ -836,10 +836,10 @@
          [:f> liver-kidney-system-detailed-view (merge props {:patient-id patient-id
                                                               :lk-data lk-data
                                                               :on-show-summary show-summary-fn})])
-       :on-click toggle-view-fn
-       :view-state @view-state
-       :card-style {:cursor "pointer"}
-       :card-body-style {:padding "0px"}])))
+       {:on-click toggle-view-fn
+        :view-state @view-state
+        :card-style {:cursor "pointer"}
+        :card-body-style {:padding "0px"}}])))
 
 ;; Digestive System Card
 (defn generate-digestive-summary [data]
@@ -942,10 +942,10 @@
          [:f> digestive-system-detailed-view (merge props {:patient-id patient-id
                                                            :ds-data ds-data
                                                            :on-show-summary show-summary-fn})])
-       :on-click toggle-view-fn
-       :view-state @view-state
-       :card-style {:cursor "pointer"}
-       :card-body-style {:padding "0px"}])))
+       {:on-click toggle-view-fn
+        :view-state @view-state
+        :card-style {:cursor "pointer"}
+        :card-body-style {:padding "0px"}}])))
 
 ;; Hematologic System Card
 (defn generate-hematologic-summary [data]
@@ -1060,10 +1060,10 @@
          [:f> hematologic-system-detailed-view (merge props {:patient-id patient-id
                                                              :hs-data hs-data
                                                              :on-show-summary show-summary-fn})])
-       :on-click toggle-view-fn
-       :view-state @view-state
-       :card-style {:cursor "pointer"}
-       :card-body-style {:padding "0px"}])))
+       {:on-click toggle-view-fn
+        :view-state @view-state
+        :card-style {:cursor "pointer"}
+        :card-body-style {:padding "0px"}}])))
 
 ;; Immune System Card
 (defn generate-immune-summary [data]
@@ -1174,10 +1174,10 @@
          [:f> immune-system-detailed-view (merge props {:patient-id patient-id
                                                         :is-data is-data
                                                         :on-show-summary show-summary-fn})])
-       :on-click toggle-view-fn
-       :view-state @view-state
-       :card-style {:cursor "pointer"}
-       :card-body-style {:padding "0px"}])))
+       {:on-click toggle-view-fn
+        :view-state @view-state
+        :card-style {:cursor "pointer"}
+        :card-body-style {:padding "0px"}}])))
 
 ;; Special Medication History Card
 (defn generate-special-medication-summary [data]
@@ -1272,10 +1272,10 @@
          [:f> special-medication-history-detailed-view (merge props {:patient-id patient-id
                                                                      :smh-data smh-data
                                                                      :on-show-summary show-summary-fn})])
-       :on-click toggle-view-fn
-       :view-state @view-state
-       :card-style {:cursor "pointer"}
-       :card-body-style {:padding "0px"}])))
+       {:on-click toggle-view-fn
+        :view-state @view-state
+        :card-style {:cursor "pointer"}
+        :card-body-style {:padding "0px"}}])))
 
 ;; Special Disease History Card
 (defn generate-special-disease-summary [data]
@@ -1374,10 +1374,10 @@
          [:f> special-disease-history-detailed-view (merge props {:patient-id patient-id
                                                                   :sdh-data sdh-data
                                                                   :on-show-summary show-summary-fn})])
-       :on-click toggle-view-fn
-       :view-state @view-state
-       :card-style {:cursor "pointer"}
-       :card-body-style {:padding "0px"}])))
+       {:on-click toggle-view-fn
+        :view-state @view-state
+        :card-style {:cursor "pointer"}
+        :card-body-style {:padding "0px"}}])))
 
 ;; Nutritional Assessment Card
 (defn generate-nutritional-summary [data]
@@ -1505,10 +1505,10 @@
          [:f> nutritional-assessment-detailed-view (merge props {:patient-id patient-id
                                                                  :na-data na-data
                                                                  :on-show-summary show-summary-fn})])
-       :on-click toggle-view-fn
-       :view-state @view-state
-       :card-style {:cursor "pointer"}
-       :card-body-style {:padding "0px"}])))
+       {:on-click toggle-view-fn
+        :view-state @view-state
+        :card-style {:cursor "pointer"}
+        :card-body-style {:padding "0px"}}])))
 
 ;; Pregnancy Assessment Card
 (defn generate-pregnancy-summary [data]
@@ -1610,10 +1610,10 @@
          [:f> pregnancy-assessment-detailed-view (merge props {:patient-id patient-id
                                                                :pa-data pa-data
                                                                :on-show-summary show-summary-fn})])
-       :on-click toggle-view-fn
-       :view-state @view-state
-       :card-style {:cursor "pointer"}
-       :card-body-style {:padding "0px"}])))
+       {:on-click toggle-view-fn
+        :view-state @view-state
+        :card-style {:cursor "pointer"}
+        :card-body-style {:padding "0px"}}])))
 
 ;; Surgical Anesthesia History Card
 (defn generate-surgical-anesthesia-summary [data]
@@ -1692,10 +1692,10 @@
          [:f> surgical-anesthesia-history-detailed-view (merge props {:patient-id patient-id
                                                                       :sah-data sah-data
                                                                       :on-show-summary show-summary-fn})])
-       :on-click toggle-view-fn
-       :view-state @view-state
-       :card-style {:cursor "pointer"}
-       :card-body-style {:padding "0px"}])))
+       {:on-click toggle-view-fn
+        :view-state @view-state
+        :card-style {:cursor "pointer"}
+        :card-body-style {:padding "0px"}}])))
 
 ;; Airway Assessment Card
 (defn generate-airway-summary [data]
@@ -1815,10 +1815,10 @@
          [:f> airway-assessment-detailed-view (merge props {:patient-id patient-id
                                                             :aa-data aa-data
                                                             :on-show-summary show-summary-fn})])
-       :on-click toggle-view-fn
-       :view-state @view-state
-       :card-style {:cursor "pointer"}
-       :card-body-style {:padding "0px"}])))
+       {:on-click toggle-view-fn
+        :view-state @view-state
+        :card-style {:cursor "pointer"}
+        :card-body-style {:padding "0px"}}])))
 
 ;; Spinal Anesthesia Assessment Card
 (defn generate-spinal-anesthesia-summary [data]
@@ -1911,7 +1911,7 @@
          [:f> spinal-anesthesia-assessment-detailed-view (merge props {:patient-id patient-id
                                                                        :saa-data saa-data
                                                                        :on-show-summary show-summary-fn})])
-       :on-click toggle-view-fn
-       :view-state @view-state
-       :card-style {:cursor "pointer"}
-       :card-body-style {:padding "0px"}])))
+       {:on-click toggle-view-fn
+        :view-state @view-state
+        :card-style {:cursor "pointer"}
+        :card-body-style {:padding "0px"}}])))
