@@ -283,18 +283,20 @@
 
       ;; Handling for :malli.core/val and :maybe should pass the correct parent-form-path
       (= malli-type :malli.core/val)
-      (let [unwrapped-schema (first (get-malli-children field-schema))]
+      (let [unwrapped-schema (first (get-malli-children field-schema))
+            unwrapped-schema-props (when unwrapped-schema (get-malli-properties unwrapped-schema))]
         (if unwrapped-schema
-          [render-form-item-from-spec [field-key unwrapped-schema optional? parent-form-path form-instance entry-props]]
+          [render-form-item-from-spec [field-key unwrapped-schema optional? parent-form-path form-instance unwrapped-schema-props]]
           (do (timbre/warn (str "Malli type :malli.core/val for field " field-key " has no child schema."))
               [:p (str "No child schema for :malli.core/val type for " label-text)])))
 
       (= malli-type :maybe)
-      (let [unwrapped-schema (first (get-malli-children field-schema))]
+      (let [unwrapped-schema (first (get-malli-children field-schema))
+            unwrapped-schema-props (when unwrapped-schema (get-malli-properties unwrapped-schema))]
         (if unwrapped-schema
           ;; For :maybe, the item itself isn't a new path segment, so parent-form-path remains the same.
           ;; The optionality is handled by the nature of :maybe.
-          [render-form-item-from-spec [field-key unwrapped-schema optional? parent-form-path form-instance entry-props]]
+          [render-form-item-from-spec [field-key unwrapped-schema optional? parent-form-path form-instance unwrapped-schema-props]]
           (do (timbre/warn (str "Malli type :maybe for field " field-key " has no child schema."))
               [:p (str "No child schema for :maybe type for " label-text)]))))
 
