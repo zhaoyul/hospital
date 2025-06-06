@@ -165,8 +165,11 @@
                                 (assoc-in [:心脏疾病史 :详情 :肺动脉高压 :有无] "有")
                                 (and (get-in merged-data [:心脏起搏器植入史 :详情]) (nil? (get-in merged-data [:心脏起搏器植入史 :有无])))
                                 (assoc-in [:心脏起搏器植入史 :有无] "有")))
+        _ (timbre/info "circulatory-system-detailed-view: initial-form-values:" (clj->js initial-form-values))
         on-finish-fn (fn [values]
+                       (timbre/info "circulatory-system-detailed-view: on-finish-fn raw JS values:" values)
                        (let [values-clj (js->clj values :keywordize-keys true)
+                             _ (timbre/info "circulatory-system-detailed-view: on-finish-fn cljs values-clj:" (clj->js values-clj))
                              transformed-values (-> values-clj
                                                     (update-in [:心脏疾病史 :详情 :充血性心力衰竭史 :上次发作日期] #(when % (utils/date->iso-string %))))]
                          (rf/dispatch [::events/update-canonical-assessment-section :循环系统 transformed-values])))]
