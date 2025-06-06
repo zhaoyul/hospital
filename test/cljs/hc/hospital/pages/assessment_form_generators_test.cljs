@@ -128,22 +128,22 @@
    [:有无 [:enum :有 :无]]
    [:详情 :string]])
 
-;; --- Tests for is-map-schema-with-conditional-key? ---
-(deftest is-map-schema-with-conditional-key-test
+;; --- Tests for check-conditional-pattern ---
+(deftest check-conditional-pattern-test
   (testing "Schema matches the common conditional pattern"
-    (is (true? (form-gen/is-map-schema-with-conditional-key? common-conditional-pattern-schema))))
+    (is (true? (form-gen/check-conditional-pattern common-conditional-pattern-schema :有无 :详情))))
   (testing "Schema lacks :有无 key"
-    (is (false? (form-gen/is-map-schema-with-conditional-key? map-without-youwu-schema))))
+    (is (false? (form-gen/check-conditional-pattern map-without-youwu-schema :有无 :详情))))
   (testing "Schema lacks :详情 key"
-    (is (false? (form-gen/is-map-schema-with-conditional-key? map-without-detail-schema))))
+    (is (false? (form-gen/check-conditional-pattern map-without-detail-schema :有无 :详情))))
   (testing "Schema where :有无 is not an enum"
-    (is (false? (form-gen/is-map-schema-with-conditional-key? map-youwu-not-enum-schema))))
+    (is (false? (form-gen/check-conditional-pattern map-youwu-not-enum-schema :有无 :详情))))
   (testing "Schema where :详情 is not a map"
-    (is (false? (form-gen/is-map-schema-with-conditional-key? map-detail-not-map-schema))))
+    (is (false? (form-gen/check-conditional-pattern map-detail-not-map-schema :有无 :详情))))
   (testing "Input is a simple map schema"
-    (is (false? (form-gen/is-map-schema-with-conditional-key? simple-map-schema))))
+    (is (false? (form-gen/check-conditional-pattern simple-map-schema :有无 :详情))))
   (testing "Input is nil"
-    (is (false? (form-gen/is-map-schema-with-conditional-key? nil)))))
+    (is (false? (form-gen/check-conditional-pattern nil :有无 :详情))))))
 
 ;; --- Test Schemas for is-date-string-schema? ---
 (def date-regex-schema-yyyy-mm-dd [:re #"\d{4}-\d{2}-\d{2}"])
@@ -370,8 +370,33 @@
             mock-call-result (last hiccup-result)]
         (is (= :div (first hiccup-result))) ; outer structure
         (is (= ::map-schema-fields (:type mock-call-result)))
-        (is (= simple-map-schema (:map-schema mock-call-result)))))
+        (is (= simple-map-schema (:map-schema mock-call-result)))
+        (is (= (conj parent-path :my-map) (:parent-form-path mock-call-result))))) ; Check parent path for the map
 
+    (testing ":maybe schema dispatches recursively with optional?=true and unwrapped schema"
+      (let [maybe-schema [:maybe :string]
+            ;; Mock render-form-item-from-spec itself to capture recursive call arguments
+            captured-recursive-args (atom nil)
+            ;; Original function for one-level execution before hitting the mock for recursion
+            original-rfi @#'form-gen/render-form-item-from-spec]
+        (with-redefs [form-gen/render-form-item-from-spec
+                       (fn [args]
+                         (if (= (second args) maybe-schema) ; If it's the first call with maybe-schema
+                           (binding [form-gen/render-form-item-from-spec ; Mock for the *next* (recursive) call
+                                     (fn [recursive-args]
+                                       (reset! captured-recursive-args recursive-args)
+                                       [:div "mocked recursive call for unwrapped string"])]
+                             (original-rfi args)) ; Execute the original logic for the maybe-schema itself
+                           (original-rfi args)))] ; Fallback for any other calls (e.g. by render-text-input if not fully mocked)
+          (apply form-gen/render-form-item-from-spec [:my-maybe maybe-schema false parent-path form-instance {}]))
+
+        (let [[rec-field-key rec-field-schema rec-optional? rec-parent-path _ rec-entry-props] @captured-recursive-args]
+          (is (= :my-maybe rec-field-key))
+          (is (= :string rec-field-schema))  ; Unwrapped schema
+          (is (= true rec-optional?))         ; Optional is now true
+          (is (= parent-path rec-parent-path)) ; Parent path remains the same for the unwrapped item
+          (is (= {} rec-entry-props))         ; Assuming unwrapped string schema has no extra props by default
+          )))
 
     (testing "Conditional map schema (is-conditional-map-schema?) dispatches to render-conditional-map-section"
       (let [args [:my-cond-map conditional-map-schema false parent-path form-instance {}]
@@ -380,7 +405,7 @@
         (is (= ::conditional-map-section (:type result)))
         (is (= :my-cond-map (:field-key result)))))
 
-    (testing "Map schema with specific conditional key pattern (is-map-schema-with-conditional-key?) dispatches correctly"
+    (testing "Map schema with specific conditional key pattern (check-conditional-pattern) dispatches correctly"
       ;; This case is more complex as it involves recursive calls to render-form-item-from-spec
       ;; and Form.useWatch. For this test, we'll check the initial structure.
       ;; A deeper test might require mocking Form.useWatch and testing branches.
@@ -402,11 +427,13 @@
   (testing "Iterates over map entries and calls render-form-item-from-spec for each"
     (let [form-instance (r/atom {})
           captured-calls (atom [])
-          parent-path [:test-parent]
-          calls @captured-calls]
-      (is (= 2 (count calls))) ; simple-map-schema has :name and :age
+          parent-path [:test-parent]]
+      (with-redefs [form-gen/render-form-item-from-spec (fn [args] (swap! captured-calls conj args))]
+        (form-gen/render-map-schema-fields simple-map-schema parent-path form-instance))
+      (let [calls @captured-calls]
+        (is (= 2 (count calls))) ; simple-map-schema has :name and :age
 
-      (let [name-call (first (filter #(= :name (first %)) calls))]
+        (let [name-call (first (filter #(= :name (first %)) calls))]
         (is (some? name-call))
         (is (= :name (nth name-call 0)))      ; field-key
         (is (= :string (nth name-call 1)))    ; field-schema
@@ -475,7 +502,7 @@
             ;; The schema for the conditional key is looked up inside options-map by render-conditional-map-section
             (is (= [:enum :option1 :option2] (:schema item-args)))
             (is (= false (:optional? item-args)))
-            (is (= parent-path (:path item-args))) ; Path for item is parent, key is managed by section
+            (is (= (conj parent-path field-key) (:path item-args))) ; Path for item is (conj parent-path field-key), key is managed by section
             (is (= {:label "My Conditional Group Label"} (:props item-args))))
 
           (is (some? detail-render-result) "Detail section should be rendered for :option1")

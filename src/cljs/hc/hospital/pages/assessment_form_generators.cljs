@@ -73,15 +73,15 @@
   [schema trigger-key details-key]
   (when (and schema (m/schema? schema) (= :map (m/type schema)))
     (let [props (into {} (m/entries schema))
-          trigger-prop (get props trigger-key)
-          detail-prop (get props details-key)]
+          trigger-prop-schema (get props trigger-key)
+          detail-prop-schema (get props details-key)]
 
       (and (contains? props trigger-key)
            (contains? props details-key)
-           (m/schema? trigger-prop)
-           (= :enum (m/type (val->content trigger-prop)))
-           (m/schema? detail-prop)
-           (= :map (m/type (val->content detail-prop)))
+           (m/schema? trigger-prop-schema)
+           (= :enum (m/type trigger-prop-schema)) ;; Check type of the schema itself
+           (m/schema? detail-prop-schema)
+           (= :map (m/type detail-prop-schema))   ;; Check type of the schema itself
            ))))
 
 (defn is-date-string-schema?
@@ -206,8 +206,9 @@
         entries (m/entries map-schema)]
     (into [:<>]
           (mapv (fn [[field-key field-schema optional? entry-props]]
-                  (let [current-path (conj parent-form-path field-key)]
-                    [render-form-item-from-spec [field-key field-schema optional? current-path form-instance entry-props]]))
+                  ;; The parent-form-path for render-form-item-from-spec should be the path to the map itself.
+                  ;; render-form-item-from-spec will then (conj its-parent-path field-key) for the actual item.
+                  [render-form-item-from-spec [field-key field-schema optional? parent-form-path form-instance entry-props]]))
                 entries))))
 
 (defn render-conditional-map-section [field-key field-schema parent-form-path form-instance entry-props]
@@ -224,7 +225,7 @@
     (when (nil? conditional-value-watch)
       (timbre/info "Conditional value for " conditional-form-path " is nil, section may not render if not intended."))
     [:<> {:key (str (name field-key) "-conditional-section")}
-     [render-form-item-from-spec [conditional-key actual-conditional-key-schema false parent-form-path form-instance {:label label-text}]]
+     [render-form-item-from-spec [conditional-key actual-conditional-key-schema false (conj parent-form-path field-key) form-instance {:label label-text}]]
      (when-let [detail-schema (get options-map conditional-value-watch)]
        (let [detail-path (conj parent-form-path field-key :详情)]
          [:div {:key (str (name field-key) "-details-" conditional-value-watch)
@@ -292,8 +293,8 @@
             unwrapped-schema-props (when unwrapped-schema (get-malli-properties unwrapped-schema))]
         (if unwrapped-schema
           ;; For :maybe, the item itself isn't a new path segment, so parent-form-path remains the same.
-          ;; The optionality is handled by the nature of :maybe.
-          [render-form-item-from-spec [field-key unwrapped-schema optional? parent-form-path form-instance unwrapped-schema-props]]
+          ;; The field is inherently optional due to :maybe, so pass true for optional?.
+          [render-form-item-from-spec [field-key unwrapped-schema true parent-form-path form-instance unwrapped-schema-props]]
           (do (timbre/warn (str "Malli type :maybe for field " field-key " has no child schema."))
               [:p (str "No child schema for :maybe type for " label-text)])))
       :else
