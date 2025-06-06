@@ -79,7 +79,7 @@
       (and (contains? props trigger-key)
            (contains? props details-key)
            (m/schema? trigger-prop)
-           (= :enum (timbre/spy :info (m/type (val->content trigger-prop))))
+           (= :enum (m/type (val->content trigger-prop)))
            (m/schema? detail-prop)
            (= :map (m/type (val->content detail-prop)))
            ))))
@@ -104,7 +104,7 @@
   "使用 m/entries 查找 map schema 中的某个键是否是可选的。"
   [map-schema key-to-find]
   (if (and map-schema (m/schema? map-schema) key-to-find)
-    (let [entries (m/entries map-schema)] ;; m/entries is safe now ;; m/entries 现在是安全的
+    (let [entries (m/entries map-schema)]
       (if-let [entry (some (fn [[k _ optional? _]] (when (= k key-to-find) optional?)) entries)]
         entry
         false))
@@ -140,7 +140,7 @@
 (defn render-general-conditional-details
   [field-key field-schema parent-form-path form-instance entry-props trigger-key details-key show-on-value]
   (let [trigger-form-path (conj parent-form-path field-key trigger-key)
-        trigger-value-watch (Form.useWatch (clj->js (timbre/spy :info trigger-form-path)) form-instance)
+        trigger-value-watch (Form.useWatch (clj->js trigger-form-path) form-instance)
 
         trigger-field-data (get-entry-details field-schema trigger-key)
         detail-field-data (get-entry-details field-schema details-key)
@@ -159,7 +159,6 @@
      (when (and (= trigger-value-watch (name show-on-value)) detail-map-schema)
        [:div {:key (str (name field-key) "-" (name details-key))
               :style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
-        [:h1 "hahax"]
         [render-map-schema-fields detail-map-schema (conj parent-form-path field-key details-key) form-instance]])]))
 
 (defn render-text-input [field-schema form-path label-text]
@@ -187,7 +186,7 @@
 
 (defn render-select [field-schema form-path label-text]
   (let [options (get-enum-options field-schema)]
-    [:> Form.Item {:name (clj->js (timbre/spy :info form-path)) :label label-text}
+    [:> Form.Item {:name (clj->js form-path) :label label-text}
      [:> Select {:placeholder (str "请选择" label-text)
                  :options (clj->js options)
                  :allowClear true
@@ -201,13 +200,14 @@
 
 ;; --- Core Data-Driven Rendering Functions --- ;; --- 核心数据驱动渲染函数 ---
 (defn render-map-schema-fields [map-schema parent-form-path form-instance]
-  (timbre/info "...." map-schema)
-  (def map-schema map-schema)
-  (let [entries (m/children map-schema)]
+  (let [map-schema (if (= ::malli.core/val (m/type map-schema))
+                     (first (get-malli-children map-schema))
+                     map-schema)
+        entries (m/entries map-schema)]
     (into [:<>]
           (mapv (fn [[field-key field-schema optional? entry-props]]
                   (let [current-path (conj parent-form-path field-key)]
-                    [render-form-item-from-spec [field-key field-schema optional? parent-form-path form-instance entry-props]]))
+                    [render-form-item-from-spec [field-key field-schema optional? current-path form-instance entry-props]]))
                 entries))))
 
 (defn render-conditional-map-section [field-key field-schema parent-form-path form-instance entry-props]
@@ -237,25 +237,22 @@
         label-text (or (:label entry-props) (keyword->label field-key))
         malli-type (get-malli-type field-schema)
         malli-props (get-malli-properties field-schema)
-        is-cond-map (is-conditional-map-schema? field-schema)
-                                        ; Removed: is-map-with-cond-key (old function name)
-        ]
+        is-cond-map (is-conditional-map-schema? field-schema)]
     (cond
-      is-cond-map ;; This is for a different conditional structure, leave as is
+      is-cond-map
       [:f> render-conditional-map-section field-key field-schema parent-form-path form-instance entry-props]
 
-      ;; New generalized conditional logic for :有无 / :详情 pattern
       (check-conditional-pattern field-schema :有无 :详情)
-      [:f> render-general-conditional-details field-key field-schema parent-form-path form-instance entry-props :有无 :详情 :有]
+      [:div {:key (str (name field-key) "-map-section") :style {:marginBottom "10px"}}
+       [:h4 {:style {:fontSize "15px" :marginBottom "8px" :borderBottom "1px solid #f0f0f0" :paddingBottom "4px"}} label-text]
+       [:f> render-general-conditional-details field-key field-schema parent-form-path form-instance entry-props :有无 :详情 :有]]
 
-      ;; New generalized conditional logic for :状态 / :详情 pattern
       (check-conditional-pattern field-schema :状态 :详情)
-      [render-general-conditional-details field-key field-schema parent-form-path form-instance entry-props :状态 :详情 :异常]
+      [:f> render-general-conditional-details field-key field-schema parent-form-path form-instance entry-props :状态 :详情 :异常]
 
       (= malli-type :map)
       [:div {:key (str (name field-key) "-map-section") :style {:marginBottom "10px"}}
        [:h4 {:style {:fontSize "15px" :marginBottom "8px" :borderBottom "1px solid #f0f0f0" :paddingBottom "4px"}} label-text]
-       ;; Pass the full path to the map for its children
        [render-map-schema-fields field-schema (conj parent-form-path field-key) form-instance]]
 
       (= malli-type :string)
