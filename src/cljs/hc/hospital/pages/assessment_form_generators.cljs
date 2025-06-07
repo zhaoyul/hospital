@@ -208,7 +208,7 @@
           (mapv (fn [[field-key field-schema optional? entry-props]]
                   ;; The parent-form-path for render-form-item-from-spec should be the path to the map itself.
                   ;; render-form-item-from-spec will then (conj its-parent-path field-key) for the actual item.
-                  [render-form-item-from-spec [field-key field-schema optional? parent-form-path form-instance entry-props]]))
+                  [render-form-item-from-spec [field-key field-schema optional? parent-form-path form-instance entry-props]])
                 entries))))
 
 (defn render-conditional-map-section [field-key field-schema parent-form-path form-instance entry-props]
