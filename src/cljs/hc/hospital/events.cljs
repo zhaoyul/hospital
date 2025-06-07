@@ -38,21 +38,21 @@
    :auxiliary_examinations_notes nil
    :anesthesia_plan {:asa_rating nil, :anesthesia_type nil, :preoperative_instructions nil}
    ;; Adding new assessment sections, initialized to empty maps
-   :circulatory_system {}
-   :respiratory_system {}
-   :mental_neuromuscular_system {}
-   :endocrine_system {}
-   :liver_kidney_system {}
-   :digestive_system {}
-   :hematologic_system {}
-   :immune_system {}
-   :special_medication_history {}
-   :special_disease_history {}
-   :nutritional_assessment {}
-   :pregnancy_assessment {}
-   :surgical_anesthesia_history {}
-   :airway_assessment {}
-   :spinal_anesthesia_assessment {}})
+   :循环系统 {}
+   :呼吸系统 {}
+   :精神及神经肌肉系统 {}
+   :内分泌系统 {}
+   :肝肾病史 {}
+   :消化系统 {}
+   :血液系统 {}
+   :免疫系统 {}
+   :特殊用药史 {}
+   :特殊疾病病史 {}
+   :营养评估 {}
+   :妊娠 {}
+   :手术麻醉史 {}
+   :气道评估 {}
+   :椎管内麻醉相关评估 {}})
 
 
 ;; -- Initialization
