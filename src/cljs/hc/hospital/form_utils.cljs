@@ -1,7 +1,9 @@
 (ns hc.hospital.form-utils
   (:require [malli.core :as m]
             [clojure.string :as str]
-            [taoensso.timbre :as timbre]))
+            [taoensso.timbre :as timbre]
+            [hc.hospital.pages.assessment-form-generators :as afg] ;; 确保已添加
+            [hc.hospital.utils :as utils])) ;; 确保已添加
 
 (defn get-first-enum-value [field-schema]
   (let [dereffed-schema (m/deref field-schema) ; Dereference the schema first
@@ -63,3 +65,73 @@
       (do (timbre/error "Cannot apply defaults: Schema dereferences to nil. Original schema form:" (m/form schema))
           start-data)
       (apply-enum-defaults-to-data-impl start-data dereffed-initial-schema []))))
+
+;; --- 新添加的函数 ---
+
+(declare process-initial-values-by-schema-impl) ;; 声明内部递归函数
+
+(defn process-initial-values-by-schema
+  "根据 Malli schema 递归处理表单的初始数据。
+   主要用于将符合特定条件的日期字符串转换为 dayjs 对象。
+   - data: 表单的初始数据 (map)。
+   - schema: 对应数据的 Malli schema。"
+  [data schema]
+  (timbre/debug "process-initial-values-by-schema: Initial data:" data "Schema form:" (m/form schema))
+  (if (or (nil? data) (nil? schema))
+    data ;; 如果数据或 schema 为空，则直接返回原始数据
+    (process-initial-values-by-schema-impl data (m/deref schema) [])))
+
+(defn- process-initial-values-by-schema-impl
+  "process-initial-values-by-schema 的内部递归实现。
+   - current-data: 当前层级的数据。
+   - current-schema: 当前层级的 schema (已解引用)。
+   - path: 当前数据在整体结构中的路径 (用于调试)。"
+  [current-data current-schema path]
+  (timbre/trace "process-impl: Path:" path "Data:" current-data "Schema type:" (m/type current-schema) "Schema form:" (m/form current-schema))
+  (cond
+    ;; 基本情况：如果数据为 nil，直接返回
+    (nil? current-data)
+    current-data
+
+    ;; Schema 是 :map 类型
+    (= :map (m/type current-schema))
+    (if (map? current-data)
+      (reduce-kv
+       (fn [acc k v]
+         (let [entry-schema-wrapper (->> (m/entries current-schema {:preserve-entry-properties true})
+                                         (some (fn [[entry-key schema-from-entry _ _]]
+                                                 (when (= entry-key k) schema-from-entry))))
+               entry-schema (when entry-schema-wrapper (m/schema entry-schema-wrapper))]
+           (if entry-schema
+             (assoc acc k (process-initial-values-by-schema-impl v (m/deref entry-schema) (conj path k)))
+             (do
+               (timbre/warn "No schema found for key:" k "at path:" path "Skipping processing for this key.")
+               (assoc acc k v))))) ; 如果找不到对应的 schema entry，保留原值
+       {} ;; 从空 map 开始构建，确保只包含 schema 中定义的键或已处理的键
+       current-data) ; current-data 已经确定是 map
+      (do
+        (timbre/warn "Data is not a map for a :map schema at path:" path "Data:" current-data)
+        current-data)) ; 如果 schema 是 map 但数据不是 map，则返回原始数据
+
+    ;; Schema 是 :maybe 类型 (可选)
+    (= :maybe (m/type current-schema))
+    (let [child-schema (-> current-schema m/children first m/deref)]
+      (process-initial-values-by-schema-impl current-data child-schema path)) ; 路径不变，因为 :maybe 不增加路径层级
+
+    ;; Schema 是其他类型（可能是叶子节点或需要特殊处理的类型）
+    :else
+    (if (afg/is-date-string-schema? current-schema)
+      (if (string? current-data)
+        (if-not (str/blank? current-data)
+          (let [parsed-date (utils/parse-date current-data)]
+            ;; 假设 utils/parse-date 返回 dayjs 对象, 检查其是否有效
+            (if (.isValid parsed-date)
+              (do
+                (timbre/debug "Converted date at path:" path "Original:" current-data "Parsed:" parsed-date)
+                parsed-date)
+              (do
+                (timbre/warn "Invalid date string at path:" path "Value:" current-data)
+                current-data))) ; 无效日期字符串，返回原值
+          current-data) ; 空字符串，返回原值
+        current-data) ; 不是字符串，返回原值（例如已经是 dayjs 对象或 nil）
+      current-data))) ; 非日期类型，返回原值

@@ -36,23 +36,28 @@
 (defn- circulatory-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id circulatory-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values (let [base-data (form-utils/apply-enum-defaults-to-data
-                                              (or circulatory-data {})
-                                              assessment-specs/循环系统Spec)
-                                  ;; Date parsing and other non-enum defaults can still be applied here
-                                  processed-data (-> base-data
-                                                     (update-in [:心脏疾病史 :详情 :充血性心力衰竭史 :上次发作日期] #(when % (utils/parse-date %))))
-                                  ;; Manual default-values map for non-enum fields or specific overrides if needed
-                                  default-values-override {:心脏功能评估 {:NYHA分级 (or (:NYHA分级 (:心脏功能评估 processed-data)) :Ⅰ级)}
-                                                           :运动能力评估 {:METs水平 (or (:METs水平 (:运动能力评估 processed-data)) :大于6MET)}}
-                                  final-initial-values (merge-with (fn [val-from-data val-from-defaults]
-                                                                     (if (map? val-from-data)
-                                                                       (merge val-from-defaults val-from-data) ; Prioritize data for maps
-                                                                       val-from-data)) ; Prioritize data for non-maps
-                                                                   default-values-override processed-data)]
-                              ;; The cond-> logic for setting :有无 based on :详情 presence can remain if it's a specific UI requirement
-                              ;; beyond simple enum defaulting for nil values.
-                              (cond-> final-initial-values
+        initial-form-values (let [;; 首先应用枚举默认值
+                                  data-with-enum-defaults (form-utils/apply-enum-defaults-to-data
+                                                            (or circulatory-data {})
+                                                            assessment-specs/循环系统Spec)
+                                  ;; 然后使用新的函数处理所有日期转换（及未来可能的其他转换）
+                                  base-data (form-utils/process-initial-values-by-schema
+                                             data-with-enum-defaults
+                                             assessment-specs/循环系统Spec)
+                                  ;; 手动处理的默认值覆盖，这些默认值不由 schema 的 enum 或类型驱动
+                                  ;; 注意：这些覆盖现在作用于已经过 schema 处理的 base-data
+                                  default-values-override {:心脏功能评估 {:NYHA分级 (or (:NYHA分级 (:心脏功能评估 base-data)) :Ⅰ级)}
+                                                           :运动能力评估 {:METs水平 (or (:METs水平 (:运动能力评估 base-data)) :大于6MET)}}
+                                  ;; 合并手动默认值。merge-with 用于智能合并 map，优先保留 base-data 中的值，
+                                  ;; 但对于 map 类型的值，会递归合并。
+                                  data-with-overrides (merge-with (fn [val-from-data val-from-defaults]
+                                                                    (if (map? val-from-data)
+                                                                      (merge val-from-defaults val-from-data)
+                                                                      val-from-data))
+                                                                  default-values-override base-data)]
+                              ;; cond-> 逻辑用于根据详情字段的存在来设置相应的 :有无 字段 (如果 :有无 字段本身是 nil)
+                              ;; 这个逻辑在所有自动处理（枚举、日期）和手动覆盖之后应用。
+                              (cond-> data-with-overrides
                                 (and (get-in final-initial-values [:心脏疾病史 :详情]) (nil? (get-in final-initial-values [:心脏疾病史 :有无])))
                                 (assoc-in [:心脏疾病史 :有无] :有)
                                 (and (get-in final-initial-values [:心脏疾病史 :详情 :冠心病]) (nil? (get-in final-initial-values [:心脏疾病史 :详情 :冠心病 :有无])))
@@ -140,16 +145,19 @@
 (defn respiratory-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id respiratory-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values (let [base-data (form-utils/apply-enum-defaults-to-data
-                                              (or respiratory-data {})
-                                              assessment-specs/呼吸系统Spec)
-                                  processed-data (-> base-data
-                                                     (update-in [:近两周内感冒病史 :详情 :发病日期] #(when % (utils/parse-date %)))
-                                                     (update-in [:近一个月内支气管炎或肺炎病史 :详情 :发病日期] #(when % (utils/parse-date %)))
-                                                     (update-in [:哮喘病史 :详情 :上次发作日期] #(when % (utils/parse-date %))))]
+        initial-form-values (let [;; 首先应用枚举默认值
+                                  data-with-enum-defaults (form-utils/apply-enum-defaults-to-data
+                                                            (or respiratory-data {})
+                                                            assessment-specs/呼吸系统Spec)
+                                  ;; 然后使用新的函数处理所有日期转换
+                                  processed-data (form-utils/process-initial-values-by-schema
+                                                  data-with-enum-defaults
+                                                  assessment-specs/呼吸系统Spec)]
+                              ;; 此处不再需要手动的 update-in 来解析日期
                               processed-data)
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)
+                             ;; 确保 on-finish-fn 中的日期转换回字符串逻辑仍然存在
                              transformed-values (-> values-clj
                                                     (update-in [:近两周内感冒病史 :详情 :发病日期] #(when % (utils/date->iso-string %)))
                                                     (update-in [:近一个月内支气管炎或肺炎病史 :详情 :发病日期] #(when % (utils/date->iso-string %)))
@@ -219,19 +227,21 @@
         [form] (Form.useForm)
         initial-form-values (let [original-mn-data (or mn-data {})
                                   _ (timbre/info "mental-neuromuscular original mn-data:" (clj->js original-mn-data))
-                                  data-with-defaults (form-utils/apply-enum-defaults-to-data
-                                                       original-mn-data
-                                                       assessment-specs/精神及神经肌肉系统Spec)
-                                  _ (timbre/info "mental-neuromuscular data-with-defaults:" (clj->js data-with-defaults))
-                                  processed-data (-> data-with-defaults
-                                                     (update-in [:癫痫病史 :详情 :近期发作日期] #(when % (utils/parse-date %)))
-                                                     (update-in [:眩晕病史 :详情 :近期发作日期] #(when % (utils/parse-date %)))
-                                                     (update-in [:脑梗病史 :详情 :近期发作日期] #(when % (utils/parse-date %)))
-                                                     (update-in [:脑出血病史 :详情 :近期发作日期] #(when % (utils/parse-date %))))]
+                                  ;; 首先应用枚举默认值
+                                  data-with-enum-defaults (form-utils/apply-enum-defaults-to-data
+                                                            original-mn-data
+                                                            assessment-specs/精神及神经肌肉系统Spec)
+                                  _ (timbre/info "mental-neuromuscular data-with-enum-defaults:" (clj->js data-with-enum-defaults))
+                                  ;; 然后使用新的函数处理所有日期转换
+                                  processed-data (form-utils/process-initial-values-by-schema
+                                                  data-with-enum-defaults
+                                                  assessment-specs/精神及神经肌肉系统Spec)]
+                              ;; 此处不再需要手动的 update-in 来解析日期
                               (timbre/info "mental-neuromuscular final initial-form-values:" (clj->js processed-data))
                               processed-data)
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)
+                             ;; 确保 on-finish-fn 中的日期转换回字符串逻辑仍然存在
                              transformed-values (-> values-clj
                                                     (update-in [:癫痫病史 :详情 :近期发作日期] #(when % (utils/date->iso-string %)))
                                                     (update-in [:眩晕病史 :详情 :近期发作日期] #(when % (utils/date->iso-string %)))
@@ -300,10 +310,17 @@
 (defn endocrine-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id endo-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values (form-utils/apply-enum-defaults-to-data
-                              (or endo-data {})
-                              assessment-specs/内分泌系统Spec)
+        initial-form-values (let [data-with-enum-defaults (form-utils/apply-enum-defaults-to-data
+                                                            (or endo-data {})
+                                                            assessment-specs/内分泌系统Spec)
+                                  ;; 使用新函数处理可能的日期字段（即使当前 spec 中没有，为了统一和未来扩展）
+                                  processed-data (form-utils/process-initial-values-by-schema
+                                                   data-with-enum-defaults
+                                                   assessment-specs/内分泌系统Spec)]
+                              processed-data)
         on-finish-fn (fn [values]
+                       ;; 如果 process-initial-values-by-schema 真的处理了日期，这里需要对应转换回字符串
+                       ;; 假设当前 内分泌系统Spec 没有日期字段，或者afg/is-date-string-schema? 不会匹配到
                        (rf/dispatch [::events/update-canonical-assessment-section :内分泌系统 (js->clj values :keywordize-keys true)]))]
     (React/useEffect (fn []
                        (when report-form-instance-fn
@@ -368,10 +385,16 @@
 (defn liver-kidney-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id lk-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values (form-utils/apply-enum-defaults-to-data
-                              (or lk-data {})
-                              assessment-specs/肝肾病史Spec)
+        initial-form-values (let [data-with-enum-defaults (form-utils/apply-enum-defaults-to-data
+                                                            (or lk-data {})
+                                                            assessment-specs/肝肾病史Spec)
+                                  ;; 使用新函数处理可能的日期字段
+                                  processed-data (form-utils/process-initial-values-by-schema
+                                                   data-with-enum-defaults
+                                                   assessment-specs/肝肾病史Spec)]
+                              processed-data)
         on-finish-fn (fn [values]
+                       ;; 假设当前 肝肾病史Spec 没有日期字段或未被转换
                        (let [values-clj (js->clj values :keywordize-keys true)]
                          (rf/dispatch [::events/update-canonical-assessment-section :肝肾病史 values-clj])))]
     (React/useEffect (fn []
@@ -437,10 +460,16 @@
 (defn digestive-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id ds-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values (form-utils/apply-enum-defaults-to-data
-                              (or ds-data {})
-                              assessment-specs/消化系统Spec)
+        initial-form-values (let [data-with-enum-defaults (form-utils/apply-enum-defaults-to-data
+                                                            (or ds-data {})
+                                                            assessment-specs/消化系统Spec)
+                                  ;; 使用新函数处理可能的日期字段
+                                  processed-data (form-utils/process-initial-values-by-schema
+                                                   data-with-enum-defaults
+                                                   assessment-specs/消化系统Spec)]
+                              processed-data)
         on-finish-fn (fn [values]
+                       ;; 假设当前 消化系统Spec 没有日期字段或未被转换
                        (let [values-clj (js->clj values :keywordize-keys true)]
                          (rf/dispatch [::events/update-canonical-assessment-section :消化系统 values-clj])))]
     (React/useEffect (fn []
@@ -506,10 +535,16 @@
 (defn hematologic-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id hs-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values (form-utils/apply-enum-defaults-to-data
-                              (or hs-data {})
-                              assessment-specs/血液系统Spec)
+        initial-form-values (let [data-with-enum-defaults (form-utils/apply-enum-defaults-to-data
+                                                            (or hs-data {})
+                                                            assessment-specs/血液系统Spec)
+                                   ;; 使用新函数处理可能的日期字段
+                                  processed-data (form-utils/process-initial-values-by-schema
+                                                   data-with-enum-defaults
+                                                   assessment-specs/血液系统Spec)]
+                              processed-data)
         on-finish-fn (fn [values]
+                       ;; 假设当前 血液系统Spec 没有日期字段或未被转换
                        (rf/dispatch [::events/update-canonical-assessment-section :血液系统 (js->clj values :keywordize-keys true)]))]
     (React/useEffect (fn []
                        (when report-form-instance-fn
@@ -574,10 +609,16 @@
 (defn immune-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id is-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values (form-utils/apply-enum-defaults-to-data
-                              (or is-data {})
-                              assessment-specs/免疫系统Spec)
+        initial-form-values (let [data-with-enum-defaults (form-utils/apply-enum-defaults-to-data
+                                                            (or is-data {})
+                                                            assessment-specs/免疫系统Spec)
+                                  ;; 使用新函数处理可能的日期字段
+                                  processed-data (form-utils/process-initial-values-by-schema
+                                                   data-with-enum-defaults
+                                                   assessment-specs/免疫系统Spec)]
+                              processed-data)
         on-finish-fn (fn [values]
+                       ;; 假设当前 免疫系统Spec 没有日期字段或未被转换
                        (let [values-clj (js->clj values :keywordize-keys true)]
                          (rf/dispatch [::events/update-canonical-assessment-section :免疫系统 values-clj])))]
     (React/useEffect (fn []
@@ -643,10 +684,16 @@
 (defn special-medication-history-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id smh-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values (form-utils/apply-enum-defaults-to-data
-                              (or smh-data {})
-                              assessment-specs/特殊用药史Spec)
+        initial-form-values (let [data-with-enum-defaults (form-utils/apply-enum-defaults-to-data
+                                                            (or smh-data {})
+                                                            assessment-specs/特殊用药史Spec)
+                                  ;; 使用新函数处理可能的日期字段
+                                  processed-data (form-utils/process-initial-values-by-schema
+                                                   data-with-enum-defaults
+                                                   assessment-specs/特殊用药史Spec)]
+                              processed-data)
         on-finish-fn (fn [values]
+                       ;; 假设当前 特殊用药史Spec 没有日期字段或未被转换
                        (let [values-clj (js->clj values :keywordize-keys true)]
                          (rf/dispatch [::events/update-canonical-assessment-section :特殊用药史 values-clj])))]
     (React/useEffect (fn []
@@ -712,10 +759,16 @@
 (defn special-disease-history-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id sdh-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values (form-utils/apply-enum-defaults-to-data
-                              (or sdh-data {})
-                              assessment-specs/特殊疾病病史Spec)
+        initial-form-values (let [data-with-enum-defaults (form-utils/apply-enum-defaults-to-data
+                                                            (or sdh-data {})
+                                                            assessment-specs/特殊疾病病史Spec)
+                                  ;; 使用新函数处理可能的日期字段
+                                  processed-data (form-utils/process-initial-values-by-schema
+                                                   data-with-enum-defaults
+                                                   assessment-specs/特殊疾病病史Spec)]
+                              processed-data)
         on-finish-fn (fn [values]
+                       ;; 假设当前 特殊疾病病史Spec 没有日期字段或未被转换
                        (let [values-clj (js->clj values :keywordize-keys true)]
                          (rf/dispatch [::events/update-canonical-assessment-section :特殊疾病病史 values-clj])))]
     (React/useEffect (fn []
@@ -781,10 +834,16 @@
 (defn nutritional-assessment-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id na-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values (form-utils/apply-enum-defaults-to-data
-                              (or na-data {})
-                              assessment-specs/营养评估Spec)
+        initial-form-values (let [data-with-enum-defaults (form-utils/apply-enum-defaults-to-data
+                                                            (or na-data {})
+                                                            assessment-specs/营养评估Spec)
+                                  ;; 使用新函数处理可能的日期字段
+                                  processed-data (form-utils/process-initial-values-by-schema
+                                                   data-with-enum-defaults
+                                                   assessment-specs/营养评估Spec)]
+                              processed-data)
         on-finish-fn (fn [values]
+                       ;; 假设当前 营养评估Spec 没有日期字段或未被转换
                        (let [values-clj (js->clj values :keywordize-keys true)]
                          (rf/dispatch [::events/update-canonical-assessment-section :营养评估 values-clj])))]
     (React/useEffect (fn []
@@ -859,10 +918,16 @@
 (defn pregnancy-assessment-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id pa-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values (form-utils/apply-enum-defaults-to-data
-                              (or pa-data {})
-                              assessment-specs/妊娠Spec)
+        initial-form-values (let [data-with-enum-defaults (form-utils/apply-enum-defaults-to-data
+                                                            (or pa-data {})
+                                                            assessment-specs/妊娠Spec)
+                                  ;; 使用新函数处理可能的日期字段
+                                  processed-data (form-utils/process-initial-values-by-schema
+                                                   data-with-enum-defaults
+                                                   assessment-specs/妊娠Spec)]
+                              processed-data)
         on-finish-fn (fn [values]
+                       ;; 假设当前 妊娠Spec 没有日期字段或未被转换
                        (let [values-clj (js->clj values :keywordize-keys true)]
                          (rf/dispatch [::events/update-canonical-assessment-section :妊娠 values-clj])))]
     (React/useEffect (fn []
@@ -928,14 +993,19 @@
 (defn surgical-anesthesia-history-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id sah-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values (let [base-data (form-utils/apply-enum-defaults-to-data
-                                              (or sah-data {})
-                                              assessment-specs/手术麻醉史Spec)
-                                  processed-data (-> base-data
-                                                     (update-in [:手术麻醉史 :详情 :具体上次麻醉日期] #(when % (utils/parse-date %))))]
+        initial-form-values (let [;; 首先应用枚举默认值
+                                  data-with-enum-defaults (form-utils/apply-enum-defaults-to-data
+                                                            (or sah-data {})
+                                                            assessment-specs/手术麻醉史Spec)
+                                  ;; 然后使用新的函数处理所有日期转换
+                                  processed-data (form-utils/process-initial-values-by-schema
+                                                  data-with-enum-defaults
+                                                  assessment-specs/手术麻醉史Spec)]
+                              ;; 此处不再需要手动的 update-in 来解析日期
                               processed-data)
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)
+                             ;; 确保 on-finish-fn 中的日期转换回字符串逻辑仍然存在
                              transformed-values (-> values-clj
                                                     (update-in [:手术麻醉史 :详情 :具体上次麻醉日期] #(when % (utils/date->iso-string %))))]
                          (rf/dispatch [::events/update-canonical-assessment-section :手术麻醉史 transformed-values])))]
@@ -1002,10 +1072,16 @@
 (defn airway-assessment-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id aa-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values (form-utils/apply-enum-defaults-to-data
-                              (or aa-data {})
-                              assessment-specs/气道评估Spec)
+        initial-form-values (let [data-with-enum-defaults (form-utils/apply-enum-defaults-to-data
+                                                            (or aa-data {})
+                                                            assessment-specs/气道评估Spec)
+                                  ;; 使用新函数处理可能的日期字段
+                                  processed-data (form-utils/process-initial-values-by-schema
+                                                   data-with-enum-defaults
+                                                   assessment-specs/气道评估Spec)]
+                              processed-data)
         on-finish-fn (fn [values]
+                       ;; 假设当前 气道评估Spec 没有日期字段或未被转换
                        (let [values-clj (js->clj values :keywordize-keys true)]
                          (rf/dispatch [::events/update-canonical-assessment-section :气道评估 values-clj])))]
     (React/useEffect (fn []
@@ -1095,10 +1171,16 @@
 (defn spinal-anesthesia-assessment-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id saa-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values (form-utils/apply-enum-defaults-to-data
-                              (or saa-data {})
-                              assessment-specs/椎管内麻醉相关评估Spec)
+        initial-form-values (let [data-with-enum-defaults (form-utils/apply-enum-defaults-to-data
+                                                            (or saa-data {})
+                                                            assessment-specs/椎管内麻醉相关评估Spec)
+                                  ;; 使用新函数处理可能的日期字段
+                                  processed-data (form-utils/process-initial-values-by-schema
+                                                   data-with-enum-defaults
+                                                   assessment-specs/椎管内麻醉相关评估Spec)]
+                              processed-data)
         on-finish-fn (fn [values]
+                       ;; 假设当前 椎管内麻醉相关评估Spec 没有日期字段或未被转换
                        (let [values-clj (js->clj values :keywordize-keys true)]
                          (rf/dispatch [::events/update-canonical-assessment-section :椎管内麻醉相关评估 values-clj])))]
     (React/useEffect (fn []

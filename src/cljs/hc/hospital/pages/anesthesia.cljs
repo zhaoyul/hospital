@@ -19,6 +19,8 @@
    [hc.hospital.subs :as subs]
    [hc.hospital.ui-helpers :refer [custom-styled-card]]
    [hc.hospital.utils :as utils]
+   [hc.hospital.form-utils :as form-utils] ; Added for schema processing
+   [hc.hospital.specs.assessment-complete-cn-spec :as assessment-specs] ; Added for specs
    [re-frame.core :as rf]
    [reagent.core :as r]
    [taoensso.timbre :as timbre])) ; Added ui-helpers require
@@ -325,11 +327,21 @@
      "病情摘要" ; Title remains, but content is now medical history
      "#fff7e6" ; Header background color
      (if (seq medical-history) ; Check if medical-history map is not empty
-       [:> Form {:layout "horizontal" :labelCol {:span 6} :wrapperCol {:span 18} :labelAlign "left"
-                 :initialValues (clj->js (update-in medical-history [:allergy :last_reaction_date] #(dayjs %) ))
-                 :key patient-id} ; Key for re-initialization
-        [render-allergy-section medical-history]
-        [render-lifestyle-section medical-history]]
+       (let [;; 首先应用枚举默认值 (MedicalHistorySpec 可能没有顶层枚举，但保持模式一致性)
+             data-with-enum-defaults (form-utils/apply-enum-defaults-to-data
+                                       (or medical-history {})
+                                       assessment-specs/MedicalHistorySpec)
+             ;; 然后应用新的 schema 驱动的日期（或其他）转换
+             processed-medical-history (form-utils/process-initial-values-by-schema
+                                        data-with-enum-defaults
+                                        assessment-specs/MedicalHistorySpec)]
+         [:> Form {:layout "horizontal" :labelCol {:span 6} :wrapperCol {:span 18} :labelAlign "left"
+                   :initialValues (clj->js processed-medical-history) ; 使用处理过的数据
+                   :key patient-id} ; Key for re-initialization
+          ;; render-allergy-section 和 render-lifestyle-section 内部的 Form.Item
+          ;; 会通过 name 属性从 Form 的状态中获取已处理的值 (包括 dayjs 对象)
+          [render-allergy-section medical-history] ; medical-history 传递给这些函数用于条件渲染 (e.g., when has_history is true)
+          [render-lifestyle-section medical-history]]) ; 它们的 Form.Item 会从 Form 状态中获取值
        [:> Empty {:description "请先选择患者或患者无病情摘要信息"}])])) ; Message can be updated if needed
 
 (defn- comorbidities-card []
@@ -361,13 +373,19 @@
          "并存疾病"
          "#f9f0ff" ; Header background color
          (if (seq comorbidities-data)
-           [:> Form {:layout "horizontal" :labelCol {:span 10} :wrapperCol {:span 14} :labelAlign "left"
-                     :initialValues (clj->js (update-in comorbidities-data
-                                                        [:special_medications :last_dose_time]
-                                                        (fn [str] (dayjs str))))
-                     :key patient-id}
-            [:> Row {:gutter [16 0]}
-             (comorbidity-item :respiratory "呼吸系统疾病")
+           (let [;; 首先应用枚举默认值
+                 data-with-enum-defaults (form-utils/apply-enum-defaults-to-data
+                                           (or comorbidities-data {})
+                                           assessment-specs/ComorbiditiesSpec)
+                 ;; 然后应用新的 schema 驱动的日期（或其他）转换
+                 processed-comorbidities-data (form-utils/process-initial-values-by-schema
+                                               data-with-enum-defaults
+                                               assessment-specs/ComorbiditiesSpec)]
+             [:> Form {:layout "horizontal" :labelCol {:span 10} :wrapperCol {:span 14} :labelAlign "left"
+                       :initialValues (clj->js processed-comorbidities-data) ; 使用处理过的数据
+                       :key patient-id}
+              [:> Row {:gutter [16 0]}
+               (comorbidity-item :respiratory "呼吸系统疾病")
              (comorbidity-item :cardiovascular "心血管疾病")
              (comorbidity-item :endocrine "内分泌疾病")
              (comorbidity-item :neuro_psychiatric "神经精神疾病")
