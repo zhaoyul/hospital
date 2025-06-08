@@ -21,6 +21,7 @@
    [hc.hospital.utils :as utils]
    [hc.hospital.ui-helpers :as ui-helpers]
    [hc.hospital.summary-generators :as sg] ; Added new namespace
+   [hc.hospital.form-utils :as form-utils] ; Added for enum defaults
    [re-frame.core :as rf]
    [reagent.core :as r]))
 
@@ -35,40 +36,40 @@
 (defn- circulatory-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id circulatory-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values (let [base-data (when circulatory-data
-                                              (-> circulatory-data
-                                                  (update-in [:心脏疾病史 :详情 :充血性心力衰竭史 :上次发作日期] #(when % (utils/parse-date %)))))
-                                  default-values {:心脏疾病史 {:有无 :无 ; Using keyword for enum
-                                                               :详情 {:冠心病 {:有无 :无}
-                                                                      :心律失常 {:有无 :无}
-                                                                      :心肌病 {:有无 :无}
-                                                                      :心脏瓣膜病变 {:有无 :无} ; Updated key
-                                                                      :先天性心脏病 {:有无 :无}
-                                                                      :充血性心力衰竭史 {:有无 :无}
-                                                                      :肺动脉高压 {:有无 :无}}}
-                                                  :心脏起搏器植入史 {:有无 :无} ; Using keyword for enum
-                                                  :心脏功能评估 {:NYHA分级 :Ⅰ级} ; Using keyword for enum
-                                                  :运动能力评估 {:METs水平 :大于6MET}} ; Using keyword for enum, e.g. :大于6MET (check spec for exact enum)
-                                  merged-data (merge default-values (or base-data {}))]
-                              ;; Apply defaults specifically for :有无 fields if details exist but :有无 is nil
-                              (cond-> merged-data
-                                (and (get-in merged-data [:心脏疾病史 :详情]) (nil? (get-in merged-data [:心脏疾病史 :有无])))
+        initial-form-values (let [base-data (form-utils/apply-enum-defaults-to-data
+                                              (or circulatory-data {})
+                                              assessment-specs/循环系统Spec)
+                                  ;; Date parsing and other non-enum defaults can still be applied here
+                                  processed-data (-> base-data
+                                                     (update-in [:心脏疾病史 :详情 :充血性心力衰竭史 :上次发作日期] #(when % (utils/parse-date %))))
+                                  ;; Manual default-values map for non-enum fields or specific overrides if needed
+                                  default-values-override {:心脏功能评估 {:NYHA分级 (or (:NYHA分级 (:心脏功能评估 processed-data)) :Ⅰ级)}
+                                                           :运动能力评估 {:METs水平 (or (:METs水平 (:运动能力评估 processed-data)) :大于6MET)}}
+                                  final-initial-values (merge-with (fn [val-from-data val-from-defaults]
+                                                                     (if (map? val-from-data)
+                                                                       (merge val-from-defaults val-from-data) ; Prioritize data for maps
+                                                                       val-from-data)) ; Prioritize data for non-maps
+                                                                   default-values-override processed-data)]
+                              ;; The cond-> logic for setting :有无 based on :详情 presence can remain if it's a specific UI requirement
+                              ;; beyond simple enum defaulting for nil values.
+                              (cond-> final-initial-values
+                                (and (get-in final-initial-values [:心脏疾病史 :详情]) (nil? (get-in final-initial-values [:心脏疾病史 :有无])))
                                 (assoc-in [:心脏疾病史 :有无] :有)
-                                (and (get-in merged-data [:心脏疾病史 :详情 :冠心病]) (nil? (get-in merged-data [:心脏疾病史 :详情 :冠心病 :有无])))
+                                (and (get-in final-initial-values [:心脏疾病史 :详情 :冠心病]) (nil? (get-in final-initial-values [:心脏疾病史 :详情 :冠心病 :有无])))
                                 (assoc-in [:心脏疾病史 :详情 :冠心病 :有无] :有)
-                                (and (get-in merged-data [:心脏疾病史 :详情 :心律失常]) (nil? (get-in merged-data [:心脏疾病史 :详情 :心律失常 :有无])))
+                                (and (get-in final-initial-values [:心脏疾病史 :详情 :心律失常]) (nil? (get-in final-initial-values [:心脏疾病史 :详情 :心律失常 :有无])))
                                 (assoc-in [:心脏疾病史 :详情 :心律失常 :有无] :有)
-                                (and (get-in merged-data [:心脏疾病史 :详情 :心肌病]) (nil? (get-in merged-data [:心脏疾病史 :详情 :心肌病 :有无])))
+                                (and (get-in final-initial-values [:心脏疾病史 :详情 :心肌病]) (nil? (get-in final-initial-values [:心脏疾病史 :详情 :心肌病 :有无])))
                                 (assoc-in [:心脏疾病史 :详情 :心肌病 :有无] :有)
-                                (and (get-in merged-data [:心脏疾病史 :详情 :心脏瓣膜病变]) (nil? (get-in merged-data [:心脏疾病史 :详情 :心脏瓣膜病变 :有无])))
+                                (and (get-in final-initial-values [:心脏疾病史 :详情 :心脏瓣膜病变]) (nil? (get-in final-initial-values [:心脏疾病史 :详情 :心脏瓣膜病变 :有无])))
                                 (assoc-in [:心脏疾病史 :详情 :心脏瓣膜病变 :有无] :有)
-                                (and (get-in merged-data [:心脏疾病史 :详情 :先天性心脏病]) (nil? (get-in merged-data [:心脏疾病史 :详情 :先天性心脏病 :有无])))
+                                (and (get-in final-initial-values [:心脏疾病史 :详情 :先天性心脏病]) (nil? (get-in final-initial-values [:心脏疾病史 :详情 :先天性心脏病 :有无])))
                                 (assoc-in [:心脏疾病史 :详情 :先天性心脏病 :有无] :有)
-                                (and (get-in merged-data [:心脏疾病史 :详情 :充血性心力衰竭史]) (nil? (get-in merged-data [:心脏疾病史 :详情 :充血性心力衰竭史 :有无])))
+                                (and (get-in final-initial-values [:心脏疾病史 :详情 :充血性心力衰竭史]) (nil? (get-in final-initial-values [:心脏疾病史 :详情 :充血性心力衰竭史 :有无])))
                                 (assoc-in [:心脏疾病史 :详情 :充血性心力衰竭史 :有无] :有)
-                                (and (get-in merged-data [:心脏疾病史 :详情 :肺动脉高压]) (nil? (get-in merged-data [:心脏疾病史 :详情 :肺动脉高压 :有无])))
+                                (and (get-in final-initial-values [:心脏疾病史 :详情 :肺动脉高压]) (nil? (get-in final-initial-values [:心脏疾病史 :详情 :肺动脉高压 :有无])))
                                 (assoc-in [:心脏疾病史 :详情 :肺动脉高压 :有无] :有)
-                                (and (get-in merged-data [:心脏起搏器植入史 :详情]) (nil? (get-in merged-data [:心脏起搏器植入史 :有无])))
+                                (and (get-in final-initial-values [:心脏起搏器植入史 :详情]) (nil? (get-in final-initial-values [:心脏起搏器植入史 :有无])))
                                 (assoc-in [:心脏起搏器植入史 :有无] :有)))
         _ (timbre/info "circulatory-system-detailed-view: initial-form-values:" (clj->js initial-form-values))
         on-finish-fn (fn [values]
@@ -140,23 +141,17 @@
   (let [{:keys [report-form-instance-fn patient-id respiratory-data on-show-summary]} props
         [form] (Form.useForm)
         ;; Removed local cold-symptom-options, treatment-options
-        initial-form-values (let [base-data (when respiratory-data
-                                              (-> respiratory-data
-                                                  (update-in [:近两周内感冒病史 :详情 :发病日期] #(when % (utils/parse-date %)))
-                                                  (update-in [:近一个月内支气管炎或肺炎病史 :详情 :发病日期] #(when % (utils/parse-date %)))
-                                                  (update-in [:哮喘病史 :详情 :上次发作日期] #(when % (utils/parse-date %)))))]
-                              (-> (or base-data {}) ; Base data should now have Chinese keys
-                                  (update-in [:近两周内感冒病史 :有无] #(or % :无)) ; Use keyword for enum
-                                  (update-in [:近一个月内支气管炎或肺炎病史 :有无] #(or % :无))
-                                  (update-in [:哮喘病史 :有无] #(or % :无))
-                                  (update-in [:慢性阻塞性肺疾病 :有无] #(or % :无))
-                                  (update-in [:支气管扩张症 :有无] #(or % :无))
-                                  (update-in [:肺部结节 :有无] #(or % :无))
-                                  (update-in [:肺部肿瘤 :有无] #(or % :无))
-                                  (update-in [:是否有肺结核] #(or % :无)))) ; Mapped from [:tuberculosis_history :present]
+        initial-form-values (let [base-data (form-utils/apply-enum-defaults-to-data
+                                              (or respiratory-data {})
+                                              assessment-specs/呼吸系统Spec)
+                                  processed-data (-> base-data
+                                                     (update-in [:近两周内感冒病史 :详情 :发病日期] #(when % (utils/parse-date %)))
+                                                     (update-in [:近一个月内支气管炎或肺炎病史 :详情 :发病日期] #(when % (utils/parse-date %)))
+                                                     (update-in [:哮喘病史 :详情 :上次发作日期] #(when % (utils/parse-date %))))]
+                              processed-data) ; Use the data after defaults and date parsing
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)
-                             transformed-values (-> values-clj
+                             transformed-values (-> values-clj ; Paths are already Chinese
                                                     (update-in [:近两周内感冒病史 :详情 :发病日期] #(when % (utils/date->iso-string %)))
                                                     (update-in [:近一个月内支气管炎或肺炎病史 :详情 :发病日期] #(when % (utils/date->iso-string %)))
                                                     (update-in [:哮喘病史 :详情 :上次发作日期] #(when % (utils/date->iso-string %))))] ; Paths already Chinese
@@ -224,25 +219,18 @@
   (let [{:keys [report-form-instance-fn patient-id mn-data on-show-summary]} props
         [form] (Form.useForm)
         ;; Removed useWatch calls and local option lists
-        initial-form-values (let [base-data (when mn-data
-                                              (-> mn-data ; Assuming mn-data is already in Chinese keys from subs
-                                                  (update-in [:癫痫病史 :详情 :近期发作日期] #(when % (utils/parse-date %)))
-                                                  (update-in [:眩晕病史 :详情 :近期发作日期] #(when % (utils/parse-date %)))
-                                                  (update-in [:脑梗病史 :详情 :近期发作日期] #(when % (utils/parse-date %)))
-                                                  (update-in [:脑出血病史 :详情 :近期发作日期] #(when % (utils/parse-date %)))))]
-                              (-> (or base-data {}) ; Base data should now have Chinese keys
-                                  (update-in [:精神认知相关疾病史 :有无] #(or % :无)) ; Use keyword for enum
-                                  (update-in [:癫痫病史 :有无] #(or % :无))
-                                  (update-in [:眩晕病史 :有无] #(or % :无))
-                                  (update-in [:短暂性脑缺血发作病史 :有无] #(or % :无))
-                                  (update-in [:脑梗病史 :有无] #(or % :无))
-                                  (update-in [:脑出血病史 :有无] #(or % :无))
-                                  (update-in [:帕金森综合症 :有无] #(or % :无))
-                                  (update-in [:颅脑和颈动脉狭窄 :有无] #(or % :无))
-                                  (update-in [:其他情况 :有无] #(or % :无))))
+        initial-form-values (let [base-data (form-utils/apply-enum-defaults-to-data
+                                              (or mn-data {})
+                                              assessment-specs/精神及神经肌肉系统Spec)
+                                  processed-data (-> base-data
+                                                     (update-in [:癫痫病史 :详情 :近期发作日期] #(when % (utils/parse-date %)))
+                                                     (update-in [:眩晕病史 :详情 :近期发作日期] #(when % (utils/parse-date %)))
+                                                     (update-in [:脑梗病史 :详情 :近期发作日期] #(when % (utils/parse-date %)))
+                                                     (update-in [:脑出血病史 :详情 :近期发作日期] #(when % (utils/parse-date %))))]
+                              processed-data)
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)
-                             transformed-values (-> values-clj ; Paths are already Chinese from form
+                             transformed-values (-> values-clj
                                                     (update-in [:癫痫病史 :详情 :近期发作日期] #(when % (utils/date->iso-string %)))
                                                     (update-in [:眩晕病史 :详情 :近期发作日期] #(when % (utils/date->iso-string %)))
                                                     (update-in [:脑梗病史 :详情 :近期发作日期] #(when % (utils/date->iso-string %)))
@@ -311,16 +299,9 @@
   (let [{:keys [report-form-instance-fn patient-id endo-data on-show-summary]} props
         [form] (Form.useForm)
         ;; Removed useWatch calls and local option lists
-        initial-form-values (-> (or endo-data {}) ; Base data should now have Chinese keys
-                                (update-in [:甲状腺疾病病史 :有无] #(or % :无)) ; Use keyword for enum
-                                ;; The following two were English before, not present in Chinese spec directly under 甲状腺疾病病史 for :有无
-                                ;; (update-in [:甲状腺疾病病史 :详情 :甲状腺是否肿大压迫气管] #(or % false)) ; Assuming boolean from spec
-                                ;; (update-in [:甲状腺疾病病史 :详情 :是否合并甲状腺心脏病] #(or % false)) ; Assuming boolean from spec
-                                (update-in [:糖尿病病史 :有无] #(or % :无))
-                                (update-in [:嗜铬细胞瘤 :有无] #(or % :无))
-                                (update-in [:皮质醇增多症 :有无] #(or % :无))
-                                (update-in [:痛风 :有无] #(or % :无)) ; Corrected key from 痛风病史 to 痛风
-                                (update-in [:垂体功能减退症 :有无] #(or % :无))) ; Corrected key
+        initial-form-values (form-utils/apply-enum-defaults-to-data
+                              (or endo-data {})
+                              assessment-specs/内分泌系统Spec)
         on-finish-fn (fn [values]
                        (rf/dispatch [::events/update-canonical-assessment-section :内分泌系统 (js->clj values :keywordize-keys true)]))]
     (React/useEffect (fn []
@@ -386,11 +367,9 @@
 (defn liver-kidney-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id lk-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values (let [defaults {:肝功能 {:状态 :正常} ; Using keyword for enum
-                                            :肾功能 {:状态 :正常} ; Using keyword for enum
-                                            :肝脏疾病病史 {:类型 :无} ; Using keyword for enum
-                                            :肾脏疾病病史 {:类型 :无 :慢性肾脏病分期 nil :尿毒症 {:有无透析治疗 :无}}}]; Using keyword for enum
-                              (merge defaults (or lk-data {})))
+        initial-form-values (form-utils/apply-enum-defaults-to-data
+                              (or lk-data {})
+                              assessment-specs/肝肾病史Spec)
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)]
                          (rf/dispatch [::events/update-canonical-assessment-section :肝肾病史 values-clj])))]
@@ -458,10 +437,9 @@
   (let [{:keys [report-form-instance-fn patient-id ds-data on-show-summary]} props
         [form] (Form.useForm)
         ;; Removed useWatch calls and local option lists
-        initial-form-values (-> (or ds-data {}) ; Base data is already in Chinese keys
-                                (update-in [:急性胃肠炎病史 :有无] #(or % :无)) ; Use keyword for enum
-                                (update-in [:食管胃十二指肠疾病病史 :有无] #(or % :无))
-                                (update-in [:慢性消化疾病病史 :有无] #(or % :无))) ; Corrected key, use enum
+        initial-form-values (form-utils/apply-enum-defaults-to-data
+                              (or ds-data {})
+                              assessment-specs/消化系统Spec)
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)]
                          (rf/dispatch [::events/update-canonical-assessment-section :消化系统 values-clj])))]
@@ -528,11 +506,9 @@
 (defn hematologic-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id hs-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values (-> (or hs-data {}) ; Base data is already in Chinese keys
-                                (update-in [:贫血 :有无] #(or % :无))
-                                (update-in [:凝血功能障碍 :有无] #(or % :无))
-                                (update-in [:血栓史 :有无] #(or % :无))
-                                (update-in [:下肢深静脉血栓 :有无] #(or % :无)))
+        initial-form-values (form-utils/apply-enum-defaults-to-data
+                              (or hs-data {})
+                              assessment-specs/血液系统Spec)
         on-finish-fn (fn [values]
                        (rf/dispatch [::events/update-canonical-assessment-section :血液系统 (js->clj values :keywordize-keys true)]))]
     (React/useEffect (fn []
@@ -599,9 +575,9 @@
   (let [{:keys [report-form-instance-fn patient-id is-data on-show-summary]} props
         [form] (Form.useForm)
         ;; Removed useWatch calls and local option lists
-        initial-form-values (-> (or is-data {}) ; Base data is already in Chinese keys
-                                (update-in [:免疫功能障碍 :有无] #(or % :无)) ; Use keyword for enum
-                                (update-in [:自身免疫性疾病 :有无] #(or % :无))) ; Use keyword for enum
+        initial-form-values (form-utils/apply-enum-defaults-to-data
+                              (or is-data {})
+                              assessment-specs/免疫系统Spec)
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)]
                          (rf/dispatch [::events/update-canonical-assessment-section :免疫系统 values-clj])))]
@@ -669,14 +645,9 @@
 (defn special-medication-history-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id smh-data on-show-summary]} props
         [form] (Form.useForm)
-        ;; Removed useWatch calls
-        initial-form-values (let [defaults {:抗凝或抗血小板药物 {:有无 :无} ; Use keyword for enum
-                                            :糖皮质激素 {:有无 :无}
-                                            :肿瘤治疗 {:有无 :无} ; Updated key
-                                            :药物滥用依赖史 {:有无 :无} ; Updated key
-                                            :神经安定类药物 {:有无 :无}
-                                            :GLP1受体激动剂 {:有无 :无}}]
-                              (merge defaults (or smh-data {}))) ; Base data is already in Chinese keys
+        initial-form-values (form-utils/apply-enum-defaults-to-data
+                              (or smh-data {})
+                              assessment-specs/特殊用药史Spec)
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)]
                          (rf/dispatch [::events/update-canonical-assessment-section :特殊用药史 values-clj])))]
@@ -745,8 +716,9 @@
   (let [{:keys [report-form-instance-fn patient-id sdh-data on-show-summary]} props
         [form] (Form.useForm)
         ;; Removed useWatch call for marfan-lesions
-        initial-form-values (let [defaults {:马方综合征 {:有无 :无}}] ; Use keyword for enum
-                              (merge defaults (or sdh-data {}))) ; Base data is already in Chinese keys
+        initial-form-values (form-utils/apply-enum-defaults-to-data
+                              (or sdh-data {})
+                              assessment-specs/特殊疾病病史Spec)
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)]
                          (rf/dispatch [::events/update-canonical-assessment-section :特殊疾病病史 values-clj])))]
@@ -814,18 +786,9 @@
 (defn nutritional-assessment-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id na-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values (-> (or na-data {}) ; Base data is already in Chinese keys
-                                ;; Paths within :营养评分
-                                (update-in [:营养评分 :BMI小于20点5] #(or % :无)) ; Use keyword for enum
-                                (update-in [:营养评分 :过去1至3个月体重下降] #(or % :无))
-                                (update-in [:营养评分 :过去1周摄食减少] #(or % :无))
-                                (update-in [:营养评分 :有严重疾病如ICU治疗] #(or % :无))
-                                ;; Paths within :FRAIL针对大于60岁病人
-                                (update-in [:FRAIL针对大于60岁病人 :疲乏] #(or % :无))
-                                (update-in [:FRAIL针对大于60岁病人 :阻力增加或耐力减退] #(or % :无))
-                                (update-in [:FRAIL针对大于60岁病人 :自由活动下降] #(or % :无))
-                                (update-in [:FRAIL针对大于60岁病人 :存在5种以上疾病] #(or % :无))
-                                (update-in [:FRAIL针对大于60岁病人 :体重下降1年或更短内大于5百分比] #(or % :无)))
+        initial-form-values (form-utils/apply-enum-defaults-to-data
+                              (or na-data {})
+                              assessment-specs/营养评估Spec)
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)]
                          (rf/dispatch [::events/update-canonical-assessment-section :营养评估 values-clj])))]
@@ -907,9 +870,9 @@
         [form] (Form.useForm)
         ;; Spec path: [:妊娠]
         ;; Removed local option lists and useWatch calls
-        initial-form-values (let [base-data (or pa-data {}) ; Base data is already in Chinese keys
-                                  default-values {:是否妊娠 :无}] ; Default from original logic, use enum
-                              (merge default-values base-data))
+        initial-form-values (form-utils/apply-enum-defaults-to-data
+                              (or pa-data {})
+                              assessment-specs/妊娠Spec)
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)]
                          (rf/dispatch [::events/update-canonical-assessment-section :妊娠 values-clj])))]
@@ -978,15 +941,15 @@
         [form] (Form.useForm)
         ;; Spec path: [:手术麻醉史]
         ;; Removed local option lists and useWatch calls
-        initial-form-values (let [base-data (when sah-data ; Base data is already in Chinese keys
-                                              (-> sah-data
-                                                  (update-in [:手术麻醉史 :详情 :具体上次麻醉日期] #(when % (utils/parse-date %)))))
-                                  default-values {:手术麻醉史 {:有无 :无} ; Use enums
-                                                  :有血缘关系的人发生过恶性高热史 {:有无 :无}}] ; Use enums
-                              (merge default-values (or base-data {})))
+        initial-form-values (let [base-data (form-utils/apply-enum-defaults-to-data
+                                              (or sah-data {})
+                                              assessment-specs/手术麻醉史Spec)
+                                  processed-data (-> base-data
+                                                     (update-in [:手术麻醉史 :详情 :具体上次麻醉日期] #(when % (utils/parse-date %))))]
+                              processed-data)
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)
-                             transformed-values (-> values-clj ; Paths are already Chinese
+                             transformed-values (-> values-clj
                                                     (update-in [:手术麻醉史 :详情 :具体上次麻醉日期] #(when % (utils/date->iso-string %))))]
                          (rf/dispatch [::events/update-canonical-assessment-section :手术麻醉史 transformed-values])))]
     (React/useEffect (fn []
@@ -1053,19 +1016,9 @@
   (let [{:keys [report-form-instance-fn patient-id aa-data on-show-summary]} props
         [form] (Form.useForm)
         ;; Removed local option lists and useWatch calls from original implementation
-        initial-form-values (let [base-data (or aa-data {}) ; Base data is already in Chinese keys
-                                  defaults {:既往困难通气史 :不详 ; Enums
-                                            :既往困难插管史 :不详
-                                            :张口度 {:分级 :大于等于3横指}
-                                            :甲颏距离cm nil
-                                            :头颈活动度 {:分级 :正常活动}
-                                            :改良Mallampati分级 :Ⅰ级
-                                            :上唇咬合试验ULBT :1级 ; Note: Spec uses 上唇咬合试验
-                                            :鼾症 {:有无 :不详}
-                                            :气道相关疾病 {:有无 :不详}
-                                            :现存气道症状 {:有无 :不详}
-                                            :食管手术史 {:有无 :不详 :是否存在返流 false}}]
-                              (merge defaults base-data))
+        initial-form-values (form-utils/apply-enum-defaults-to-data
+                              (or aa-data {})
+                              assessment-specs/气道评估Spec)
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)]
                          (rf/dispatch [::events/update-canonical-assessment-section :气道评估 values-clj])))]
@@ -1156,17 +1109,9 @@
 (defn spinal-anesthesia-assessment-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id saa-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values (let [base-data (or saa-data {}) ; Base data is already in Chinese keys
-                                  ;; Map original defaults to new spec paths.
-                                  defaults {:中枢神经系统 {:脑肿瘤 :无, :脑出血 :无, :严重颅脑外伤 :无, :癫痫 :无} ; Enums
-                                            :外周神经系统 {:多发性硬化 :无, :脊髓损伤 :无, :脊柱侧弯 :无, :脊柱畸形 :无,
-                                                           :椎管内肿瘤 :无, :强制性脊柱炎 :无, :腰椎手术史 :无}
-                                            :腰椎间盘突出 {:有无 :无, :下肢麻木症状 :无}
-                                            :心血管系统 {:主动脉瓣狭窄 :无, :肥厚型梗阻型心肌病 :无,
-                                                         :抗凝或抗血小板药物 {:有无 :无}}
-                                            :穿刺点检查 {:既往穿刺困难史 :无, :局部感染 :无, :畸形 :无}
-                                            :局麻药过敏 :无}]
-                              (merge defaults base-data))
+        initial-form-values (form-utils/apply-enum-defaults-to-data
+                              (or saa-data {})
+                              assessment-specs/椎管内麻醉相关评估Spec)
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)]
                          (rf/dispatch [::events/update-canonical-assessment-section :椎管内麻醉相关评估 values-clj])))]
