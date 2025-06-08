@@ -5,46 +5,54 @@
 
 (defn get-first-enum-value
   "Extracts the first enum value from a Malli schema.
-   Handles :enum and [:maybe :enum] schemas."
+   Handles :enum and [:maybe [:enum ...]] schemas."
   [field-schema]
-  (let [actual-schema (if (= :maybe (m/type field-schema))
-                        (-> field-schema m/children first) ; Get the child schema of :maybe
+  (timbre/info "get-first-enum-value for schema:" (m/form field-schema))
+  (let [schema-type (m/type field-schema)
+        actual-schema (if (= :maybe schema-type)
+                        (let [children (m/children field-schema)]
+                          (when (seq children) (first children)))
                         field-schema)]
-    (when (and actual-schema (= :enum (m/type actual-schema)))
-      (let [options (m/children actual-schema)] ; For :enum, children are the values
+    (if (and actual-schema (= :enum (m/type actual-schema)))
+      (let [options (m/children actual-schema)]
+        (timbre/info "Enum options:" options)
         (when (seq options)
-          (first options))))))
+          (first options)))
+      (do
+        (timbre/info "Not an enum or valid maybe-enum:" (m/form actual-schema))
+        nil))))
 
+(declare apply-enum-defaults-to-data*) ;; Forward declare for mutual recursion if needed, though current structure is linear
 
-(defn apply-enum-defaults-to-data
-  "Recursively applies default values for nil fields that are enums,
-   using the first value of the enum as the default.
-   Also handles nested map schemas."
-  [data schema]
+(defn- apply-enum-defaults-to-data-impl [data schema current-path-vec]
   (if-not (and (map? data) schema (= :map (m/type schema)))
-    ;; If data is not a map, or schema is not a map schema, return data as is.
-    ;; This also handles cases where data might be nil for a non-map schema part.
     data
     (let [entries (m/entries schema {:preserve-entry-properties true})]
       (reduce
-       (fn [acc-data [field-key field-schema-entry _ entry-props]]
-         (let [current-val (get acc-data field-key)
-               field-schema (m/schema field-schema-entry) ; Get the actual schema for the field
-               schema-type (m/type field-schema)]
+        (fn [acc-data [field-key field-schema-entry _ _entry-props]]
+          (let [current-val (get acc-data field-key)
+                field-schema (m/schema field-schema-entry) ; Get the actual schema for the field
+                new-path (conj current-path-vec field-key)]
+            (cond
+              (nil? current-val)
+              (if-let [default-enum-val (get-first-enum-value field-schema)]
+                (do
+                  (timbre/info "Defaulting for path:" new-path "to value:" default-enum-val)
+                  (assoc acc-data field-key default-enum-val))
+                (do
+                  (timbre/info "No default enum for path:" new-path "Schema type:" (m/type field-schema))
+                  acc-data))
 
-           (cond
-             ;; If current value is nil, try to apply enum default
-             (nil? current-val)
-             (if-let [default-enum-val (get-first-enum-value field-schema)]
-               (assoc acc-data field-key default-enum-val)
-               acc-data)
+              (and (map? current-val) (= :map (m/type field-schema)))
+              (assoc acc-data field-key (apply-enum-defaults-to-data-impl current-val field-schema new-path))
 
-             ;; If current value is a map and field schema is a map, recurse
-             (and (map? current-val) (= :map schema-type))
-             (assoc acc-data field-key (apply-enum-defaults-to-data current-val field-schema))
+              :else
+              acc-data)))
+        data
+        entries))))
 
-             ;; Otherwise, keep existing value
-             :else
-             acc-data)))
-       data
-       entries))))
+(defn apply-enum-defaults-to-data
+  "Public wrapper function for applying enum defaults."
+  [data schema]
+  (timbre/info "Starting apply-enum-defaults-to-data for schema:" (m/form schema) "with data:" data)
+  (apply-enum-defaults-to-data-impl data schema []))

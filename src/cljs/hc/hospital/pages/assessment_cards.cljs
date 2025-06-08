@@ -219,14 +219,18 @@
   (let [{:keys [report-form-instance-fn patient-id mn-data on-show-summary]} props
         [form] (Form.useForm)
         ;; Removed useWatch calls and local option lists
-        initial-form-values (let [base-data (form-utils/apply-enum-defaults-to-data
-                                              (or mn-data {})
-                                              assessment-specs/精神及神经肌肉系统Spec)
-                                  processed-data (-> base-data
+        initial-form-values (let [original-mn-data (or mn-data {})
+                                  _ (timbre/info "mental-neuromuscular original mn-data:" (clj->js original-mn-data))
+                                  data-with-defaults (form-utils/apply-enum-defaults-to-data
+                                                       original-mn-data
+                                                       assessment-specs/精神及神经肌肉系统Spec)
+                                  _ (timbre/info "mental-neuromuscular data-with-defaults:" (clj->js data-with-defaults))
+                                  processed-data (-> data-with-defaults
                                                      (update-in [:癫痫病史 :详情 :近期发作日期] #(when % (utils/parse-date %)))
                                                      (update-in [:眩晕病史 :详情 :近期发作日期] #(when % (utils/parse-date %)))
                                                      (update-in [:脑梗病史 :详情 :近期发作日期] #(when % (utils/parse-date %)))
                                                      (update-in [:脑出血病史 :详情 :近期发作日期] #(when % (utils/parse-date %))))]
+                              (timbre/info "mental-neuromuscular final initial-form-values:" (clj->js processed-data))
                               processed-data)
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)
