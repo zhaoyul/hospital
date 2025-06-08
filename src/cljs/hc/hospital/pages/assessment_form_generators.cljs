@@ -1,14 +1,14 @@
 (ns hc.hospital.pages.assessment-form-generators
   (:require
    [malli.core :as m]
-   ;; Removed [malli.util :as mu] ;; 已移除 [malli.util :as mu]
    ["antd" :refer [Form Input InputNumber DatePicker Radio Select Checkbox]]
    [hc.hospital.specs.assessment-complete-cn-spec :as assessment-specs]
    [clojure.string :as str]
    [taoensso.timbre :as timbre]))
 
 ;; Declare mutually recursive functions ;; 声明相互递归函数
-(declare render-form-item-from-spec get-malli-children)
+(declare render-form-item-from-spec)
+(declare get-malli-children)
 (declare render-map-schema-fields)
 (declare render-conditional-map-section)
 
@@ -24,11 +24,10 @@
     (if (= :map (m/type map-schema)) ;; Only proceed if it's a map schema
       (when-let [entry-pair (some (fn [[k v]] (when (= k key-to-find) [k v])) (m/entries map-schema))]
         (let [val-schema-wrapper (second entry-pair)]
-          {:schema (if (m/schema? val-schema-wrapper) (m/schema val-schema-wrapper) nil) ;; ensure val-schema-wrapper is a schema
+          {:schema (if (m/schema? val-schema-wrapper) (m/schema val-schema-wrapper) nil)
            :optional? (if (m/schema? val-schema-wrapper) (:optional (m/properties val-schema-wrapper) false) false)}))
       (timbre/warn "get-entry-details called with non-map schema:" (m/type map-schema) "for key:" key-to-find))))
 
-;; --- Malli Introspection Helpers (Inferred & Custom) --- ;; --- Malli 内省辅助函数 (推断和自定义) ---
 (defn is-conditional-map-schema?
   "检查一个 schema 是否是具有条件结构的 map。
    启发式规则：一个 map，其中第一个子项的 schema 是一个 :enum，
@@ -73,16 +72,15 @@
   [schema trigger-key details-key]
   (when (and schema (m/schema? schema) (= :map (m/type schema)))
     (let [props (into {} (m/entries schema))
-          trigger-prop-schema (get props trigger-key)
-          detail-prop-schema (get props details-key)]
-
+          trigger-prop-schema (val->content (get props trigger-key))
+          detail-prop-schema (val->content (get props details-key))]
+      ;;(js-debugger)
       (and (contains? props trigger-key)
            (contains? props details-key)
            (m/schema? trigger-prop-schema)
-           (= :enum (m/type trigger-prop-schema)) ;; Check type of the schema itself
+           (= :enum (m/type trigger-prop-schema))
            (m/schema? detail-prop-schema)
-           (= :map (m/type detail-prop-schema))   ;; Check type of the schema itself
-           ))))
+           (= :map (m/type detail-prop-schema))))))
 
 (defn is-date-string-schema?
   "检查一个 schema 是否可能是日期字符串 schema。
@@ -244,7 +242,7 @@
       is-cond-map
       [:f> render-conditional-map-section field-key field-schema parent-form-path form-instance entry-props]
 
-      (check-conditional-pattern field-schema :有无 :详情)
+      (timbre/spy :info (check-conditional-pattern field-schema :有无 :详情))
       [:div {:key (str (name field-key) "-map-section") :style {:marginBottom "10px"}}
        [:h4 {:style {:fontSize "15px" :marginBottom "8px" :borderBottom "1px solid #f0f0f0" :paddingBottom "4px"}} label-text]
        [:f> render-general-conditional-details field-key field-schema parent-form-path form-instance entry-props :有无 :详情 :有]]
