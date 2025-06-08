@@ -41,21 +41,30 @@
                            (try (some-> val str str/trim Integer/parseInt) (catch Exception _ nil)))
 
           transformed-data
-          {:basic_info {:outpatient_number (:outpatient-number raw-basic-info)
-                        :name (:name raw-basic-info)
-                        :gender (:gender raw-basic-info)
-                        :age (parse-int-safe (:age raw-basic-info))
-                        :department nil
-                        :health_card_number (:id-number raw-basic-info)
-                        :diagnosis nil
-                        :planned_surgery nil
-                        :height nil
-                        :weight nil
-                        :patient_submitted_at current-time
-                        :assessment_updated_at current-time
-                        :assessment_status "待评估"
-                        :doctor_name nil
-                        :assessment_notes nil}
+          {:基本信息 {:门诊号 (:outpatient-number raw-basic-info)
+                        :姓名 (:name raw-basic-info)
+                        :性别 (:gender raw-basic-info)
+                        :年龄 (parse-int-safe (:age raw-basic-info))
+                        :院区 (:department raw-basic-info) ; Assuming :department maps to :院区
+                        :身份证号 (:id-number raw-basic-info) ; Assuming :id-number maps to :身份证号
+                        :手机号 (:phone-number raw-basic-info) ; Assuming :phone-number maps to :手机号
+                        :术前诊断 (:diagnosis raw-basic-info)
+                        :拟施手术 (:planned_surgery raw-basic-info)
+                        :身高cm (parse-int-safe (:height raw-basic-info))
+                        :体重kg (parse-int-safe (:weight raw-basic-info))
+                        :患者提交时间 current-time
+                        :评估更新时间 current-time
+                        :评估状态 "待评估"
+                        :医生姓名 (:doctor_name raw-basic-info)
+                        :评估备注 (:assessment_notes raw-basic-info)
+                        ;; Fields from general-condition-card that are part of 基本信息 in spec
+                        :精神状态 (:mental_state raw-basic-info)
+                        :活动能力 (:activity_level raw-basic-info)
+                        :血压mmHg (:blood_pressure raw-basic-info) ; Assuming a single field from patient input
+                        :脉搏次每分 (parse-int-safe (:heart_rate raw-basic-info))
+                        :呼吸次每分 (parse-int-safe (:respiratory_rate raw-basic-info))
+                        :体温摄氏度 (try (some-> raw-basic-info :temperature str str/trim Double/parseDouble) (catch Exception _ nil))
+                        :SpO2百分比 (parse-int-safe (:spo2 raw-basic-info))}
            :medical_history (ctl/spy :info {:allergy {:has_history (to-boolean (:allergy-history raw-medical-summary))
                                                       :details (:allergen raw-medical-summary)
                                                       :last_reaction_date (:allergy-date raw-medical-summary)}
@@ -121,10 +130,10 @@
                                            raw-aux-exams)
                                      [])
            :auxiliary_examinations_notes nil
-           :anesthesia_plan {:asa_rating nil, :anesthesia_type nil, :preoperative_instructions nil}}
+           :anesthesia_plan {:asa_rating nil, :anesthesia_type nil, :preoperative_instructions nil}} ; This is old anesthesia_plan, should be :麻醉评估与医嘱 eventually
 
-          patient-id (get-in transformed-data [:basic_info :outpatient_number])
-          patient-name (get-in transformed-data [:basic_info :name] "")
+          patient-id (get-in transformed-data [:基本信息 :门诊号]) ; Updated path
+          patient-name (get-in transformed-data [:基本信息 :姓名] "") ; Updated path
           {:keys [pinyin initial]} (get-pinyin-parts patient-name) ; Assuming get-pinyin-parts is available
           assessment-data-json (cheshire/generate-string transformed-data)]
       (if (str/blank? (str patient-id)) ; Ensure patient-id is treated as string for blank? check
@@ -192,8 +201,8 @@
   (try
     (let [existing-assessment (query-fn :get-patient-assessment-by-id {:patient_id patient-id})]
       (if (seq existing-assessment)
-        (let [updated-body (assoc-in body [:basic_info :assessment_updated_at] (str (Instant/now)))
-              patient-name (get-in updated-body [:basic_info :name] "")
+        (let [updated-body (assoc-in body [:基本信息 :评估更新时间] (str (Instant/now))) ; Updated path
+              patient-name (get-in updated-body [:基本信息 :姓名] "") ; Updated path
               {:keys [pinyin initial]} (get-pinyin-parts patient-name)
               assessment-data-json (cheshire/generate-string updated-body)]
           (query-fn :update-patient-assessment!

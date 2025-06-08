@@ -118,21 +118,21 @@
        [:div
         [:div {:style {:display "flex" :flex-wrap "wrap" :align-items "center" :padding "10px 0"}}
          ;; 将每个患者信息字段显示为独立的标签
-         [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "门诊号: " (get basic-info :outpatient_number "未知"))]
-         [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "姓名: " (get basic-info :name "未知"))]
-         [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "性别: " (get basic-info :gender "未知"))]
-         [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "年龄: " (get basic-info :age "未知") "岁")]
-         [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "病区: " (get basic-info :department "未知"))]
-         [:span {:style {:margin-bottom "8px"}} (str "电子健康卡号: " (get basic-info :health_card_number "无"))]]
+         [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "门诊号: " (get basic-info :门诊号 "未知"))]
+         [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "姓名: " (get basic-info :姓名 "未知"))]
+         [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "性别: " (get basic-info :性别 "未知"))]
+         [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "年龄: " (get basic-info :年龄 "未知") "岁")]
+         [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "病区: " (get basic-info :院区 "未知"))]
+         [:span {:style {:margin-bottom "8px"}} (str "身份证号: " (get basic-info :身份证号 "无"))]] ; Updated key and label
 
-        [:> Form.Item {:label "术前诊断" :name :diagnosis}
+        [:> Form.Item {:label "术前诊断" :name :术前诊断} ; Updated name
          [:> Input.TextArea {:placeholder "请输入术前诊断"
-                             :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:basic_info :diagnosis] (-> % .-target .-value)])}]]
+                             :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :术前诊断] (-> % .-target .-value)])}]] ; Updated path
 
-        [:> Form.Item {:label "拟施手术" :name :planned_surgery}
+        [:> Form.Item {:label "拟施手术" :name :拟施手术} ; Updated name
          [:> Input.TextArea {:placeholder "请输入拟施手术"
 
-                             :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:basic_info :planned_surgery] (-> % .-target .-value)])}]]]
+                             :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :拟施手术] (-> % .-target .-value)])}]]] ; Updated path
        [:> Empty {:description "请先选择患者或患者无基本信息"}])]))
 
 (defn- general-condition-card "显示一般情况" []
@@ -558,8 +558,8 @@
 ;; 辅助函数，用于显示签名和日期
 (defn- signature-and-date-card []
   (let [basic-info @(rf/subscribe [::subs/canonical-basic-info])
-        assessment-updated-at (get basic-info :assessment_updated_at (utils/date->iso-string (js/Date.now))) ; Default to now if not present
-        doctor-name (get basic-info :doctor_name)]
+        assessment-updated-at (get basic-info :评估更新时间 (utils/date->iso-string (js/Date.now))) ; Updated key
+        doctor-name (get basic-info :医生姓名)] ; Updated key
     [custom-styled-card
      [:> SaveOutlined {:style {:marginRight "8px"}}]
      "麻醉医师签名及日期"
@@ -568,13 +568,13 @@
       [:> Descriptions.Item {:label "麻醉医师"}
        [:> Input {:placeholder "记录医师姓名"
                   :value doctor-name
-                  :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:basic_info :doctor_name] (-> % .-target .-value)])}]]
+                  :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :医生姓名] (-> % .-target .-value)])}]] ; Updated path
       [:> Descriptions.Item {:label "评估更新日期"}
        (utils/format-date assessment-updated-at "YYYY-MM-DD HH:mm")]]]))
 
 ;; 辅助函数，用于显示备注信息 (now part of basic_info)
 (defn- remarks-card []
-  (let [assessment-notes (rf/subscribe [::subs/canonical-basic-info :assessment_notes])]
+  (let [assessment-notes (rf/subscribe [::subs/canonical-basic-info :评估备注])] ; Updated subscription path
     [custom-styled-card
      [:> MessageOutlined {:style {:marginRight "8px"}}]
      "评估备注" ; Changed title to be more specific
@@ -582,7 +582,7 @@
      [:> Input.TextArea {:rows 4 ; Increased rows for better visibility
                          :value (or @assessment-notes "") ; Deref the atom from subscription
                          :placeholder "评估备注（如有特殊情况请在此注明）"
-                         :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:basic_info :assessment_notes] (-> % .-target .-value)])}]]))
+                         :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :评估备注] (-> % .-target .-value)])}]])) ; Updated path
 
 (defn- assessment-action-buttons [patient-status]
   [:> Space {} ; Removed marginBottom, parent will handle layout
