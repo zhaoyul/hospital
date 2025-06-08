@@ -1153,5 +1153,3 @@
        :view-state @view-state
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
-
-[end of src/cljs/hc/hospital/pages/assessment_cards.cljs]
