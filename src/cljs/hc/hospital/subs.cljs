@@ -139,7 +139,7 @@
 (rf/reg-sub ::circulatory-system-data
   :<- [::current-canonical-assessment]
   (fn [assessment _]
-    (or (:circulatory_system assessment) {}))) ; Return empty map if nil
+    (or (:循环系统 assessment) {})))
 
 ;; Respiratory System - New
 (rf/reg-sub ::respiratory-system-data

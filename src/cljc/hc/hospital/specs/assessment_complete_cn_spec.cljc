@@ -16,7 +16,7 @@
 
 ;; 常用枚举
 (def 有无不详Enum (m/schema [:enum :无 :有 :不详]))
-(def 有无Enum (m/schema [:enum :有 :无])) ; 直接对应 “有”、“无”
+(def 有无Enum (m/schema [:enum :无 :有])) ; 直接对应 “有”、“无”
 (def 治疗情况Enum (m/schema [:enum :治愈 :好转 :仍有症状 :未治疗 :病情稳定 :其他]))
 (def 是否Enum (m/schema [:enum :是 :否])) ; 对应 "是" / "否"
 
