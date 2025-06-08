@@ -10,9 +10,9 @@
 (def OptionalBoolean (m/schema [:maybe :boolean]))
 
 ;; 日期和时间格式
-(def 日期字符串Spec (m/schema {:is-date? true} [:re #"\d{4}-\d{2}-\d{2}"])) ; YYYY-MM-DD
+(def 日期字符串Spec (m/schema [:re {:is-date? true} #"\d{4}-\d{2}-\d{2}"])) ; YYYY-MM-DD
 (def Optional日期字符串 (m/schema [:maybe 日期字符串Spec]))
-(def 日期时间字符串Spec (m/schema {:is-date? true} [:re #"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?Z?"]))
+(def 日期时间字符串Spec (m/schema [:re {:is-date? true} #"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?Z?"]))
 (def Optional日期时间字符串 (m/schema [:maybe 日期时间字符串Spec]))
 
 ;; 常用枚举

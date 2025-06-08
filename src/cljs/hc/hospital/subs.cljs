@@ -106,20 +106,20 @@
   :<- [::canonical-basic-info]
   (fn [basic-info _] (:门诊号 basic-info))) ;; Updated to :门诊号
 
-;; Medical History - DEPRECATED due to spec changes to Chinese keywords and restructuring
-;; (rf/reg-sub ::canonical-medical-history
-;;   :<- [::current-canonical-assessment]
-;;   (fn [assessment _] (:medical_history assessment))) ;; This key no longer exists at the top level
+;; Medical History
+(rf/reg-sub ::canonical-medical-history
+  :<- [::current-canonical-assessment]
+  (fn [assessment _] (:medical_history assessment)))
 
-;; Physical Examination - DEPRECATED due to spec changes to Chinese keywords and restructuring
-;; (rf/reg-sub ::canonical-physical-examination
-;;   :<- [::current-canonical-assessment]
-;;   (fn [assessment _] (:physical_examination assessment))) ;; This key no longer exists at the top level
+;; Physical Examination
+(rf/reg-sub ::canonical-physical-examination
+  :<- [::current-canonical-assessment]
+  (fn [assessment _] (:physical_examination assessment)))
 
-;; Comorbidities - DEPRECATED due to spec changes to Chinese keywords and restructuring
-;; (rf/reg-sub ::canonical-comorbidities
-;;   :<- [::current-canonical-assessment]
-;;   (fn [assessment _] (:comorbidities assessment))) ;; This key no longer exists at the top level
+;; Comorbidities
+(rf/reg-sub ::canonical-comorbidities
+  :<- [::current-canonical-assessment]
+  (fn [assessment _] (:comorbidities assessment)))
 
 ;; Auxiliary Examinations
 (rf/reg-sub ::canonical-auxiliary-examinations
