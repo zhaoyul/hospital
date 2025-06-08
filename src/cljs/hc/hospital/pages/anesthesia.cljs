@@ -136,7 +136,7 @@
        [:> Empty {:description "请先选择患者或患者无基本信息"}])]))
 
 (defn- general-condition-card "显示一般情况" []
-  (let [physical-exam-data @(rf/subscribe [::subs/canonical-physical-examination]) ; Use new subscription
+  (let [basic-info-data @(rf/subscribe [::subs/canonical-basic-info]) ; Changed subscription
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])] ; For Form key
     ;; 定义选项数据
     (let [mental-status-options [{:value "清醒" :label "清醒"}
@@ -156,37 +156,37 @@
        [:> HeartOutlined {:style {:marginRight "8px"}}]
        "一般情况"
        "#f6ffed" ; Header background color
-       (if (seq physical-exam-data) ; Check if data is not empty
+       (if (seq basic-info-data) ; Check if data is not empty
          [:> Form {:layout "horizontal" :labelCol {:sm {:span 24} :md {:span 10}} :wrapperCol {:sm {:span 24} :md {:span 14}} :labelAlign "left"
-                   :initialValues (clj->js physical-exam-data)
+                   :initialValues (clj->js basic-info-data) ; Use basic-info-data
                    :key patient-id} ; Key to re-initialize form when patient changes
           ;; 第一部分：身高、体重、精神状态、活动能力
           [:div {:key "vital-signs-group-1"}
            [:div {:style (assoc grid-style-4-col :marginBottom "16px")}
-            [:> Form.Item {:label "身高" :name :height} ; Matches canonical
+            [:> Form.Item {:label "身高" :name :身高cm} ; Updated name
              [:> InputNumber {:placeholder "cm"
                               :addonAfter "cm"
                               :style {:width "100%"}
                               :min 0
-                              :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:physical_examination :height] %])}]]
-            [:> Form.Item {:label "体重" :name :weight} ; Matches canonical
+                              :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :身高cm] %])}]] ; Updated path
+            [:> Form.Item {:label "体重" :name :体重kg} ; Updated name
              [:> InputNumber {:placeholder "kg"
                               :addonAfter "kg"
                               :style {:width "100%"}
                               :min 0
-                              :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:physical_examination :weight] %])}]]
-            [:> Form.Item {:label "精神状态" :name :mental_state} ; Matches canonical
+                              :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :体重kg] %])}]] ; Updated path
+            [:> Form.Item {:label "精神状态" :name :精神状态} ; Updated name
              [:> Select {:placeholder "请选择"
                          :style {:width "100%"}
                          :allowClear true
                          :options mental-status-options
-                         :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:physical_examination :mental_state] %])}]]
-            [:> Form.Item {:label "活动能力" :name :activity_level} ; Matches canonical
+                         :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :精神状态] %])}]] ; Updated path
+            [:> Form.Item {:label "活动能力" :name :活动能力} ; Updated name
              [:> Select {:placeholder "请选择"
                          :style {:width "100%"}
                          :allowClear true
                          :options activity-level-options
-                         :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:physical_examination :activity_level] %])}]]]]
+                         :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :活动能力] %])}]]]] ; Updated path
 
           ;; 分隔线 (可选，如果视觉上需要)
           ;; [:> Divider {:style {:margin "0 0 16px 0"}}]
@@ -194,54 +194,54 @@
           ;; 第二部分：血压、脉搏、呼吸、体温、SpO2
           [:div {:key "vital-signs-group-2"}
            [:div {:style {:display "flex" :flexWrap "wrap" :gap "8px 24px"}} ; 增大列间距
-            ;; 血压
-            [:> Form.Item {:label "血压"}
-             [:> Space {:align "center"} ; Use Space as the single child
-              [:> Form.Item {:name :bp_systolic :noStyle true} ; Canonical: bp_systolic
-               [:> InputNumber {:placeholder "收缩压"
-                                :min 0
-                                :style {:width "70px"}
-                                :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:physical_examination :bp_systolic] %])}]]
-              [:span {:style {:margin "0 4px"}} "/"] ; Keep the separator
-              [:> Form.Item {:name :bp_diastolic :noStyle true} ; Canonical: bp_diastolic
-               [:> InputNumber {:placeholder "舒张压"
-                                :min 0
-                                :style {:width "70px"}
-                                :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:physical_examination :bp_diastolic] %])}]]
-              [:span {:style {:marginLeft "4px"}} "mmHg"]]] ; Adjusted margin for consistency
+            ;; 血压 - Temporarily commented out as per instructions
+            #_[:> Form.Item {:label "血压"}
+               [:> Space {:align "center"} ; Use Space as the single child
+                [:> Form.Item {:name :bp_systolic :noStyle true} ; Canonical: bp_systolic
+                 [:> InputNumber {:placeholder "收缩压"
+                                  :min 0
+                                  :style {:width "70px"}
+                                  :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :bp_systolic] %])}]] ; Path would change
+                [:span {:style {:margin "0 4px"}} "/"] ; Keep the separator
+                [:> Form.Item {:name :bp_diastolic :noStyle true} ; Canonical: bp_diastolic
+                 [:> InputNumber {:placeholder "舒张压"
+                                  :min 0
+                                  :style {:width "70px"}
+                                  :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :bp_diastolic] %])}]] ; Path would change
+                [:span {:style {:marginLeft "4px"}} "mmHg"]]]
 
             ;; 脉搏
-            [:> Form.Item {:label "脉搏" :name :heart_rate} ; Canonical: heart_rate
+            [:> Form.Item {:label "脉搏" :name :脉搏次每分} ; Updated name
              [:> InputNumber {:placeholder "次/分"
                               :addonAfter "次/分"
                               :min 0
                               :style {:width "130px"}
-                              :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:physical_examination :heart_rate] %])}]]
+                              :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :脉搏次每分] %])}]] ; Updated path
 
             ;; 呼吸
-            [:> Form.Item {:label "呼吸" :name :respiratory_rate} ; Canonical: respiratory_rate
+            [:> Form.Item {:label "呼吸" :name :呼吸次每分} ; Updated name
              [:> InputNumber {:placeholder "次/分"
                               :addonAfter "次/分"
                               :min 0
                               :style {:width "130px"}
-                              :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:physical_examination :respiratory_rate] %])}]]
+                              :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :呼吸次每分] %])}]] ; Updated path
 
             ;; 体温
-            [:> Form.Item {:label "体温" :name :temperature} ; Matches canonical
+            [:> Form.Item {:label "体温" :name :体温摄氏度} ; Updated name
              [:> InputNumber {:placeholder "°C"
                               :addonAfter "°C"
                               :precision 1
                               :step 0.1
                               :style {:width "110px"}
-                              :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:physical_examination :temperature] %])}]]
+                              :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :体温摄氏度] %])}]] ; Updated path
 
             ;; SpO2
-            [:> Form.Item {:label "SpO2" :name :spo2} ; Matches canonical
+            [:> Form.Item {:label "SpO2" :name :SpO2百分比} ; Updated name
              [:> InputNumber {:placeholder "%"
                               :addonAfter "%"
                               :min 0 :max 100
                               :style {:width "100px"}
-                              :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:physical_examination :spo2] %])}]]]]]
+                              :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :SpO2百分比] %])}]]]]] ; Updated path
          [:> Empty {:description "暂无一般情况信息或未选择患者"}])])))
 
 
@@ -504,7 +504,7 @@
        "相关辅助检查检验结果"
        "#fffbe6" ; Header background color
        [:> Form {:layout "vertical" ; Vertical layout might be better for list + notes
-                 :initialValues {:auxiliary_examinations_notes aux-notes}
+                 :initialValues {:辅助检查备注 aux-notes} ; Updated name
                  :key patient-id}
         [:> Form.Item {:label "上传检查文件 (如ECG, 胸片, 血常规等)"}
          [:> Upload upload-props
@@ -512,11 +512,11 @@
            [:> UploadOutlined]
            [:div {:style {:marginTop 8}} "上传文件"]]]]
         
-        [:> Form.Item {:label "其他检查结果说明" :name :auxiliary_examinations_notes}
+        [:> Form.Item {:label "其他检查结果说明" :name :辅助检查备注} ; Updated name
          [:> Input.TextArea {;; :value aux-notes ; Let Form handle
                              :placeholder "请在此记录其他重要检查结果的文字描述或总结"
                              :rows 4
-                             :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:auxiliary_examinations_notes] (-> % .-target .-value)])}]]
+                             :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:辅助检查备注] (-> % .-target .-value)])}]] ; Updated path
         
         (when @modal-open?
           [:> Modal {:visible @modal-open?
@@ -539,20 +539,20 @@
                  :initialValues (clj->js anesthesia-plan-data)
                  :key patient-id} ; Key for re-initialization
         [:div {:style grid-style-4-col}
-         [:> Form.Item {:label "ASA分级" :name :asa_rating :style (grid-col-span-style 1)} ; Matches canonical
-          [:> Select {;; :value (:asa_rating anesthesia-plan-data) ; Let Form handle
+         [:> Form.Item {:label "ASA分级" :name :ASA分级 :style (grid-col-span-style 1)} ; Updated name
+          [:> Select {;; :value (:ASA分级 anesthesia-plan-data) ; Let Form handle
                       :placeholder "请选择ASA分级"
-                      :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:anesthesia_plan :asa_rating] %])
+                      :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:麻醉评估与医嘱 :ASA分级] %]) ; Updated path
                       :options (mapv (fn [i] {:value (str "ASA " i) :label (str "ASA " i)}) (range 1 7))}]]
-         [:> Form.Item {:label "麻醉方式" :name :anesthesia_type :style (grid-col-span-style 3)} ; Matches canonical
-          [:> Input {;; :value (:anesthesia_type anesthesia-plan-data) ; Let Form handle
+         [:> Form.Item {:label "麻醉方式" :name :拟行麻醉方式 :style (grid-col-span-style 3)} ; Updated name
+          [:> Input {;; :value (:拟行麻醉方式 anesthesia-plan-data) ; Let Form handle
                      :placeholder "请输入麻醉方式"
-                     :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:anesthesia_plan :anesthesia_type] (-> % .-target .-value)])}]]
-         [:> Form.Item {:label "术前医嘱" :name :preoperative_instructions :style (grid-col-span-style 4)} ; Matches canonical
-          [:> Input.TextArea {;; :value (:preoperative_instructions anesthesia-plan-data) ; Let Form handle
+                     :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:麻醉评估与医嘱 :拟行麻醉方式] (-> % .-target .-value)])}]] ; Updated path
+         [:> Form.Item {:label "术前医嘱" :name :术前麻醉医嘱 :style (grid-col-span-style 4)} ; Updated name
+          [:> Input.TextArea {;; :value (:术前麻醉医嘱 anesthesia-plan-data) ; Let Form handle
                               :rows 3
                               :placeholder "请输入术前医嘱，例如禁食水时间、特殊准备等"
-                              :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:anesthesia_plan :preoperative_instructions] (-> % .-target .-value)])}]]]])
+                              :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:麻醉评估与医嘱 :术前麻醉医嘱] (-> % .-target .-value)])}]]]]) ; Updated path
      [:> Empty {:description "暂无术前麻醉医嘱信息或未选择患者"}]]))
 
 ;; 辅助函数，用于显示签名和日期
@@ -669,9 +669,9 @@
         [:f> acards/airway-assessment-card {:report-form-instance-fn register-form-instance}]
         [:f> acards/spinal-anesthesia-assessment-card {:report-form-instance-fn register-form-instance}]
         [general-condition-card]
-        [medical-history-summary-card]
-        [comorbidities-card]
-        [physical-examination-card]
+        ;; [medical-history-summary-card] ; Commented out
+        ;; [comorbidities-card] ; Commented out
+        ;; [physical-examination-card] ; Commented out as per instructions
         [auxiliary-tests-card]
         [preoperative-orders-card]
         [remarks-card]
