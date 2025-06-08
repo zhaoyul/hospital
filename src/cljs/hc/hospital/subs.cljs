@@ -40,21 +40,21 @@
   :<- [::assessment-status-filter]
   ;; Removed :<- [::anesthesia-example-patients]
   (fn [[api-assessments search-term date-range-moments status-filter] _] ;; Removed example-patients
-    (letfn [(format-gender [g] (case g "male" "男" "female" "女" "未知"))
+    (letfn [(format-gender [g] (case g "男" "男" "女" "女" "其他" "其他" "未知")) ; Updated to match spec if different
             (format-date-str [d] (when d (utils/format-date d "YYYY-MM-DD")))
             (patient-from-api-assessment [assessment]
-              ;; Accessing canonical structure directly from :assessment_data
-              (let [basic-info (get-in assessment [:assessment_data :basic_info] {})
-                    anesthesia-plan (get-in assessment [:assessment_data :anesthesia_plan] {})]
-                {:key (:patient_id assessment)
-                 :name (or (:name basic-info) "未知姓名")
-                 :patient-id-display (or (:outpatient_number basic-info) (:patient_id assessment))
-                 :gender (format-gender (:gender basic-info))
-                 :age (str (or (:age basic-info) "未知") "岁")
-                 :anesthesia-type (or (:anesthesia_type anesthesia-plan) "未知麻醉方式")
+              ;; Accessing canonical structure directly from :assessment_data, now using Chinese keys
+              (let [basic-info (get-in assessment [:assessment_data :基本信息] {})
+                    anesthesia-plan (get-in assessment [:assessment_data :麻醉评估与医嘱] {})]
+                {:key (:patient_id assessment) ; patient_id is from the wrapper, not assessment_data
+                 :name (or (:姓名 basic-info) "未知姓名")
+                 :patient-id-display (or (:门诊号 basic-info) (:patient_id assessment))
+                 :gender (format-gender (:性别 basic-info))
+                 :age (str (or (:年龄 basic-info) "未知") "岁")
+                 :anesthesia-type (or (:拟行麻醉方式 anesthesia-plan) "未知麻醉方式")
                  ;; Timestamps are now directly in basic_info according to canonical server structure
-                 :date (format-date-str (:assessment_updated_at basic-info)) ; Use assessment_updated_at
-                 :status (or (:assessment_status basic-info) "待评估")}))] ; Use assessment_status
+                 :date (format-date-str (:评估更新时间 basic-info)) ; Use 评估更新时间
+                 :status (or (:评估状态 basic-info) "待评估")}))] ; Use 评估状态
 
       (let [patients-from-api (if (seq api-assessments)
                                 (mapv patient-from-api-assessment api-assessments)
@@ -96,44 +96,44 @@
 ;; Basic Info
 (rf/reg-sub ::canonical-basic-info
   :<- [::current-canonical-assessment]
-  (fn [assessment _] (:basic_info assessment)))
+  (fn [assessment _] (:基本信息 assessment)))
 
 (rf/reg-sub ::canonical-patient-name
   :<- [::canonical-basic-info]
-  (fn [basic-info _] (:name basic-info)))
+  (fn [basic-info _] (:姓名 basic-info))) ;; Updated to :姓名
 
 (rf/reg-sub ::canonical-patient-outpatient-number
   :<- [::canonical-basic-info]
-  (fn [basic-info _] (:outpatient_number basic-info)))
+  (fn [basic-info _] (:门诊号 basic-info))) ;; Updated to :门诊号
 
-;; Medical History
-(rf/reg-sub ::canonical-medical-history
-  :<- [::current-canonical-assessment]
-  (fn [assessment _] (:medical_history assessment)))
+;; Medical History - DEPRECATED due to spec changes to Chinese keywords and restructuring
+;; (rf/reg-sub ::canonical-medical-history
+;;   :<- [::current-canonical-assessment]
+;;   (fn [assessment _] (:medical_history assessment))) ;; This key no longer exists at the top level
 
-;; Physical Examination
-(rf/reg-sub ::canonical-physical-examination
-  :<- [::current-canonical-assessment]
-  (fn [assessment _] (:physical_examination assessment)))
+;; Physical Examination - DEPRECATED due to spec changes to Chinese keywords and restructuring
+;; (rf/reg-sub ::canonical-physical-examination
+;;   :<- [::current-canonical-assessment]
+;;   (fn [assessment _] (:physical_examination assessment))) ;; This key no longer exists at the top level
 
-;; Comorbidities
-(rf/reg-sub ::canonical-comorbidities
-  :<- [::current-canonical-assessment]
-  (fn [assessment _] (:comorbidities assessment)))
+;; Comorbidities - DEPRECATED due to spec changes to Chinese keywords and restructuring
+;; (rf/reg-sub ::canonical-comorbidities
+;;   :<- [::current-canonical-assessment]
+;;   (fn [assessment _] (:comorbidities assessment))) ;; This key no longer exists at the top level
 
 ;; Auxiliary Examinations
 (rf/reg-sub ::canonical-auxiliary-examinations
   :<- [::current-canonical-assessment]
-  (fn [assessment _] (:auxiliary_examinations assessment)))
+  (fn [assessment _] (:辅助检查集 assessment))) ;; Updated to :辅助检查集
 
 (rf/reg-sub ::canonical-auxiliary-examinations-notes
   :<- [::current-canonical-assessment]
-  (fn [assessment _] (:auxiliary_examinations_notes assessment)))
+  (fn [assessment _] (:辅助检查备注 assessment))) ;; Updated to :辅助检查备注
 
 ;; Anesthesia Plan
 (rf/reg-sub ::canonical-anesthesia-plan
   :<- [::current-canonical-assessment]
-  (fn [assessment _] (:anesthesia_plan assessment)))
+  (fn [assessment _] (:麻醉评估与医嘱 assessment))) ;; Updated to :麻醉评估与医嘱
 
 ;; Cardiovascular System - New
 (rf/reg-sub ::circulatory-system-data
@@ -204,7 +204,7 @@
 (rf/reg-sub ::pregnancy-assessment-data
   :<- [::current-canonical-assessment]
   (fn [assessment _]
-    (or (:妊娠评估 assessment) {})))
+    (or (:妊娠 assessment) {}))) ;; Updated to :妊娠
 
 ;; Surgical Anesthesia History - New
 (rf/reg-sub ::surgical-anesthesia-history-data
@@ -246,8 +246,8 @@
   :<- [::current-canonical-assessment]
   :<- [::all-patient-assessments]
   (fn [[patient-key current-canonical-data all-assessments] _]
-    (if (and patient-key current-canonical-data 
-             (= patient-key (get-in current-canonical-data [:basic_info :outpatient_number])))
+    (if (and patient-key current-canonical-data
+             (= patient-key (get-in current-canonical-data [:基本信息 :门诊号]))) ;; Updated path
       current-canonical-data ;; If current canonical matches selected ID, use it directly
       (when patient-key ;; Otherwise, find in the main list and get its assessment_data
         (some-> (filter #(= (:patient_id %) patient-key) all-assessments)

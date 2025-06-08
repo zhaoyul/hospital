@@ -8,51 +8,37 @@
 
 ;; -- Default Canonical Assessment Structure --
 (def default-canonical-assessment
-  {:basic_info {:outpatient_number nil, :name nil, :gender nil, :age nil,
-                :department nil, :health_card_number nil, :diagnosis nil,
-                :planned_surgery nil, :height nil, :weight nil,
-                :patient_submitted_at nil, :assessment_updated_at nil,
-                :assessment_status "待评估", :doctor_name nil, :assessment_notes nil}
-   :medical_history {:allergy {:has_history false, :details nil, :last_reaction_date nil}
-                     :smoking {:has_history false, :years nil, :cigarettes_per_day nil}
-                     :drinking {:has_history false, :years nil, :alcohol_per_day nil}}
-   :physical_examination {:mental_state nil, :activity_level nil,
-                          :bp_systolic nil, :bp_diastolic nil, :heart_rate nil,
-                          :respiratory_rate nil, :temperature nil, :spo2 nil,
-                          :heart {:status nil, :notes nil}, :lungs {:status nil, :notes nil},
-                          :airway {:status nil, :notes nil}, :teeth {:status nil, :notes nil},
-                          :spine_limbs {:status nil, :notes nil}, :neuro {:status nil, :notes nil},
-                          :other_findings nil}
-   :comorbidities {:respiratory {:has false, :details nil}
-                   :cardiovascular {:has false, :details nil}
-                   :endocrine {:has false, :details nil}
-                   :neuro_psychiatric {:has false, :details nil}
-                   :neuromuscular {:has false, :details nil}
-                   :hepatic {:has false, :details nil}
-                   :renal {:has false, :details nil}
-                   :musculoskeletal {:has false, :details nil}
-                   :malignant_hyperthermia_fh {:has false, :details nil}
-                   :anesthesia_surgery_history {:has false, :details nil}
-                   :special_medications {:has_taken false, :details nil, :last_dose_time nil}}
-   :auxiliary_examinations []
-   :auxiliary_examinations_notes nil
-   :anesthesia_plan {:asa_rating nil, :anesthesia_type nil, :preoperative_instructions nil}
-   ;; Adding new assessment sections, initialized to empty maps
-   :circulatory_system {}
-   :respiratory_system {}
-   :mental_neuromuscular_system {}
-   :endocrine_system {}
-   :liver_kidney_system {}
-   :digestive_system {}
-   :hematologic_system {}
-   :immune_system {}
-   :special_medication_history {}
-   :special_disease_history {}
-   :nutritional_assessment {}
-   :pregnancy_assessment {}
-   :surgical_anesthesia_history {}
-   :airway_assessment {}
-   :spinal_anesthesia_assessment {}})
+  {:基本信息 {:门诊号 nil, :姓名 nil, :身份证号 nil, :手机号 nil, :性别 nil,
+            :年龄 nil, :院区 nil, :患者提交时间 nil, :评估更新时间 nil,
+            :评估状态 "待评估", :医生姓名 nil, :评估备注 nil, :身高cm nil,
+            :体重kg nil, :精神状态 nil, :活动能力 nil, :血压mmHg nil,
+            :脉搏次每分 nil, :呼吸次每分 nil, :体温摄氏度 nil, :SpO2百分比 nil,
+            :术前诊断 nil, :拟施手术 nil}
+   :循环系统 {}
+   :呼吸系统 {}
+   :精神及神经肌肉系统 {}
+   :内分泌系统 {}
+   :肝肾病史 {}
+   :消化系统 {}
+   :血液系统 {}
+   :免疫系统 {}
+   :特殊用药史 {}
+   :特殊疾病病史 {}
+   :营养评估 {}
+   :妊娠 {}
+   :手术麻醉史 {}
+   :气道评估 {}
+   :椎管内麻醉相关评估 {}
+   :辅助检查集 []
+   :辅助检查备注 nil
+   :麻醉评估与医嘱 {:ASA分级 nil, :心功能分级NYHA nil, :拟行麻醉方式 nil,
+                :监测项目 nil, :特殊技术 nil, :其他麻醉相关 nil,
+                :术前麻醉医嘱 nil, :术日晨继续应用药物 nil, :术日晨停用药物 nil,
+                :麻醉前用药 nil, :麻醉中需注意的问题 nil}
+   ;; 根据 患者评估数据Spec 添加可能需要的顶层key，如果它们需要在UI加载时有默认结构
+   ;; :审批状态 {} ; 根据需要取消注释并提供默认结构
+   ;; :知情同意书 {} ; 根据需要取消注释并提供默认结构
+   })
 
 
 ;; -- Initialization

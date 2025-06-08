@@ -20,110 +20,15 @@
    [hc.hospital.subs :as subs]
    [hc.hospital.utils :as utils]
    [hc.hospital.ui-helpers :as ui-helpers]
+   [hc.hospital.summary-generators :as sg] ; Added new namespace
    [re-frame.core :as rf]
    [reagent.core :as r]))
 
 ;; Data-driven rendering helpers have been moved to hc.hospital.pages.assessment-form-generators
 
-(defn- generate-circulatory-summary "循环系统总结" [data]
-  (if (or (nil? data) (empty? data))
-    "无数据"
-    (let [findings (transient [])]
-      ;; ECG Description
-      (when (not (str/blank? (get-in data [:ecg_description])))
-        (conj! findings "ECG描述:有记录"))
-
-      ;; Cardiac Disease History
-      (let [cardiac_history_data (get data :cardiac_disease_history)
-            cdh_has (get cardiac_history_data :has)]
-        (cond
-          (= cdh_has "有")
-          (let [specific_cardiac_issues (transient [])
-                cad_data (get cardiac_history_data :coronary_artery_disease)
-                arr_data (get cardiac_history_data :arrhythmia)]
-            ;; CAD
-            (when (= (get cad_data :has) "有")
-              (let [symptoms (get cad_data :symptoms)]
-                (cond
-                  (= symptoms "心梗") (conj! specific_cardiac_issues "冠心病(心梗)")
-                  (= symptoms "不稳定性心绞痛") (conj! specific_cardiac_issues "冠心病(不稳定性心绞痛)")
-                  :else (conj! specific_cardiac_issues "冠心病"))))
-            ;; Arrhythmia
-            (when (= (get arr_data :has) "有")
-              (let [arr_type (get arr_data :type)]
-                (if (or (= arr_type "高危型") (= arr_type "中危型"))
-                  (conj! specific_cardiac_issues (str "心律失常(" arr_type ")"))
-                  (conj! specific_cardiac_issues "心律失常"))))
-            ;; Cardiomyopathy
-            (when (= (get-in cardiac_history_data [:cardiomyopathy :has]) "有")
-              (conj! specific_cardiac_issues "心肌病"))
-            ;; Valvular Heart Disease
-            (when (= (get-in cardiac_history_data [:valvular_heart_disease :has]) "有")
-              (conj! specific_cardiac_issues "瓣膜病"))
-            ;; Congenital Heart Disease
-            (when (= (get-in cardiac_history_data [:congenital_heart_disease :has]) "有")
-              (conj! specific_cardiac_issues "先心病"))
-            ;; Congestive Heart Failure
-            (when (= (get-in cardiac_history_data [:congestive_heart_failure :has]) "有")
-              (conj! specific_cardiac_issues "心衰史"))
-            ;; Pulmonary Hypertension
-            (when (= (get-in cardiac_history_data [:pulmonary_hypertension :has]) "有")
-              (conj! specific_cardiac_issues "肺动脉高压"))
-
-            (let [persistent_specific_issues (persistent! specific_cardiac_issues)]
-              (if (seq persistent_specific_issues)
-                (conj! findings (str "心脏病史:异常 (" (str/join ", " persistent_specific_issues) ")"))
-                (conj! findings "心脏病史:异常"))))
-
-          (= cdh_has "无")
-          (conj! findings "心脏病史:无")
-
-          :else ; nil or other
-          (conj! findings "心脏病史:未评估")))
-
-      ;; Pacemaker History
-      (let [pm_has (get-in data [:pacemaker_history :has])
-            pm_type (get-in data [:pacemaker_history :type])]
-        (cond
-          (= pm_has "有") (conj! findings (str "起搏器:有" (when pm_type (str "(" pm_type ")"))))
-          (= pm_has "无") (conj! findings "起搏器:无")
-          (= pm_has "不祥") (conj! findings "起搏器:不祥")))
-
-      ;; Cardiac Ultrasound Findings
-      (when (not (str/blank? (get-in data [:cardiac_ultrasound_findings :details])))
-        (conj! findings "心脏彩超:有记录"))
-
-      ;; Coronary CTA/Angiography
-      (when (not (str/blank? (get-in data [:coronary_cta_angiography_results :details])))
-        (conj! findings "冠脉CTA/造影:有记录"))
-
-      ;; Cardiac Function Assessment
-      (let [cardiac_function (get-in data [:cardiac_function_assessment :class])]
-        (cond
-          (or (nil? cardiac_function) (= cardiac_function "未评估")) (conj! findings "心功能:未评估")
-          (= cardiac_function "Ⅰ 级") (conj! findings "心功能:正常(Ⅰ级)")
-          :else (conj! findings (str "心功能:" cardiac_function "(异常)"))))
-
-      ;; Exercise Capacity Assessment
-      (let [exercise_capacity (get-in data [:exercise_capacity_assessment :level])]
-        (cond
-          (or (nil? exercise_capacity) (= exercise_capacity "未评估")) (conj! findings "运动能力:未评估")
-          (= exercise_capacity "运动能力正常") (conj! findings "运动能力:正常")
-          :else (conj! findings (str "运动能力:" exercise_capacity "(异常)"))))
-
-      ;; Other Cardiac Info
-      (when (not (str/blank? (get-in data [:other_cardiac_info :details])))
-        (conj! findings "其他循环系统情况:有记录"))
-
-      ;; Final Summary
-      (let [persistent_findings (persistent! findings)]
-        (if (empty? persistent_findings)
-          "循环系统: 未见明显异常"
-          (str "循环系统: " (str/join ", " persistent_findings)))))))
-
 (defn- circulatory-system-summary-view [props]
   (let [{:keys [circulatory-data]} props
-        content (generate-circulatory-summary circulatory-data)]
+        content (sg/generate-summary-from-spec circulatory-data assessment-specs/循环系统Spec)]
     [:div {:style {:padding "10px"}}
      content]))
 
@@ -133,45 +38,45 @@
         initial-form-values (let [base-data (when circulatory-data
                                               (-> circulatory-data
                                                   (update-in [:心脏疾病史 :详情 :充血性心力衰竭史 :上次发作日期] #(when % (utils/parse-date %)))))
-                                  default-values {:心脏疾病史 {:有无 "无"
-                                                               :详情 {:冠心病 {:有无 "无"}
-                                                                      :心律失常 {:有无 "无"}
-                                                                      :心肌病 {:有无 "无"}
-                                                                      :瓣膜性心脏病 {:有无 "无"}
-                                                                      :先天性心脏病 {:有无 "无"}
-                                                                      :充血性心力衰竭史 {:有无 "无"}
-                                                                      :肺动脉高压 {:有无 "无"}}}
-                                                  :心脏起搏器植入史 {:有无 "无"}
-                                                  :心脏功能评估 {:NYHA分级 "Ⅰ级"}
-                                                  :运动能力评估 {:METs水平 "运动能力正常"}}
+                                  default-values {:心脏疾病史 {:有无 :无 ; Using keyword for enum
+                                                               :详情 {:冠心病 {:有无 :无}
+                                                                      :心律失常 {:有无 :无}
+                                                                      :心肌病 {:有无 :无}
+                                                                      :心脏瓣膜病变 {:有无 :无} ; Updated key
+                                                                      :先天性心脏病 {:有无 :无}
+                                                                      :充血性心力衰竭史 {:有无 :无}
+                                                                      :肺动脉高压 {:有无 :无}}}
+                                                  :心脏起搏器植入史 {:有无 :无} ; Using keyword for enum
+                                                  :心脏功能评估 {:NYHA分级 :Ⅰ级} ; Using keyword for enum
+                                                  :运动能力评估 {:METs水平 :大于6MET}} ; Using keyword for enum, e.g. :大于6MET (check spec for exact enum)
                                   merged-data (merge default-values (or base-data {}))]
                               ;; Apply defaults specifically for :有无 fields if details exist but :有无 is nil
                               (cond-> merged-data
                                 (and (get-in merged-data [:心脏疾病史 :详情]) (nil? (get-in merged-data [:心脏疾病史 :有无])))
-                                (assoc-in [:心脏疾病史 :有无] "有")
+                                (assoc-in [:心脏疾病史 :有无] :有)
                                 (and (get-in merged-data [:心脏疾病史 :详情 :冠心病]) (nil? (get-in merged-data [:心脏疾病史 :详情 :冠心病 :有无])))
-                                (assoc-in [:心脏疾病史 :详情 :冠心病 :有无] "有")
+                                (assoc-in [:心脏疾病史 :详情 :冠心病 :有无] :有)
                                 (and (get-in merged-data [:心脏疾病史 :详情 :心律失常]) (nil? (get-in merged-data [:心脏疾病史 :详情 :心律失常 :有无])))
-                                (assoc-in [:心脏疾病史 :详情 :心律失常 :有无] "有")
+                                (assoc-in [:心脏疾病史 :详情 :心律失常 :有无] :有)
                                 (and (get-in merged-data [:心脏疾病史 :详情 :心肌病]) (nil? (get-in merged-data [:心脏疾病史 :详情 :心肌病 :有无])))
-                                (assoc-in [:心脏疾病史 :详情 :心肌病 :有无] "有")
-                                (and (get-in merged-data [:心脏疾病史 :详情 :瓣膜性心脏病]) (nil? (get-in merged-data [:心脏疾病史 :详情 :瓣膜性心脏病 :有无])))
-                                (assoc-in [:心脏疾病史 :详情 :瓣膜性心脏病 :有无] "有")
+                                (assoc-in [:心脏疾病史 :详情 :心肌病 :有无] :有)
+                                (and (get-in merged-data [:心脏疾病史 :详情 :心脏瓣膜病变]) (nil? (get-in merged-data [:心脏疾病史 :详情 :心脏瓣膜病变 :有无])))
+                                (assoc-in [:心脏疾病史 :详情 :心脏瓣膜病变 :有无] :有)
                                 (and (get-in merged-data [:心脏疾病史 :详情 :先天性心脏病]) (nil? (get-in merged-data [:心脏疾病史 :详情 :先天性心脏病 :有无])))
-                                (assoc-in [:心脏疾病史 :详情 :先天性心脏病 :有无] "有")
+                                (assoc-in [:心脏疾病史 :详情 :先天性心脏病 :有无] :有)
                                 (and (get-in merged-data [:心脏疾病史 :详情 :充血性心力衰竭史]) (nil? (get-in merged-data [:心脏疾病史 :详情 :充血性心力衰竭史 :有无])))
-                                (assoc-in [:心脏疾病史 :详情 :充血性心力衰竭史 :有无] "有")
+                                (assoc-in [:心脏疾病史 :详情 :充血性心力衰竭史 :有无] :有)
                                 (and (get-in merged-data [:心脏疾病史 :详情 :肺动脉高压]) (nil? (get-in merged-data [:心脏疾病史 :详情 :肺动脉高压 :有无])))
-                                (assoc-in [:心脏疾病史 :详情 :肺动脉高压 :有无] "有")
+                                (assoc-in [:心脏疾病史 :详情 :肺动脉高压 :有无] :有)
                                 (and (get-in merged-data [:心脏起搏器植入史 :详情]) (nil? (get-in merged-data [:心脏起搏器植入史 :有无])))
-                                (assoc-in [:心脏起搏器植入史 :有无] "有")))
+                                (assoc-in [:心脏起搏器植入史 :有无] :有)))
         _ (timbre/info "circulatory-system-detailed-view: initial-form-values:" (clj->js initial-form-values))
         on-finish-fn (fn [values]
                        (timbre/info "circulatory-system-detailed-view: on-finish-fn raw JS values:" values)
                        (let [values-clj (js->clj values :keywordize-keys true)
                              _ (timbre/info "circulatory-system-detailed-view: on-finish-fn cljs values-clj:" (clj->js values-clj))
                              transformed-values (-> values-clj
-                                                    (update-in [:心脏疾病史 :详情 :充血性心力衰竭史 :上次发作日期] #(when % (utils/date->iso-string %))))]
+                                                    (update-in [:心脏疾病史 :详情 :充血性心力衰竭史 :上次发作日期] #(when % (utils/date->iso-string %))))] ; Path already Chinese
                          (rf/dispatch [::events/update-canonical-assessment-section :循环系统 transformed-values])))]
     (React/useEffect (fn []
                        (when report-form-instance-fn
@@ -225,140 +130,9 @@
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
 
-(defn- generate-respiratory-summary [data]
-  (if (or (nil? data) (empty? data))
-    "无数据"
-    (let [findings (transient [])]
-      ;; Cold History
-      (let [cold_data (get data :cold_history_last_2_weeks)
-            cold_present (get cold_data :present)]
-        (cond
-          (= cold_present "有")
-          (let [symptoms (get cold_data :symptoms)
-                symptoms_str (if (seq symptoms) (str "(" (str/join "/" symptoms) ")") "")]
-            (conj! findings (str "近期感冒:有" symptoms_str)))
-          (= cold_present "无")
-          (conj! findings "近期感冒:无")
-          :else
-          (conj! findings "近期感冒:未评估/不祥")))
-
-      ;; Bronchitis/Pneumonia
-      (let [bp_data (get data :bronchitis_pneumonia_last_month)
-            bp_present (get bp_data :present)]
-        (cond
-          (= bp_present "有")
-          (let [treatment (get bp_data :treatment_status)]
-            (conj! findings (str "近期支气管炎/肺炎:有" (when treatment (str "(" treatment ")")))))
-          (= bp_present "无")
-          (conj! findings "近期支气管炎/肺炎:无")
-          :else
-          (conj! findings "近期支气管炎/肺炎:未评估/不祥")))
-
-      ;; Asthma History
-      (let [asthma_data (get data :asthma_history)
-            asthma_present (get asthma_data :present)]
-        (cond
-          (= asthma_present "有")
-          (let [med_status (get asthma_data :medication_status)]
-            (conj! findings (str "哮喘病史:有" (when med_status (str "(" med_status ")")))))
-          (= asthma_present "无")
-          (conj! findings "哮喘病史:无")
-          :else
-          (conj! findings "哮喘病史:未评估/不祥")))
-
-      ;; COPD History
-      (let [copd_data (get data :copd_history)
-            copd_present (get copd_data :present)]
-        (cond
-          (= copd_present "有")
-          (let [treatment (get copd_data :treatment_status)]
-            (conj! findings (str "COPD病史:有" (when treatment (str "(" treatment ")")))))
-          (= copd_present "无")
-          (conj! findings "COPD病史:无")
-          :else
-          (conj! findings "COPD病史:未评估/不祥")))
-
-      ;; Bronchiectasis History
-      (let [bronch_data (get data :bronchiectasis_history)
-            bronch_present (get bronch_data :present)]
-        (cond
-          (= bronch_present "有")
-          (let [treatment (get bronch_data :treatment_status)]
-            (conj! findings (str "支气管扩张:有" (when treatment (str "(" treatment ")")))))
-          (= bronch_present "无")
-          (conj! findings "支气管扩张:无")
-          :else
-          (conj! findings "支气管扩张:未评估/不祥")))
-
-      ;; Pulmonary Nodules History
-      (let [nod_data (get data :pulmonary_nodules_history)
-            nod_present (get nod_data :present)]
-        (cond
-          (= nod_present "有")
-          (let [treatment (get nod_data :treatment_status)]
-            (conj! findings (str "肺部结节:有" (when treatment (str "(" treatment ")")))))
-          (= nod_present "无")
-          (conj! findings "肺部结节:无")
-          :else
-          (conj! findings "肺部结节:未评估/不祥")))
-
-      ;; Lung Tumor History
-      (let [tumor_data (get data :lung_tumor_history)
-            tumor_present (get tumor_data :present)]
-        (cond
-          (= tumor_present "有")
-          (let [treatment (get tumor_data :treatment_status)]
-            (conj! findings (str "肺部肿瘤:有" (when treatment (str "(" treatment ")")))))
-          (= tumor_present "无")
-          (conj! findings "肺部肿瘤:无")
-          :else
-          (conj! findings "肺部肿瘤:未评估/不祥")))
-
-      ;; Chest X-ray
-      (when (not (str/blank? (get data :chest_xray_results)))
-        (conj! findings "胸片:有记录"))
-
-      ;; Chest CT
-      (when (not (str/blank? (get data :chest_ct_results)))
-        (conj! findings "胸部CT:有记录"))
-
-      ;; Pulmonary Function
-      (when (not (str/blank? (get data :pulmonary_function_test_results)))
-        (conj! findings "肺功能:有记录"))
-
-      ;; Blood Gas Analysis
-      (when (not (str/blank? (get data :blood_gas_analysis_results)))
-        (conj! findings "血气分析:有记录"))
-
-      ;; Tuberculosis History
-      (let [tb_data (get data :tuberculosis_history)
-            tb_present (get tb_data :present)]
-        (cond
-          (= tb_present "有")
-          (let [treatment (get tb_data :treatment_status)
-                infectious (get tb_data :infectious)
-                details (transient [])]
-            (when treatment (conj! details (str "治疗:" treatment)))
-            (when infectious (conj! details (str "传染性:" infectious)))
-            (conj! findings (str "肺结核:有" (if (seq (persistent! details)) (str "(" (str/join ", " (persistent! details)) ")") ""))))
-          (= tb_present "无")
-          (conj! findings "肺结核:无")
-          :else
-          (conj! findings "肺结核:未评估")))
-
-      ;; Other Respiratory Conditions
-      (when (not (str/blank? (get data :other_respiratory_conditions)))
-        (conj! findings "其他呼吸系统情况:有记录"))
-
-      ;; Final Summary
-      (let [persistent_findings (persistent! findings)]
-        (if (empty? persistent_findings)
-          "呼吸系统: 未见明显异常"
-          (str "呼吸系统: " (str/join ", " persistent_findings)))))))
-
-(defn respiratory-system-summary-view [props]
+(defn- respiratory-system-summary-view [props]
   (let [{:keys [respiratory-data]} props
-        content (generate-respiratory-summary respiratory-data)]
+        content (sg/generate-summary-from-spec respiratory-data assessment-specs/呼吸系统Spec)]
     [:div {:style {:padding "10px"}}
      content]))
 
@@ -368,28 +142,24 @@
         ;; Removed local cold-symptom-options, treatment-options
         initial-form-values (let [base-data (when respiratory-data
                                               (-> respiratory-data
-                                                  (assoc-in [:cold_history_last_2_weeks :onset_date]
-                                                            (utils/parse-date (get-in respiratory-data [:cold_history_last_2_weeks :onset_date])))
-                                                  (assoc-in [:bronchitis_pneumonia_last_month :onset_date]
-                                                            (utils/parse-date (get-in respiratory-data [:bronchitis_pneumonia_last_month :onset_date])))
-                                                  (assoc-in [:asthma_history :last_episode_date]
-                                                            (utils/parse-date (get-in respiratory-data [:asthma_history :last_episode_date])))))]
-                              (-> (or base-data {})
-                                  (update-in [:cold_history_last_2_weeks :present] #(or % "无"))
-                                  (update-in [:bronchitis_pneumonia_last_month :present] #(or % "无"))
-                                  (update-in [:asthma_history :present] #(or % "无"))
-                                  (update-in [:copd_history :present] #(or % "无"))
-                                  (update-in [:bronchiectasis_history :present] #(or % "无"))
-                                  (update-in [:pulmonary_nodules_history :present] #(or % "无"))
-                                  (update-in [:lung_tumor_history :present] #(or % "无"))
-                                  (update-in [:tuberculosis_history :present] #(or % "无"))
-                                  (update-in [:tuberculosis_history :infectious] #(or % "无"))))
+                                                  (update-in [:近两周内感冒病史 :详情 :发病日期] #(when % (utils/parse-date %)))
+                                                  (update-in [:近一个月内支气管炎或肺炎病史 :详情 :发病日期] #(when % (utils/parse-date %)))
+                                                  (update-in [:哮喘病史 :详情 :上次发作日期] #(when % (utils/parse-date %)))))]
+                              (-> (or base-data {}) ; Base data should now have Chinese keys
+                                  (update-in [:近两周内感冒病史 :有无] #(or % :无)) ; Use keyword for enum
+                                  (update-in [:近一个月内支气管炎或肺炎病史 :有无] #(or % :无))
+                                  (update-in [:哮喘病史 :有无] #(or % :无))
+                                  (update-in [:慢性阻塞性肺疾病 :有无] #(or % :无))
+                                  (update-in [:支气管扩张症 :有无] #(or % :无))
+                                  (update-in [:肺部结节 :有无] #(or % :无))
+                                  (update-in [:肺部肿瘤 :有无] #(or % :无))
+                                  (update-in [:是否有肺结核] #(or % :无)))) ; Mapped from [:tuberculosis_history :present]
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)
                              transformed-values (-> values-clj
                                                     (update-in [:近两周内感冒病史 :详情 :发病日期] #(when % (utils/date->iso-string %)))
                                                     (update-in [:近一个月内支气管炎或肺炎病史 :详情 :发病日期] #(when % (utils/date->iso-string %)))
-                                                    (update-in [:哮喘病史 :详情 :上次发作日期] #(when % (utils/date->iso-string %))))]
+                                                    (update-in [:哮喘病史 :详情 :上次发作日期] #(when % (utils/date->iso-string %))))] ; Paths already Chinese
                          (rf/dispatch [::events/update-canonical-assessment-section :呼吸系统 transformed-values])))]
     (React/useEffect (fn []
                        (when report-form-instance-fn
@@ -448,74 +218,74 @@
   (if (or (nil? data) (empty? data))
     "无数据"
     (let [findings (transient [])]
-      ;; Psycho-cognitive History
-      (let [pc_data (get data :psycho_cognitive_history)
-            pc_present (get pc_data :present)]
+      ;; Psycho-cognitive History - Mapped from :psycho_cognitive_history to :精神认知相关疾病史
+      (let [pc_data (get data :精神认知相关疾病史)
+            pc_present (get pc_data :有无)] ; Mapped :present to :有无
         (cond
-          (= pc_present "有") (conj! findings (str "精神认知史:有" (let [symptoms (get pc_data :symptoms)] (if (seq symptoms) (str "(" (str/join "/" symptoms) ")") ""))))
-          (= pc_present "无") (conj! findings "精神认知史:无")
+          (= pc_present :有) (conj! findings (str "精神认知史:有" (let [symptoms (get-in pc_data [:详情 :症状])] (if (seq symptoms) (str "(" (str/join "/" (map name symptoms)) ")") "")))) ; symptoms under :详情
+          (= pc_present :无) (conj! findings "精神认知史:无")
           :else (conj! findings "精神认知史:未评估/不祥")))
 
-      ;; Epilepsy History
-      (let [ep_data (get data :epilepsy_history)
-            ep_present (get ep_data :present)]
+      ;; Epilepsy History - Mapped from :epilepsy_history to :癫痫病史
+      (let [ep_data (get data :癫痫病史)
+            ep_present (get ep_data :有无)] ; Mapped :present to :有无
         (cond
-          (= ep_present "有") (conj! findings (str "癫痫史:有" (when-let [status (get ep_data :treatment_status)] (str "(" status ")"))))
-          (= ep_present "无") (conj! findings "癫痫史:无")
+          (= ep_present :有) (conj! findings (str "癫痫史:有" (when-let [status (get-in ep_data [:详情 :治疗情况])] (str "(" (name status) ")")))) ; treatment_status under :详情
+          (= ep_present :无) (conj! findings "癫痫史:无")
           :else (conj! findings "癫痫史:未评估/不祥")))
 
-      ;; Vertigo History
-      (let [vt_data (get data :vertigo_history)
-            vt_present (get vt_data :present)]
+      ;; Vertigo History - Mapped from :vertigo_history to :眩晕病史
+      (let [vt_data (get data :眩晕病史)
+            vt_present (get vt_data :有无)] ; Mapped :present to :有无
         (cond
-          (= vt_present "有") (conj! findings (str "眩晕史:有" (when-let [status (get vt_data :treatment_status)] (str "(" status ")"))))
-          (= vt_present "无") (conj! findings "眩晕史:无")
+          (= vt_present :有) (conj! findings (str "眩晕史:有" (when-let [status (get-in vt_data [:详情 :治疗情况])] (str "(" (name status) ")")))) ; treatment_status under :详情
+          (= vt_present :无) (conj! findings "眩晕史:无")
           :else (conj! findings "眩晕史:未评估/不祥")))
 
-      ;; TIA History
-      (let [tia_data (get data :tia_history)
-            tia_present (get tia_data :present)]
+      ;; TIA History - Mapped from :tia_history to :短暂性脑缺血发作病史
+      (let [tia_data (get data :短暂性脑缺血发作病史)
+            tia_present (get tia_data :有无)] ; Mapped :present to :有无
         (cond
-          (= tia_present "有") (conj! findings (str "TIA史:有" (when-let [status (get tia_data :recent_onset_status)] (str "(" status ")"))))
-          (= tia_present "无") (conj! findings "TIA史:无")
+          (= tia_present :有) (conj! findings (str "TIA史:有" (when-let [status (get-in tia_data [:详情 :近期发作情况])] (str "(" (name status) ")")))) ; recent_onset_status under :详情
+          (= tia_present :无) (conj! findings "TIA史:无")
           :else (conj! findings "TIA史:未评估/不祥")))
 
-      ;; Cerebral Infarction History
-      (let [ci_data (get data :cerebral_infarction_history)
-            ci_present (get ci_data :present)]
+      ;; Cerebral Infarction History - Mapped from :cerebral_infarction_history to :脑梗病史
+      (let [ci_data (get data :脑梗病史)
+            ci_present (get ci_data :有无)] ; Mapped :present to :有无
         (cond
-          (= ci_present "有") (conj! findings (str "脑梗史:有" (when-let [status (get ci_data :treatment_status)] (str "(" status ")"))))
-          (= ci_present "无") (conj! findings "脑梗史:无")
+          (= ci_present :有) (conj! findings (str "脑梗史:有" (when-let [status (get-in ci_data [:详情 :治疗情况])] (str "(" (name status) ")")))) ; treatment_status under :详情
+          (= ci_present :无) (conj! findings "脑梗史:无")
           :else (conj! findings "脑梗史:未评估")))
 
-      ;; Cerebral Hemorrhage History
-      (let [ch_data (get data :cerebral_hemorrhage_history)
-            ch_present (get ch_data :present)]
+      ;; Cerebral Hemorrhage History - Mapped from :cerebral_hemorrhage_history to :脑出血病史
+      (let [ch_data (get data :脑出血病史)
+            ch_present (get ch_data :有无)] ; Mapped :present to :有无
         (cond
-          (= ch_present "有") (conj! findings (str "脑出血史:有" (when-let [status (get ch_data :treatment_status)] (str "(" status ")"))))
-          (= ch_present "无") (conj! findings "脑出血史:无")
+          (= ch_present :有) (conj! findings (str "脑出血史:有" (when-let [status (get-in ch_data [:详情 :治疗情况])] (str "(" (name status) ")")))) ; treatment_status under :详情
+          (= ch_present :无) (conj! findings "脑出血史:无")
           :else (conj! findings "脑出血史:未评估")))
 
-      ;; Parkinson's Syndrome
-      (let [ps_data (get data :parkinsons_syndrome)
-            ps_present (get ps_data :present)]
+      ;; Parkinson's Syndrome - Mapped from :parkinsons_syndrome to :帕金森综合症
+      (let [ps_data (get data :帕金森综合症)
+            ps_present (get ps_data :有无)] ; Mapped :present to :有无
         (cond
-          (= ps_present "有") (conj! findings (str "帕金森综合征:有" (when-let [status (get ps_data :treatment_status)] (str "(" status ")"))))
-          (= ps_present "无") (conj! findings "帕金森综合征:无")
+          (= ps_present :有) (conj! findings (str "帕金森综合征:有" (when-let [status (get-in ps_data [:详情 :治疗情况])] (str "(" (name status) ")")))) ; treatment_status under :详情
+          (= ps_present :无) (conj! findings "帕金森综合征:无")
           :else (conj! findings "帕金森综合征:未评估")))
 
-      ;; Cranial/Carotid Stenosis
-      (let [ccs_present (get-in data [:cranial_carotid_stenosis :present])]
+      ;; Cranial/Carotid Stenosis - Mapped from :cranial_carotid_stenosis to :颅脑和颈动脉狭窄
+      (let [ccs_present (get-in data [:颅脑和颈动脉狭窄 :有无])] ; Mapped :present to :有无
         (cond
-          (= ccs_present "有") (conj! findings (str "颅脑/颈动脉狭窄:有" (if-not (str/blank? (get-in data [:cranial_carotid_stenosis :details])) "(详情)" "")))
-          (= ccs_present "无") (conj! findings "颅脑/颈动脉狭窄:无")
-          (= ccs_present "不祥") (conj! findings "颅脑/颈动脉狭窄:不祥")))
+          (= ccs_present :有) (conj! findings (str "颅脑/颈动脉狭窄:有" (if-not (str/blank? (get-in data [:颅脑和颈动脉狭窄 :描述])) "(详情)" ""))) ; :details to :描述
+          (= ccs_present :无) (conj! findings "颅脑/颈动脉狭窄:无")
+          (= ccs_present :不详) (conj! findings "颅脑/颈动脉狭窄:不详")))
 
-      ;; Other Neuromuscular Conditions
-      (let [onc_data (get data :other_neuromuscular_conditions)
-            onc_present (get onc_data :present)]
-        (when (= onc_present "有")
-          (conj! findings (str "其他神经肌肉系统情况:有" (let [symptoms (get onc_data :symptoms)] (if (seq symptoms) (str "(" (str/join "/" symptoms) ")") ""))))))
+      ;; Other Neuromuscular Conditions - Mapped from :other_neuromuscular_conditions to [:其他情况] (within this system)
+      (let [onc_data (get data :其他情况)
+            onc_present (get onc_data :有无)] ; Mapped :present to :有无
+        (when (= onc_present :有)
+          (conj! findings (str "其他神经肌肉系统情况:有" (let [symptoms (get-in onc_data [:详情 :症状])] (if (seq symptoms) (str "(" (str/join "/" (map name symptoms)) ")") "")))))) ; symptoms under :详情
 
       (let [persistent_findings (persistent! findings)]
         (if (empty? persistent_findings)
@@ -523,8 +293,8 @@
           (str "精神及神经肌肉系统: " (str/join ", " persistent_findings)))))))
 
 (defn mental-neuromuscular-system-summary-view [props]
-  (let [{:keys [endo-data]} props
-        content (generate-mental-neuromuscular-summary endo-data)]
+  (let [{:keys [mn-data]} props ; Corrected from endo-data to mn-data
+        content (generate-mental-neuromuscular-summary mn-data)]
     [:div {:style {:padding "10px"}}
      content]))
 
@@ -533,25 +303,24 @@
         [form] (Form.useForm)
         ;; Removed useWatch calls and local option lists
         initial-form-values (let [base-data (when mn-data
-                                              (-> mn-data
-                                                  (assoc-in [:epilepsy_history :last_seizure_date] (utils/parse-date (get-in mn-data [:epilepsy_history :last_seizure_date])))
-                                                  (assoc-in [:vertigo_history :last_episode_date] (utils/parse-date (get-in mn-data [:vertigo_history :last_episode_date])))
-                                                  (assoc-in [:cerebral_infarction_history :last_episode_date] (utils/parse-date (get-in mn-data [:cerebral_infarction_history :last_episode_date])))
-                                                  (assoc-in [:cerebral_hemorrhage_history :last_episode_date] (utils/parse-date (get-in mn-data [:cerebral_hemorrhage_history :last_episode_date])))))]
-                              (-> (or base-data {})
-                                  (update-in [:psycho_cognitive_history :present] #(or % "无"))
-                                  (update-in [:epilepsy_history :present] #(or % "无"))
-                                  (update-in [:vertigo_history :present] #(or % "无"))
-                                  (update-in [:tia_history :present] #(or % "无"))
-                                  (update-in [:cerebral_infarction_history :present] #(or % "无"))
-                                  (update-in [:cerebral_hemorrhage_history :present] #(or % "无"))
-                                  (update-in [:parkinsons_syndrome :present] #(or % "无"))
-                                  (update-in [:cranial_carotid_stenosis :present] #(or % "无"))
-                                  (update-in [:颅脑及颈动脉狭窄情况 :有无] #(or % "无"))
-                                  (update-in [:其他神经肌肉系统相关情况 :有无] #(or % "无"))))
+                                              (-> mn-data ; Assuming mn-data is already in Chinese keys from subs
+                                                  (update-in [:癫痫病史 :详情 :近期发作日期] #(when % (utils/parse-date %)))
+                                                  (update-in [:眩晕病史 :详情 :近期发作日期] #(when % (utils/parse-date %)))
+                                                  (update-in [:脑梗病史 :详情 :近期发作日期] #(when % (utils/parse-date %)))
+                                                  (update-in [:脑出血病史 :详情 :近期发作日期] #(when % (utils/parse-date %)))))]
+                              (-> (or base-data {}) ; Base data should now have Chinese keys
+                                  (update-in [:精神认知相关疾病史 :有无] #(or % :无)) ; Use keyword for enum
+                                  (update-in [:癫痫病史 :有无] #(or % :无))
+                                  (update-in [:眩晕病史 :有无] #(or % :无))
+                                  (update-in [:短暂性脑缺血发作病史 :有无] #(or % :无))
+                                  (update-in [:脑梗病史 :有无] #(or % :无))
+                                  (update-in [:脑出血病史 :有无] #(or % :无))
+                                  (update-in [:帕金森综合症 :有无] #(or % :无))
+                                  (update-in [:颅脑和颈动脉狭窄 :有无] #(or % :无))
+                                  (update-in [:其他情况 :有无] #(or % :无))))
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)
-                             transformed-values (-> values-clj
+                             transformed-values (-> values-clj ; Paths are already Chinese from form
                                                     (update-in [:癫痫病史 :详情 :近期发作日期] #(when % (utils/date->iso-string %)))
                                                     (update-in [:眩晕病史 :详情 :近期发作日期] #(when % (utils/date->iso-string %)))
                                                     (update-in [:脑梗病史 :详情 :近期发作日期] #(when % (utils/date->iso-string %)))
@@ -614,58 +383,58 @@
   (if (or (nil? data) (empty? data))
     "无数据"
     (let [findings (transient [])]
-      ;; Thyroid Disease History
-      (let [td_data (get data :thyroid_disease_history)
-            td_present (get td_data :present)]
+      ;; Thyroid Disease History - Mapped from :thyroid_disease_history to :甲状腺疾病病史
+      (let [td_data (get data :甲状腺疾病病史)
+            td_present (get td_data :有无)] ; Mapped :present to :有无
         (cond
-          (= td_present "有") (conj! findings (str "甲状腺疾病:有" (let [types (get td_data :types)] (if (seq types) (str "(" (str/join "/" types) ")") ""))))
-          (= td_present "无") (conj! findings "甲状腺疾病:无")
+          (= td_present :有) (conj! findings (str "甲状腺疾病:有" (let [types (get-in td_data [:详情 :类型])] (if types (str "(" (name types) ")") "")))) ; :types to :类型 under :详情
+          (= td_present :无) (conj! findings "甲状腺疾病:无")
           :else (conj! findings "甲状腺疾病:未评估/不祥")))
 
-      ;; Diabetes History
-      (let [db_data (get data :diabetes_history)
-            db_present (get db_data :present)]
+      ;; Diabetes History - Mapped from :diabetes_history to :糖尿病病史
+      (let [db_data (get data :糖尿病病史)
+            db_present (get db_data :有无)] ; Mapped :present to :有无
         (cond
-          (= db_present "有")
-          (let [type (get db_data :type)
-                control (get db_data :control_method)
-                details_parts (cond-> [] type (conj type) control (conj control))]
+          (= db_present :有)
+          (let [type (get-in db_data [:详情 :类型]) ; :type to :类型 under :详情
+                control (get-in db_data [:详情 :控制方式]) ; :control_method to :控制方式 under :详情
+                details_parts (cond-> [] type (conj (name type)) control (conj (name control)))]
             (conj! findings (str "糖尿病:有" (if (seq details_parts) (str "(" (str/join "/" details_parts) ")") ""))))
-          (= db_present "无") (conj! findings "糖尿病:无")
+          (= db_present :无) (conj! findings "糖尿病:无")
           :else (conj! findings "糖尿病:未评估/不祥")))
 
-      ;; Pheochromocytoma
-      (let [ph_data (get data :pheochromocytoma)
-            ph_present (get ph_data :present)]
+      ;; Pheochromocytoma - Mapped from :pheochromocytoma to :嗜铬细胞瘤
+      (let [ph_data (get data :嗜铬细胞瘤)
+            ph_present (get ph_data :有无)] ; Mapped :present to :有无
         (cond
-          (= ph_present "有") (conj! findings (str "嗜铬细胞瘤:有" (when-let [status (get ph_data :control_status)] (str "(" status ")"))))
-          (= ph_present "无") (conj! findings "嗜铬细胞瘤:无")
+          (= ph_present :有) (conj! findings (str "嗜铬细胞瘤:有" (when-let [status (get-in ph_data [:详情 :控制情况])] (str "(" (name status) ")")))) ; :control_status to :控制情况 under :详情
+          (= ph_present :无) (conj! findings "嗜铬细胞瘤:无")
           :else (conj! findings "嗜铬细胞瘤:未评估")))
 
-      ;; Hypercortisolism
-      (let [hc_data (get data :hypercortisolism)
-            hc_present (get hc_data :present)]
+      ;; Hypercortisolism - Mapped from :hypercortisolism to :皮质醇增多症
+      (let [hc_data (get data :皮质醇增多症) ; Note: spec uses 皮质醇增多症, but also has肾上腺皮质功能不全. Assuming this maps to the broader category for summary.
+            hc_present (get hc_data :有无)] ; Mapped :present to :有无
         (cond
-          (= hc_present "有") (conj! findings (str "皮质醇增多症:有" (when-let [details (get hc_data :details)] (str "(" details ")"))))
-          (= hc_present "无") (conj! findings "皮质醇增多症:无")
+          (= hc_present :有) (conj! findings (str "皮质醇增多症:有" (when-let [details (get-in hc_data [:类型])] (str "(" (name details) ")")))) ; :details to :类型
+          (= hc_present :无) (conj! findings "皮质醇增多症:无")
           :else (conj! findings "皮质醇增多症:未评估/不祥")))
 
-      ;; Gout
-      (let [gout_present (get-in data [:gout :present])]
+      ;; Gout - Mapped from :gout to :痛风
+      (let [gout_present (get-in data [:痛风 :有无])] ; Mapped :present to :有无
         (cond
-          (= gout_present "有") (conj! findings (str "痛风:有" (if-not (str/blank? (get-in data [:gout :details])) "(详情)" "")))
-          (= gout_present "无") (conj! findings "痛风:无")
-          (= gout_present "不祥") (conj! findings "痛风:不祥")))
+          (= gout_present :有) (conj! findings (str "痛风:有" (if-not (str/blank? (get-in data [:痛风 :描述])) "(详情)" ""))) ; :details to :描述
+          (= gout_present :无) (conj! findings "痛风:无")
+          (= gout_present :不详) (conj! findings "痛风:不详")))
 
-      ;; Hypopituitarism
-      (let [hypo_present (get-in data [:hypopituitarism :present])]
+      ;; Hypopituitarism - Mapped from :hypopituitarism to :垂体功能减退症
+      (let [hypo_present (get-in data [:垂体功能减退症 :有无])] ; Mapped :present to :有无
         (cond
-          (= hypo_present "有") (conj! findings (str "垂体功能减退:有" (if-not (str/blank? (get-in data [:hypopituitarism :details])) "(详情)" "")))
-          (= hypo_present "无") (conj! findings "垂体功能减退:无")
-          (= hypo_present "不祥") (conj! findings "垂体功能减退:不祥")))
+          (= hypo_present :有) (conj! findings (str "垂体功能减退:有" (if-not (str/blank? (get-in data [:垂体功能减退症 :描述])) "(详情)" ""))) ; :details to :描述
+          (= hypo_present :无) (conj! findings "垂体功能减退:无")
+          (= hypo_present :不详) (conj! findings "垂体功能减退:不详")))
 
-      ;; Other Endocrine Conditions
-      (when (not (str/blank? (get data :other_endocrine_conditions)))
+      ;; Other Endocrine Conditions - Mapped from :other_endocrine_conditions to [:其他情况 :内容]
+      (when (not (str/blank? (get-in data [:其他情况 :内容])))
         (conj! findings "其他内分泌情况:有记录"))
 
       (let [persistent_findings (persistent! findings)]
@@ -683,16 +452,16 @@
   (let [{:keys [report-form-instance-fn patient-id endo-data on-show-summary]} props
         [form] (Form.useForm)
         ;; Removed useWatch calls and local option lists
-        initial-form-values (-> (or endo-data {})
-                                (update-in [:thyroid_disease_history :present] #(or % "无"))
-                                (update-in [:thyroid_disease_history :airway_compression] #(or % "无"))
-                                (update-in [:thyroid_disease_history :thyroid_heart_disease] #(or % "无"))
-                                (update-in [:diabetes_history :present] #(or % "无"))
-                                (update-in [:pheochromocytoma :present] #(or % "无"))
-                                (update-in [:hypercortisolism :present] #(or % "无"))
-                                (update-in [:皮质醇增多症病史 :有无] #(or % "无"))
-                                (update-in [:痛风病史 :有无] #(or % "无"))
-                                (update-in [:垂体功能减退症病史 :有无] #(or % "无"))) ; Corrected: Exactly one ')' to close the -> form.
+        initial-form-values (-> (or endo-data {}) ; Base data should now have Chinese keys
+                                (update-in [:甲状腺疾病病史 :有无] #(or % :无)) ; Use keyword for enum
+                                ;; The following two were English before, not present in Chinese spec directly under 甲状腺疾病病史 for :有无
+                                ;; (update-in [:甲状腺疾病病史 :详情 :甲状腺是否肿大压迫气管] #(or % false)) ; Assuming boolean from spec
+                                ;; (update-in [:甲状腺疾病病史 :详情 :是否合并甲状腺心脏病] #(or % false)) ; Assuming boolean from spec
+                                (update-in [:糖尿病病史 :有无] #(or % :无))
+                                (update-in [:嗜铬细胞瘤 :有无] #(or % :无))
+                                (update-in [:皮质醇增多症 :有无] #(or % :无))
+                                (update-in [:痛风 :有无] #(or % :无)) ; Corrected key from 痛风病史 to 痛风
+                                (update-in [:垂体功能减退症 :有无] #(or % :无))) ; Corrected key
         on-finish-fn (fn [values]
                        (rf/dispatch [::events/update-canonical-assessment-section :内分泌系统 (js->clj values :keywordize-keys true)]))]
     (React/useEffect (fn []
@@ -753,28 +522,39 @@
   (if (or (nil? data) (empty? data))
     "无数据"
     (let [findings (transient [])]
-      ;; Liver Function
-      (let [lf_status (get-in data [:liver_function :status])]
+      ;; Liver Function - Mapped from [:liver_function :status] to [:肝功能 :状态]
+      (let [lf_status (get-in data [:肝功能 :状态])]
         (cond
-          (= lf_status "异常")
-          (let [alt (get-in data [:liver_function :alt])
-                albumin (get-in data [:liver_function :albumin])
+          (= lf_status :异常) ; Enum
+          (let [alt (get-in data [:肝功能 :详情 :谷丙转氨酶ALT]) ; Path under :详情
+                albumin (get-in data [:肝功能 :详情 :血清白蛋白]) ; Path under :详情
                 details (transient [])]
             (when alt (conj! details (str "ALT:" alt)))
             (when albumin (conj! details (str "Alb:" albumin)))
             (conj! findings (str "肝功能:异常" (let [pd (persistent! details)] (if (seq pd) (str "(" (str/join ", " pd) ")") "")))))
-          (= lf_status "正常") (conj! findings "肝功能:正常")
+          (= lf_status :正常) (conj! findings "肝功能:正常") ; Enum
           :else (conj! findings "肝功能:未评估")))
 
-      ;; Liver Disease History
-      (let [ldh_types (get-in data [:liver_disease_history :types])
-            actual_types (if (seq ldh_types) (remove #{"none"} ldh_types) nil)]
-        (if (seq actual_types)
-          (conj! findings (str "肝脏疾病:有(" (str/join "/" actual_types) ")"))
+      ;; Liver Disease History - Mapped from [:liver_disease_history :types] to [:肝脏疾病病史 :类型]
+      (let [ldh_type (get-in data [:肝脏疾病病史 :类型])] ; Spec uses a single type, not a list of types
+        (if (and ldh_type (not= ldh_type :无)) ; Check if type is not :无 (enum for none)
+          (conj! findings (str "肝脏疾病:有(" (name ldh_type) ")"))
           (conj! findings "肝脏疾病:无")))
 
-      ;; Other Liver/Kidney Conditions
-      (when (not (str/blank? (get data :other_liver_kidney_conditions)))
+      ;; Kidney Function & Disease (Simplified for summary - check spec for more details)
+      (let [kf_status (get-in data [:肾功能 :状态])
+            kdh_type (get-in data [:肾脏疾病病史 :类型])]
+        (cond
+          (= kf_status :异常) (conj! findings "肾功能:异常")
+          (= kf_status :正常) (conj! findings "肾功能:正常")
+          :else (conj! findings "肾功能:未评估"))
+        (if (and kdh_type (not= kdh_type :无))
+          (conj! findings (str "肾脏疾病:有(" (name kdh_type) ")"))
+          (conj! findings "肾脏疾病:无")))
+
+
+      ;; Other Liver/Kidney Conditions - Mapped from :other_liver_kidney_conditions to [:其他情况 :内容]
+      (when (not (str/blank? (get-in data [:其他情况 :内容])))
         (conj! findings "其他肝肾情况:有记录"))
 
       (let [persistent_findings (persistent! findings)]
@@ -791,9 +571,10 @@
 (defn liver-kidney-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id lk-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values (let [defaults {:肝功能 {:状态 "正常"}
-                                            :既往肾功能不全史 "否"
-                                            :目前是否规律透析 "否"}]
+        initial-form-values (let [defaults {:肝功能 {:状态 :正常} ; Using keyword for enum
+                                            :肾功能 {:状态 :正常} ; Using keyword for enum
+                                            :肝脏疾病病史 {:类型 :无} ; Using keyword for enum
+                                            :肾脏疾病病史 {:类型 :无 :慢性肾脏病分期 nil :尿毒症 {:有无透析治疗 :无}}}]; Using keyword for enum
                               (merge defaults (or lk-data {})))
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)]
@@ -856,32 +637,32 @@
   (if (or (nil? data) (empty? data))
     "无数据"
     (let [findings (transient [])]
-      ;; Acute Gastroenteritis History
-      (let [agh_data (get data :acute_gastroenteritis_history)
-            agh_has (get agh_data :has)]
+      ;; Acute Gastroenteritis History - Mapped from :acute_gastroenteritis_history to :急性胃肠炎病史
+      (let [agh_data (get data :急性胃肠炎病史)
+            agh_has (get agh_data :有无)] ; Mapped :has to :有无
         (cond
-          (= agh_has "有") (conj! findings (str "急性胃肠炎:有" (let [s (get agh_data :symptoms)] (if (seq s) (str "(" (str/join "/" s) ")") ""))))
-          (= agh_has "无") (conj! findings "急性胃肠炎:无")
+          (= agh_has :有) (conj! findings (str "急性胃肠炎:有" (let [s (get-in agh_data [:详情 :症状])] (if (seq s) (str "(" (str/join "/" (map name s)) ")") "")))) ; :symptoms to :症状 under :详情
+          (= agh_has :无) (conj! findings "急性胃肠炎:无")
           :else (conj! findings "急性胃肠炎:未评估/不祥")))
 
-      ;; Esophageal, Gastric, Duodenal History
-      (let [egdh_data (get data :esophageal_gastric_duodenal_history)
-            egdh_has (get egdh_data :has)]
+      ;; Esophageal, Gastric, Duodenal History - Mapped from :esophageal_gastric_duodenal_history to :食管胃十二指肠疾病病史
+      (let [egdh_data (get data :食管胃十二指肠疾病病史)
+            egdh_has (get egdh_data :有无)] ; Mapped :has to :有无
         (cond
-          (= egdh_has "有") (conj! findings (str "食管胃十二指肠疾病:有" (let [s (get egdh_data :symptoms)] (if (seq s) (str "(" (str/join "/" s) ")") ""))))
-          (= egdh_has "无") (conj! findings "食管胃十二指肠疾病:无")
+          (= egdh_has :有) (conj! findings (str "食管胃十二指肠疾病:有" (let [s (get-in egdh_data [:详情 :症状])] (if (seq s) (str "(" (str/join "/" (map name s)) ")") "")))) ; :symptoms to :症状 under :详情
+          (= egdh_has :无) (conj! findings "食管胃十二指肠疾病:无")
           :else (conj! findings "食管胃十二指肠疾病:未评估")))
 
-      ;; Chronic Digestive History
-      (let [cdh_data (get data :chronic_digestive_history)
-            cdh_has (get cdh_data :has)]
+      ;; Chronic Digestive History - Mapped from :chronic_digestive_history to :慢性消化疾病病史
+      (let [cdh_data (get data :慢性消化疾病病史)
+            cdh_has (get cdh_data :有无)] ; Mapped :has to :有无
         (cond
-          (= cdh_has "有") (conj! findings (str "慢性消化疾病:有" (let [s (get cdh_data :symptoms)] (if (seq s) (str "(" (str/join "/" s) ")") ""))))
-          (= cdh_has "无") (conj! findings "慢性消化疾病:无")
+          (= cdh_has :有) (conj! findings (str "慢性消化疾病:有" (let [s (get-in cdh_data [:详情 :症状])] (if (seq s) (str "(" (str/join "/" (map name s)) ")") "")))) ; :symptoms to :症状 under :详情
+          (= cdh_has :无) (conj! findings "慢性消化疾病:无")
           :else (conj! findings "慢性消化疾病:未评估/不祥")))
 
-      ;; Other Digestive Conditions
-      (when (not (str/blank? (get data :other_conditions)))
+      ;; Other Digestive Conditions - Mapped from :other_conditions to [:其他情况 :内容]
+      (when (not (str/blank? (get-in data [:其他情况 :内容])))
         (conj! findings "其他消化系统情况:有记录"))
 
       (let [persistent_findings (persistent! findings)]
@@ -899,10 +680,10 @@
   (let [{:keys [report-form-instance-fn patient-id ds-data on-show-summary]} props
         [form] (Form.useForm)
         ;; Removed useWatch calls and local option lists
-        initial-form-values (-> (or ds-data {})
-                                (update-in [:急性胃肠炎病史 :有无] #(or % "无"))
-                                (update-in [:食管胃十二指肠疾病病史 :有无] #(or % "无"))
-                                (update-in [:慢性消化系统疾病病史 :有无] #(or % "无"))) ; Corrected: Single parenthesis
+        initial-form-values (-> (or ds-data {}) ; Base data is already in Chinese keys
+                                (update-in [:急性胃肠炎病史 :有无] #(or % :无)) ; Use keyword for enum
+                                (update-in [:食管胃十二指肠疾病病史 :有无] #(or % :无))
+                                (update-in [:慢性消化疾病病史 :有无] #(or % :无))) ; Corrected key, use enum
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)]
                          (rf/dispatch [::events/update-canonical-assessment-section :消化系统 values-clj])))]
@@ -964,49 +745,50 @@
   (if (or (nil? data) (empty? data))
     "无数据"
     (let [findings (transient [])]
-      ;; Anemia
-      (let [anemia_data (get data :anemia)
-            anemia_has (get anemia_data :has)]
+      ;; Anemia - Mapped from :anemia to :贫血
+      (let [anemia_data (get data :贫血)
+            anemia_has (get anemia_data :有无)] ; Mapped :has to :有无
         (cond
-          (= anemia_has "有")
-          (let [hb (get anemia_data :hb)]
+          (= anemia_has :有) ; Enum
+          (let [hb (get-in anemia_data [:详情 :Hb值])] ; Mapped :hb to :Hb值 under :详情
             (conj! findings (str "贫血:有" (when hb (str "(Hb:" hb "g/L)")))))
-          (= anemia_has "无") (conj! findings "贫血:无")
+          (= anemia_has :无) (conj! findings "贫血:无") ; Enum
           :else (conj! findings "贫血:未评估")))
 
-      ;; Coagulation Dysfunction
-      (let [coag_data (get data :coagulation_dysfunction)
-            coag_has (get coag_data :has)]
+      ;; Coagulation Dysfunction - Mapped from :coagulation_dysfunction to :凝血功能障碍
+      (let [coag_data (get data :凝血功能障碍)
+            coag_has (get coag_data :有无)] ; Mapped :has to :有无
         (cond
-          (= coag_has "有")
-          (let [details (transient [])]
-            (when (get coag_data :pt) (conj! details (str "PT:" (get coag_data :pt))))
-            (when (get coag_data :aptt) (conj! details (str "APTT:" (get coag_data :aptt))))
-            (when (get coag_data :inr) (conj! details (str "INR:" (get coag_data :inr))))
-            (when (get coag_data :platelet_count) (conj! details (str "PLT:" (get coag_data :platelet_count))))
-            (when (get coag_data :d_dimer) (conj! details (str "D-dimer:" (get coag_data :d_dimer))))
+          (= coag_has :有) ; Enum
+          (let [details (transient [])
+                coag_details (get coag_data :详情)]
+            (when (get coag_details :PT值) (conj! details (str "PT:" (get coag_details :PT值))))
+            (when (get coag_details :APTT值) (conj! details (str "APTT:" (get coag_details :APTT值))))
+            (when (get coag_details :INR值) (conj! details (str "INR:" (get coag_details :INR值))))
+            (when (get coag_details :血小板计数) (conj! details (str "PLT:" (get coag_details :血小板计数))))
+            (when (get coag_details :D二聚体值) (conj! details (str "D-dimer:" (get coag_details :D二聚体值))))
             (conj! findings (str "凝血功能障碍:有" (let [pd (persistent! details)] (if (seq pd) (str "(" (str/join ", " pd) ")") "")))))
-          (= coag_has "无") (conj! findings "凝血功能障碍:无")
+          (= coag_has :无) (conj! findings "凝血功能障碍:无") ; Enum
           :else (conj! findings "凝血功能障碍:未评估")))
 
-      ;; Thrombosis History
-      (let [thromb_data (get data :thrombosis_history)
-            thromb_has (get thromb_data :has)]
+      ;; Thrombosis History - Mapped from :thrombosis_history to :血栓史
+      (let [thromb_data (get data :血栓史)
+            thromb_has (get thromb_data :有无)] ; Mapped :has to :有无
         (cond
-          (= thromb_has "有") (conj! findings (str "血栓史:有" (if-not (str/blank? (get thromb_data :details)) "(详情)" "")))
-          (= thromb_has "无") (conj! findings "血栓史:无")
+          (= thromb_has :有) (conj! findings (str "血栓史:有" (if-not (str/blank? (get-in thromb_data [:描述])) "(详情)" ""))) ; :details to :描述
+          (= thromb_has :无) (conj! findings "血栓史:无") ; Enum
           :else (conj! findings "血栓史:未评估")))
 
-      ;; Lower Limb DVT
-      (let [dvt_data (get data :lower_limb_dvt)
-            dvt_has (get dvt_data :has)]
+      ;; Lower Limb DVT - Mapped from :lower_limb_dvt to :下肢深静脉血栓
+      (let [dvt_data (get data :下肢深静脉血栓)
+            dvt_has (get dvt_data :有无)] ; Mapped :has to :有无
         (cond
-          (= dvt_has "有") (conj! findings (str "下肢DVT:有" (if-not (str/blank? (get dvt_data :details)) "(详情)" "")))
-          (= dvt_has "无") (conj! findings "下肢DVT:无")
+          (= dvt_has :有) (conj! findings (str "下肢DVT:有" (if-not (str/blank? (get-in dvt_data [:描述])) "(详情)" ""))) ; :details to :描述
+          (= dvt_has :无) (conj! findings "下肢DVT:无") ; Enum
           :else (conj! findings "下肢DVT:未评估/不祥")))
 
-      ;; Vascular Ultrasound Results
-      (when (not (str/blank? (get data :vascular_ultrasound_results)))
+      ;; Vascular Ultrasound Results - Mapped from :vascular_ultrasound_results to [:血管超声 :内容]
+      (when (not (str/blank? (get-in data [:血管超声 :内容])))
         (conj! findings "血管超声:有记录"))
 
       (let [persistent_findings (persistent! findings)]
@@ -1023,7 +805,11 @@
 (defn hematologic-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id hs-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values (or hs-data {}) ; Assuming hs-data is already structured per spec or nil
+        initial-form-values (-> (or hs-data {}) ; Base data is already in Chinese keys
+                                (update-in [:贫血 :有无] #(or % :无))
+                                (update-in [:凝血功能障碍 :有无] #(or % :无))
+                                (update-in [:血栓史 :有无] #(or % :无))
+                                (update-in [:下肢深静脉血栓 :有无] #(or % :无)))
         on-finish-fn (fn [values]
                        (rf/dispatch [::events/update-canonical-assessment-section :血液系统 (js->clj values :keywordize-keys true)]))]
     (React/useEffect (fn []
@@ -1084,40 +870,40 @@
   (if (or (nil? data) (empty? data))
     "无数据"
     (let [findings (transient [])]
-      ;; Immune Dysfunction
-      (let [id_data (get data :immune_dysfunction)
-            id_has (get id_data :has)]
+      ;; Immune Dysfunction - Mapped from :immune_dysfunction to :免疫功能障碍
+      (let [id_data (get data :免疫功能障碍)
+            id_has (get id_data :有无)] ; Mapped :has to :有无
         (cond
-          (= id_has "有")
-          (let [type (get id_data :type)
-                details (get id_data :type_other_details)
-                type_str (if (and type (= type "other_immune_dysfunction") (not (str/blank? details)))
+          (= id_has :有) ; Enum
+          (let [type (get-in id_data [:详情 :类型]) ; Mapped :type to :类型 under :详情
+                details (get-in id_data [:详情 :其他类型描述]) ; Mapped :type_other_details to :其他类型描述 under :详情
+                type_str (if (and type (= type :其他) (not (str/blank? details))) ; Check for :其他 enum
                            (str "其他(" details ")")
-                           type)]
+                           (name type))]
             (conj! findings (str "免疫功能障碍:有" (when type_str (str "(" type_str ")")))))
-          (= id_has "无") (conj! findings "免疫功能障碍:无")
+          (= id_has :无) (conj! findings "免疫功能障碍:无") ; Enum
           :else (conj! findings "免疫功能障碍:未评估/不祥")))
 
-      ;; Autoimmune Disease
-      (let [ad_data (get data :autoimmune_disease)
-            ad_has (get ad_data :has)]
+      ;; Autoimmune Disease - Mapped from :autoimmune_disease to :自身免疫性疾病
+      (let [ad_data (get data :自身免疫性疾病)
+            ad_has (get ad_data :有无)] ; Mapped :has to :有无
         (cond
-          (= ad_has "有")
-          (let [symptoms (get ad_data :symptoms)
-                symptoms_details (get ad_data :symptoms_other_details)
+          (= ad_has :有) ; Enum
+          (let [symptoms (get-in ad_data [:详情 :症状]) ; Mapped :symptoms to :症状 under :详情
+                symptoms_details (get-in ad_data [:详情 :其他症状描述]) ; Mapped :symptoms_other_details to :其他症状描述 under :详情
                 symptoms_display (when (seq symptoms)
-                                   (mapv #(if (= % "other_autoimmune_symptom")
+                                   (mapv #(if (= % :其他) ; Check for :其他 enum
                                             (if (not (str/blank? symptoms_details))
                                               (str "其他(" symptoms_details ")")
                                               "其他")
-                                            %)
+                                            (name %)) ; Use name for other enums
                                          symptoms))]
             (conj! findings (str "自身免疫性疾病:有" (if (seq symptoms_display) (str "(" (str/join "/" symptoms_display) ")") ""))))
-          (= ad_has "无") (conj! findings "自身免疫性疾病:无")
+          (= ad_has :无) (conj! findings "自身免疫性疾病:无") ; Enum
           :else (conj! findings "自身免疫性疾病:未评估/不祥")))
 
-      ;; Other Immune Conditions
-      (when (not (str/blank? (get data :other_immune_conditions)))
+      ;; Other Immune Conditions - Mapped from :other_immune_conditions to [:其他情况 :内容]
+      (when (not (str/blank? (get-in data [:其他情况 :内容])))
         (conj! findings "其他免疫系统情况:有记录"))
 
       (let [persistent_findings (persistent! findings)]
@@ -1135,9 +921,9 @@
   (let [{:keys [report-form-instance-fn patient-id is-data on-show-summary]} props
         [form] (Form.useForm)
         ;; Removed useWatch calls and local option lists
-        initial-form-values (-> (or is-data {})
-                                (update-in [:免疫功能障碍 :有无] #(or % "无"))
-                                (update-in [:自身免疫性疾病 :有无] #(or % "无"))) ; Corrected: Single parenthesis
+        initial-form-values (-> (or is-data {}) ; Base data is already in Chinese keys
+                                (update-in [:免疫功能障碍 :有无] #(or % :无)) ; Use keyword for enum
+                                (update-in [:自身免疫性疾病 :有无] #(or % :无))) ; Use keyword for enum
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)]
                          (rf/dispatch [::events/update-canonical-assessment-section :免疫系统 values-clj])))]
@@ -1200,19 +986,21 @@
   (if (or (nil? data) (empty? data))
     "无数据"
     (let [findings (transient [])
-          med_fields [[:anticoagulant_antiplatelet "抗凝/抗血小板"]
-                      [:glucocorticoids "糖皮质激素"]
-                      [:cancer_treatment "肿瘤治疗"]
-                      [:drug_abuse_dependence "药物滥用依赖"]
-                      [:neuroleptic_drugs "神经安定类药物"]
-                      [:glp1_agonists "GLP-1激动剂"]]]
+          ;; Spec keys for Special Medication History:
+          ;; :抗凝或抗血小板药物, :糖皮质激素, :肿瘤治疗, :药物滥用依赖史, :神经安定类药物, :GLP1受体激动剂, :其他药物使用
+          med_fields [[:抗凝或抗血小板药物 "抗凝/抗血小板"]
+                      [:糖皮质激素 "糖皮质激素"]
+                      [:肿瘤治疗 "肿瘤治疗"] ; Changed from :肿瘤治疗药物
+                      [:药物滥用依赖史 "药物滥用依赖"] ; Changed from :毒麻及精神类药物滥用或依赖
+                      [:神经安定类药物 "神经安定类药物"]
+                      [:GLP1受体激动剂 "GLP-1激动剂"]]]
       (doseq [[med-key med-name] med_fields]
-        (let [med_present (get-in data [med-key :present])]
-          (when (= med_present "有")
-            (conj! findings (str med-name ":有" (if-not (str/blank? (get-in data [med-key :details])) "(详情)" ""))))))
+        (let [med_present (get-in data [med-key :有无])] ; Mapped :present to :有无
+          (when (= med_present :有) ; Enum
+            (conj! findings (str med-name ":有" (if-not (str/blank? (get-in data [med-key :描述])) "(详情)" "")))))) ; :details to :描述
 
-      ;; Other Drug Use
-      (let [other_drug_use_details (get data :other_drug_use)]
+      ;; Other Drug Use - Mapped from :other_drug_use to [:其他药物使用 :内容]
+      (let [other_drug_use_details (get-in data [:其他药物使用 :内容])]
         (when (not (str/blank? other_drug_use_details))
           (conj! findings (str "其他药物使用:" other_drug_use_details))))
 
@@ -1231,13 +1019,13 @@
   (let [{:keys [report-form-instance-fn patient-id smh-data on-show-summary]} props
         [form] (Form.useForm)
         ;; Removed useWatch calls
-        initial-form-values (let [defaults {:抗凝或抗血小板药物 {:有无 "无"}
-                                            :糖皮质激素 {:有无 "无"}
-                                            :肿瘤治疗药物 {:有无 "无"}
-                                            :毒麻及精神类药物滥用或依赖 {:有无 "无"}
-                                            :神经安定类药物 {:有无 "无"}
-                                            :GLP1受体激动剂 {:有无 "无"}}]
-                              (merge defaults (or smh-data {})))
+        initial-form-values (let [defaults {:抗凝或抗血小板药物 {:有无 :无} ; Use keyword for enum
+                                            :糖皮质激素 {:有无 :无}
+                                            :肿瘤治疗 {:有无 :无} ; Updated key
+                                            :药物滥用依赖史 {:有无 :无} ; Updated key
+                                            :神经安定类药物 {:有无 :无}
+                                            :GLP1受体激动剂 {:有无 :无}}]
+                              (merge defaults (or smh-data {}))) ; Base data is already in Chinese keys
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)]
                          (rf/dispatch [::events/update-canonical-assessment-section :特殊用药史 values-clj])))]
@@ -1300,28 +1088,24 @@
   (if (or (nil? data) (empty? data))
     "无数据"
     (let [findings (transient [])]
-      ;; Marfan Syndrome
-      (let [marfan_data (get data :marfan_syndrome)
-            marfan_present (get marfan_data :present)]
+      ;; Marfan Syndrome - Mapped from :marfan_syndrome to :马方综合征
+      (let [marfan_data (get data :马方综合征)
+            marfan_present (get marfan_data :有无)] ; Mapped :present to :有无
         (cond
-          (= marfan_present "有")
-          (let [lesions (get marfan_data :related_lesions)
-                cv_other_details (get marfan_data :cardiovascular_other_details)
-                sk_other_details (get marfan_data :skeletal_other_details)
-                lesion_names {"eye_lesion_lens_dislocation" "眼部病变(晶状体脱位)"
-                              "cardiovascular_aortic_aneurysm" "心血管(主动脉瘤)"
-                              "cardiovascular_aortic_dissection" "心血管(主动脉夹层)"
-                              "cardiovascular_mitral_valve_disease" "心血管(二尖瓣病变)"
-                              "cardiovascular_other" (if (not (str/blank? cv_other_details)) (str "心血管其他(" cv_other_details ")") "心血管其他")
-                              "skeletal_scoliosis" "骨骼(脊柱侧弯)"
-                              "skeletal_chest_deformity" "骨骼(胸廓畸形)"
-                              "skeletal_other" (if (not (str/blank? sk_other_details)) (str "骨骼其他(" sk_other_details ")") "骨骼其他")}
-                display_lesions (when (seq lesions) (mapv #(get lesion_names % %) lesions))]
-            (conj! findings (str "马方综合征:有" (if (seq display_lesions) (str "(" (str/join "/" display_lesions) ")") ""))))
-          (= marfan_present "不祥") (conj! findings "马方综合征:不祥")))
+          (= marfan_present :有) ; Enum
+          (let [details (get marfan_data :详情)
+                eye_lesion (get details :眼部病变晶状体脱位) ; Boolean from spec
+                cv_lesions (get details :心血管病变) ; Vector of enums
+                sk_lesions (get details :骨骼病变) ; Vector of enums
+                lesion_parts (transient [])]
+            (when eye_lesion (conj! lesion_parts "眼部病变(晶状体脱位)"))
+            (when (seq cv_lesions) (conj! lesion_parts (str "心血管(" (str/join "/" (map name cv_lesions)) ")")))
+            (when (seq sk_lesions) (conj! lesion_parts (str "骨骼(" (str/join "/" (map name sk_lesions)) ")")))
+            (conj! findings (str "马方综合征:有" (let [pl (persistent! lesion_parts)] (if (seq pl) (str "(" (str/join ", " pl) ")") "")))))
+          (= marfan_present :不详) (conj! findings "马方综合征:不详"))) ; Enum
 
-      ;; Other Special Diseases
-      (let [other_details_str (get data :other_special_diseases)]
+      ;; Other Special Diseases - Mapped from :other_special_diseases to [:其他特殊疾病 :内容]
+      (let [other_details_str (get-in data [:其他特殊疾病 :内容])]
         (when (not (str/blank? other_details_str))
           (conj! findings (str "其他特殊疾病:" other_details_str))))
 
@@ -1340,8 +1124,8 @@
   (let [{:keys [report-form-instance-fn patient-id sdh-data on-show-summary]} props
         [form] (Form.useForm)
         ;; Removed useWatch call for marfan-lesions
-        initial-form-values (let [defaults {:马方综合征 {:有无 "无"}}]
-                              (merge defaults (or sdh-data {})))
+        initial-form-values (let [defaults {:马方综合征 {:有无 :无}}] ; Use keyword for enum
+                              (merge defaults (or sdh-data {}))) ; Base data is already in Chinese keys
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)]
                          (rf/dispatch [::events/update-canonical-assessment-section :特殊疾病病史 values-clj])))]
@@ -1404,32 +1188,38 @@
   (if (or (nil? data) (empty? data))
     "无数据"
     (let [findings (transient [])]
-      ;; Nutritional Score
-      (let [ns_data (get data :nutritional_score)]
+      ;; Nutritional Score - Mapped from :nutritional_score to :营养评分
+      (let [ns_data (get data :营养评分)]
         (if ns_data
-          (let [bmi_risk (= "有" (get ns_data :bmi_lt_20_5))
-                weight_loss_risk (= "有" (get ns_data :weight_loss_last_3_months))
-                intake_risk (= "有" (get ns_data :reduced_intake_last_week))
-                illness_risk (= "有" (get ns_data :severe_illness))
-                num_ns_risks (+ (if bmi_risk 1 0) (if weight_loss_risk 1 0) (if intake_risk 1 0) (if illness_risk 1 0))]
-            (if (>= num_ns_risks 2)
-              (conj! findings (str "营养评分:有风险(" num_ns_risks "项阳性)"))
-              (conj! findings "营养评分:无明显风险")))
+          (let [bmi_risk (= :有 (get ns_data :BMI小于20点5)) ; Mapped to spec keys, use enum
+                weight_loss_risk (= :有 (get ns_data :过去1至3个月体重下降))
+                intake_risk (= :有 (get ns_data :过去1周摄食减少))
+                illness_risk (= :有 (get ns_data :有严重疾病如ICU治疗))
+                num_ns_risks (+ (if bmi_risk 1 0) (if weight_loss_risk 1 0) (if intake_risk 1 0) (if illness_risk 1 0))
+                risk_level (get ns_data :风险等级)] ; Get risk level from data
+            (if risk_level
+              (conj! findings (str "营养评分:" (name risk_level) "(" num_ns_risks "项阳性)"))
+              (if (>= num_ns_risks 2)
+                (conj! findings (str "营养评分:有风险(" num_ns_risks "项阳性)"))
+                (conj! findings "营养评分:无明显风险"))))
           (conj! findings "营养评分:未评估")))
 
-      ;; FRAIL Score
-      (let [fs_data (get data :frail_score)]
+      ;; FRAIL Score - Mapped from :frail_score to :FRAIL针对大于60岁病人
+      (let [fs_data (get data :FRAIL针对大于60岁病人)]
         (if fs_data
-          (let [fatigue (= "有" (get fs_data :fatigue))
-                resistance (= "有" (get fs_data :resistance))
-                ambulation (= "有" (get fs_data :ambulation))
-                illness_gt_5 (= "有" (get fs_data :illness_gt_5))
-                loss_of_weight (= "有" (get fs_data :loss_of_weight_gt_5_percent))
-                num_fs_risks (+ (if fatigue 1 0) (if resistance 1 0) (if ambulation 1 0) (if illness_gt_5 1 0) (if loss_of_weight 1 0))]
-            (cond
-              (>= num_fs_risks 3) (conj! findings (str "FRAIL评估:衰弱(" num_fs_risks "分)"))
-              (and (>= num_fs_risks 1) (<= num_fs_risks 2)) (conj! findings (str "FRAIL评估:衰弱前期(" num_fs_risks "分)"))
-              :else (conj! findings "FRAIL评估:健康(0分)")))
+          (let [fatigue (= :有 (get fs_data :疲乏)) ; Mapped to spec keys, use enum
+                resistance (= :有 (get fs_data :阻力增加或耐力减退))
+                ambulation (= :有 (get fs_data :自由活动下降))
+                illness_gt_5 (= :有 (get fs_data :存在5种以上疾病))
+                loss_of_weight (= :有 (get fs_data :体重下降1年或更短内大于5百分比))
+                num_fs_risks (+ (if fatigue 1 0) (if resistance 1 0) (if ambulation 1 0) (if illness_gt_5 1 0) (if loss_of_weight 1 0))
+                conclusion (get fs_data :结论)] ; Get conclusion from data
+            (if conclusion
+              (conj! findings (str "FRAIL评估:" (name conclusion) "(" num_fs_risks "分)"))
+              (cond
+                (>= num_fs_risks 3) (conj! findings (str "FRAIL评估:衰弱(" num_fs_risks "分)"))
+                (and (>= num_fs_risks 1) (<= num_fs_risks 2)) (conj! findings (str "FRAIL评估:衰弱前期(" num_fs_risks "分)"))
+                :else (conj! findings "FRAIL评估:健康(0分)"))))
           (conj! findings "FRAIL评估:未评估")))
 
       (let [persistent_findings (persistent! findings)]
@@ -1446,23 +1236,18 @@
 (defn nutritional-assessment-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id na-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values (-> (or na-data {})
-                                (update-in [:nutritional_score :bmi_lt_20_5] #(or % "无"))
-                                (update-in [:nutritional_score :weight_loss_last_3_months] #(or % "无"))
-                                (update-in [:nutritional_score :reduced_intake_last_week] #(or % "无"))
-                                (update-in [:nutritional_score :severe_illness] #(or % "无"))
-                                (update-in [:frail_score :fatigue] #(or % "无"))
-                                (update-in [:frail_score :resistance] #(or % "无"))
-                                (update-in [:frail_score :ambulation] #(or % "无"))
-                                (update-in [:营养评分 :BMI小于20点5] #(or % "无"))
-                                (update-in [:营养评分 :近3个月体重下降] #(or % "无"))
-                                (update-in [:营养评分 :近1周摄食减少] #(or % "无"))
-                                (update-in [:营养评分 :患有严重疾病] #(or % "无"))
-                                (update-in [:FRAIL针对大于60岁病人 :疲乏] #(or % "无"))
-                                (update-in [:FRAIL针对大于60岁病人 :上楼梯困难] #(or % "无"))
-                                (update-in [:FRAIL针对大于60岁病人 :独立行走100m困难] #(or % "无"))
-                                (update-in [:FRAIL针对大于60岁病人 :患有5种以上慢性病] #(or % "无"))
-                                (update-in [:FRAIL针对大于60岁病人 :体重下降大于5百分比] #(or % "无"))) ; Corrected: Single parenthesis
+        initial-form-values (-> (or na-data {}) ; Base data is already in Chinese keys
+                                ;; Paths within :营养评分
+                                (update-in [:营养评分 :BMI小于20点5] #(or % :无)) ; Use keyword for enum
+                                (update-in [:营养评分 :过去1至3个月体重下降] #(or % :无))
+                                (update-in [:营养评分 :过去1周摄食减少] #(or % :无))
+                                (update-in [:营养评分 :有严重疾病如ICU治疗] #(or % :无))
+                                ;; Paths within :FRAIL针对大于60岁病人
+                                (update-in [:FRAIL针对大于60岁病人 :疲乏] #(or % :无))
+                                (update-in [:FRAIL针对大于60岁病人 :阻力增加或耐力减退] #(or % :无))
+                                (update-in [:FRAIL针对大于60岁病人 :自由活动下降] #(or % :无))
+                                (update-in [:FRAIL针对大于60岁病人 :存在5种以上疾病] #(or % :无))
+                                (update-in [:FRAIL针对大于60岁病人 :体重下降1年或更短内大于5百分比] #(or % :无)))
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)]
                          (rf/dispatch [::events/update-canonical-assessment-section :营养评估 values-clj])))]
@@ -1536,29 +1321,35 @@
 (defn generate-pregnancy-summary [data]
   (if (or (nil? data) (empty? data))
     "妊娠状态: 未知(无数据)"
-    (let [is_pregnant (get data :is_pregnant)]
+    ;; Spec root key is :妊娠, with sub-keys like :是否妊娠
+    (let [is_pregnant (get-in data [:是否妊娠])] ; Mapped :is_pregnant to :是否妊娠
       (cond
-        (= is_pregnant "有")
+        (= is_pregnant :有) ; Enum
         (let [summary_parts (transient ["妊娠:是"])
-              gest_week (get data :gestational_week)
-              obstetric_history (get data :obstetric_history)
-              comorbid_conditions (get data :comorbid_obstetric_conditions)
-              other_comorbid_details (get data :comorbid_obstetric_conditions_other_details)
-              other_preg_conditions (get data :other_pregnancy_conditions)]
+              details (get data :详情) ; Get the :详情 map
+              gest_week (get details :孕周) ; Mapped :gestational_week to :孕周
+              obstetric_history_map (get details :孕产史) ; Mapped :obstetric_history to :孕产史 (map)
+              comorbid_conditions (get details :合并产科情况) ; Mapped :comorbid_obstetric_conditions to :合并产科情况 (list of enums)
+              other_comorbid_details (get details :其他产科情况描述) ; Mapped :comorbid_obstetric_conditions_other_details to :其他产科情况描述
+              other_preg_conditions (get-in data [:其他情况 :内容])] ; Mapped :other_pregnancy_conditions to [:其他情况 :内容]
 
           (if gest_week
-            (conj! summary_parts (str "孕周:" gest_week))
+            (conj! summary_parts (str "孕周:" (name gest_week)))
             (conj! summary_parts "孕周:未提供"))
 
-          (when (not (str/blank? obstetric_history))
-            (conj! summary_parts (str "孕产史:" obstetric_history)))
+          (when obstetric_history_map
+            (let [oh_str (str "G" (or (:足月 obstetric_history_map) 0)
+                              "P" (or (:早产 obstetric_history_map) 0)
+                              "A" (or (:流产 obstetric_history_map) 0)
+                              "L" (or (:存活 obstetric_history_map) 0))]
+              (conj! summary_parts (str "孕产史:" oh_str))))
 
           (if (seq comorbid_conditions)
-            (let [display_comorbid (mapv #(if (= % "other_obstetric_conditions")
+            (let [display_comorbid (mapv #(if (= % :其他) ; Enum
                                             (if (not (str/blank? other_comorbid_details))
                                               (str "其他(" other_comorbid_details ")")
                                               "其他产科情况")
-                                            %)
+                                            (name %)) ; Enum
                                          comorbid_conditions)]
               (conj! summary_parts (str "合并产科情况:" (str/join "/" display_comorbid))))
             (conj! summary_parts "合并产科情况:无"))
@@ -1567,7 +1358,7 @@
             (conj! summary_parts (str "其他妊娠相关:" other_preg_conditions)))
           (str/join ", " (persistent! summary_parts)))
 
-        (= is_pregnant "无") "妊娠:否"
+        (= is_pregnant :无) "妊娠:否" ; Enum
         :else "妊娠状态:不祥/未评估"))))
 
 (defn pregnancy-assessment-summary-view [props]
@@ -1580,8 +1371,8 @@
         [form] (Form.useForm)
         ;; Spec path: [:妊娠]
         ;; Removed local option lists and useWatch calls
-        initial-form-values (let [base-data (or pa-data {})
-                                  default-values {:是否妊娠 "无"}] ; Default from original logic
+        initial-form-values (let [base-data (or pa-data {}) ; Base data is already in Chinese keys
+                                  default-values {:是否妊娠 :无}] ; Default from original logic, use enum
                               (merge default-values base-data))
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)]
@@ -1643,10 +1434,13 @@
 (defn generate-surgical-anesthesia-summary [data]
   (if (or (nil? data) (empty? data))
     "无数据"
-    (let [history-present (get-in data [:手术麻醉史 :有无]) ; Updated path
-          family-hyperthermia (get-in data [:有血缘关系的人发生过恶性高热史 :有无]) ; Updated path
-          parts [(str "手术麻醉史:" (cond (= history-present "有") "有" (= history-present "不祥") "不祥" :else "无"))
-                 (str "恶性高热家族史:" (if (= family-hyperthermia "有") "有" "无"))]]
+    ;; Spec root key is :手术麻醉史
+    (let [history_data (get data :手术麻醉史)
+          history_present (get history_data :有无) ; Mapped to :有无
+          family_hyperthermia_data (get data :有血缘关系的人发生过恶性高热史)
+          family_hyperthermia_present (get family_hyperthermia_data :有无) ; Mapped to :有无
+          parts [(str "手术麻醉史:" (cond (= history_present :有) "有" (= history_present :不详) "不详" :else "无")) ; Enums
+                 (str "恶性高热家族史:" (if (= family_hyperthermia_present :有) "有" "无"))]] ; Enums
       (str/join ", " parts))))
 
 (defn surgical-anesthesia-history-summary-view [props]
@@ -1659,15 +1453,15 @@
         [form] (Form.useForm)
         ;; Spec path: [:手术麻醉史]
         ;; Removed local option lists and useWatch calls
-        initial-form-values (let [base-data (when sah-data
+        initial-form-values (let [base-data (when sah-data ; Base data is already in Chinese keys
                                               (-> sah-data
                                                   (update-in [:手术麻醉史 :详情 :具体上次麻醉日期] #(when % (utils/parse-date %)))))
-                                  default-values {:手术麻醉史 {:有无 "无"}
-                                                  :有血缘关系的人发生过恶性高热史 {:有无 "无"}}]
+                                  default-values {:手术麻醉史 {:有无 :无} ; Use enums
+                                                  :有血缘关系的人发生过恶性高热史 {:有无 :无}}] ; Use enums
                               (merge default-values (or base-data {})))
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)
-                             transformed-values (-> values-clj
+                             transformed-values (-> values-clj ; Paths are already Chinese
                                                     (update-in [:手术麻醉史 :详情 :具体上次麻醉日期] #(when % (utils/date->iso-string %))))]
                          (rf/dispatch [::events/update-canonical-assessment-section :手术麻醉史 transformed-values])))]
     (React/useEffect (fn []
@@ -1725,25 +1519,26 @@
 
 ;; Airway Assessment Card
 (defn generate-airway-summary [data]
-  (if (or (nil? data) (empty? data) (nil? (:detailed_assessment data)))
+  ;; Spec root key is :气道评估
+  (if (or (nil? data) (empty? data))
     "无数据"
-    (let [assessment (:detailed_assessment data)
-          diff-intubation (get assessment :difficult_intubation_history)
-          mallampati (get assessment :mallampati_classification)
-          mouth-opening (get-in assessment [:mouth_opening :degree])
-          thyromental-dist (get-in assessment [:thyromental_distance_class])
+    (let [assessment data ; Data is already :气道评估
+          diff-intubation (get assessment :既往困难插管史) ; Mapped
+          mallampati (get assessment :改良Mallampati分级) ; Mapped
+          mouth-opening (get-in assessment [:张口度 :分级]) ; Mapped
+          thyromental-dist (get assessment :甲颏距离cm) ; Mapped (value not class)
           parts (cond-> []
-                  (and diff-intubation (not= diff-intubation "无") (not (nil? diff-intubation)))
-                  (conj (str "困难插管史:" diff-intubation))
+                  (and diff-intubation (not= diff-intubation :无) (not= diff-intubation :不详) (not (nil? diff-intubation))) ; Enums
+                  (conj (str "困难插管史:" (name diff-intubation)))
                   mallampati
-                  (conj (str "Mallampati:" mallampati))
-                  (and mouth-opening (not= mouth-opening "gte_3_fingers"))
-                  (conj (str "张口度:" mouth-opening))
-                  (and thyromental-dist (not= thyromental-dist "gt_6_5_cm"))
-                  (conj (str "甲颏距离:" thyromental-dist)))]
+                  (conj (str "Mallampati:" (name mallampati))) ; Enum
+                  (and mouth-opening (not= mouth-opening :大于等于3横指)) ; Enum
+                  (conj (str "张口度:" (name mouth-opening)))
+                  (and thyromental-dist (< thyromental-dist 6.0)) ; Assuming number, check spec (OptionalNumber)
+                  (conj (str "甲颏距离:" thyromental-dist "cm")))]
       (if (empty? parts)
-        "未见明显异常"
-        (str/join ", " parts)))))
+        "气道评估: 未见明显异常"
+        (str "气道评估: " (str/join ", " parts))))))
 
 (defn airway-assessment-summary-view [props]
   (let [{:keys [aa-data]} props]
@@ -1754,14 +1549,14 @@
   (let [{:keys [report-form-instance-fn patient-id aa-data on-show-summary]} props
         [form] (Form.useForm)
         ;; Removed local option lists and useWatch calls from original implementation
-        initial-form-values (let [base-data (or aa-data {})
-                                  defaults {:既往困难通气史 :不详
+        initial-form-values (let [base-data (or aa-data {}) ; Base data is already in Chinese keys
+                                  defaults {:既往困难通气史 :不详 ; Enums
                                             :既往困难插管史 :不详
                                             :张口度 {:分级 :大于等于3横指}
                                             :甲颏距离cm nil
                                             :头颈活动度 {:分级 :正常活动}
                                             :改良Mallampati分级 :Ⅰ级
-                                            :上唇咬合试验ULBT :1级
+                                            :上唇咬合试验ULBT :1级 ; Note: Spec uses 上唇咬合试验
                                             :鼾症 {:有无 :不详}
                                             :气道相关疾病 {:有无 :不详}
                                             :现存气道症状 {:有无 :不详}
@@ -1849,23 +1644,26 @@
 
 ;; Spinal Anesthesia Assessment Card
 (defn generate-spinal-anesthesia-summary [data]
+  ;; Spec root key is :椎管内麻醉相关评估
   (if (or (nil? data) (empty? data))
     "无数据"
-    (let [critical-fields {[:central_nervous_system :brain_tumor] "脑肿瘤"
-                           [:peripheral_nervous_system :spinal_cord_injury] "脊髓损伤"
-                           [:lumbar_disc_herniation :present] "腰椎间盘突出"
-                           [:cardiovascular_system :aortic_stenosis] "主动脉瓣狭窄"
-                           [:puncture_site_inspection :local_infection] "穿刺点感染"
-                           [:local_anesthetic_allergy] "局麻药过敏"}
+    (let [assessment data ; Data is already :椎管内麻醉相关评估
+          critical-fields {[:中枢神经系统 :脑肿瘤] "脑肿瘤"
+                           [:外周神经系统 :脊髓损伤] "脊髓损伤"
+                           [:腰椎间盘突出 :有无] "腰椎间盘突出" ; Check for :有无
+                           [:心血管系统 :主动脉瓣狭窄] "主动脉瓣狭窄"
+                           [:穿刺点检查 :局部感染] "穿刺点感染"
+                           [:局麻药过敏] "局麻药过敏"} ; Direct key
           risk-factors (reduce (fn [acc [path label]]
-                                 (if (= (get-in data path) "有")
-                                   (conj acc label)
-                                   acc))
+                                 (let [value (if (coll? path) (get-in assessment path) (get assessment path))]
+                                   (if (or (= value :有) (= value true)) ; Check for :有 enum or true boolean
+                                     (conj acc label)
+                                     acc)))
                                []
                                critical-fields)]
       (if (seq risk-factors)
-        (str/join ", " risk-factors)
-        "无明确风险因素"))))
+        (str "椎管内麻醉风险: " (str/join ", " risk-factors))
+        "椎管内麻醉评估: 无明确风险因素"))))
 
 (defn spinal-anesthesia-assessment-summary-view [props]
   (let [{:keys [saa-data]} props]
@@ -1875,11 +1673,9 @@
 (defn spinal-anesthesia-assessment-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id saa-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values (let [base-data (or saa-data {})
+        initial-form-values (let [base-data (or saa-data {}) ; Base data is already in Chinese keys
                                   ;; Map original defaults to new spec paths.
-                                  ;; Original: [:central_nervous_system :brain_tumor] "无"
-                                  ;; New: [:椎管内麻醉相关评估 :中枢神经系统 :脑肿瘤] :无 (assuming enum uses keywords)
-                                  defaults {:中枢神经系统 {:脑肿瘤 :无, :脑出血 :无, :严重颅脑外伤 :无, :癫痫 :无}
+                                  defaults {:中枢神经系统 {:脑肿瘤 :无, :脑出血 :无, :严重颅脑外伤 :无, :癫痫 :无} ; Enums
                                             :外周神经系统 {:多发性硬化 :无, :脊髓损伤 :无, :脊柱侧弯 :无, :脊柱畸形 :无,
                                                            :椎管内肿瘤 :无, :强制性脊柱炎 :无, :腰椎手术史 :无}
                                             :腰椎间盘突出 {:有无 :无, :下肢麻木症状 :无}
