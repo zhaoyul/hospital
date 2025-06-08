@@ -140,7 +140,6 @@
 (defn respiratory-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id respiratory-data on-show-summary]} props
         [form] (Form.useForm)
-        ;; Removed local cold-symptom-options, treatment-options
         initial-form-values (let [base-data (form-utils/apply-enum-defaults-to-data
                                               (or respiratory-data {})
                                               assessment-specs/呼吸系统Spec)
@@ -148,17 +147,17 @@
                                                      (update-in [:近两周内感冒病史 :详情 :发病日期] #(when % (utils/parse-date %)))
                                                      (update-in [:近一个月内支气管炎或肺炎病史 :详情 :发病日期] #(when % (utils/parse-date %)))
                                                      (update-in [:哮喘病史 :详情 :上次发作日期] #(when % (utils/parse-date %))))]
-                              processed-data) ; Use the data after defaults and date parsing
+                              processed-data)
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)
-                             transformed-values (-> values-clj ; Paths are already Chinese
+                             transformed-values (-> values-clj
                                                     (update-in [:近两周内感冒病史 :详情 :发病日期] #(when % (utils/date->iso-string %)))
                                                     (update-in [:近一个月内支气管炎或肺炎病史 :详情 :发病日期] #(when % (utils/date->iso-string %)))
-                                                    (update-in [:哮喘病史 :详情 :上次发作日期] #(when % (utils/date->iso-string %))))] ; Paths already Chinese
+                                                    (update-in [:哮喘病史 :详情 :上次发作日期] #(when % (utils/date->iso-string %))))]
                          (rf/dispatch [::events/update-canonical-assessment-section :呼吸系统 transformed-values])))]
     (React/useEffect (fn []
                        (when report-form-instance-fn
-                         (report-form-instance-fn :呼吸系统 form)) ; Use new keyword
+                         (report-form-instance-fn :呼吸系统 form))
                        js/undefined)
                      #js [])
     (let [section-spec assessment-specs/呼吸系统Spec
@@ -169,7 +168,7 @@
       [afc/patient-assessment-card-wrapper
        {:patient-id patient-id
         :form-instance form
-        :form-key (str patient-id "-respiratory-system-spec") ; Updated form key
+        :form-key (str patient-id "-respiratory-system-spec")
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :children
@@ -218,7 +217,6 @@
 (defn mental-neuromuscular-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id mn-data on-show-summary]} props
         [form] (Form.useForm)
-        ;; Removed useWatch calls and local option lists
         initial-form-values (let [original-mn-data (or mn-data {})
                                   _ (timbre/info "mental-neuromuscular original mn-data:" (clj->js original-mn-data))
                                   data-with-defaults (form-utils/apply-enum-defaults-to-data
@@ -253,7 +251,7 @@
       [afc/patient-assessment-card-wrapper
        {:patient-id patient-id
         :form-instance form
-        :form-key (str patient-id "-mental-neuromuscular-system-spec") ; Updated form key
+        :form-key (str patient-id "-mental-neuromuscular-system-spec")
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :children
@@ -302,7 +300,6 @@
 (defn endocrine-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id endo-data on-show-summary]} props
         [form] (Form.useForm)
-        ;; Removed useWatch calls and local option lists
         initial-form-values (form-utils/apply-enum-defaults-to-data
                               (or endo-data {})
                               assessment-specs/内分泌系统Spec)
@@ -322,7 +319,7 @@
       [afc/patient-assessment-card-wrapper
        {:patient-id patient-id
         :form-instance form
-        :form-key (str patient-id "-endocrine-system-spec") ; Updated form key
+        :form-key (str patient-id "-endocrine-system-spec")
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :children
@@ -379,7 +376,7 @@
                          (rf/dispatch [::events/update-canonical-assessment-section :肝肾病史 values-clj])))]
     (React/useEffect (fn []
                        (when report-form-instance-fn
-                         (report-form-instance-fn :肝肾病史 form)) ; Use new keyword
+                         (report-form-instance-fn :肝肾病史 form))
                        js/undefined)
                      #js [])
     (let [section-spec assessment-specs/肝肾病史Spec
@@ -391,7 +388,7 @@
       [afc/patient-assessment-card-wrapper
        {:patient-id patient-id
         :form-instance form
-        :form-key (str patient-id "-liver-kidney-system-spec") ; Updated form key
+        :form-key (str patient-id "-liver-kidney-system-spec")
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :children
@@ -440,7 +437,6 @@
 (defn digestive-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id ds-data on-show-summary]} props
         [form] (Form.useForm)
-        ;; Removed useWatch calls and local option lists
         initial-form-values (form-utils/apply-enum-defaults-to-data
                               (or ds-data {})
                               assessment-specs/消化系统Spec)
@@ -461,7 +457,7 @@
       [afc/patient-assessment-card-wrapper
        {:patient-id patient-id
         :form-instance form
-        :form-key (str patient-id "-digestive-system-spec") ; Updated form key
+        :form-key (str patient-id "-digestive-system-spec")
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :children
@@ -517,19 +513,19 @@
                        (rf/dispatch [::events/update-canonical-assessment-section :血液系统 (js->clj values :keywordize-keys true)]))]
     (React/useEffect (fn []
                        (when report-form-instance-fn
-                         (report-form-instance-fn :血液系统 form)) ; Use new keyword
+                         (report-form-instance-fn :血液系统 form))
                        js/undefined)
                      #js [])
-    (let [section-spec assessment-specs/血液系统Spec ; Use the spec
+    (let [section-spec assessment-specs/血液系统Spec
           form-items (into
                       [:<>]
                       (mapv (fn [[field-key field-schema optional? _]]
-                              (afg/render-form-item-from-spec [field-key field-schema optional? [] form])) ; <--- UPDATED TO afg/
+                              (afg/render-form-item-from-spec [field-key field-schema optional? [] form]))
                             (m/entries section-spec)))]
       [afc/patient-assessment-card-wrapper
        {:patient-id patient-id
         :form-instance form
-        :form-key (str patient-id "-hematologic-system-spec") ; Spec-based key
+        :form-key (str patient-id "-hematologic-system-spec")
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :children
@@ -578,7 +574,6 @@
 (defn immune-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id is-data on-show-summary]} props
         [form] (Form.useForm)
-        ;; Removed useWatch calls and local option lists
         initial-form-values (form-utils/apply-enum-defaults-to-data
                               (or is-data {})
                               assessment-specs/免疫系统Spec)
@@ -599,10 +594,9 @@
       [afc/patient-assessment-card-wrapper
        {:patient-id patient-id
         :form-instance form
-        :form-key (str patient-id "-immune-system-spec") ; Updated form key
+        :form-key (str patient-id "-immune-system-spec")
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
-        ;; :on-values-change-handler on-values-change-fn ; Removed for now
         :children
         [:<>
          form-items
@@ -669,10 +663,9 @@
       [afc/patient-assessment-card-wrapper
        {:patient-id patient-id
         :form-instance form
-        :form-key (str patient-id "-special-medication-history-spec") ; Updated form key
+        :form-key (str patient-id "-special-medication-history-spec")
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
-        ;; :on-values-change-handler on-values-change-fn ; Removed
         :children
         [:<>
          form-items
@@ -719,7 +712,6 @@
 (defn special-disease-history-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id sdh-data on-show-summary]} props
         [form] (Form.useForm)
-        ;; Removed useWatch call for marfan-lesions
         initial-form-values (form-utils/apply-enum-defaults-to-data
                               (or sdh-data {})
                               assessment-specs/特殊疾病病史Spec)
@@ -740,10 +732,9 @@
       [afc/patient-assessment-card-wrapper
        {:patient-id patient-id
         :form-instance form
-        :form-key (str patient-id "-special-disease-history-spec") ; Updated form key
+        :form-key (str patient-id "-special-disease-history-spec")
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
-        ;; :on-values-change-handler on-values-change-fn ; Removed for now
         :children
         [:<>
          form-items
@@ -807,14 +798,10 @@
                       (mapv (fn [[field-key field-schema optional? _]]
                               (afg/render-form-item-from-spec [field-key field-schema optional? [] form]))
                             (m/entries section-spec)))]
-      ;; The spec has two main keys: :营养评分 and :FRAIL针对大于60岁病人
-      ;; These will be rendered as map sections by afg/render-conditional-map-section
-      ;; because they don't have the :有无/:详情 pattern, their fields will be rendered directly.
-      ;; We also add the original descriptive texts as non-form elements.
       [afc/patient-assessment-card-wrapper
        {:patient-id patient-id
         :form-instance form
-        :form-key (str patient-id "-nutritional-assessment-spec") ; Updated form key
+        :form-key (str patient-id "-nutritional-assessment-spec")
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :children
@@ -872,8 +859,6 @@
 (defn pregnancy-assessment-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id pa-data on-show-summary]} props
         [form] (Form.useForm)
-        ;; Spec path: [:妊娠]
-        ;; Removed local option lists and useWatch calls
         initial-form-values (form-utils/apply-enum-defaults-to-data
                               (or pa-data {})
                               assessment-specs/妊娠Spec)
@@ -894,7 +879,7 @@
       [afc/patient-assessment-card-wrapper
        {:patient-id patient-id
         :form-instance form
-        :form-key (str patient-id "-pregnancy-assessment-spec") ; Updated form key
+        :form-key (str patient-id "-pregnancy-assessment-spec")
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :children
@@ -943,8 +928,6 @@
 (defn surgical-anesthesia-history-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id sah-data on-show-summary]} props
         [form] (Form.useForm)
-        ;; Spec path: [:手术麻醉史]
-        ;; Removed local option lists and useWatch calls
         initial-form-values (let [base-data (form-utils/apply-enum-defaults-to-data
                                               (or sah-data {})
                                               assessment-specs/手术麻醉史Spec)
@@ -958,7 +941,7 @@
                          (rf/dispatch [::events/update-canonical-assessment-section :手术麻醉史 transformed-values])))]
     (React/useEffect (fn []
                        (when report-form-instance-fn
-                         (report-form-instance-fn :手术麻醉史 form)) ; Use spec keyword
+                         (report-form-instance-fn :手术麻醉史 form))
                        js/undefined)
                      #js [])
     (let [section-spec assessment-specs/手术麻醉史Spec
@@ -970,7 +953,7 @@
       [afc/patient-assessment-card-wrapper
        {:patient-id patient-id
         :form-instance form
-        :form-key (str patient-id "-surgical-anesthesia-history-spec") ; Updated form key
+        :form-key (str patient-id "-surgical-anesthesia-history-spec")
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :children
@@ -1019,7 +1002,6 @@
 (defn airway-assessment-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id aa-data on-show-summary]} props
         [form] (Form.useForm)
-        ;; Removed local option lists and useWatch calls from original implementation
         initial-form-values (form-utils/apply-enum-defaults-to-data
                               (or aa-data {})
                               assessment-specs/气道评估Spec)
@@ -1063,7 +1045,7 @@
       [afc/patient-assessment-card-wrapper
        {:patient-id patient-id
         :form-instance form
-        :form-key (str patient-id "-airway-assessment-spec") ; Updated form key
+        :form-key (str patient-id "-airway-assessment-spec")
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
         :children
@@ -1133,10 +1115,9 @@
       [afc/patient-assessment-card-wrapper
        {:patient-id patient-id
         :form-instance form
-        :form-key (str patient-id "-spinal-anesthesia-assessment-spec") ; Updated form key
+        :form-key (str patient-id "-spinal-anesthesia-assessment-spec")
         :initial-data initial-form-values
         :on-finish-handler on-finish-fn
-        ;; :on-values-change-handler ; Removed
         :children
         [:<>
          form-items
@@ -1172,3 +1153,5 @@
        :view-state @view-state
        :card-style {:cursor "pointer"}
        :card-body-style {:padding "0px"}])))
+
+[end of src/cljs/hc/hospital/pages/assessment_cards.cljs]
