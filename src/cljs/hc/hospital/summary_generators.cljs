@@ -74,7 +74,7 @@
                       (is-value-meaningful? sub-val sub-schema)))
                   entries))
           ;; Fallback: actual-schema is not a map or is nil.
-          (some (fn [[_map-key map-val]] (is-value-meaningful? map-val nil)) value))))
+          (some (fn [[_map-key map-val]] (is-value-meaningful? map-val nil)) value))) ; Removed one parenthesis here
 
       (= true value) true
       (= false value) false
