@@ -42,30 +42,30 @@
 
           transformed-data
           {:基本信息 {:门诊号 (:outpatient-number raw-basic-info)
-                        :姓名 (:name raw-basic-info)
-                        :性别 (:gender raw-basic-info)
-                        :年龄 (parse-int-safe (:age raw-basic-info))
-                        :院区 (:department raw-basic-info) ; Assuming :department maps to :院区
-                        :身份证号 (:id-number raw-basic-info) ; Assuming :id-number maps to :身份证号
-                        :手机号 (:phone-number raw-basic-info) ; Assuming :phone-number maps to :手机号
-                        :术前诊断 (:diagnosis raw-basic-info)
-                        :拟施手术 (:planned_surgery raw-basic-info)
-                        :身高cm (parse-int-safe (:height raw-basic-info))
-                        :体重kg (parse-int-safe (:weight raw-basic-info))
-                        :患者提交时间 current-time
-                        :评估更新时间 current-time
-                        :评估状态 "待评估"
-                        :医生姓名 (:doctor_name raw-basic-info)
-                        :医生签名图片 (:doctor_signature_b64 raw-basic-info) ; Added for signature
-                        :评估备注 (:assessment_notes raw-basic-info)
-                        ;; Fields from general-condition-card that are part of 基本信息 in spec
-                        :精神状态 (:mental_state raw-basic-info)
-                        :活动能力 (:activity_level raw-basic-info)
-                        :血压mmHg (:blood_pressure raw-basic-info) ; Assuming a single field from patient input
-                        :脉搏次每分 (parse-int-safe (:heart_rate raw-basic-info))
-                        :呼吸次每分 (parse-int-safe (:respiratory_rate raw-basic-info))
-                        :体温摄氏度 (try (some-> raw-basic-info :temperature str str/trim Double/parseDouble) (catch Exception _ nil))
-                        :SpO2百分比 (parse-int-safe (:spo2 raw-basic-info))}
+                      :姓名 (:name raw-basic-info)
+                      :性别 (:gender raw-basic-info)
+                      :年龄 (parse-int-safe (:age raw-basic-info))
+                      :院区 (:department raw-basic-info) ; Assuming :department maps to :院区
+                      :身份证号 (:id-number raw-basic-info) ; Assuming :id-number maps to :身份证号
+                      :手机号 (:phone-number raw-basic-info) ; Assuming :phone-number maps to :手机号
+                      :术前诊断 (:diagnosis raw-basic-info)
+                      :拟施手术 (:planned_surgery raw-basic-info)
+                      :身高cm (parse-int-safe (:height raw-basic-info))
+                      :体重kg (parse-int-safe (:weight raw-basic-info))
+                      :患者提交时间 current-time
+                      :评估更新时间 current-time
+                      :评估状态 "待评估"
+                      :医生姓名 (:doctor_name raw-basic-info)
+                      :医生签名图片 (:doctor_signature_b64 raw-basic-info) ; Added for signature
+                      :评估备注 (:assessment_notes raw-basic-info)
+                      ;; Fields from general-condition-card that are part of 基本信息 in spec
+                      :精神状态 (:mental_state raw-basic-info)
+                      :活动能力 (:activity_level raw-basic-info)
+                      :血压mmHg (:blood_pressure raw-basic-info) ; Assuming a single field from patient input
+                      :脉搏次每分 (parse-int-safe (:heart_rate raw-basic-info))
+                      :呼吸次每分 (parse-int-safe (:respiratory_rate raw-basic-info))
+                      :体温摄氏度 (try (some-> raw-basic-info :temperature str str/trim Double/parseDouble) (catch Exception _ nil))
+                      :SpO2百分比 (parse-int-safe (:spo2 raw-basic-info))}
            :medical_history (ctl/spy :info {:allergy {:has_history (to-boolean (:allergy-history raw-medical-summary))
                                                       :details (:allergen raw-medical-summary)
                                                       :last_reaction_date (:allergy-date raw-medical-summary)}
@@ -137,7 +137,7 @@
           patient-name (get-in transformed-data [:基本信息 :姓名] "") ; Updated path
           doctor-signature (get-in transformed-data [:基本信息 :医生签名图片]) ; Extract signature
           {:keys [pinyin initial]} (get-pinyin-parts patient-name) ; Assuming get-pinyin-parts is available
-          assessment-data-json (cheshire/generate-string (dissoc-in transformed-data [:基本信息 :医生签名图片]))] ; Remove signature from JSON
+          assessment-data-json (cheshire/generate-string (update transformed-data :基本信息 dissoc  :医生签名图片))] ; Remove signature from JSON
       (if (str/blank? (str patient-id)) ; Ensure patient-id is treated as string for blank? check
         (do
           (log/error "患者ID (outpatient_number) 未在 basic_info 中提供。")
@@ -225,7 +225,7 @@
               ;; Remove signature from body before generating JSON to avoid storing it inside assessment_data JSON
               body-without-signature (dissoc body :doctor_signature_b64)
               ;; also if it was nested under :基本信息 :医生签名图片
-              body-without-signature (dissoc-in body-without-signature [:基本信息 :医生签名图片])
+              body-without-signature (update body-without-signature [:基本信息] dissoc :医生签名图片)
 
               updated-body (assoc-in body-without-signature [:基本信息 :评估更新时间] (str (Instant/now)))
               patient-name (get-in updated-body [:基本信息 :姓名] "")
