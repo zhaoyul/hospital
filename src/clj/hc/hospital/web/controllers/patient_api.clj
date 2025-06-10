@@ -135,6 +135,8 @@
           patient-id (get-in transformed-data [:基本信息 :门诊号]) ; Updated path
           patient-name (get-in transformed-data [:基本信息 :姓名] "") ; Updated path
           {:keys [pinyin initial]} (get-pinyin-parts patient-name) ; Assuming get-pinyin-parts is available
+          ;; 中文注释：提取医生签名图片 (如果存在)，用于插入操作
+          doctor-signature (get-in transformed-data [:基本信息 :医生签名图片])
           assessment-data-json (cheshire/generate-string transformed-data)]
       (if (str/blank? (str patient-id)) ; Ensure patient-id is treated as string for blank? check
         (do
@@ -148,7 +150,8 @@
                         {:patient_id patient-id
                          :assessment_data assessment-data-json
                          :patient_name_pinyin pinyin
-                         :patient_name_initial initial})
+                         :patient_name_initial initial
+                         :doctor_signature_b64 doctor-signature}) ;; 中文注释：传递签名数据给更新查询 (如果存在)
               (http-response/ok {:message "评估更新成功！"}))
             (do
               (log/info "插入新的患者评估数据, 患者ID:" patient-id ", 拼音:" pinyin ", 首字母:" initial)
@@ -156,7 +159,8 @@
                         {:patient_id patient-id
                          :assessment_data assessment-data-json
                          :patient_name_pinyin pinyin
-                         :patient_name_initial initial})
+                         :patient_name_initial initial
+                         :doctor_signature_b64 doctor-signature}) ;; 中文注释：传递签名数据给插入查询 (如果存在)
               (http-response/ok {:message "评估提交成功！"}))))))
     (catch Exception e
       (log/error e "提交/更新评估时出错" (ex-message e) (ex-data e))
@@ -167,9 +171,12 @@
 (defn get-assessment-by-patient-id [{{{:keys [patient-id]} :path} :parameters :keys [query-fn] :as _request}]
   (log/info "查询患者评估数据，患者ID:" patient-id)
   (try
-    (let [assessment-data-map (query-fn :get-patient-assessment-by-id {:patient_id patient-id})]
-      (if (seq assessment-data-map)
-        (http-response/ok (cheshire/decode (:assessment_data assessment-data-map) keyword))
+    (let [db-result (query-fn :get-patient-assessment-by-id {:patient_id patient-id})]
+      (if (seq db-result)
+        (let [assessment-data (cheshire/decode (:assessment_data db-result) keyword)
+              ;; 中文注释：将数据库中的 doctor_signature_b64 映射回 :医生签名图片
+              full-assessment (assoc-in assessment-data [:基本信息 :医生签名图片] (:doctor_signature_b64 db-result))]
+          (http-response/ok full-assessment))
         (http-response/not-found {:message "未找到该患者的评估数据"})))
     (catch Exception e
       (log/error e "查询评估数据时出错")
@@ -184,12 +191,17 @@
                              (not (str/blank? updated_from)) (assoc :updated_from updated_from)
                              (not (str/blank? updated_to)) (assoc :updated_to updated_to))
           all-assessments-raw (query-fn :get-all-patient-assessments params-for-query)
-          parsed-assessments (mapv (fn [assessment]
-                                     (cond-> assessment
-                                       (:assessment_data assessment) (assoc :assessment_data (cheshire/decode (:assessment_data assessment) keyword))
-                                       ;; Ensure pinyin and initial are strings
-                                       (:patient_name_pinyin assessment) (update :patient_name_pinyin #(if (keyword? %) (name %) %))
-                                       (:patient_name_initial assessment) (update :patient_name_initial #(if (keyword? %) (name %) %))))
+          parsed-assessments (mapv (fn [assessment-row]
+                                     (let [parsed-assessment-data (cheshire/decode (:assessment_data assessment-row) keyword)
+                                           ;; 中文注释：将数据库中的 doctor_signature_b64 整合到返回的 assessment_data 中
+                                           full-assessment-data (assoc-in parsed-assessment-data [:基本信息 :医生签名图片] (:doctor_signature_b64 assessment-row))]
+                                       (-> assessment-row
+                                           (assoc :assessment_data full-assessment-data)
+                                           ;; Ensure pinyin and initial are strings
+                                           (update :patient_name_pinyin #(if (keyword? %) (name %) %))
+                                           (update :patient_name_initial #(if (keyword? %) (name %) %))
+                                           ;; 中文注释：从结果中移除单独的 doctor_signature_b64 键，因为它已合并到 assessment_data 中
+                                           (dissoc :doctor_signature_b64))))
                                    all-assessments-raw)]
       (http-response/ok parsed-assessments))
     (catch Exception e
@@ -197,19 +209,27 @@
       (http-response/internal-server-error {:message "查询所有评估数据时出错"}))))
 
 (defn update-assessment-by-patient-id! [{{{:keys [patient-id]} :path :keys [body]} :parameters :keys [query-fn] :as _request}]
-  (log/info "请求更新患者评估数据，患者ID:" patient-id)
+  (log/info "请求更新患者评估数据，患者ID:" patient-id ", 完整body:" body)
   (try
     (let [existing-assessment (query-fn :get-patient-assessment-by-id {:patient_id patient-id})]
       (if (seq existing-assessment)
-        (let [updated-body (assoc-in body [:基本信息 :评估更新时间] (str (Instant/now))) ; Updated path
-              patient-name (get-in updated-body [:基本信息 :姓名] "") ; Updated path
+        (let [;; 中文注释：确保评估更新时间被设置
+              body-with-timestamp (assoc-in body [:基本信息 :评估更新时间] (str (Instant/now)))
+              ;; 中文注释：从请求体中提取医生签名图片
+              doctor-signature (get-in body-with-timestamp [:基本信息 :医生签名图片])
+              patient-name (get-in body-with-timestamp [:基本信息 :姓名] "")
               {:keys [pinyin initial]} (get-pinyin-parts patient-name)
-              assessment-data-json (cheshire/generate-string updated-body)]
+              ;; 中文注释：可以选择是否从 assessment_data JSON 中移除签名图片，如果它已作为独立列存储。
+              ;; 为了简单起见，并保持其他地方的兼容性，暂时将其保留在JSON中。
+              ;; 若要移除: (assoc-in body-with-timestamp [:基本信息] (dissoc (get-in body-with-timestamp [:基本信息]) :医生签名图片))
+              assessment-data-json (cheshire/generate-string body-with-timestamp)]
+          (log/info "准备更新数据库，患者ID:" patient-id ", 签名数据长度:" (count doctor-signature))
           (query-fn :update-patient-assessment!
                     {:patient_id patient-id
                      :assessment_data assessment-data-json
                      :patient_name_pinyin pinyin
-                     :patient_name_initial initial})
+                     :patient_name_initial initial
+                     :doctor_signature_b64 doctor-signature}) ;; 中文注释：传递签名数据给数据库
           (http-response/ok {:message "评估更新成功！"}))
         (http-response/not-found {:message "未找到该患者的评估数据，无法更新。"})))
     (catch Exception e

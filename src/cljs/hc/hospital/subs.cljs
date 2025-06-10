@@ -106,6 +106,12 @@
   :<- [::canonical-basic-info]
   (fn [basic-info _] (:门诊号 basic-info))) ;; Updated to :门诊号
 
+;; 新增：订阅医生签名图片数据
+(rf/reg-sub ::doctor-signature-image
+  :<- [::canonical-basic-info]
+  (fn [basic-info _]
+    (:医生签名图片 basic-info)))
+
 ;; Medical History - DEPRECATED due to spec changes to Chinese keywords and restructuring
 ;; (rf/reg-sub ::canonical-medical-history
 ;;   :<- [::current-canonical-assessment]

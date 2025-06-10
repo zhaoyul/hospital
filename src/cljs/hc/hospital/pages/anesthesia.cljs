@@ -14,6 +14,7 @@
    ;; 确保 antd/Form 等组件已引入
    ["antd" :refer [Button Card Col DatePicker Descriptions Empty Form Input
                    InputNumber Layout Modal Radio Row Select Space Tag Upload]] ; Removed Tooltip as it's not used, Added Checkbox
+   ["signature_pad" :default SignaturePad] ;; 新增：引入 signature_pad
    [hc.hospital.events :as events]
    [hc.hospital.pages.assessment-cards :as acards]
    [hc.hospital.subs :as subs]
@@ -22,6 +23,33 @@
    [re-frame.core :as rf]
    [reagent.core :as r]
    [taoensso.timbre :as timbre])) ; Added ui-helpers require
+
+;; 新增：签名板组件
+(defn signature-pad-comp [{:keys [on-save]}]
+  (let [canvas-ref (r/atom nil)
+        signature-pad-instance (r/atom nil)
+        init-signature-pad (fn []
+                             (when-let [canvas @canvas-ref]
+                               (reset! signature-pad-instance (SignaturePad. canvas))))]
+    (r/create-class
+     {:component-did-mount init-signature-pad
+      :reagent-render
+      (fn [{:keys [on-save]}]
+        [:div
+         [:canvas {:ref #(reset! canvas-ref %)
+                   :style {:border "1px solid #eee"
+                           :width "100%" :height "150px"}}]
+         [:>Space {:style {:margin-top "8px"}}
+          [:>Button {:on-click #(when-let [pad @signature-pad-instance]
+                                 (.clear pad))}
+           "清除签名"]
+          [:>Button {:type "primary"
+                     :on-click (fn []
+                                 (when-let [pad @signature-pad-instance]
+                                   (when-not (.isEmpty pad) ;; 检查签名是否为空
+                                     (let [data-url (.toDataURL pad)]
+                                       (rf/dispatch [::events/update-signature-data data-url])))))}
+           "确认签名"]]])})))
 
 ;; Define common grid style maps and helper function
 (def ^:private grid-style-4-col
@@ -559,18 +587,31 @@
 (defn- signature-and-date-card []
   (let [basic-info @(rf/subscribe [::subs/canonical-basic-info])
         assessment-updated-at (get basic-info :评估更新时间 (utils/date->iso-string (js/Date.now))) ; Updated key
-        doctor-name (get basic-info :医生姓名)] ; Updated key
+        ;; doctor-name (get basic-info :医生姓名) ; Not used directly for signature anymore
+        saved-signature-image @(rf/subscribe [::subs/doctor-signature-image])] ;; 中文注释：订阅已保存的签名图像
     [custom-styled-card
      [:> SaveOutlined {:style {:marginRight "8px"}}]
      "麻醉医师签名及日期"
      "#fff0f6" ; Header background color
-     [:> Descriptions {:bordered true :column 1 :size "small"} ; Changed to 1 column for better layout
-      [:> Descriptions.Item {:label "麻醉医师"}
-       [:> Input {:placeholder "记录医师姓名"
-                  :value doctor-name
-                  :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :医生姓名] (-> % .-target .-value)])}]] ; Updated path
+     [:> Descriptions {:bordered true :column 1 :size "small"}
+      [:> Descriptions.Item {:label "麻醉医师签名"}
+       (if saved-signature-image
+         ;; 中文注释：如果存在已保存的签名，则显示图像和“重新签名”按钮
+         [:div
+          [:img {:src saved-signature-image
+                 :alt "麻醉医师签名"
+                 :style {:width "200px"
+                         :height "auto"
+                         :border "1px solid #ccc"
+                         :margin-bottom "8px"}}]
+          [:>Button {:type "default"
+                     :size "small"
+                     :on-click #(rf/dispatch [::events/update-signature-data nil])}
+           "重新签名"]]
+         ;; 中文注释：如果不存在已保存的签名，则显示签名板组件
+         [signature-pad-comp {}])]
       [:> Descriptions.Item {:label "评估更新日期"}
-       (utils/format-date assessment-updated-at "YYYY-MM-DD HH:mm")]]]))
+       (utils/format-date assessment-updated-at "YYYY-MM-DD HH:mm")]]])) ;; 保留日期显示
 
 ;; 辅助函数，用于显示备注信息 (now part of basic_info)
 (defn- remarks-card []

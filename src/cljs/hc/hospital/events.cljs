@@ -92,6 +92,12 @@
   (fn [db [_ path value]]
     (assoc-in db (concat [:anesthesia :current-assessment-canonical] path) value)))
 
+;; 新增：处理签名数据更新事件，将其存储到 app-db
+(rf/reg-event-db ::update-signature-data
+  (fn [db [_ signature-data]]
+    (timbre/info "Updating signature data in app-db.")
+    (assoc-in db [:anesthesia :current-assessment-canonical :基本信息 :医生签名图片] signature-data)))
+
 (rf/reg-event-db ::update-canonical-assessment-section
   [(when ^boolean goog.DEBUG re-frame.core/debug)]
   (fn [db [_ section-key section-data]]
@@ -173,17 +179,19 @@
   [(when ^boolean goog.DEBUG re-frame.core/debug)]
   (fn [{:keys [db]} _]
     (let [current-patient-id (get-in db [:anesthesia :current-patient-id])
-          ;; The entire canonical assessment is now the payload
+          ;; 获取完整的评估数据，现在包含了 :医生签名图片
           assessment-payload (get-in db [:anesthesia :current-assessment-canonical])]
       (if current-patient-id
         (if assessment-payload
-          {:http-xhrio {:method          :put
-                        :uri             (str "/api/patient/assessment/" current-patient-id)
-                        :params          assessment-payload ;; Send the whole canonical structure
-                        :format          (ajax/json-request-format) ;; <--- ADD THIS LINE
-                        :response-format (ajax/json-response-format {:keywords? true})
-                        :on-success      [::save-assessment-success]
-                        :on-failure      [::save-assessment-failed]}}
+          (do
+            (timbre/info "Saving final assessment with signature data (if present):" (get-in assessment-payload [:基本信息 :医生签名图片] "No signature data")) ;; 中文注释：记录日志，检查是否包含签名数据
+            {:http-xhrio {:method          :put
+                          :uri             (str "/api/patient/assessment/" current-patient-id)
+                          :params          assessment-payload ;; 发送包含签名图片的完整数据结构
+                          :format          (ajax/json-request-format)
+                          :response-format (ajax/json-response-format {:keywords? true})
+                          :on-success      [::save-assessment-success]
+                          :on-failure      [::save-assessment-failed]}})
           (do (timbre/warn "Assessment data is nil, cannot save.")
               {}))
         (do (timbre/warn "No patient selected, cannot save assessment.")
