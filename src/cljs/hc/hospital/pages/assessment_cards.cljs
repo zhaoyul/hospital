@@ -378,12 +378,19 @@
 (defn liver-kidney-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id lk-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values (form-utils/apply-enum-defaults-to-data
-                              (or lk-data {})
-                              assessment-specs/肝肾病史Spec)
+        initial-form-values (let [data-from-db (or lk-data {})
+                                  data-with-enum-defaults (form-utils/apply-enum-defaults-to-data
+                                                            data-from-db
+                                                            assessment-specs/肝肾病史Spec)]
+                              (form-utils/preprocess-date-fields
+                                data-with-enum-defaults
+                                assessment-specs/肝肾病史Spec))
         on-finish-fn (fn [values]
-                       (let [values-clj (js->clj values :keywordize-keys true)]
-                         (rf/dispatch [::events/update-canonical-assessment-section :肝肾病史 values-clj])))]
+                       (let [values-clj (js->clj values :keywordize-keys true)
+                             transformed-values (form-utils/transform-date-fields-for-submission
+                                                  values-clj
+                                                  assessment-specs/肝肾病史Spec)]
+                         (rf/dispatch [::events/update-canonical-assessment-section :肝肾病史 transformed-values])))]
     (React/useEffect (fn []
                        (when report-form-instance-fn
                          (report-form-instance-fn :肝肾病史 form))
