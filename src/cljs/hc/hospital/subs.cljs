@@ -96,7 +96,7 @@
 ;; Basic Info
 (rf/reg-sub ::canonical-basic-info
   :<- [::current-canonical-assessment]
-  (fn [assessment _] (:基本信息 assessment)))
+  (fn [assessment k] (get-in  assessment (cond-> [:基本信息] k (conj k)))))
 
 (rf/reg-sub ::canonical-patient-name
   :<- [::canonical-basic-info]
