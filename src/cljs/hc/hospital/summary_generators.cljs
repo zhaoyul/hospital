@@ -64,7 +64,11 @@
                           sub-schema (m/schema entry-schema-wrapper)]
                       (is-value-meaningful? sub-val sub-schema)))
                   entries))
-          true)) ; No schema for map, consider meaningful if not empty and not all values are nil/blank (covered by prior checks)
+        ;; Fallback: actual-schema is not a map or is nil.
+        ;; Check if any of the map's own values are meaningful, without relying on sub-schemas.
+        (some (fn [[_map-key map-val]] ; We only need the value from the map's key-value pair
+                (is-value-meaningful? map-val nil)) ; Pass nil as field-schema for children
+              value))) ; Iterate over the map (value) itself
 
       (= true value) true
       (= false value) false
@@ -119,8 +123,12 @@
                                              [:span {:style {:font-size (str current-value-font-size "px")}}
                                               processed-val])]))))
                                (filterv identity))]
-        (when (seq child-hiccups)
-          (into [:<>] child-hiccups))) ;; <--- 修改点
+        ;; Current: (when (seq child-hiccups) (into [:<>] child-hiccups))
+        ;; --- 修改点在此附近 ---
+        ;; 需要确保如果 child-hiccups 为空，整个map的渲染结果为 nil
+        (if (seq child-hiccups)
+          (into [:<>] child-hiccups)
+          nil)) ; If child-hiccups is empty, this map itself is considered empty for rendering
 
       (= :vector schema-type)
       (if (is-value-meaningful? data actual-schema)
