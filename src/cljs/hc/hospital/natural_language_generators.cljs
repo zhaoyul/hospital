@@ -9,17 +9,23 @@
           :negative :无,
           :label-suffix "史",
           :positive-prefix "",
-          :negative-prefix "无"}
+          :negative-prefix "无",
+          :omit-if-negative true} ; Default to omit negative "有无" unless for specific conditions
    :是否 {:positive :是,
           :negative :否,
           :label-suffix "",
           :positive-prefix "",
-          :negative-prefix "非"}
+          :negative-prefix "非",
+          :omit-if-negative true}
    :状态 {:positive :异常,
           :negative :正常,
           :label-suffix "状态",
           :positive-prefix "",
-          :negative-prefix ""}
+          :negative-prefix "",
+          :omit-if-negative false} ; Usually we want to state "XX状态：正常"
+   ;; Specific override for certain fields where "无XX史" is desired
+   :心脏起搏器植入史 {:positive :有, :negative :无, :label-suffix "史", :negative-prefix "无", :omit-if-negative false}
+   ;; Add other fields that need explicit negation if their :有无 is :无
    })
 
 (defn is-val-present?
@@ -39,19 +45,19 @@
         (str/capitalize))))
 
 (defn format-value
-  [value field-schema]
+  "Formats a single atomic value into a string for display."
+  [value _field-schema]
   (cond
     (nil? value) ""
-    (keyword? value) (schema-key->display-label value)
-    (vector? value) (str/join "、" (map #(format-value % nil) value))
+    (keyword? value) (name value)
     (boolean? value) (if value "是" "否")
     :else (str value)))
 
-(declare generate-description-parts)
+(declare generate-description-parts parts->hiccup)
 
 (defn generate-description-parts
-  "递归函数，接收数据和 Malli schema，输出一个“文本部分”的 vector。
-   Part types: :statement, :key-value, :list-items, :nested-group"
+  "Recursively generates a vector of 'parts' from data and schema.
+   Part types: :statement, :key-value, :list-items, :nested-group, :atomic-value"
   [data schema]
   (let [actual-schema (m/deref schema)
         schema-type (m/type actual-schema)]
@@ -63,52 +69,67 @@
       (= :map schema-type)
       (when (is-val-present? data)
         (let [entries (m/entries actual-schema)
-              parts (reduce
-                     (fn [acc [field-key entry-schema-wrapper props-map]]
-                       (let [entry-schema (m/schema entry-schema-wrapper)
-                             entry-data (get data field-key)
-                             label (schema-key->display-label field-key)
-                             entry-props (:properties entry-schema-wrapper)]
-                         (if-not (is-val-present? entry-data)
-                           acc
-                           (if-let [control-def (get control-word-config field-key)]
-                             (let [positive-val (:positive control-def)
-                                   negative-val (:negative control-def)
-                                   label-suffix (:label-suffix control-def "")
-                                   full-label (str label label-suffix)
-                                   details-parts nil]  ; Simplified, details handled by subsequent parts
-                               (cond
-                                 (= entry-data positive-val)
-                                 (conj acc {:type :statement :positive true :label full-label :prefix (:positive-prefix control-def "") :details details-parts})
-                                 (= entry-data negative-val)
-                                 (if (:omit-if-negative control-def)
-                                   acc
-                                   (conj acc {:type :statement :positive false :label full-label :prefix (:negative-prefix control-def "")}))
-                                 :else
-                                 (conj acc {:type :key-value :label full-label :value (format-value entry-data entry-schema)})))
-                             ;; Not a control field
-                             (let [child-parts (generate-description-parts entry-data entry-schema)]
-                               (if (seq child-parts)
-                                 (conj acc {:type :nested-group :label label :content child-parts})
-                                 (if-let [formatted-atomic-val (format-value entry-data entry-schema)]
-                                   (if (str/blank? formatted-atomic-val)
-                                     acc
-                                     (conj acc {:type :key-value :label label :value formatted-atomic-val}))
-                                   acc)))))))
-                     []
-                     entries)]
-          (when (seq parts) parts)))
+              control-key-entry (first (filter #(contains? control-word-config (first %)) entries))
+              is-controlled-negative? (if control-key-entry
+                                        (let [[ctrl-key _] control-key-entry ; ctrl-schema-wrapper not needed here
+                                              ctrl-data (get data ctrl-key)
+                                              ctrl-def (get control-word-config ctrl-key)]
+                                          (and (= ctrl-data (:negative ctrl-def))
+                                               (:omit-if-negative ctrl-def true)))
+                                        false)]
+          (if is-controlled-negative?
+            nil
+            (let [parts (reduce
+                         (fn [acc [field-key entry-schema-wrapper entry-optional? entry-properties]] ; Destructure entry correctly
+                           (let [entry-schema (m/schema entry-schema-wrapper)
+                                 entry-data (get data field-key)
+                                 label (schema-key->display-label field-key)]
+                             (if-not (is-val-present? entry-data)
+                               acc
+                               (if (or (= field-key :详情) (= field-key :描述))
+                                 (if (map? entry-data)
+                                   (into acc (generate-description-parts entry-data entry-schema))
+                                   (let [val-str (format-value entry-data entry-schema)]
+                                     (if (is-val-present? val-str)
+                                       (conj acc {:type :key-value :label label :value val-str})
+                                       acc)))
+                                 (if-let [control-def (get control-word-config field-key)]
+                                   (let [positive-val (:positive control-def)
+                                         negative-val (:negative control-def)
+                                         label-suffix (:label-suffix control-def "")
+                                         full-label (str label label-suffix)
+                                         part-base {:original-key field-key :label label :prefix (:positive-prefix control-def "")}]
+                                     (cond
+                                       (= entry-data positive-val)
+                                       (conj acc (assoc part-base :type :statement :positive true))
+                                       (= entry-data negative-val)
+                                       (if (get control-def :omit-if-negative true)
+                                         acc
+                                         (conj acc (assoc part-base :type :statement :positive false :prefix (:negative-prefix control-def ""))))
+                                       :else
+                                       (conj acc {:type :key-value :label full-label :value (format-value entry-data entry-schema)})))
+                                   ;; Not a control field, not :详情/:描述
+                                   (let [child-parts (generate-description-parts entry-data entry-schema)]
+                                     (if (seq child-parts)
+                                       (conj acc {:type :nested-group :label label :content child-parts})
+                                       (let [formatted-atomic-val (format-value entry-data entry-schema)]
+                                         (if (is-val-present? formatted-atomic-val)
+                                           (conj acc {:type :key-value :label label :value formatted-atomic-val})
+                                           acc))))))))) ; Added one more ) here
+                         [] ; initial value for reduce
+                         entries)] ; collection for reduce
+              (when (seq parts) parts)))))
 
       (= :vector schema-type)
       (when (is-val-present? data)
         (let [element-schema (first (m/children actual-schema))
-              item-parts (->> data
-                              (mapcat #(generate-description-parts % element-schema))
-                              (filter is-val-present?))]
-          (when (seq item-parts)
-            (if (every? #(= (:type %) :atomic-value) item-parts)
-              [{:type :list-items :items (map :value item-parts)}]
-              item-parts))))
+              processed-item-part-groups (map #(generate-description-parts % element-schema) data)]
+          (let [valid-item-part-groups (filterv seq processed-item-part-groups)]
+            (when (seq valid-item-part-groups)
+              (if (every? (fn [pg] (and (= 1 (count pg)) (= :atomic-value (:type (first pg)))))
+                          valid-item-part-groups)
+                [{:type :list-items :items (mapv #(:value (first %)) valid-item-part-groups)}]
+                (reduce into [] valid-item-part-groups))))))
 
       :else
       (when (is-val-present? data)
@@ -116,114 +137,108 @@
           (when (is-val-present? val-str)
             [{:type :atomic-value :value val-str}]))))))
 
+;; --- Hiccup Rendering ---
+(declare render-hypertension-details) ; Specific formatter
 
-(defn- join-sentences [sentences]
-  (->> sentences
-       (map str/trim)
-       (filter #(not (str/blank? %)))
-       (map #(if (re-find #"[。！？]$" %) % (str % "。")))
-       (str/join " ")))
+(defn- render-part [part]
+  "Renders a single part into its Hiccup representation."
+  (when part
+    (let [{:keys [type label value items positive content prefix original-key]} part]
+      (condp = type
+        :statement
+        (let [control-def (get control-word-config original-key)
+              label-suffix (or (:label-suffix control-def) "")
+              base-label (or label (schema-key->display-label original-key)) ; Ensure label is present
+              display-label (str base-label label-suffix)]
+          (if positive
+             [:div.statement.positive [:strong display-label "："]] ;; Positive statement always ends with a colon
+            (when-not (get control-def :omit-if-negative true)
+              (let [neg-prefix (or prefix (:negative-prefix control-def "无"))]
+                [:div.statement.negative [:strong neg-prefix display-label "。"]]))))
 
-(defn- format-key-value-pair [label value]
-  (str label "：" value))
+        :key-value
+        (when-not (str/blank? (str value))
+          [:div.key-value [:strong label "："] [:span value]])
 
-(defn- format-list-items [items]
-  (if (and items (seq items))
-    (str/join "、" items)
-    ""))
+        :list-items
+        (when (seq items)
+          [:ul.list-items {:style {:list-style-type "disc" :margin-left "20px" :padding-left "0px"}}
+           (for [item items] [:li {:key (str item)} item])])
 
-(defn- process-statement-part [part]
-  (let [{:keys [positive label prefix]} part]
-    (str prefix (when (and prefix (not (str/blank? prefix))) " ") label)))
+        :nested-group
+        (when (seq content)
+          (cond
+            ;; Specific renderers for complex groups
+            (= label "高血压") (render-hypertension-details content)
+            ;; Add other custom group renderers here if needed
+            ;; (= label "心律失常") (render-arrhythmia-details content)
+            :else ;; Default rendering for nested groups
+            [:div.nested-group {:style {:margin-left "15px"}}
+             (when label [:div [:strong label "："]])
+             (parts->hiccup content)]))
 
+        :atomic-value
+        [:span value]
 
-(defn parts->natural-language
-  "接收“文本部分”的 vector，将其组装成自然语言描述字符串。"
+        (let [fallback-content (or value items content)]
+          (when fallback-content
+            [:span (str fallback-content)]))
+        ))))
+
+(defn parts->hiccup
+  "Receives a vector of 'text parts' and assembles them into a Hiccup structure."
   [parts]
-  (if (empty? parts)
-    ""
-    (let [processed-strings (volatile! []) ;; Use volatile vector
-          add-str! (fn [s] (when (is-val-present? s) (vswap! processed-strings conj (str/trim s))))
-          peek-last-str #(peek @processed-strings)
+  (when (seq parts)
+    (let [hiccup-elements (->> parts
+                               (mapv render-part)
+                               (filterv identity))]
+      (when (seq hiccup-elements)
+        (if (= 1 (count hiccup-elements))
+          (first hiccup-elements)
+          (into [:<>] hiccup-elements)
+          )))))
 
-          ensure-ends-with-punctuation! (fn []
-                                          (let [current-coll @processed-strings]
-                                            (when (seq current-coll)
-                                              (let [last-str (peek current-coll)]
-                                                (when (and last-str (not (some #{(last last-str)} [\. \。 \， \、 \：])) ) ; Corrected to char literals
-                                                  (vswap! processed-strings assoc (- (count current-coll) 1) (str last-str "。")))))))]
+;; --- Custom Formatters for Specific Complex Fields ---
+(defn render-hypertension-details [hypertension-parts]
+  ;; hypertension-parts is a vector of parts for 分级, 病史时长, 治疗 etc.
+  (let [parts-map (into {} (map (fn [p] [(:label p) p]) hypertension-parts))
+        grading (get-in parts-map ["分级" :value])
+        history-duration (get-in parts-map ["病史时长" :value])
+        treatment-group-content (get-in parts-map ["治疗" :content])
 
-      (doseq [[idx part] (map-indexed vector parts)]
-        (let [{:keys [type label value items positive content prefix]} part
-              prev-part (get parts (dec idx) nil)]
+        desc-parts (cond-> []
+                     (is-val-present? grading) (conj (str "分级为" grading))
+                     (is-val-present? history-duration) (conj (str "病史时长" history-duration)))
+        desc (if (seq desc-parts)
+               (str/join "，" desc-parts)
+               "")]
 
-          (when (and (pos? idx)
-                     (seq @processed-strings) ; Check if there's something to add punctuation to
-                     (or (= type :statement)
-                         (and (= type :nested-group) (not (= (:type prev-part) :statement)))
-                         (and (= type :key-value) (not= (:type prev-part) :statement))))
-            (let [last-str-val (peek @processed-strings)]
-              (when-not (or (str/ends-with? last-str-val "：")
-                            (str/ends-with? last-str-val "，")
-                            (str/ends-with? last-str-val "、"))
-                (ensure-ends-with-punctuation!) ; Ensure previous sentence ends, then add comma if needed
-                (vswap! processed-strings assoc (- (count @processed-strings) 1) (str (peek @processed-strings) "，"))
-                )))
+    [:div.hypertension-details
+     (when (is-val-present? desc)
+       [:div desc "。"])
+     (when (seq treatment-group-content)
+       [:div {:style {:margin-left "15px"}}
+        [:strong (schema-key->display-label :治疗) "："]
+        (parts->hiccup treatment-group-content)])]))
 
 
-          (condp = type
-            :statement
-            (let [stmt (process-statement-part part)]
-              ;; If previous string doesn't end with punctuation, add one.
-              (when (and (pos? idx) (seq @processed-strings) (not (re-find #"[。！？：]$" (peek @processed-strings))))
-                 (ensure-ends-with-punctuation!))
-              (add-str! stmt)
-              (let [next-part (get parts (inc idx) nil)]
-                (when (and positive
-                           next-part
-                           (or (= (:type next-part) :nested-group) ;; Changed from :nested-map-details
-                               (= (:type next-part) :list-items)
-                               (= (:type next-part) :key-value))) ;; If a statement is followed by a simple KV
-                  (let [last-str (peek-last-str)]
-                    (if (and last-str (not (str/ends-with? last-str "：")))
-                       (vswap! processed-strings assoc (- (count @processed-strings) 1) (str last-str "，具体包括："))
-                       (add-str! "具体包括："))))))
-
-            :key-value
-            (let [kv-str (format-key-value-pair label value)]
-              (add-str! kv-str))
-
-            :list-items
-            (let [list-str (format-list-items items)]
-              (when (is-val-present? list-str)
-                (if (and prev-part (str/ends-with? (peek @processed-strings) "："))
-                   (add-str! (str " " list-str)) ; Add space if after colon
-                   (add-str! list-str))))
-
-            :nested-group
-            (let [nested-str (parts->natural-language content)]
-              (when (is-val-present? nested-str)
-                (add-str! (str label "：" nested-str))))
-
-            :atomic-value
-            (add-str! (str value))
-
-            (warn "Unhandled part type in parts->natural-language:" type part)
-            )))
-
-      (join-sentences @processed-strings))))
-
-(defn generate-natural-language-summary
-  "Generates a natural language summary string for the given data and schema."
+(defn generate-summary-component
+  "Generates a Hiccup component for the summary of the given data and schema."
   [data schema system-name-key]
   (if-not (and data schema system-name-key)
-    (do (warn "generate-natural-language-summary called with nil data, schema, or system-name-key") "")
+    (do (warn "generate-summary-component called with nil data, schema, or system-name-key") nil)
     (let [system-label (schema-key->display-label system-name-key)
           parts (generate-description-parts data schema)]
       (if (seq parts)
-        (let [language (parts->natural-language parts)]
-          (if (str/blank? language)
-            (str system-label "：无特殊或异常情况记录。")
-            (str system-label "：" language))) ;; join-sentences now adds trailing punctuation
-        (str system-label "：无特殊或异常情况记录。")
+        (let [content-hiccup (parts->hiccup parts)]
+          (when content-hiccup
+            [:div.summary-section {:key (name system-name-key)
+                                   :style {:padding "10px" :border "1px solid #ddd" :margin-bottom "10px" :border-radius "4px"}}
+             [:h3 {:style {:font-size "16px" :font-weight "bold" :margin-top "0" :margin-bottom "8px"}}
+              system-label "："]
+             content-hiccup]))
+        [:div.summary-section {:key (name system-name-key)
+                               :style {:padding "10px" :border "1px solid #ddd" :margin-bottom "10px" :border-radius "4px"}}
+         [:h3 {:style {:font-size "16px" :font-weight "bold" :margin-top "0" :margin-bottom "8px"}} system-label "："]
+         [:p {:style {:margin "0"}} "无特殊或异常情况记录。"]]
         ))))

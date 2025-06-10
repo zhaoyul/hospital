@@ -31,12 +31,15 @@
 (defn- circulatory-system-summary-view [props]
   (let [{:keys [circulatory-data]} props]
     (if (seq circulatory-data)
-      (let [summary-text (nlg/generate-natural-language-summary circulatory-data
-                                                                assessment-specs/循环系统Spec
-                                                                :循环系统)]
-        [:div {:style {:white-space "pre-wrap" :padding "10px"}}
-         summary-text])
-      [:div {:style {:padding "10px"}} "暂无循环系统评估数据可供总结。"])))
+      (nlg/generate-summary-component circulatory-data
+                                      assessment-specs/循环系统Spec
+                                      :循环系统)
+      ;; When circulatory-data is nil or empty, provide a consistent empty state structure
+      [:div.summary-section {:key :circulatory-system-empty
+                             :style {:padding "10px" :border "1px solid #ddd" :margin-bottom "10px" :border-radius "4px"}}
+       [:h3 {:style {:font-size "16px" :font-weight "bold" :margin-top "0" :margin-bottom "8px"}}
+        (nlg/schema-key->display-label :循环系统) "："]
+       [:p {:style {:margin "0"}} "暂无数据可供总结。"]])))
 
 (defn- circulatory-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id circulatory-data on-show-summary]} props
