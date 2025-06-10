@@ -135,20 +135,24 @@
 (defn respiratory-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id respiratory-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values (let [base-data (form-utils/apply-enum-defaults-to-data
-                                              (or respiratory-data {})
-                                              assessment-specs/呼吸系统Spec)
-                                  processed-data (-> base-data
-                                                     (update-in [:近两周内感冒病史 :详情 :发病日期] #(when % (utils/parse-date %)))
-                                                     (update-in [:近一个月内支气管炎或肺炎病史 :详情 :发病日期] #(when % (utils/parse-date %)))
-                                                     (update-in [:哮喘病史 :详情 :上次发作日期] #(when % (utils/parse-date %))))]
-                              processed-data)
+        ;; 初始化表单值的数据处理流程
+        initial-form-values (let [data-from-db (or respiratory-data {}) ; 1. 从数据库获取原始数据，如果为空则使用空 map
+                                  ;; 2. 应用枚举字段的默认值
+                                  data-with-enum-defaults (form-utils/apply-enum-defaults-to-data
+                                                            data-from-db
+                                                            assessment-specs/呼吸系统Spec)
+                                  ;; 3. 自动将所有在 Spec 中标记为 :is-date? true 的日期字符串转换为 dayjs 对象
+                                  final-initial-values (form-utils/preprocess-date-fields
+                                                         data-with-enum-defaults
+                                                         assessment-specs/呼吸系统Spec)]
+                              final-initial-values)
+        ;; 表单提交时的处理函数
         on-finish-fn (fn [values]
-                       (let [values-clj (js->clj values :keywordize-keys true)
-                             transformed-values (-> values-clj
-                                                    (update-in [:近两周内感冒病史 :详情 :发病日期] #(when % (utils/date->iso-string %)))
-                                                    (update-in [:近一个月内支气管炎或肺炎病史 :详情 :发病日期] #(when % (utils/date->iso-string %)))
-                                                    (update-in [:哮喘病史 :详情 :上次发作日期] #(when % (utils/date->iso-string %))))]
+                       (let [values-clj (js->clj values :keywordize-keys true) ; 1. 将 JS 表单值转换为 ClojureScript map
+                             ;; 2. 自动将所有 dayjs 对象转换回 ISO 日期字符串，以便存储或传输
+                             transformed-values (form-utils/transform-date-fields-for-submission
+                                                  values-clj
+                                                  assessment-specs/呼吸系统Spec)]
                          (rf/dispatch [::events/update-canonical-assessment-section :呼吸系统 transformed-values])))]
     (React/useEffect (fn []
                        (when report-form-instance-fn
@@ -215,26 +219,28 @@
 (defn mental-neuromuscular-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id mn-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values (let [original-mn-data (or mn-data {})
-                                  _ (timbre/info "mental-neuromuscular original mn-data:" (clj->js original-mn-data))
-                                  data-with-defaults (form-utils/apply-enum-defaults-to-data
-                                                       original-mn-data
-                                                       assessment-specs/精神及神经肌肉系统Spec)
-                                  _ (timbre/info "mental-neuromuscular data-with-defaults:" (clj->js data-with-defaults))
-                                  processed-data (-> data-with-defaults
-                                                     (update-in [:癫痫病史 :详情 :近期发作日期] #(when % (utils/parse-date %)))
-                                                     (update-in [:眩晕病史 :详情 :近期发作日期] #(when % (utils/parse-date %)))
-                                                     (update-in [:脑梗病史 :详情 :近期发作日期] #(when % (utils/parse-date %)))
-                                                     (update-in [:脑出血病史 :详情 :近期发作日期] #(when % (utils/parse-date %))))]
-                              (timbre/info "mental-neuromuscular final initial-form-values:" (clj->js processed-data))
-                              processed-data)
+        ;; 初始化表单值的数据处理流程
+        initial-form-values (let [data-from-db (or mn-data {}) ; 1. 从数据库获取原始数据，如果为空则使用空 map
+                                  ;; 2. 应用枚举字段的默认值
+                                  data-with-enum-defaults (form-utils/apply-enum-defaults-to-data
+                                                            data-from-db
+                                                            assessment-specs/精神及神经肌肉系统Spec)
+                                  ;; 3. 自动将所有在 Spec 中标记为 :is-date? true 的日期字符串转换为 dayjs 对象
+                                  final-initial-values (form-utils/preprocess-date-fields
+                                                         data-with-enum-defaults
+                                                         assessment-specs/精神及神经肌肉系统Spec)]
+                              (timbre/info "mental-neuromuscular-system-detailed-view: final initial-form-values after processing:" (clj->js final-initial-values)) ; Logging after all processing
+                              final-initial-values)
+        ;; 表单提交时的处理函数
         on-finish-fn (fn [values]
-                       (let [values-clj (js->clj values :keywordize-keys true)
-                             transformed-values (-> values-clj
-                                                    (update-in [:癫痫病史 :详情 :近期发作日期] #(when % (utils/date->iso-string %)))
-                                                    (update-in [:眩晕病史 :详情 :近期发作日期] #(when % (utils/date->iso-string %)))
-                                                    (update-in [:脑梗病史 :详情 :近期发作日期] #(when % (utils/date->iso-string %)))
-                                                    (update-in [:脑出血病史 :详情 :近期发作日期] #(when % (utils/date->iso-string %))))]
+                       (timbre/info "mental-neuromuscular-system-detailed-view: on-finish-fn raw JS values:" values)
+                       (let [values-clj (js->clj values :keywordize-keys true) ; 1. 将 JS 表单值转换为 ClojureScript map
+                             _ (timbre/info "mental-neuromuscular-system-detailed-view: on-finish-fn cljs values-clj before transformation:" (clj->js values-clj))
+                             ;; 2. 自动将所有 dayjs 对象转换回 ISO 日期字符串，以便存储或传输
+                             transformed-values (form-utils/transform-date-fields-for-submission
+                                                  values-clj
+                                                  assessment-specs/精神及神经肌肉系统Spec)]
+                         (timbre/info "mental-neuromuscular-system-detailed-view: on-finish-fn transformed-values for dispatch:" (clj->js transformed-values))
                          (rf/dispatch [::events/update-canonical-assessment-section :精神及神经肌肉系统 transformed-values])))]
     (React/useEffect (fn []
                        (when report-form-instance-fn
@@ -956,16 +962,28 @@
 (defn surgical-anesthesia-history-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id sah-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values (let [base-data (form-utils/apply-enum-defaults-to-data
-                                              (or sah-data {})
-                                              assessment-specs/手术麻醉史Spec)
-                                  processed-data (-> base-data
-                                                     (update-in [:手术麻醉史 :详情 :具体上次麻醉日期] #(when % (utils/parse-date %))))]
-                              processed-data)
+        ;; 初始化表单值的数据处理流程
+        initial-form-values (let [data-from-db (or sah-data {}) ; 1. 从数据库获取原始数据，如果为空则使用空 map
+                                  ;; 2. 应用枚举字段的默认值
+                                  data-with-enum-defaults (form-utils/apply-enum-defaults-to-data
+                                                            data-from-db
+                                                            assessment-specs/手术麻醉史Spec)
+                                  ;; 3. 自动将所有在 Spec 中标记为 :is-date? true 的日期字符串转换为 dayjs 对象
+                                  final-initial-values (form-utils/preprocess-date-fields
+                                                         data-with-enum-defaults
+                                                         assessment-specs/手术麻醉史Spec)]
+                              (timbre/info "surgical-anesthesia-history-detailed-view: final initial-form-values after processing:" (clj->js final-initial-values))
+                              final-initial-values)
+        ;; 表单提交时的处理函数
         on-finish-fn (fn [values]
-                       (let [values-clj (js->clj values :keywordize-keys true)
-                             transformed-values (-> values-clj
-                                                    (update-in [:手术麻醉史 :详情 :具体上次麻醉日期] #(when % (utils/date->iso-string %))))]
+                       (timbre/info "surgical-anesthesia-history-detailed-view: on-finish-fn raw JS values:" values)
+                       (let [values-clj (js->clj values :keywordize-keys true) ; 1. 将 JS 表单值转换为 ClojureScript map
+                             _ (timbre/info "surgical-anesthesia-history-detailed-view: on-finish-fn cljs values-clj before transformation:" (clj->js values-clj))
+                             ;; 2. 自动将所有 dayjs 对象转换回 ISO 日期字符串，以便存储或传输
+                             transformed-values (form-utils/transform-date-fields-for-submission
+                                                  values-clj
+                                                  assessment-specs/手术麻醉史Spec)]
+                         (timbre/info "surgical-anesthesia-history-detailed-view: on-finish-fn transformed-values for dispatch:" (clj->js transformed-values))
                          (rf/dispatch [::events/update-canonical-assessment-section :手术麻醉史 transformed-values])))]
     (React/useEffect (fn []
                        (when report-form-instance-fn
