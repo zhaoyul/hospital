@@ -88,7 +88,7 @@
                                               processed-val])]))))
                                (filterv identity))]
         (when (seq child-hiccups)
-          child-hiccups))
+          (into [:<>] child-hiccups))) ;; <--- 修改点
 
       (= :vector schema-type)
       (if (is-value-meaningful? data actual-schema)
@@ -113,7 +113,7 @@
                                                  item-hiccup]))))
                              (filterv identity)
                              vec)]
-              (when (seq items) items))
+              (when (seq items) (into [:<>] items))) ;; <--- 修改点
             ))
         nil)
       :else nil)))
