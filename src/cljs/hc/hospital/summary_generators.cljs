@@ -19,7 +19,7 @@
         (str/replace #"-" " ")
         (str/capitalize))))
 
-(declare generate-summary-hiccup*)
+(declare is-value-meaningful?)
 
 (defn is-value-meaningful?
   "判断一个值，根据其类型和内容，是否算作有意义的、应在总结中显示。"
@@ -28,7 +28,6 @@
     (cond
       (nil? value) false
 
-      ;; String handling
       (string? value)
       (if (str/blank? value)
         false
@@ -36,62 +35,70 @@
           (let [kw-val (keyword value)
                 enum-values (get-enum-values actual-schema)]
             (if (no-content-keywords kw-val)
-              false ; Explicitly excluded
+              false
               (if (or (nil? enum-values) (enum-values kw-val))
-                true ; Valid enum member (or enum-values couldn't be determined, treat as meaningful)
-                (not (str/blank? value))))) ; Not an enum member, treat as free text
-          true)) ; Not an enum or no schema, meaningful if not blank
+                true
+                (not (str/blank? value)))))
+          true))
 
       (keyword? value) (not (no-content-keywords value))
 
-      (vector? value)
-      (if (empty? value)
-        false
-        ;; For vectors, we generally don't have a direct sub-schema for each element in the same way maps do.
-        ;; We check if *any* item in the vector is meaningful.
-        ;; If a more specific check is needed based on vector's element schema, this might need adjustment
-        ;; or be handled by the caller providing the element schema.
-        (some #(is-value-meaningful? % nil) value))
+      (vector? value) (some #(is-value-meaningful? % nil) value)
 
       (map? value)
-      (if (empty? value)
-        false
+      (cond
+        (empty? value) false
+        ;; Rule for :内容 being nil makes the map non-meaningful IFF other keys are also not meaningful
+        (and (contains? value :内容) (let [content-val (:内容 value)] (or (nil? content-val) (= :nil content-val))))
+        (let [other-keys (dissoc value :内容)]
+          (if (empty? other-keys) false ;; Only :内容 nil was present
+              (some (fn [[k v]] (is-value-meaningful? v (when actual-schema (get (m/entries actual-schema) k)))) other-keys)))
+
+        ;; Rule for :有无 being "无" or :无 makes the map non-meaningful IFF other keys are also not meaningful
+        (contains? value :有无)
+        (let [yuwu-val (:有无 value)]
+          (if (or (= "无" yuwu-val) (= :无 yuwu-val))
+            (let [other-keys (dissoc value :有无)]
+              (if (empty? other-keys) false ;; Only :有无 "无" was present
+                  (some (fn [[k v]] (is-value-meaningful? v (when actual-schema (get (m/entries actual-schema) k)))) other-keys)))
+            ;; :有无 is present and not "无", evaluate normally based on all keys
+            (some (fn [[k v]] (is-value-meaningful? v (when actual-schema (get (m/entries actual-schema) k)))) value)))
+
+        ;; Default map handling: meaningful if any of its values are meaningful according to its own schema or direct check
+        :else
         (if (and actual-schema (= :map (m/type actual-schema)))
-          ;; Check if any value in the map is meaningful according to its own schema
           (let [entries (m/entries actual-schema)]
             (some (fn [[entry-key entry-schema-wrapper _props]]
                     (let [sub-val (get value entry-key)
                           sub-schema (m/schema entry-schema-wrapper)]
                       (is-value-meaningful? sub-val sub-schema)))
                   entries))
-        ;; Fallback: actual-schema is not a map or is nil.
-        ;; Check if any of the map's own values are meaningful, without relying on sub-schemas.
-        (some (fn [[_map-key map-val]] ; We only need the value from the map's key-value pair
-                (is-value-meaningful? map-val nil)) ; Pass nil as field-schema for children
-              value))) ; Iterate over the map (value) itself
+          ;; Fallback: actual-schema is not a map or is nil.
+          (some (fn [[_map-key map-val]] (is-value-meaningful? map-val nil)) value))))
 
       (= true value) true
       (= false value) false
       :else true)))
 
+(declare generate-summary-hiccup*)
+
 (defn- generate-summary-hiccup*
   [data schema level]
   (let [schema-type (m/type schema)
-        actual-schema (m/deref schema) ; Dereference for :maybe, :enum etc.
-        base-font-size 14 ; 基准字体大小 for content
-        level-font-reduction 1 ; 每层级减小的字号
-        current-label-font-size (max 12 (- (+ base-font-size 1) (* level level-font-reduction))) ; 标签稍大，最小12px
-        current-value-font-size (max 12 (- base-font-size (* level level-font-reduction)))      ; 内容字体，最小12px
-        ]
+        actual-schema (m/deref schema)
+        base-font-size 14
+        level-font-reduction 1
+        current-label-font-size (max 12 (- (+ base-font-size 1) (* level level-font-reduction)))
+        current-value-font-size (max 12 (- base-font-size (* level level-font-reduction)))]
     (cond
       (= :maybe schema-type)
       (when-not (nil? data)
         (generate-summary-hiccup* data (first (m/children actual-schema)) level))
 
       (not (or (= :map schema-type) (= :vector schema-type))) ;; 原子值处理
-      (if (is-value-meaningful? data actual-schema) ; Use actual-schema for enum checks
+      (if (is-value-meaningful? data actual-schema)
         (let [formatted-value (cond
-                                (vector? data) ;; Should ideally be handled by :vector case, but as fallback for simple lists
+                                (vector? data)
                                 (let [meaningful-items (filterv #(is-value-meaningful? % nil) data)]
                                   (when (seq meaningful-items)
                                     (str/join ", " (map #(if (keyword? %) (name %) (str %)) meaningful-items))))
@@ -108,7 +115,17 @@
                                       (let [entry-schema (m/schema entry-schema-wrapper)
                                             val-at-key (get data key-in-data)
                                             label (schema-key->label key-in-data)
-                                            processed-val (generate-summary-hiccup* val-at-key entry-schema (inc level))]
+                                            processed-val (if (and (= :心电图 key-in-data)
+                                                                     (map? val-at-key)
+                                                                     (contains? val-at-key :描述))
+                                                            (let [description-val (:描述 val-at-key)
+                                                                  description-schema (when entry-schema
+                                                                                       (when-let [desc-entry (->> (m/entries entry-schema)
+                                                                                                                  (filter #(= :描述 (first %)))
+                                                                                                                  first)]
+                                                                                         (m/schema (second desc-entry))))]
+                                                              (generate-summary-hiccup* description-val description-schema (inc level)))
+                                                            (generate-summary-hiccup* val-at-key entry-schema (inc level)))]
                                         (when processed-val
                                           [:div {:key (str (name key-in-data) "-" level) :style {:margin-bottom "4px"}}
                                            [:span {:style {:font-weight "bold"
@@ -123,27 +140,23 @@
                                              [:span {:style {:font-size (str current-value-font-size "px")}}
                                               processed-val])]))))
                                (filterv identity))]
-        ;; Current: (when (seq child-hiccups) (into [:<>] child-hiccups))
-        ;; --- 修改点在此附近 ---
-        ;; 需要确保如果 child-hiccups 为空，整个map的渲染结果为 nil
         (if (seq child-hiccups)
           (into [:<>] child-hiccups)
-          nil)) ; If child-hiccups is empty, this map itself is considered empty for rendering
+          nil))
 
       (= :vector schema-type)
       (if (is-value-meaningful? data actual-schema)
         (let [element-schema (first (m/children actual-schema))]
           (if (and element-schema (not= :map (m/type element-schema)))
             (let [items (->> data
-                             (map #(generate-summary-hiccup* % element-schema level)) ; level does not increase for simple list items
+                             (map #(generate-summary-hiccup* % element-schema level))
                              (filterv identity))]
               (when (seq items)
                 [:ul {:style {:list-style-type "'• '" :padding-left "20px" :margin-top "2px" :margin-bottom "2px"}}
                  (for [item items] [:li {:key (str item) :style {:font-size (str current-value-font-size "px")}} item])]))
-            ;; Vector of maps
             (let [items (->> data
                              (map-indexed (fn [idx item-data]
-                                            (let [item-hiccup (generate-summary-hiccup* item-data element-schema (inc level))] ; level increases for map items
+                                            (let [item-hiccup (generate-summary-hiccup* item-data element-schema (inc level))]
                                               (when item-hiccup
                                                 [:div {:key idx
                                                        :style {:border "1px solid #f0f0f0"
@@ -153,8 +166,7 @@
                                                  item-hiccup]))))
                              (filterv identity)
                              vec)]
-              (when (seq items) (into [:<>] items))) ;; <--- 修改点
-            ))
+              (when (seq items) (into [:<>] items)))))
         nil)
       :else nil)))
 
