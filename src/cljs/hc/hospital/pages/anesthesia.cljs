@@ -25,7 +25,7 @@
    [re-frame.core :as rf]
    [reagent.core :as r]
    [taoensso.timbre :as timbre]
-   ["signature_pad" :default SignaturePad])) ; Added SignaturePad & ui-helpers require
+   ["signature_pad" :as SignaturePad])) ; Added SignaturePad & ui-helpers require
 
 ;; Define common grid style maps and helper function
 (def ^:private grid-style-4-col
@@ -588,14 +588,13 @@
         signature-pad-instance (r/atom nil)
         init-signature-pad (fn []
                              (when @canvas-ref
-                               (reset! signature-pad-instance (js/SignaturePad. @canvas-ref #js {:penColor "black"}))))]
+                               (reset! signature-pad-instance (SignaturePad. @canvas-ref #js {:penColor "black"}))))]
     (r/create-class
      {:component-did-mount init-signature-pad
       :reagent-render
       (fn []
         [:div
-         [:canvas {:ref (fn [el] (reset! canvas-ref el))
-                   :style {:border "1px solid #eee" :width "300px" :height "150px"}}]
+         [:canvas {:ref (fn [el] (reset! canvas-ref el)) :style {:border "1px solid #eee" :width "300px" :height "150px"}}]
          [:div {:style {:marginTop "10px"}}
           [:> Button {:on-click (fn [] (when @signature-pad-instance (.clear @signature-pad-instance)))
                       :style {:marginRight "10px"}}
