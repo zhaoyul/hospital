@@ -285,6 +285,9 @@
           (do (timbre/warn (str "Malli type :malli.core/val for field " field-key " has no child schema."))
               [:p (str "No child schema for :malli.core/val type for " label-text)])))
 
+      (= malli-type :or)
+      [render-number-input field-schema (conj parent-form-path field-key) label-text]
+
       (= malli-type :maybe)
       (let [unwrapped-schema (first (get-malli-children field-schema))
             unwrapped-schema-props (when unwrapped-schema (get-malli-properties unwrapped-schema))]
