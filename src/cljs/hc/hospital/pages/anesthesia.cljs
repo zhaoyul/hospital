@@ -662,7 +662,7 @@
      "评估备注" ; Changed title to be more specific
      "#fffaf0" ; Header background color
      [:> Input.TextArea {:rows 4 ; Increased rows for better visibility
-                         :value (timbre/spy :info (or @assessment-notes "")) ; Deref the atom from subscription
+                         :value (or @assessment-notes "") ; Deref the atom from subscription
                          :placeholder "评估备注（如有特殊情况请在此注明）"
                          :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :评估备注] (-> % .-target .-value)])}]])) ; Updated path
 
