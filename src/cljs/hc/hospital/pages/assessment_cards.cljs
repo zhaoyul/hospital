@@ -20,8 +20,9 @@
    [hc.hospital.subs :as subs]
    [hc.hospital.utils :as utils]
    [hc.hospital.ui-helpers :as ui-helpers]
-   [hc.hospital.summary-generators :as sg] ; Added new namespace
-   [hc.hospital.form-utils :as form-utils] ; Added for enum defaults
+   [hc.hospital.summary-generators :as sg]
+   [hc.hospital.natural-language-generators :as nlg] ; Added nlg
+   [hc.hospital.form-utils :as form-utils]
    [re-frame.core :as rf]
    [reagent.core :as r]))
 
@@ -30,10 +31,11 @@
 (defn- circulatory-system-summary-view [props]
   (let [{:keys [circulatory-data]} props]
     (if (seq circulatory-data)
-      (let [summary-hiccup (sg/generate-summary-hiccup circulatory-data assessment-specs/循环系统Spec :循环系统)]
-        (if (or (not (vector? summary-hiccup)) (seq summary-hiccup)) ; Check if not an empty vector or nil
-          summary-hiccup
-          [:div {:style {:padding "10px"}} "暂无循环系统评估数据可供总结 (内容为空)。"]))
+      (let [summary-text (nlg/generate-natural-language-summary circulatory-data
+                                                                assessment-specs/循环系统Spec
+                                                                :循环系统)]
+        [:div {:style {:white-space "pre-wrap" :padding "10px"}}
+         summary-text])
       [:div {:style {:padding "10px"}} "暂无循环系统评估数据可供总结。"])))
 
 (defn- circulatory-system-detailed-view [props]
