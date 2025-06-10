@@ -44,48 +44,32 @@
 (defn- circulatory-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id circulatory-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values (let [base-data (form-utils/apply-enum-defaults-to-data
-                                              (or circulatory-data {})
-                                              assessment-specs/循环系统Spec)
-                                  ;; Date parsing and other non-enum defaults can still be applied here
-                                  processed-data (-> base-data
-                                                     (update-in [:心脏疾病史 :详情 :充血性心力衰竭史 :上次发作日期] #(when % (utils/parse-date %))))
-                                  ;; Manual default-values map for non-enum fields or specific overrides if needed
-                                  default-values-override {:心脏功能评估 {:NYHA分级 (or (:NYHA分级 (:心脏功能评估 processed-data)) :Ⅰ级)}
-                                                           :运动能力评估 {:METs水平 (or (:METs水平 (:运动能力评估 processed-data)) :大于6MET)}}
-                                  final-initial-values (merge-with (fn [val-from-data val-from-defaults]
-                                                                     (if (map? val-from-data)
-                                                                       (merge val-from-defaults val-from-data) ; Prioritize data for maps
-                                                                       val-from-data)) ; Prioritize data for non-maps
-                                                                   default-values-override processed-data)]
-                              ;; The cond-> logic for setting :有无 based on :详情 presence can remain if it's a specific UI requirement
-                              ;; beyond simple enum defaulting for nil values.
-                              (cond-> final-initial-values
-                                (and (get-in final-initial-values [:心脏疾病史 :详情]) (nil? (get-in final-initial-values [:心脏疾病史 :有无])))
-                                (assoc-in [:心脏疾病史 :有无] :有)
-                                (and (get-in final-initial-values [:心脏疾病史 :详情 :冠心病]) (nil? (get-in final-initial-values [:心脏疾病史 :详情 :冠心病 :有无])))
-                                (assoc-in [:心脏疾病史 :详情 :冠心病 :有无] :有)
-                                (and (get-in final-initial-values [:心脏疾病史 :详情 :心律失常]) (nil? (get-in final-initial-values [:心脏疾病史 :详情 :心律失常 :有无])))
-                                (assoc-in [:心脏疾病史 :详情 :心律失常 :有无] :有)
-                                (and (get-in final-initial-values [:心脏疾病史 :详情 :心肌病]) (nil? (get-in final-initial-values [:心脏疾病史 :详情 :心肌病 :有无])))
-                                (assoc-in [:心脏疾病史 :详情 :心肌病 :有无] :有)
-                                (and (get-in final-initial-values [:心脏疾病史 :详情 :心脏瓣膜病变]) (nil? (get-in final-initial-values [:心脏疾病史 :详情 :心脏瓣膜病变 :有无])))
-                                (assoc-in [:心脏疾病史 :详情 :心脏瓣膜病变 :有无] :有)
-                                (and (get-in final-initial-values [:心脏疾病史 :详情 :先天性心脏病]) (nil? (get-in final-initial-values [:心脏疾病史 :详情 :先天性心脏病 :有无])))
-                                (assoc-in [:心脏疾病史 :详情 :先天性心脏病 :有无] :有)
-                                (and (get-in final-initial-values [:心脏疾病史 :详情 :充血性心力衰竭史]) (nil? (get-in final-initial-values [:心脏疾病史 :详情 :充血性心力衰竭史 :有无])))
-                                (assoc-in [:心脏疾病史 :详情 :充血性心力衰竭史 :有无] :有)
-                                (and (get-in final-initial-values [:心脏疾病史 :详情 :肺动脉高压]) (nil? (get-in final-initial-values [:心脏疾病史 :详情 :肺动脉高压 :有无])))
-                                (assoc-in [:心脏疾病史 :详情 :肺动脉高压 :有无] :有)
-                                (and (get-in final-initial-values [:心脏起搏器植入史 :详情]) (nil? (get-in final-initial-values [:心脏起搏器植入史 :有无])))
-                                (assoc-in [:心脏起搏器植入史 :有无] :有)))
-        _ (timbre/info "circulatory-system-detailed-view: initial-form-values:" (clj->js initial-form-values))
+        ;; 初始化表单值的数据处理流程
+        initial-form-values (let [data-from-db (or circulatory-data {}) ; 1. 从数据库获取原始数据，如果为空则使用空 map
+                                  ;; 2. 应用枚举字段的默认值
+                                  data-with-enum-defaults (form-utils/apply-enum-defaults-to-data
+                                                            data-from-db
+                                                            assessment-specs/循环系统Spec)
+                                  ;; 3. 自动将所有在 Spec 中标记为 :is-date? true 的日期字符串转换为 dayjs 对象
+                                  data-with-parsed-dates (form-utils/preprocess-date-fields
+                                                           data-with-enum-defaults
+                                                           assessment-specs/循环系统Spec)
+                                  ;; 最终的初始值，移除了手动的 default-values-override 和 merge
+                                  final-initial-values data-with-parsed-dates]
+                              ;; 此前的 cond-> 逻辑块已根据用户反馈移除 (用于处理特定字段如 :有无 的显式设置)。
+                              ;; 现在直接返回经过枚举默认化和日期自动预处理后的数据。
+                              final-initial-values)
+        _ (timbre/info "circulatory-system-detailed-view: final initial-form-values after all processing (cond-> logic removed):" (clj->js initial-form-values))
+        ;; 表单提交时的处理函数
         on-finish-fn (fn [values]
                        (timbre/info "circulatory-system-detailed-view: on-finish-fn raw JS values:" values)
-                       (let [values-clj (js->clj values :keywordize-keys true)
-                             _ (timbre/info "circulatory-system-detailed-view: on-finish-fn cljs values-clj:" (clj->js values-clj))
-                             transformed-values (-> values-clj
-                                                    (update-in [:心脏疾病史 :详情 :充血性心力衰竭史 :上次发作日期] #(when % (utils/date->iso-string %))))] ; Path already Chinese
+                       (let [values-clj (js->clj values :keywordize-keys true) ; 1. 将 JS 表单值转换为 ClojureScript map
+                             _ (timbre/info "circulatory-system-detailed-view: on-finish-fn cljs values-clj before transformation:" (clj->js values-clj))
+                             ;; 2. 自动将所有 dayjs 对象转换回 ISO 日期字符串，以便存储或传输
+                             transformed-values (form-utils/transform-date-fields-for-submission
+                                                  values-clj
+                                                  assessment-specs/循环系统Spec)]
+                         (timbre/info "circulatory-system-detailed-view: on-finish-fn transformed-values for dispatch:" (clj->js transformed-values))
                          (rf/dispatch [::events/update-canonical-assessment-section :循环系统 transformed-values])))]
     (React/useEffect (fn []
                        (when report-form-instance-fn
