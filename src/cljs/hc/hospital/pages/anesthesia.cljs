@@ -24,6 +24,7 @@
    [malli.core :as m] ; Added malli.core
    [re-frame.core :as rf]
    [reagent.core :as r]
+   ["react" :as React] ; Added React for useEffect
    [taoensso.timbre :as timbre]
    ["signature_pad" :as SignaturePad])) ; Added SignaturePad & ui-helpers require
 
@@ -111,32 +112,51 @@
    [patient-list-filters]
    [patient-list]])
 
-(defn- patient-info-card "显示患者基本信息" []
-  (let [basic-info @(rf/subscribe [::subs/canonical-basic-info])]
+(defn- patient-info-card "显示患者基本信息" [props]
+  (let [{:keys [report-form-instance-fn]} props
+        basic-info @(rf/subscribe [::subs/canonical-basic-info])
+        patient-id (get basic-info :门诊号) ; Used for keying the form and useEffect dep
+        [form] (Form.useForm)]
+
+    (React/useEffect ; Changed to React/useEffect
+     (fn []
+       (when report-form-instance-fn
+         (report-form-instance-fn :基本信息 form)) ; Register this form with key :基本信息
+       js/undefined)
+     #js [form report-form-instance-fn patient-id]) ; Dependencies
+
     [custom-styled-card
      [:> UserOutlined {:style {:marginRight "8px"}}]
      "患者基本信息"
      "#e6fffb" ; Header background color
      (if (seq basic-info)
-       ;; 使用 Flexbox 将患者基本信息排列在一行, 并允许换行
-       [:div
-        [:div {:style {:display "flex" :flex-wrap "wrap" :align-items "center" :padding "10px 0"}}
-         ;; 将每个患者信息字段显示为独立的标签
+       [:div ; Main container for card content
+        ;; Display-only information (can be styled as before)
+        [:div {:style {:display "flex" :flex-wrap "wrap" :align-items "center" :padding "10px 0" :marginBottom "10px"}}
          [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "门诊号: " (get basic-info :门诊号 "未知"))]
          [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "姓名: " (get basic-info :姓名 "未知"))]
          [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "性别: " (get basic-info :性别 "未知"))]
          [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "年龄: " (get basic-info :年龄 "未知") "岁")]
          [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "病区: " (get basic-info :院区 "未知"))]
-         [:span {:style {:margin-bottom "8px"}} (str "身份证号: " (get basic-info :身份证号 "无"))]] ; Updated key and label
+         [:span {:style {:margin-bottom "8px"}} (str "身份证号: " (get basic-info :身份证号 "无"))]]
 
-        [:> Form.Item {:label "术前诊断" :name :术前诊断} ; Updated name
-         [:> Input.TextArea {:placeholder "请输入术前诊断"
-                             :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :术前诊断] (-> % .-target .-value)])}]] ; Updated path
+        ;; Form for editable fields: "术前诊断" and "拟施手术"
+        [:> Form {:form form
+                  :layout "vertical" ; Using vertical layout for simplicity
+                  :initialValues (clj->js (select-keys basic-info [:术前诊断 :拟施手术]))
+                  :onFinish (fn [values]
+                              (let [values-clj (js->clj values :keywordize-keys true)]
+                                (rf/dispatch [::events/update-canonical-assessment-section :基本信息 values-clj])))
+                  :key patient-id} ; Ensure form re-initializes when patient changes
+         [:> Form.Item {:label "术前诊断" :name :术前诊断}
+          [:> Input.TextArea {:placeholder "请输入术前诊断"
+                              :rows 2
+                              :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :术前诊断] (-> % .-target .-value)])}]]
 
-        [:> Form.Item {:label "拟施手术" :name :拟施手术} ; Updated name
-         [:> Input.TextArea {:placeholder "请输入拟施手术"
-
-                             :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :拟施手术] (-> % .-target .-value)])}]]] ; Updated path
+         [:> Form.Item {:label "拟施手术" :name :拟施手术}
+          [:> Input.TextArea {:placeholder "请输入拟施手术"
+                              :rows 2
+                              :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :拟施手术] (-> % .-target .-value)])}]]]]
        [:> Empty {:description "请先选择患者或患者无基本信息"}])]))
 
 (defn- general-condition-card "显示一般情况" []
@@ -247,6 +267,8 @@
                               :style {:width "100px"}
                               :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :SpO2百分比] %])}]]]]] ; Updated path
          [:> Empty {:description "暂无一般情况信息或未选择患者"}])])))
+
+
 
 
 (defn- render-allergy-section [medical-history]
@@ -712,7 +734,7 @@
 
        ;; Main scrollable content area for cards
        [:div {:style {:padding "16px" :overflowY "auto" :flexGrow 1 :background "#f0f2f5"}}
-        [patient-info-card]
+        [:f> patient-info-card {:report-form-instance-fn register-form-instance}]
         [:f> acards/circulatory-system-card {:report-form-instance-fn register-form-instance}]
         [:f> acards/respiratory-system-card {:report-form-instance-fn register-form-instance}]
         [:f> acards/mental-neuromuscular-system-card {:report-form-instance-fn register-form-instance}]
