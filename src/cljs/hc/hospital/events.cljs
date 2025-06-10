@@ -128,6 +128,13 @@
     (update-in db [:anesthesia :current-assessment-canonical :auxiliary_examinations]
                (fn [files] (vec (remove #(or (= (:uid %) file-uid-or-url) (= (:url %) file-uid-or-url)) files))))))
 
+;; 事件：更新签名数据到 app-db
+(rf/reg-event-db
+ ::update-signature-data
+ (fn [db [_ signature-data]]
+   (timbre/info "Updating signature data in app-db:" signature-data)
+   (assoc-in db [:anesthesia :current-assessment-canonical :基本信息 :医生签名图片] signature-data)))
+
 ;; Removed ::update-assessment-notes, use ::update-canonical-assessment-field for this.
 ;; e.g. (rf/dispatch [::update-canonical-assessment-field [:anesthesia_plan :notes] new-notes-text])
 ;; or (rf/dispatch [::update-canonical-assessment-field [:auxiliary_examinations_notes] new-notes-text])
@@ -174,7 +181,9 @@
   (fn [{:keys [db]} _]
     (let [current-patient-id (get-in db [:anesthesia :current-patient-id])
           ;; The entire canonical assessment is now the payload
-          assessment-payload (get-in db [:anesthesia :current-assessment-canonical])]
+          assessment-payload (get-in db [:anesthesia :current-assessment-canonical])
+          signature-present (not (str/blank? (get-in assessment-payload [:基本信息 :医生签名图片] "")))]
+      (timbre/info "Saving final assessment for patient-id:" current-patient-id "Signature present?:" signature-present)
       (if current-patient-id
         (if assessment-payload
           {:http-xhrio {:method          :put

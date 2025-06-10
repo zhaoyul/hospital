@@ -4,8 +4,8 @@
 -- :name insert-patient-assessment! :! :n
 -- :doc 插入一个新的患者评估记录
 INSERT INTO patient_assessments
-(patient_id, assessment_data, patient_name_pinyin, patient_name_initial, created_at, updated_at)
-VALUES (:patient_id, :assessment_data, :patient_name_pinyin, :patient_name_initial, datetime('now'), datetime('now'));
+(patient_id, assessment_data, patient_name_pinyin, patient_name_initial, doctor_signature_b64, created_at, updated_at) -- 中文注释：添加 doctor_signature_b64 列
+VALUES (:patient_id, :assessment_data, :patient_name_pinyin, :patient_name_initial, :doctor_signature_b64, datetime('now'), datetime('now')); -- 中文注释：添加 doctor_signature_b64 参数
 
 -- 更新患者评估
 -- :name update-patient-assessment! :! :n
@@ -14,13 +14,15 @@ UPDATE patient_assessments
 SET assessment_data = :assessment_data,
     patient_name_pinyin = :patient_name_pinyin,
     patient_name_initial = :patient_name_initial,
+    doctor_signature_b64 = :doctor_signature_b64, -- 中文注释：添加 doctor_signature_b64 更新
     updated_at = datetime('now')
 WHERE patient_id = :patient_id;
 
 -- 根据患者ID获取患者评估
 -- :name get-patient-assessment-by-id :? :1
 -- :doc 通过 patient_id 检索患者评估
-SELECT assessment_data FROM patient_assessments WHERE patient_id = :patient_id;
+SELECT patient_id, assessment_data, patient_name_pinyin, patient_name_initial, doctor_signature_b64, created_at, updated_at -- 中文注释：选取 doctor_signature_b64 列
+FROM patient_assessments WHERE patient_id = :patient_id;
 
 -- 获取所有患者评估信息
 -- :name get-all-patient-assessments :*

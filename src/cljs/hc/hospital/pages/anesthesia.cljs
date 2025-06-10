@@ -24,7 +24,8 @@
    [malli.core :as m] ; Added malli.core
    [re-frame.core :as rf]
    [reagent.core :as r]
-   [taoensso.timbre :as timbre])) ; Added ui-helpers require
+   [taoensso.timbre :as timbre]
+   ["signature_pad" :default SignaturePad])) ; Added SignaturePad & ui-helpers require
 
 ;; Define common grid style maps and helper function
 (def ^:private grid-style-4-col
@@ -581,20 +582,54 @@
                               :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:麻醉评估与医嘱 :术前麻醉医嘱] (-> % .-target .-value)])}]]]]) ; Updated path
      [:> Empty {:description "暂无术前麻醉医嘱信息或未选择患者"}]]))
 
+;; 新增：签名板组件
+(defn signature-pad-comp []
+  (let [canvas-ref (r/atom nil)
+        signature-pad-instance (r/atom nil)
+        init-signature-pad (fn []
+                             (when @canvas-ref
+                               (reset! signature-pad-instance (js/SignaturePad. @canvas-ref #js {:penColor "black"}))))]
+    (r/create-class
+     {:component-did-mount init-signature-pad
+      :reagent-render
+      (fn []
+        [:div
+         [:canvas {:ref (fn [el] (reset! canvas-ref el))
+                   :style {:border "1px solid #eee" :width "300px" :height "150px"}}]
+         [:div {:style {:marginTop "10px"}}
+          [:> Button {:on-click (fn [] (when @signature-pad-instance (.clear @signature-pad-instance)))
+                      :style {:marginRight "10px"}}
+           "清除签名"]
+          [:> Button {:type "primary"
+                      :on-click (fn []
+                                  (when (and @signature-pad-instance (not (.isEmpty @signature-pad-instance)))
+                                    (let [signature-data (.toDataURL @signature-pad-instance)]
+                                      (rf/dispatch [::events/update-signature-data signature-data]))))}
+           "确认签名"]]])})))
+
 ;; 辅助函数，用于显示签名和日期
 (defn- signature-and-date-card []
   (let [basic-info @(rf/subscribe [::subs/canonical-basic-info])
         assessment-updated-at (get basic-info :评估更新时间 (utils/date->iso-string (js/Date.now))) ; Updated key
-        doctor-name (get basic-info :医生姓名)] ; Updated key
+        doctor-name (get basic-info :医生姓名) ; Updated key
+        saved-signature-image @(rf/subscribe [::subs/doctor-signature-image])]
     [custom-styled-card
      [:> SaveOutlined {:style {:marginRight "8px"}}]
      "麻醉医师签名及日期"
      "#fff0f6" ; Header background color
-     [:> Descriptions {:bordered true :column 1 :size "small"} ; Changed to 1 column for better layout
-      [:> Descriptions.Item {:label "麻醉医师"}
+     [:> Descriptions {:bordered true :column 1 :size "small"}
+      [:> Descriptions.Item {:label "麻醉医师姓名"} ; Label updated
        [:> Input {:placeholder "记录医师姓名"
                   :value doctor-name
-                  :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :医生姓名] (-> % .-target .-value)])}]] ; Updated path
+                  :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :医生姓名] (-> % .-target .-value)])}]]
+      [:> Descriptions.Item {:label "麻醉医师签名"}
+       (if saved-signature-image
+         [:div
+          [:img {:src saved-signature-image :alt "医生签名" :style {:width "200px" :height "100px" :border "1px solid #eee"}}]
+          [:> Button {:style {:marginLeft "10px"}
+                      :on-click (fn [] (rf/dispatch [::events/update-signature-data nil]))} ; 清除签名
+           "重新签名"]]
+         [signature-pad-comp {}])] ; 显示签名板
       [:> Descriptions.Item {:label "评估更新日期"}
        (utils/format-date assessment-updated-at "YYYY-MM-DD HH:mm")]]]))
 

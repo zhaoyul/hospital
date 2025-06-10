@@ -106,6 +106,12 @@
   :<- [::canonical-basic-info]
   (fn [basic-info _] (:门诊号 basic-info))) ;; Updated to :门诊号
 
+;; New subscription for doctor's signature image
+(rf/reg-sub ::doctor-signature-image
+  :<- [::canonical-basic-info]
+  (fn [basic-info _]
+    (get basic-info :医生签名图片)))
+
 ;; Medical History
 (rf/reg-sub ::canonical-medical-history
   :<- [::current-canonical-assessment]
