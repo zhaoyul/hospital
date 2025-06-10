@@ -24,19 +24,51 @@
 (defn is-value-meaningful?
   "判断一个值，根据其类型和内容，是否算作有意义的、应在总结中显示。"
   [value field-schema]
-  (cond
-    (nil? value) false
-    (and (string? value) (str/blank? value)) false
-    (keyword? value) (not (no-content-keywords value))
-    (vector? value) (if (empty? value)
-                      false
-                      (some #(is-value-meaningful? % nil) value))
-    (map? value) (if (empty? value)
-                   false
-                   true)
-    (= true value) true
-    (= false value) false
-    :else true))
+  (let [actual-schema (when field-schema (m/deref field-schema))]
+    (cond
+      (nil? value) false
+
+      ;; String handling
+      (string? value)
+      (if (str/blank? value)
+        false
+        (if (and actual-schema (= :enum (m/type actual-schema)))
+          (let [kw-val (keyword value)
+                enum-values (get-enum-values actual-schema)]
+            (if (no-content-keywords kw-val)
+              false ; Explicitly excluded
+              (if (or (nil? enum-values) (enum-values kw-val))
+                true ; Valid enum member (or enum-values couldn't be determined, treat as meaningful)
+                (not (str/blank? value))))) ; Not an enum member, treat as free text
+          true)) ; Not an enum or no schema, meaningful if not blank
+
+      (keyword? value) (not (no-content-keywords value))
+
+      (vector? value)
+      (if (empty? value)
+        false
+        ;; For vectors, we generally don't have a direct sub-schema for each element in the same way maps do.
+        ;; We check if *any* item in the vector is meaningful.
+        ;; If a more specific check is needed based on vector's element schema, this might need adjustment
+        ;; or be handled by the caller providing the element schema.
+        (some #(is-value-meaningful? % nil) value))
+
+      (map? value)
+      (if (empty? value)
+        false
+        (if (and actual-schema (= :map (m/type actual-schema)))
+          ;; Check if any value in the map is meaningful according to its own schema
+          (let [entries (m/entries actual-schema)]
+            (some (fn [[entry-key entry-schema-wrapper _props]]
+                    (let [sub-val (get value entry-key)
+                          sub-schema (m/schema entry-schema-wrapper)]
+                      (is-value-meaningful? sub-val sub-schema)))
+                  entries))
+          true)) ; No schema for map, consider meaningful if not empty and not all values are nil/blank (covered by prior checks)
+
+      (= true value) true
+      (= false value) false
+      :else true)))
 
 (defn- generate-summary-hiccup*
   [data schema level]
