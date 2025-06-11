@@ -1,40 +1,55 @@
 (ns hc.hospital.db.oracle
   (:require
    [integrant.core :as ig]
-   [hikari-cp.core :as hikari]
    [clojure.tools.logging :as log]
    [hugsql.core :as hugsql]) ;; Added HugSQL
-  (:import (com.zaxxer.hikari HikariDataSource)))
+  (:import (oracle.jdbc.pool OracleDataSource)))
 
 (defmethod ig/init-key :db.oracle/connection
   [_ {:keys [jdbc-url user password]}]
   (try
-    (let [options {:auto-commit        true
-                   :read-only          false
-                   :connection-timeout 5000
-                   :validation-timeout 2500
-                   :idle-timeout       600000
-                   :max-lifetime       1800000
-                   :minimum-idle       10
-                   :maximum-pool-size  20
-                   :pool-name          "db-oracle-pool"
-                   :adapter            "oracle"
-                   :username           user
-                   :password           password
-                   :jdbc-url           jdbc-url}]
-      (log/info "Attempting to connect to Oracle database:" jdbc-url)
-      (let [datasource (hikari/make-datasource options)]
-        (log/info "Successfully connected to Oracle database:" jdbc-url)
-        datasource))
+    (log/info "Attempting to connect to Oracle database directly using OracleDataSource:" jdbc-url)
+    (let [ods (doto (OracleDataSource.)
+                (.setURL jdbc-url)
+                (.setUser user)
+                (.setPassword password)
+                (.setConnectionCachingEnabled true)
+                (.setConnectionCacheName "OracleHISCache")
+                ;; Optional: Add more cache properties if needed via .setConnectionCacheProperties
+                )]
+      ;; To actually start the cache and make it effective,
+      ;; OracleDataSource might need its connection pool properties set,
+      ;; (e.g., MinLimit, MaxLimit) via a properties object
+      ;; passed to setConnectionCacheProperties, and then startImplicitConnectionCache
+      ;; However, setConnectionCachingEnabled alone might be enough for basic behavior.
+      ;; For robust pooling, one might need:
+      ;; (let [cacheProps (java.util.Properties.)]
+      ;;  (.setProperty cacheProps "MinLimit" "3")
+      ;;  (.setProperty cacheProps "MaxLimit" "10")
+      ;;  (.setConnectionCacheProperties ods cacheProps)
+      ;;  (.startImplicitConnectionCache ods) ; May not be needed if properties auto-start
+      ;; )
+      ;; For now, keeping it simple as per plan.
+      (log/info "Successfully configured OracleDataSource for:" jdbc-url)
+      ods)
     (catch Exception e
-      (log/warn (str "Failed to connect to Oracle database (" jdbc-url "). Application will continue without Oracle DB functionality. Error: " (.getMessage e)))
+      (log/error (str "Failed to configure OracleDataSource (" jdbc-url "). Error: " (.getMessage e)) e) ; Log full exception
+      (log/warn (str "Application will continue without Oracle DB functionality due to OracleDataSource setup failure."))
       nil)))
 
 (defmethod ig/halt-key! :db.oracle/connection
-  [_ datasource]
+  [_ ^OracleDataSource datasource] ; Type hint OracleDataSource
   (when datasource
-    (log/info "Closing Oracle database connection pool.")
-    (.close ^HikariDataSource datasource)))
+    (try
+      (log/info "Closing OracleDataSource and its implicit connection cache.")
+      ;; If implicit cache was explicitly started with startImplicitConnectionCache(),
+      ;; it should be stopped with stopImplicitConnectionCache().
+      ;; However, .close() on the OracleDataSource itself is generally the way
+      ;; to release its resources, including any implicit pool.
+      (.close datasource)
+      (log/info "OracleDataSource closed.")
+      (catch Exception e
+        (log/warn (str "Error closing OracleDataSource: " (.getMessage e)) e)))))
 
 ;; Function to create a NOP (no-operation) query function map
 (defn create-nop-oracle-query-fn [filename]

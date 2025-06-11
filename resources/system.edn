@@ -73,7 +73,7 @@
                               :prod {:jdbc-url #or [#env JDBC_URL "jdbc:sqlite:hospital.db"]}}
 
  :db.oracle/connection
- {:jdbc-url  #or [#env ORACLE_JDBC_URL "jdbc:oracle:thin:@//192.192.2.11:1521/his"]
+ {:jdbc-url  #or [#env ORACLE_JDBC_URL "jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=192.192.2.11)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=his)))"]
   :user     #or [#env ORACLE_USER "USER"]
   :password #or [#env ORACLE_PASSWORD "PASSWORD"]}
 
