@@ -72,10 +72,27 @@
                               :test {:jdbc-url "jdbc:sqlite:hospital_test.db"},
                               :prod {:jdbc-url #or [#env JDBC_URL "jdbc:sqlite:hospital.db"]}}
 
- :db.oracle/connection
- {:jdbc-url  #or [#env ORACLE_JDBC_URL "jdbc:oracle:thin:@(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=192.192.2.11)(PORT=1521))(CONNECT_DATA=(SERVICE_NAME=his)))"]
-  :user     #or [#env ORACLE_USER "USER"]
-  :password #or [#env ORACLE_PASSWORD "PASSWORD"]}
+ :db.oracle/connection #profile {
+            :dev  {:adapter       :oracle
+                   :jdbc-url      "jdbc:oracle:thin:@//localhost:1521/XEPDB1" ; Placeholder DEV JDBC URL
+                   :user          "dev_oracle_user"    ; Placeholder DEV user
+                   :password      "dev_oracle_pass"    ; Placeholder DEV password
+                   ;; :max-pool-size 10 ; Example pool option
+                  }
+            :prod {:adapter       :oracle
+                   :jdbc-url      #env ORACLE_PROD_JDBC_URL    ; Read from environment
+                   :user          #env ORACLE_PROD_USER        ; Read from environment
+                   :password      #env ORACLE_PROD_PASSWORD    ; Read from environment
+                   ;; Add other production specific options here, e.g.
+                   ;; :max-pool-size 20
+                   ;; :connection-timeout 30000
+                  }
+            ;; Test environment can be added if needed
+            ;; :test {:adapter       :oracle
+            ;;        :jdbc-url      "jdbc:oracle:thin:@//localhost:1521/TESTDB"
+            ;;        :user          "test_user"
+            ;;        :password      "test_pass"}
+        }
 
  :db.oracle/query-fn
  {:conn     #ig/ref :db.oracle/connection

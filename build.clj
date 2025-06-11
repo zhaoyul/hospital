@@ -48,13 +48,16 @@
 (defn prep [_]
   (write-version-file)
   (println "Writing Pom...")
+  (println "Before b/write-pom")
   (b/write-pom {:class-dir class-dir
                 :lib lib
                 :version version
                 :basis basis
                 :src-dirs ["src/clj"]})
+  (println "After b/write-pom, before b/copy-dir")
   (b/copy-dir {:src-dirs ["src/clj" "resources" "env/prod/resources" "env/prod/clj"]
-               :target-dir class-dir}))
+               :target-dir class-dir})
+  (println "After b/copy-dir"))
 
 (defn uber [_]
   (println "Compiling Clojure...")
@@ -67,6 +70,13 @@
            :uber-file uber-file
            :main main-cls
            :basis basis}))
+
+(defn compile-clj-only [_]
+  (println "Compiling Clojure (only)...")
+  (b/compile-clj {:basis basis
+                  :src-dirs ["src/clj" "resources" "env/prod/resources" "env/prod/clj"]
+                  :class-dir class-dir})
+  (println "Clojure compilation (only) finished."))
 
 (defn all [_]
   (do (clean nil) (prep nil) (uber nil)))
