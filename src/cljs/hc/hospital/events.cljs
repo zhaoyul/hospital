@@ -44,7 +44,11 @@
 ;; -- Initialization
 (rf/reg-event-db ::initialize-db
   (fn [_ _]
-    (assoc app-db/default-db :anesthesia {:current-assessment-canonical default-canonical-assessment})))
+    (-> app-db/default-db
+        (assoc :anesthesia {:current-assessment-canonical default-canonical-assessment})
+        ;; 初始化二维码扫描模态框相关状态
+        (assoc :qr-scan-modal-visible? false)
+        (assoc :qr-scan-input-value ""))))
 
 
 ;; --- Fetching All Assessments ---
@@ -367,3 +371,21 @@
 (rf/reg-event-db ::delete-doctor
   (fn [db [_ username]]
     (update db :doctors (fn [doctors] (vec (remove #(= username (:username %)) doctors))))))
+
+;; --- 二维码扫描模态框事件 ---
+;; 打开二维码扫描模态框
+(rf/reg-event-db ::open-qr-scan-modal
+  (fn [db _]
+    (assoc db :qr-scan-modal-visible? true)))
+
+;; 关闭二维码扫描模态框
+(rf/reg-event-db ::close-qr-scan-modal
+  (fn [db _]
+    (-> db
+        (assoc :qr-scan-modal-visible? false)
+        (assoc :qr-scan-input-value "")))) ; 关闭时清空输入值
+
+;; 设置二维码扫描输入框的值
+(rf/reg-event-db ::set-qr-scan-input
+  (fn [db [_ value]]
+    (assoc db :qr-scan-input-value value)))

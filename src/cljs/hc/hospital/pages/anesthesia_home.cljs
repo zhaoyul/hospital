@@ -4,6 +4,7 @@
    ["dayjs" :as dayjs]
    ["antd" :refer [Avatar Button DatePicker Input Layout Menu Modal Pagination Space Table Tag Typography]] ; Added Modal, Table, Space, Button, DatePicker, Input, Pagination
    [hc.hospital.events :as events]
+   [hc.hospital.components.qr-scan-modal :refer [qr-scan-modal]] ; 引入二维码扫描模态框组件
    [hc.hospital.pages.anesthesia :refer [anesthesia-content]]
    [hc.hospital.pages.comps :refer [custom-sider-trigger]]
    [hc.hospital.pages.settings :refer [system-settings-content]]
@@ -70,6 +71,12 @@
         [:> Tag {:color "processing" :style {:marginRight "8px"}} "聊城市人民医院"]
         [:> Typography.Text {:style {:marginRight "8px"}} (or (:name current-doctor) "医生")]
         [:> icons/DownOutlined {:style {:color "rgba(0, 0, 0, 0.45)" :marginLeft "8px" :marginRight "16px"}}] ; Added margin-left and right for spacing
+        ;; 新增扫码签到按钮
+        [:> Button {:type "primary" ; 使用 primary 类型使其更突出
+                    :icon (r/as-element [:> icons/QrcodeOutlined]) ; 二维码图标
+                    :style {:marginRight "16px"} ; 与退出登录按钮保持间距
+                    :on-click #(rf/dispatch [::events/open-qr-scan-modal])}
+         "扫码签到"]
         [:> Button {:type "default"
                     :icon (r/as-element [:> icons/LogoutOutlined])
                     :on-click #(rf/dispatch [::events/handle-logout])}
@@ -91,10 +98,22 @@
       [:div "未知标签页内容"])]]) ; Removed inline style from default case as it's handled by the wrapper
 
 (defn anesthesia-home-page []
-  (let [active-tab @(rf/subscribe [::subs/active-tab])]
+  (let [active-tab @(rf/subscribe [::subs/active-tab])
+        qr-modal-visible? @(rf/subscribe [::subs/qr-scan-modal-visible?])
+        qr-input-value @(rf/subscribe [::subs/qr-scan-input-value])]
     [:> Layout {:style {:minHeight "100vh"}}
      [sider-bar active-tab]
      [:> Layout {:style {:display "flex" :flexDirection "column"}}
       [app-header]
       [:> Layout.Content {:style {:margin "0" :overflow "initial" :display "flex" :flex "1"}}
-       [right-side active-tab]]]]))
+       [right-side active-tab]]
+      ;; 在页面底部渲染二维码扫描模态框
+      (when qr-modal-visible?
+        [qr-scan-modal {:visible? qr-modal-visible?
+                        :input-value qr-input-value
+                        :on-input-change (fn [e] (rf/dispatch [::events/set-qr-scan-input (-> e .-target .-value)]))
+                        :on-ok (fn []
+                                 ;; 点击确定时，记录当前的输入值，然后关闭模态框
+                                 (js/console.log (str "患者就诊号：" qr-input-value))
+                                 (rf/dispatch [::events/close-qr-scan-modal]))
+                        :on-cancel #(rf/dispatch [::events/close-qr-scan-modal])}])]]))

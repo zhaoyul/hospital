@@ -295,3 +295,14 @@
 (rf/reg-sub ::session-check-pending?
   (fn [db _]
     (get db :session-check-pending? true))) ; Default to true if not found, matches db.cljs
+
+;; --- 二维码扫描模态框订阅 ---
+;; 订阅二维码扫描模态框的可见状态
+(rf/reg-sub ::qr-scan-modal-visible?
+  (fn [db _]
+    (get db :qr-scan-modal-visible? false))) ; 默认值为 false
+
+;; 订阅二维码扫描模态框输入框的值
+(rf/reg-sub ::qr-scan-input-value
+  (fn [db _]
+    (get db :qr-scan-input-value ""))) ; 默认值为空字符串

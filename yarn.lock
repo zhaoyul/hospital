@@ -1388,10 +1388,10 @@ side-channel@^1.1.0:
     side-channel-map "^1.0.1"
     side-channel-weakmap "^1.0.2"
 
-signature_pad@^5.0.9:
-  version "5.0.9"
-  resolved "https://registry.npmjs.org/signature_pad/-/signature_pad-5.0.9.tgz"
-  integrity sha512-QpY2d5nN/tY7QWFPQatAR29sakdxn7Lg2XjV2jQxNq0sWCDsh82yCA5kWE0kvG2x2tXQ7r2Mvjq+2JqF20uYrw==
+signature_pad@^5.0.8:
+  version "5.0.8"
+  resolved "https://registry.npmjs.org/signature_pad/-/signature_pad-5.0.8.tgz"
+  integrity sha512-505NOftCZxTgBq2Qoo5PuC7z11e+fHUAusY726UqQnIvL0mXV7S6GarGJivbAT4i7RUqZQsGivCcBRg8ry96ug==
 
 source-map-support@^0.4.15:
   version "0.4.18"
