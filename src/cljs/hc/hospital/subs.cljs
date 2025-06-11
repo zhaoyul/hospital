@@ -91,7 +91,9 @@
 ;; ---- Canonical Assessment Subscriptions ----
 (rf/reg-sub ::current-canonical-assessment
   (fn [db _]
-    (get-in db [:anesthesia :current-assessment-canonical])))
+    (let [assessment (get-in db [:anesthesia :current-assessment-canonical])]
+      (timbre/info "::current-canonical-assessment: Subscription triggered. Returning assessment:" (clj->js assessment))
+      assessment)))
 
 ;; Basic Info
 (rf/reg-sub ::canonical-basic-info
@@ -156,8 +158,11 @@
 ;; Mental & Neuromuscular System - New
 (rf/reg-sub ::mental-neuromuscular-system-data
   :<- [::current-canonical-assessment]
-  (fn [assessment _]
-    (or (:精神神经肌肉系统 assessment) {}))) ; Return empty map if nil
+  (fn [assessment _] ; assessment here is the result from ::current-canonical-assessment
+    (timbre/info "::mental-neuromuscular-system-data: Subscription triggered. Input assessment (from ::current-canonical-assessment):" (clj->js assessment))
+    (let [mn-data (or (:精神神经肌肉系统 assessment) {})]
+      (timbre/info "::mental-neuromuscular-system-data: Returning mn-data:" (clj->js mn-data))
+      mn-data)))
 
 ;; Endocrine System - New
 (rf/reg-sub ::endocrine-system-data
@@ -227,8 +232,11 @@
 ;; Spinal Anesthesia Assessment - New
 (rf/reg-sub ::spinal-anesthesia-assessment-data
   :<- [::current-canonical-assessment]
-  (fn [assessment _]
-    (or (:椎管内麻醉评估 assessment) {})))
+  (fn [assessment _] ; assessment here is the result from ::current-canonical-assessment
+    (timbre/info "::spinal-anesthesia-assessment-data: Subscription triggered. Input assessment (from ::current-canonical-assessment):" (clj->js assessment))
+    (let [saa-data (or (:椎管内麻醉评估 assessment) {})]
+      (timbre/info "::spinal-anesthesia-assessment-data: Returning saa-data:" (clj->js saa-data))
+      saa-data)))
 
 ;; ---- Existing subscriptions - Review/Refactor as needed ----
 ;; DEPRECATED by ::canonical-basic-info, ::canonical-medical-history etc.
