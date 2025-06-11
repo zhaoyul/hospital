@@ -54,7 +54,8 @@
                                :env #ig/ref :system/env}
  :reitit.routes/patient-api {:base-path "/api",
                              :env #ig/ref :system/env
-                             :query-fn #ig/ref :db.sql/query-fn}
+                             :query-fn #ig/ref :db.sql/query-fn ;; For existing local DB queries
+                             :oracle-query-fn #ig/ref :db.oracle/query-fn} ;; For new Oracle HIS queries
 
  ;; Add new doctor API route set here
  :reitit.routes/doctor-api {:base-path "/api",
@@ -69,4 +70,14 @@
                      :migrate-on-init? true}
  :db.sql/connection #profile {:dev {:jdbc-url "jdbc:sqlite:hospital_dev.db"},
                               :test {:jdbc-url "jdbc:sqlite:hospital_test.db"},
-                              :prod {:jdbc-url #env JDBC_URL}}}
+                              :prod {:jdbc-url #env JDBC_URL}}
+
+ :db.oracle/connection
+ {:jdbc-url #env ORACLE_JDBC_URL
+  :user     #env ORACLE_USER
+  :password #env ORACLE_PASSWORD}
+
+ :db.oracle/query-fn
+ {:conn     #ig/ref :db.oracle/connection
+  :options  {} ;; Add any Oracle-specific options if needed
+  :filename "sql/oracle_his_queries.sql"}
