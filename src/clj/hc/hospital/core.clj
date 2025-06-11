@@ -16,6 +16,7 @@
    [hc.hospital.web.routes.patient-pages]
    [hc.hospital.web.routes.patient-api]
    [kit.edge.db.sql.conman]
+   [hc.hospital.db.oracle]
    [kit.edge.db.sql.migratus])
   (:import [java.util Properties])
   (:gen-class))
