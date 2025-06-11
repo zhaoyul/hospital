@@ -51,9 +51,10 @@
                   :onClick #(rf/dispatch [::events/sync-applications]) ; 您需要定义此事件
                   :style {:display "flex" :alignItems "center"}}
        "同步申请"]
-      [:> Button {:icon (r/as-element [:> QrcodeOutlined])
-                  :onClick #(rf/dispatch [::events/scan-check-in]) ; 您需要定义此事件
-                  :style {:display "flex" :alignItems "center"}}
+      [:> Button {:type "primary"
+                  :icon (r/as-element [:> icons/QrcodeOutlined]) ; 二维码图标
+                  :style {:marginRight "16px"} ; 与退出登录按钮保持间距
+                  :on-click #(rf/dispatch [::events/open-qr-scan-modal])}
        "扫码签到"]]
 
      ;; 申请日期
