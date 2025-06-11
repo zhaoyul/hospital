@@ -24,7 +24,7 @@
           :negative-prefix "",
           :omit-if-negative false} ; Usually we want to state "XX状态：正常"
    ;; Specific override for certain fields where "无XX史" is desired
-   :心脏起搏器植入史 {:positive :有, :negative :无, :label-suffix "史", :negative-prefix "无", :omit-if-negative false}
+   :心脏起搏器植入史 {:positive :有, :negative :无, :label-suffix "史", :negative-prefix "无", :omit-if-negative true}
    ;; Add other fields that need explicit negation if their :有无 is :无
    })
 
@@ -86,36 +86,59 @@
                                  label (schema-key->display-label field-key)]
                              (if-not (is-val-present? entry-data)
                                acc
-                               (if (or (= field-key :详情) (= field-key :描述))
+                               (cond
+                                 ;; NEW Condition: Check if entry-data is a map with only a :描述 key
+                                 (and (map? entry-data)
+                                      (= 1 (count (keys entry-data)))
+                                      (contains? entry-data :描述)
+                                      (not (or (= field-key :详情) (= field-key :描述))))
+                                 (let [desc-val (get entry-data :描述)
+                                       ;; Attempt to get schema for the :描述 value itself
+                                       desc-val-schema (when entry-schema
+                                                         (when-let [map-entries (m/entries entry-schema)]
+                                                           (when-let [desc-entry-tuple (first (filter #(= :描述 (first %)) map-entries))]
+                                                             (m/schema (second desc-entry-tuple)))))
+                                       formatted-desc-val (format-value desc-val desc-val-schema)]
+                                   (if (is-val-present? formatted-desc-val)
+                                     (conj acc {:type :key-value :label label :value formatted-desc-val})
+                                     acc))
+
+                                 ;; Existing condition for when field-key IS :详情 or :描述
+                                 (or (= field-key :详情) (= field-key :描述))
                                  (if (map? entry-data)
                                    (into acc (generate-description-parts entry-data entry-schema))
                                    (let [val-str (format-value entry-data entry-schema)]
                                      (if (is-val-present? val-str)
                                        (conj acc {:type :key-value :label label :value val-str})
                                        acc)))
-                                 (if-let [control-def (get control-word-config field-key)]
-                                   (let [positive-val (:positive control-def)
-                                         negative-val (:negative control-def)
-                                         label-suffix (:label-suffix control-def "")
-                                         full-label (str label label-suffix)
-                                         part-base {:original-key field-key :label label :prefix (:positive-prefix control-def "")}]
-                                     (cond
-                                       (= entry-data positive-val)
-                                       (conj acc (assoc part-base :type :statement :positive true))
-                                       (= entry-data negative-val)
-                                       (if (get control-def :omit-if-negative true)
-                                         acc
-                                         (conj acc (assoc part-base :type :statement :positive false :prefix (:negative-prefix control-def ""))))
-                                       :else
-                                       (conj acc {:type :key-value :label full-label :value (format-value entry-data entry-schema)})))
-                                   ;; Not a control field, not :详情/:描述
-                                   (let [child-parts (generate-description-parts entry-data entry-schema)]
-                                     (if (seq child-parts)
-                                       (conj acc {:type :nested-group :label label :content child-parts})
-                                       (let [formatted-atomic-val (format-value entry-data entry-schema)]
-                                         (if (is-val-present? formatted-atomic-val)
-                                           (conj acc {:type :key-value :label label :value formatted-atomic-val})
-                                           acc))))))))) ; Added one more ) here
+
+                                 ;; Existing control word logic
+                                 (some? (get control-word-config field-key)) ; Check if control-def exists
+                                 (let [control-def (get control-word-config field-key)
+                                       positive-val (:positive control-def)
+                                       negative-val (:negative control-def)
+                                       label-suffix (:label-suffix control-def "")
+                                       full-label (str label label-suffix)
+                                       part-base {:original-key field-key :label label :prefix (:positive-prefix control-def "")}]
+                                   (cond
+                                     (= entry-data positive-val)
+                                     (conj acc (assoc part-base :type :statement :positive true))
+                                     (= entry-data negative-val)
+                                     (if (get control-def :omit-if-negative true)
+                                       acc
+                                       (conj acc (assoc part-base :type :statement :positive false :prefix (:negative-prefix control-def ""))))
+                                     :else ; Data doesn't match positive or negative, treat as key-value
+                                     (conj acc {:type :key-value :label full-label :value (format-value entry-data entry-schema)})))
+
+                                 ;; Default handling for nested groups / key-values (when no other condition met)
+                                 :else
+                                 (let [child-parts (generate-description-parts entry-data entry-schema)]
+                                   (if (seq child-parts)
+                                     (conj acc {:type :nested-group :label label :content child-parts})
+                                     (let [formatted-atomic-val (format-value entry-data entry-schema)]
+                                       (if (is-val-present? formatted-atomic-val)
+                                         (conj acc {:type :key-value :label label :value formatted-atomic-val})
+                                         acc))))))))
                          [] ; initial value for reduce
                          entries)] ; collection for reduce
               (when (seq parts) parts)))))
@@ -229,16 +252,13 @@
     (do (warn "generate-summary-component called with nil data, schema, or system-name-key") nil)
     (let [system-label (schema-key->display-label system-name-key)
           parts (generate-description-parts data schema)]
-      (if (seq parts)
+      (if (seq parts) ; Only proceed if there are meaningful parts
         (let [content-hiccup (parts->hiccup parts)]
-          (when content-hiccup
+          (when content-hiccup ; Further ensure hiccup generation was successful
             [:div.summary-section {:key (name system-name-key)
                                    :style {:padding "10px" :border "1px solid #ddd" :margin-bottom "10px" :border-radius "4px"}}
              [:h3 {:style {:font-size "16px" :font-weight "bold" :margin-top "0" :margin-bottom "8px"}}
               system-label "："]
              content-hiccup]))
-        [:div.summary-section {:key (name system-name-key)
-                               :style {:padding "10px" :border "1px solid #ddd" :margin-bottom "10px" :border-radius "4px"}}
-         [:h3 {:style {:font-size "16px" :font-weight "bold" :margin-top "0" :margin-bottom "8px"}} system-label "："]
-         [:p {:style {:margin "0"}} "无特殊或异常情况记录。"]]
-        ))))
+        ;; If (seq parts) is nil, the if form returns nil, hiding the section.
+        nil))))
