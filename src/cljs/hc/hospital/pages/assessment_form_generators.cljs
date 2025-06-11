@@ -243,7 +243,7 @@
         malli-type (get-malli-type field-schema)
         malli-props (get-malli-properties field-schema)
         is-cond-map (is-conditional-map-schema? field-schema)]
-    (timbre/info "render-form-item-from-spec: field-key:" field-key ", generated form-path:" (conj parent-form-path field-key) ", malli-type:" malli-type)
+
     (cond
       is-cond-map
       [:f> render-conditional-map-section field-key field-schema parent-form-path form-instance entry-props]

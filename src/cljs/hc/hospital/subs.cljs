@@ -29,10 +29,6 @@
   (fn [db _]
     (get-in db [:anesthesia :assessment-status-filter] "all")))
 
-(rf/reg-sub ::anesthesia-example-patients
-  (fn [db _]
-    (get-in db [:anesthesia :patients])))
-
 (rf/reg-sub ::filtered-patients
   :<- [::all-patient-assessments]
   :<- [::search-term]
@@ -91,9 +87,7 @@
 ;; ---- Canonical Assessment Subscriptions ----
 (rf/reg-sub ::current-canonical-assessment
   (fn [db _]
-    (let [assessment (get-in db [:anesthesia :current-assessment-canonical])]
-      (timbre/info "::current-canonical-assessment: Subscription triggered. Returning assessment:" (clj->js assessment))
-      assessment)))
+    (get-in db [:anesthesia :current-assessment-canonical])))
 
 ;; Basic Info
 (rf/reg-sub ::canonical-basic-info
@@ -159,10 +153,7 @@
 (rf/reg-sub ::mental-neuromuscular-system-data
   :<- [::current-canonical-assessment]
   (fn [assessment _] ; assessment here is the result from ::current-canonical-assessment
-    (timbre/info "::mental-neuromuscular-system-data: Subscription triggered. Input assessment (from ::current-canonical-assessment):" (clj->js assessment))
-    (let [mn-data (or (:精神神经肌肉系统 assessment) {})]
-      (timbre/info "::mental-neuromuscular-system-data: Returning mn-data:" (clj->js mn-data))
-      mn-data)))
+    (or (:精神神经肌肉系统 assessment) {})))
 
 ;; Endocrine System - New
 (rf/reg-sub ::endocrine-system-data
@@ -215,7 +206,7 @@
 (rf/reg-sub ::pregnancy-assessment-data
   :<- [::current-canonical-assessment]
   (fn [assessment _]
-    (or (:妊娠 assessment) {}))) ;; Updated to :妊娠
+    (or (:妊娠 assessment) {})))
 
 ;; Surgical Anesthesia History - New
 (rf/reg-sub ::surgical-anesthesia-history-data
@@ -227,58 +218,13 @@
 (rf/reg-sub ::airway-assessment-data
   :<- [::current-canonical-assessment]
   (fn [assessment _]
-    (or (:气道评估 assessment) {}))) ; Return empty map if nil
+    (or (:气道评估 assessment) {})))
 
 ;; Spinal Anesthesia Assessment - New
 (rf/reg-sub ::spinal-anesthesia-assessment-data
   :<- [::current-canonical-assessment]
-  (fn [assessment _] ; assessment here is the result from ::current-canonical-assessment
-    (timbre/info "::spinal-anesthesia-assessment-data: Subscription triggered. Input assessment (from ::current-canonical-assessment):" (clj->js assessment))
-    (let [saa-data (or (:椎管内麻醉评估 assessment) {})]
-      (timbre/info "::spinal-anesthesia-assessment-data: Returning saa-data:" (clj->js saa-data))
-      saa-data)))
-
-;; ---- Existing subscriptions - Review/Refactor as needed ----
-;; DEPRECATED by ::canonical-basic-info, ::canonical-medical-history etc.
-;; (rf/reg-sub ::selected-patient-assessment-forms-data
-;;   (fn [db _]
-;;     (get-in db [:anesthesia :assessment])))
-
-;; DEPRECATED by ::canonical-medical-history etc.
-;; (rf/reg-sub ::medical-summary-data
-;;   (fn [db _]
-;;     (get-in db [:anesthesia :assessment :form-data])))
-
-;; DEPRECATED by ::canonical-physical-examination etc.
-;; (rf/reg-sub ::doctor-form-physical-examination
-;;   (fn [db _]
-;;     (get-in db [:anesthesia :assessment :form-data])))
-
-
-(rf/reg-sub ::selected-patient-raw-details ;; Provides the full canonical data for the selected patient
-  :<- [::current-patient-id]
-  :<- [::current-canonical-assessment]
-  :<- [::all-patient-assessments]
-  (fn [[patient-key current-canonical-data all-assessments] _]
-    (if (and patient-key current-canonical-data
-             (= patient-key (get-in current-canonical-data [:基本信息 :门诊号]))) ;; Updated path
-      current-canonical-data ;; If current canonical matches selected ID, use it directly
-      (when patient-key ;; Otherwise, find in the main list and get its assessment_data
-        (some-> (filter #(= (:patient_id %) patient-key) all-assessments)
-                first
-                :assessment_data)))))
-
-;; DEPRECATED by ::canonical-anesthesia-plan
-;; (rf/reg-sub ::anesthesia-plan-details
-;;   (fn [db _]
-;;     (get-in db [:anesthesia :assessment :anesthesia-plan])))
-
-;; DEPRECATED by ::canonical-anesthesia-plan or ::canonical-auxiliary-examinations-notes etc.
-;; (rf/reg-sub ::assessment-notes
-;;   :<- [::anesthesia-plan-details]
-;;   (fn [anesthesia-plan _]
-;;     (when anesthesia-plan
-;;       (:notes anesthesia-plan))))
+  (fn [assessment _]
+    (or (:椎管内麻醉评估 assessment) {})))
 
 (rf/reg-sub ::doctors
   (fn [db _]

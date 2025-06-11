@@ -58,17 +58,14 @@
                               ;; 此前的 cond-> 逻辑块已根据用户反馈移除 (用于处理特定字段如 :有无 的显式设置)。
                               ;; 现在直接返回经过枚举默认化和日期自动预处理后的数据。
                               final-initial-values)
-        _ (timbre/info "circulatory-system-detailed-view: final initial-form-values after all processing (cond-> logic removed):" (clj->js initial-form-values))
         ;; 表单提交时的处理函数
         on-finish-fn (fn [values]
-                       (timbre/info "circulatory-system-detailed-view: on-finish-fn raw JS values:" values)
+
                        (let [values-clj (js->clj values :keywordize-keys true) ; 1. 将 JS 表单值转换为 ClojureScript map
-                             _ (timbre/info "circulatory-system-detailed-view: on-finish-fn cljs values-clj before transformation:" (clj->js values-clj))
                              ;; 2. 自动将所有 dayjs 对象转换回 ISO 日期字符串，以便存储或传输
                              transformed-values (form-utils/transform-date-fields-for-submission
                                                   values-clj
                                                   assessment-specs/循环系统Spec)]
-                         (timbre/info "circulatory-system-detailed-view: on-finish-fn transformed-values for dispatch:" (clj->js transformed-values))
                          (rf/dispatch [::events/update-canonical-assessment-section :循环系统 transformed-values])))]
     (React/useEffect (fn []
                        (when report-form-instance-fn
@@ -216,9 +213,7 @@
       [:div {:style {:padding "10px"}} "暂无精神及神经肌肉系统评估数据可供总结。"])))
 
 (defn mental-neuromuscular-system-detailed-view [props]
-  (timbre/info "mental-neuromuscular-system-detailed-view: Props received:" (clj->js props))
   (let [{:keys [report-form-instance-fn patient-id mn-data on-show-summary]} props
-        _ (timbre/info "mental-neuromuscular-system-detailed-view: mn-data from props:" (clj->js mn-data))
         [form] (Form.useForm)
         ;; 初始化表单值的数据处理流程
         initial-form-values (let [data-from-db (or mn-data {}) ; 1. 从数据库获取原始数据，如果为空则使用空 map
@@ -231,23 +226,18 @@
                                                          data-with-enum-defaults
                                                          assessment-specs/精神及神经肌肉系统Spec)]
                               final-initial-values)
-        _ (timbre/info "mental-neuromuscular-system-detailed-view: Calculated initial-form-values:" (clj->js initial-form-values))
         ;; 表单提交时的处理函数
         on-finish-fn (fn [values]
-                       (timbre/info "mental-neuromuscular-system-detailed-view: on-finish-fn - raw JS values from form:" values)
                        (let [values-clj (js->clj values :keywordize-keys true)
-                             _ (timbre/info "mental-neuromuscular-system-detailed-view: on-finish-fn - values-clj after js->clj:" (clj->js values-clj))
                              ;; 2. 自动将所有 dayjs 对象转换回 ISO 日期字符串，以便存储或传输
                              transformed-values (form-utils/transform-date-fields-for-submission
                                                   values-clj
                                                   assessment-specs/精神及神经肌肉系统Spec)]
-                         (timbre/info "mental-neuromuscular-system-detailed-view: on-finish-fn - transformed-values for dispatch:" (clj->js transformed-values))
                          (rf/dispatch [::events/update-canonical-assessment-section :精神及神经肌肉系统 transformed-values])))]
 
     ;; Effect to update form when mn-data (and thus initial-form-values) changes
     (React/useEffect
      (fn []
-       (timbre/info "mental-neuromuscular-system-detailed-view: useEffect [initial-form-values] triggered. current initial-form-values:" (clj->js initial-form-values))
        (.resetFields form)
        (.setFieldsValue form (clj->js initial-form-values))
        js/undefined) ; Return undefined for cleanup
@@ -990,18 +980,14 @@
                                   final-initial-values (form-utils/preprocess-date-fields
                                                          data-with-enum-defaults
                                                          assessment-specs/手术麻醉史Spec)]
-                              (timbre/info "surgical-anesthesia-history-detailed-view: final initial-form-values after processing:" (clj->js final-initial-values))
                               final-initial-values)
         ;; 表单提交时的处理函数
         on-finish-fn (fn [values]
-                       (timbre/info "surgical-anesthesia-history-detailed-view: on-finish-fn raw JS values:" values)
                        (let [values-clj (js->clj values :keywordize-keys true) ; 1. 将 JS 表单值转换为 ClojureScript map
-                             _ (timbre/info "surgical-anesthesia-history-detailed-view: on-finish-fn cljs values-clj before transformation:" (clj->js values-clj))
                              ;; 2. 自动将所有 dayjs 对象转换回 ISO 日期字符串，以便存储或传输
                              transformed-values (form-utils/transform-date-fields-for-submission
                                                   values-clj
                                                   assessment-specs/手术麻醉史Spec)]
-                         (timbre/info "surgical-anesthesia-history-detailed-view: on-finish-fn transformed-values for dispatch:" (clj->js transformed-values))
                          (rf/dispatch [::events/update-canonical-assessment-section :手术麻醉史 transformed-values])))]
     (React/useEffect (fn []
                        (when report-form-instance-fn

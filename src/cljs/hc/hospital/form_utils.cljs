@@ -14,7 +14,7 @@
         actual-schema (if (= :maybe (m/type dereffed-schema))
                         (-> dereffed-schema m/children first m/deref) ; 对子 schema 也解引用
                         dereffed-schema)]
-    (timbre/debug "get-first-enum-value for schema:" (m/form field-schema) "Dereffed to:" (m/form dereffed-schema) "Actual for enum check:" (m/form actual-schema))
+
     (if (and actual-schema (= :enum (m/type actual-schema)))
       (let [options (m/children actual-schema)]
         (when (seq options)
@@ -49,20 +49,17 @@
                ;; 情况1: 当前值为 nil
                (nil? current-value)
                (if-let [default-enum (get-first-enum-value entry-schema-actual)] ; 尝试获取枚举默认值
-                 (do (timbre/info "PATH:" field-path "- Value is nil. Applying enum default:" default-enum)
-                     (assoc processed-data field-key default-enum)) ; 应用默认值
+                 (assoc processed-data field-key default-enum) ; 应用默认值
                  ;; 如果不是枚举，但 schema 是 map 类型，则递归处理空 map
                  (if (= :map (m/type entry-schema-actual))
-                   (do (timbre/info "PATH:" field-path "- Value is nil. Field is a map. Recursing with {} for this map.")
-                       (assoc processed-data field-key (apply-enum-defaults-to-data-impl {} entry-schema-actual field-path)))
+                   (assoc processed-data field-key (apply-enum-defaults-to-data-impl {} entry-schema-actual field-path))
                    ;; 其他情况（非枚举、非 map），不应用默认值
                    (do (timbre/debug "PATH:" field-path "- Value is nil. Not an enum, not a map. No default applied.")
                        processed-data)))
 
                ;; 情况2: 当前值是一个 map，并且对应的 schema 也是 :map 类型，则递归处理
                (and (map? current-value) (= :map (m/type entry-schema-actual)))
-               (do (timbre/debug "PATH:" field-path "- Value is a map. Recursing.")
-                   (assoc processed-data field-key (apply-enum-defaults-to-data-impl current-value entry-schema-actual field-path)))
+               (assoc processed-data field-key (apply-enum-defaults-to-data-impl current-value entry-schema-actual field-path))
 
                ;; 情况3: 其他所有情况 (值存在且不需要特殊处理)，保持原样
                :else
@@ -77,7 +74,6 @@
    data: 要处理的数据 (通常是一个 map，可以为 nil，此时会视为空 map)。
    schema: 描述数据结构的 Malli schema。"
   [data schema]
-  (timbre/info "Public apply-enum-defaults-to-data for schema form:" (m/form schema) "(type:"(m/type schema) "dereffed type:" (m/type (m/deref schema)) ") with data:" data)
   (let [start-data (if (nil? data) {} data) ; 如果输入数据为 nil，则从空 map 开始
         dereffed-initial-schema (m/deref schema)] ; 解引用顶层 schema
     (if (nil? dereffed-initial-schema)
