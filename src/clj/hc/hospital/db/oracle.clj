@@ -8,48 +8,41 @@
 (defmethod ig/init-key :db.oracle/connection
   [_ {:keys [jdbc-url user password]}]
   (try
-    (log/info "Attempting to connect to Oracle database directly using OracleDataSource:" jdbc-url)
-    (let [ods (doto (OracleDataSource.)
-                (.setURL jdbc-url)
-                (.setUser user)
-                (.setPassword password)
-                (.setConnectionCachingEnabled true)
-                (.setConnectionCacheName "OracleHISCache")
-                ;; Optional: Add more cache properties if needed via .setConnectionCacheProperties
-                )]
-      ;; To actually start the cache and make it effective,
-      ;; OracleDataSource might need its connection pool properties set,
-      ;; (e.g., MinLimit, MaxLimit) via a properties object
-      ;; passed to setConnectionCacheProperties, and then startImplicitConnectionCache
-      ;; However, setConnectionCachingEnabled alone might be enough for basic behavior.
-      ;; For robust pooling, one might need:
-      ;; (let [cacheProps (java.util.Properties.)]
-      ;;  (.setProperty cacheProps "MinLimit" "3")
-      ;;  (.setProperty cacheProps "MaxLimit" "10")
-      ;;  (.setConnectionCacheProperties ods cacheProps)
-      ;;  (.startImplicitConnectionCache ods) ; May not be needed if properties auto-start
-      ;; )
-      ;; For now, keeping it simple as per plan.
-      (log/info "Successfully configured OracleDataSource for:" jdbc-url)
+    (log/info "Attempting to connect to Oracle database directly using OracleDataSource and configure implicit caching:" jdbc-url)
+    (let [ods (OracleDataSource.)]
+      (.setURL ods jdbc-url)
+      (.setUser ods user)
+      (.setPassword ods password)
+
+      (let [cacheProps (java.util.Properties.)]
+        (.setProperty cacheProps "ConnectionCachingEnabled" "true")
+        (.setProperty cacheProps "ConnectionCacheName" "OracleHISCache")
+        (.setProperty cacheProps "MinLimit" "1")
+        (.setProperty cacheProps "MaxLimit" "10")
+        ;; Add other properties like "InitialLimit", "MaxStatementsLimit" if desired
+        (.setConnectionCacheProperties ods cacheProps))
+
+      (.startImplicitConnectionCache ods) ; Start the cache
+
+      (log/info "Successfully configured OracleDataSource and started implicit cache for:" jdbc-url)
       ods)
     (catch Exception e
-      (log/error (str "Failed to configure OracleDataSource (" jdbc-url "). Error: " (.getMessage e)) e) ; Log full exception
+      (log/error (str "Failed to configure OracleDataSource or start implicit cache (" jdbc-url "). Error: " (.getMessage e)) e)
       (log/warn (str "Application will continue without Oracle DB functionality due to OracleDataSource setup failure."))
       nil)))
 
 (defmethod ig/halt-key! :db.oracle/connection
-  [_ ^OracleDataSource datasource] ; Type hint OracleDataSource
+  [_ ^OracleDataSource datasource]
   (when datasource
     (try
-      (log/info "Closing OracleDataSource and its implicit connection cache.")
-      ;; If implicit cache was explicitly started with startImplicitConnectionCache(),
-      ;; it should be stopped with stopImplicitConnectionCache().
-      ;; However, .close() on the OracleDataSource itself is generally the way
-      ;; to release its resources, including any implicit pool.
+      (log/info "Stopping OracleDataSource implicit connection cache...")
+      (.stopImplicitConnectionCache datasource)
+      (log/info "Implicit connection cache stopped.")
+      (log/info "Closing OracleDataSource...")
       (.close datasource)
       (log/info "OracleDataSource closed.")
       (catch Exception e
-        (log/warn (str "Error closing OracleDataSource: " (.getMessage e)) e)))))
+        (log/warn (str "Error stopping/closing OracleDataSource: " (.getMessage e)) e)))))
 
 ;; Function to create a NOP (no-operation) query function map
 (defn create-nop-oracle-query-fn [filename]
