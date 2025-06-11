@@ -113,7 +113,6 @@
                         :input-value qr-input-value
                         :on-input-change (fn [e] (rf/dispatch [::events/set-qr-scan-input (-> e .-target .-value)]))
                         :on-ok (fn []
-                                 ;; 点击确定时，记录当前的输入值，然后关闭模态框
-                                 (js/console.log (str "患者就诊号：" qr-input-value))
-                                 (rf/dispatch [::events/close-qr-scan-modal]))
+                                 ;; 点击确定时，派发事件以通过API查询HIS中的患者信息
+                                 (rf/dispatch [::events/find-patient-by-id-in-his qr-input-value]))
                         :on-cancel #(rf/dispatch [::events/close-qr-scan-modal])}])]]))

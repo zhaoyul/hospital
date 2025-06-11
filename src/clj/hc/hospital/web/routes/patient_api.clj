@@ -34,7 +34,8 @@
 
 ;; 患者 API 特定路由
 (defn patient-api-routes [opts]
-  (let [query-fn (:query-fn opts)]
+  (let [query-fn (:query-fn opts)
+        oracle-query-fn (:oracle-query-fn opts)] ; 从 opts 获取 oracle-query-fn
     [["/patient" ; Start of /patient routes group
       ["/assessment" {:post {:summary "提交患者评估信息"
                              :description "接收并存储患者填写的评估表单信息"
@@ -65,6 +66,19 @@
                                         :responses {200 {:body {:message string?}}
                                                     404 {:body {:message string?}}
                                                     500 {:body {:message string?}}}}}]
+      ;; 通过患者ID (REGISTER_NO, PATIENT_ID, 或 INP_NO) 查询患者信息并创建记录的路由
+      ["/find-by-id/:patientIdInput" {:get {:summary "通过ID查找患者信息"
+                                            :description "根据患者的 REGISTER_NO, PATIENT_ID 或 INP_NO 查询患者信息，并在系统中创建记录"
+                                            :tags ["患者"]
+                                            :parameters {:path {:patientIdInput string?}}
+                                            :handler (fn [request]
+                                                       (patient-api/find-patient-by-id-handler
+                                                        (assoc request
+                                                               :query-fn query-fn
+                                                               :oracle-query-fn oracle-query-fn))) ; 传递 oracle-query-fn
+                                            :responses {200 {:body map?}
+                                                        404 {:body {:message string?}}
+                                                        500 {:body {:message string?}}}}}]
 
       ["/assessments" {:get {:summary "查询所有患者的评估信息列表"
                              :description "获取所有已存储的患者评估表单信息"

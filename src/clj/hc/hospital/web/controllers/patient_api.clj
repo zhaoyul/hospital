@@ -1,12 +1,13 @@
 (ns hc.hospital.web.controllers.patient-api
   (:require
    [cheshire.core :as cheshire]
+   [cheshire.core :as cheshire]
    [clojure.string :as str]
    [clojure.tools.logging :as log]
-   [clojure.tools.logging :as ctl]
-   [ring.util.http-response :as http-response])
+   [ring.util.http-response :as http-response]
+   [hc.hospital.db.his-patient-queries :as his-queries]) ; 新增的 require
   (:import
-   [com.hankcs.hanlp HanLP] ; Import HanLP
+   [com.hankcs.hanlp HanLP]
    [java.time Instant]))
 
 (defn- get-pinyin-parts [name-str]
@@ -242,3 +243,81 @@
     (catch Exception e
       (log/error e "更新评估时出错" {:patient-id patient-id :error (ex-message e) :data (ex-data e)})
       (http-response/internal-server-error {:message (str "更新评估时出错: " (ex-message e))}))))
+
+(defn find-patient-by-id-handler
+  "根据患者ID输入（REGISTER_NO, PATIENT_ID, 或 INP_NO）查找患者信息，
+  如果找到，则在本地数据库创建或更新患者记录，并返回患者信息。
+  此函数是 /api/patient/find-by-id/:patientIdInput 端点的处理器。"
+  [{{{:keys [patientIdInput]} :path} :parameters
+    :keys [query-fn oracle-query-fn] :as _request}] ; query-fn 用于本地数据库, oracle-query-fn 用于HIS
+  (log/info "接收到查询患者请求，输入ID:" patientIdInput)
+  (if-not oracle-query-fn
+    (do
+      (log/error "Oracle query function (oracle-query-fn) 未提供给 find-patient-by-id-handler")
+      (http-response/internal-server-error {:message "系统错误：HIS数据库查询功能未配置。"}));; 优先检查 oracle-query-fn 是否存在
+    (try
+      (let [patient-info-from-his (his-queries/find-patient-in-his oracle-query-fn patientIdInput)]
+        (if patient-info-from-his
+          (do
+            (log/info "HIS中找到患者信息:" patient-info-from-his)
+            (let [his-name (get patient-info-from-his :NAME) ; HIS视图字段通常大写
+                  his-sex (get patient-info-from-his :SEX)
+                  his-dob (get patient-info-from-his :DATE_OF_BIRTH) ; 可能需要日期格式转换
+                  current-time-str (str (Instant/now))
+
+                  ;; 构建用于本地存储的 assessment_data
+                  basic-info {:姓名 his-name
+                              :性别 his-sex
+                              :出生日期 (if his-dob (str his-dob) nil) ; 确保为字符串或nil
+                              :门诊号 patientIdInput ; 使用查询ID作为本地的门诊号/患者ID
+                              :患者来源 "HIS扫码"
+                              :评估状态 "待评估" ; 初始状态
+                              :患者提交时间 current-time-str
+                              :评估更新时间 current-time-str}
+                  assessment-map {:基本信息 basic-info
+                                  :medical_history {}
+                                  :physical_examination {}
+                                  :comorbidities {}
+                                  :auxiliary_examinations []
+                                  :anesthesia_plan {}}
+                  assessment-data-json (cheshire/generate-string assessment-map)
+
+                  ;; 检查本地数据库是否已存在该患者记录
+                  existing-local-assessment (query-fn :get-patient-assessment-by-id {:patient_id patientIdInput})
+                  was-inserted? (not (seq existing-local-assessment))]
+
+              (if was-inserted?
+                (do
+                  (log/info "本地不存在患者评估，将插入新记录，患者ID:" patientIdInput)
+                  (query-fn :insert-patient-assessment!
+                            {:patient_id patientIdInput
+                             :assessment_data assessment-data-json
+                             :patient_name_pinyin nil
+                             :patient_name_initial nil
+                             :doctor_signature_b64 nil}))
+                (log/info "本地已存在患者评估，患者ID:" patientIdInput))
+
+              ;; 无论插入还是已存在，都重新获取并返回完整的本地记录
+              (let [final-local-assessment (query-fn :get-patient-assessment-by-id {:patient_id patientIdInput})
+                    parsed-assessment-data (when (:assessment_data final-local-assessment)
+                                             (cheshire/parse-string (:assessment_data final-local-assessment) true))]
+                (if final-local-assessment
+                  (http-response/ok {:message (if was-inserted?
+                                                 (str "成功从HIS获取并创建新患者记录: " patientIdInput)
+                                                 (str "成功从HIS获取患者信息，本地记录已存在: " patientIdInput))
+                                     :patientIdInput patientIdInput
+                                     ;; 返回从HIS直接获取的基础信息，以及完整的本地评估记录（包含了解析后的assessment_data）
+                                     :his_info patient-info-from-his ; 保留原始HIS信息以供参考
+                                     :assessment (assoc final-local-assessment :assessment_data parsed-assessment-data)
+                                     :data_source "HIS_AND_LOCAL_DB"})
+                  (do
+                    (log/error "在插入/确认后，无法在本地数据库中检索到患者评估，患者ID：" patientIdInput)
+                    (http-response/internal-server-error
+                     {:message (str "处理患者信息后无法在本地检索: " patientIdInput)})))))))
+          (do
+            (log/info "HIS中未找到患者信息，输入ID:" patientIdInput)
+            (http-response/not-found {:message (str "HIS中未找到患者信息，输入ID: " patientIdInput)
+                                      :patientIdInput patientIdInput}))))
+      (catch Exception e
+        (log/error e (str "查询HIS或处理本地患者记录时出错，输入ID: " patientIdInput) (ex-message e))
+        (http-response/internal-server-error {:message "处理患者信息时发生内部错误"})))))

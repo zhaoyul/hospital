@@ -393,3 +393,54 @@
 (rf/reg-event-db ::set-qr-scan-input
   (fn [db [_ value]]
     (assoc db :qr-scan-input-value value)))
+
+;; 通过患者ID（从二维码扫描获得）查询HIS系统中的患者信息
+(rf/reg-event-fx ::find-patient-by-id-in-his
+  (fn [{:keys [db]} [_ patient-id-input]]
+    (if (str/blank? patient-id-input)
+      (do
+        (timbre/warn "HIS患者查询：输入的ID为空。")
+        ;; 输入为空时也关闭模态框并清空输入值
+        {:dispatch [::close-qr-scan-modal]})
+      {:http-xhrio {:method          :get
+                    :uri             (str "/api/patient/find-by-id/" patient-id-input)
+                    :response-format (ajax/json-response-format {:keywords? true})
+                    :on-success      [::find-patient-in-his-success patient-id-input] ; 传递原始输入ID作为上下文
+                    :on-failure      [::find-patient-in-his-failure patient-id-input]}})))
+
+;; HIS患者查询成功事件
+(rf/reg-event-db ::find-patient-in-his-success
+  (fn [db [_ patient-id-input api-response]] ; patient-id-input is original, api-response is from server
+    (timbre/info "成功从HIS查询/创建患者 " patient-id-input ". API响应:" api-response)
+    (let [new-assessment-record (:assessment api-response)]
+      (if new-assessment-record
+        (let [current-assessments (get-in db [:anesthesia :all-patient-assessments] [])
+              ;; API返回的 :patient_id 通常就是 patient-id-input，但使用记录中的ID更准确
+              record-patient-id (:patient_id new-assessment-record)
+              patient-exists? (some #(= (:patient_id %) record-patient-id) current-assessments)
+              updated-assessments (if patient-exists?
+                                    (mapv #(if (= (:patient_id %) record-patient-id)
+                                             new-assessment-record ; 更新已存在的记录
+                                             %)
+                                          current-assessments)
+                                    (conj current-assessments new-assessment-record))] ; 添加新记录
+          ;; 使用 new-assessment-record 中的姓名进行提示
+          (js/alert (str "成功处理患者信息：" (get-in new-assessment-record [:assessment_data :基本信息 :姓名])))
+          (rf/dispatch [::close-qr-scan-modal])
+          (rf/dispatch [::select-patient record-patient-id]) ; 使用记录中的ID确保选中正确的患者
+          (assoc-in db [:anesthesia :all-patient-assessments] updated-assessments))
+        (do
+          (timbre/warn "从API获取的患者评估数据 (:assessment) 为空，无法更新UI列表。Patient ID:" patient-id-input ", Response:" api-response)
+          ;; 此处不关闭模态框，允许用户看到错误或取消
+          ;; 显示一个更通用的错误消息，因为具体原因可能在日志中
+          (js/alert (str "处理患者 " patient-id-input " 信息时发生错误，未能获取完整的评估数据。详情请查看日志。"))
+          db)))))
+
+;; HIS患者查询失败事件
+(rf/reg-event-db ::find-patient-in-his-failure
+  (fn [db [_ patient-id-input error]]
+    (let [error-message (or (-> error :response :message) (:status-text error) "查询失败")]
+      (timbre/error "HIS患者查询失败 " patient-id-input ":" error)
+      (js/alert (str "查询患者 " patient-id-input " 失败: " error-message))
+      ;; 查询失败时不关闭模态框，允许用户重试或取消
+      db)))
