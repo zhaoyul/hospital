@@ -96,15 +96,15 @@
 ;; Basic Info
 (rf/reg-sub ::canonical-basic-info
   :<- [::current-canonical-assessment]
-  (fn [assessment k] (get-in  assessment (cond-> [:基本信息] k (conj k)))))
+  (fn [assessment k] (:基本信息 assessment )))
 
 (rf/reg-sub ::canonical-patient-name
   :<- [::canonical-basic-info]
-  (fn [basic-info _] (:姓名 basic-info))) ;; Updated to :姓名
+  (fn [basic-info _] (:姓名 basic-info)))
 
 (rf/reg-sub ::canonical-patient-outpatient-number
   :<- [::canonical-basic-info]
-  (fn [basic-info _] (:门诊号 basic-info))) ;; Updated to :门诊号
+  (fn [basic-info _] (:门诊号 basic-info)))
 
 ;; New subscription for doctor's signature image
 (rf/reg-sub ::doctor-signature-image
