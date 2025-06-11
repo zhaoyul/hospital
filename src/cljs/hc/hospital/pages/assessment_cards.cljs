@@ -20,7 +20,6 @@
    [hc.hospital.subs :as subs]
    [hc.hospital.utils :as utils]
    [hc.hospital.ui-helpers :as ui-helpers]
-   [hc.hospital.summary-generators :as sg]
    [hc.hospital.natural-language-generators :as nlg] ; Added nlg
    [hc.hospital.form-utils :as form-utils]
    [re-frame.core :as rf]
@@ -126,7 +125,7 @@
 (defn- respiratory-system-summary-view [props]
   (let [{:keys [respiratory-data]} props]
     (if (seq respiratory-data)
-      (let [summary-hiccup (sg/generate-summary-hiccup respiratory-data assessment-specs/呼吸系统Spec :呼吸系统)]
+      (let [summary-hiccup (nlg/generate-summary-component respiratory-data assessment-specs/呼吸系统Spec :呼吸系统)]
         (if (or (not (vector? summary-hiccup)) (seq summary-hiccup))
           summary-hiccup
           [:div {:style {:padding "10px"}} "暂无呼吸系统评估数据可供总结 (内容为空)。"]))
@@ -210,7 +209,7 @@
 (defn- mental-neuromuscular-system-summary-view [props]
   (let [{:keys [mn-data]} props]
     (if (seq mn-data)
-      (let [summary-hiccup (sg/generate-summary-hiccup mn-data assessment-specs/精神及神经肌肉系统Spec :精神及神经肌肉系统)]
+      (let [summary-hiccup (nlg/generate-summary-component mn-data assessment-specs/精神及神经肌肉系统Spec :精神及神经肌肉系统)]
         (if (or (not (vector? summary-hiccup)) (seq summary-hiccup))
           summary-hiccup
           [:div {:style {:padding "10px"}} "暂无精神及神经肌肉系统评估数据可供总结 (内容为空)。"]))
@@ -298,7 +297,7 @@
 (defn- endocrine-system-summary-view [props]
   (let [{:keys [endo-data]} props]
     (if (seq endo-data)
-      (let [summary-hiccup (sg/generate-summary-hiccup endo-data assessment-specs/内分泌系统Spec :内分泌系统)]
+      (let [summary-hiccup (nlg/generate-summary-component endo-data assessment-specs/内分泌系统Spec :内分泌系统)]
         (if (or (not (vector? summary-hiccup)) (seq summary-hiccup))
           summary-hiccup
           [:div {:style {:padding "10px"}} "暂无内分泌系统评估数据可供总结 (内容为空)。"]))
@@ -369,7 +368,7 @@
 (defn- liver-kidney-system-summary-view [props]
   (let [{:keys [lk-data]} props]
     (if (seq lk-data)
-      (let [summary-hiccup (sg/generate-summary-hiccup lk-data assessment-specs/肝肾病史Spec :肝肾病史)]
+      (let [summary-hiccup (nlg/generate-summary-component lk-data assessment-specs/肝肾病史Spec :肝肾病史)]
         (if (or (not (vector? summary-hiccup)) (seq summary-hiccup))
           summary-hiccup
           [:div {:style {:padding "10px"}} "暂无肝肾病史评估数据可供总结 (内容为空)。"]))
@@ -448,7 +447,7 @@
 (defn- digestive-system-summary-view [props]
   (let [{:keys [ds-data]} props]
     (if (seq ds-data)
-      (let [summary-hiccup (sg/generate-summary-hiccup ds-data assessment-specs/消化系统Spec :消化系统)]
+      (let [summary-hiccup (nlg/generate-summary-component ds-data assessment-specs/消化系统Spec :消化系统)]
         (if (or (not (vector? summary-hiccup)) (seq summary-hiccup))
           summary-hiccup
           [:div {:style {:padding "10px"}} "暂无消化系统评估数据可供总结 (内容为空)。"]))
@@ -520,7 +519,7 @@
 (defn- hematologic-system-summary-view [props]
   (let [{:keys [hs-data]} props]
     (if (seq hs-data)
-      (let [summary-hiccup (sg/generate-summary-hiccup hs-data assessment-specs/血液系统Spec :血液系统)]
+      (let [summary-hiccup (nlg/generate-summary-component hs-data assessment-specs/血液系统Spec :血液系统)]
         (if (or (not (vector? summary-hiccup)) (seq summary-hiccup))
           summary-hiccup
           [:div {:style {:padding "10px"}} "暂无血液系统评估数据可供总结 (内容为空)。"]))
@@ -591,7 +590,7 @@
 (defn- immune-system-summary-view [props]
   (let [{:keys [is-data]} props]
     (if (seq is-data)
-      (let [summary-hiccup (sg/generate-summary-hiccup is-data assessment-specs/免疫系统Spec :免疫系统)]
+      (let [summary-hiccup (nlg/generate-summary-component is-data assessment-specs/免疫系统Spec :免疫系统)]
         (if (or (not (vector? summary-hiccup)) (seq summary-hiccup))
           summary-hiccup
           [:div {:style {:padding "10px"}} "暂无免疫系统评估数据可供总结 (内容为空)。"]))
@@ -663,7 +662,7 @@
 (defn- special-medication-history-summary-view [props]
   (let [{:keys [smh-data]} props]
     (if (seq smh-data)
-      (let [summary-hiccup (sg/generate-summary-hiccup smh-data assessment-specs/特殊用药史Spec :特殊用药史)]
+      (let [summary-hiccup (nlg/generate-summary-component smh-data assessment-specs/特殊用药史Spec :特殊用药史)]
         (if (or (not (vector? summary-hiccup)) (seq summary-hiccup))
           summary-hiccup
           [:div {:style {:padding "10px"}} "暂无特殊用药史评估数据可供总结 (内容为空)。"]))
@@ -735,7 +734,7 @@
 (defn- special-disease-history-summary-view [props]
   (let [{:keys [sdh-data]} props]
     (if (seq sdh-data)
-      (let [summary-hiccup (sg/generate-summary-hiccup sdh-data assessment-specs/特殊疾病病史Spec :特殊疾病病史)]
+      (let [summary-hiccup (nlg/generate-summary-component sdh-data assessment-specs/特殊疾病病史Spec :特殊疾病病史)]
         (if (or (not (vector? summary-hiccup)) (seq summary-hiccup))
           summary-hiccup
           [:div {:style {:padding "10px"}} "暂无特殊疾病病史评估数据可供总结 (内容为空)。"]))
@@ -807,7 +806,7 @@
 (defn- nutritional-assessment-summary-view [props]
   (let [{:keys [na-data]} props]
     (if (seq na-data)
-      (let [summary-hiccup (sg/generate-summary-hiccup na-data assessment-specs/营养评估Spec :营养评估)]
+      (let [summary-hiccup (nlg/generate-summary-component na-data assessment-specs/营养评估Spec :营养评估)]
         (if (or (not (vector? summary-hiccup)) (seq summary-hiccup))
           summary-hiccup
           [:div {:style {:padding "10px"}} "暂无营养评估数据可供总结 (内容为空)。"]))
@@ -888,7 +887,7 @@
 (defn- pregnancy-assessment-summary-view [props]
   (let [{:keys [pa-data]} props]
     (if (seq pa-data)
-      (let [summary-hiccup (sg/generate-summary-hiccup pa-data assessment-specs/妊娠Spec :妊娠)]
+      (let [summary-hiccup (nlg/generate-summary-component pa-data assessment-specs/妊娠Spec :妊娠)]
         (if (or (not (vector? summary-hiccup)) (seq summary-hiccup))
           summary-hiccup
           [:div {:style {:padding "10px"}} "暂无妊娠评估数据可供总结 (内容为空)。"]))
@@ -960,7 +959,7 @@
 (defn- surgical-anesthesia-history-summary-view [props]
   (let [{:keys [sah-data]} props]
     (if (seq sah-data)
-      (let [summary-hiccup (sg/generate-summary-hiccup sah-data assessment-specs/手术麻醉史Spec :手术麻醉史)]
+      (let [summary-hiccup (nlg/generate-summary-component sah-data assessment-specs/手术麻醉史Spec :手术麻醉史)]
         (if (or (not (vector? summary-hiccup)) (seq summary-hiccup))
           summary-hiccup
           [:div {:style {:padding "10px"}} "暂无手术麻醉史评估数据可供总结 (内容为空)。"]))
@@ -1049,7 +1048,7 @@
 (defn- airway-assessment-summary-view [props]
   (let [{:keys [aa-data]} props]
     (if (seq aa-data)
-      (let [summary-hiccup (sg/generate-summary-hiccup aa-data assessment-specs/气道评估Spec :气道评估)]
+      (let [summary-hiccup (nlg/generate-summary-component aa-data assessment-specs/气道评估Spec :气道评估)]
         (if (or (not (vector? summary-hiccup)) (seq summary-hiccup))
           summary-hiccup
           [:div {:style {:padding "10px"}} "暂无气道评估数据可供总结 (内容为空)。"]))
@@ -1145,7 +1144,7 @@
 (defn- spinal-anesthesia-assessment-summary-view [props]
   (let [{:keys [saa-data]} props]
     (if (seq saa-data)
-      (let [summary-hiccup (sg/generate-summary-hiccup saa-data assessment-specs/椎管内麻醉相关评估Spec :椎管内麻醉相关评估)]
+      (let [summary-hiccup (nlg/generate-summary-component saa-data assessment-specs/椎管内麻醉相关评估Spec :椎管内麻醉相关评估)]
         (if (or (not (vector? summary-hiccup)) (seq summary-hiccup))
           summary-hiccup
           [:div {:style {:padding "10px"}} "暂无椎管内麻醉相关评估数据可供总结 (内容为空)。"]))
