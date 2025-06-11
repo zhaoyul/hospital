@@ -99,10 +99,17 @@
 (rf/reg-event-db ::update-canonical-assessment-section
   [(when ^boolean goog.DEBUG re-frame.core/debug)]
   (fn [db [_ section-key section-data]]
-    ;; Original logic
-    (if (get-in db [:anesthesia :current-assessment-canonical section-key])
-      (update-in db [:anesthesia :current-assessment-canonical section-key] merge section-data)
-      (update-in db [:anesthesia :current-assessment-canonical section-key] (fnil merge {}) section-data))))
+    (timbre/info "::update-canonical-assessment-section: Event triggered. Section-key:" section-key ", Incoming section-data:" (clj->js section-data))
+
+    (let [path [:anesthesia :current-assessment-canonical section-key]
+          current-data-before-merge (get-in db path)]
+      (timbre/info "::update-canonical-assessment-section: Data for section" section-key "BEFORE merge:" (clj->js current-data-before-merge))
+
+      (let [updated-db (if (get-in db [:anesthesia :current-assessment-canonical section-key])
+                         (update-in db path merge section-data)
+                         (update-in db path (fnil merge {}) section-data))]
+        (timbre/info "::update-canonical-assessment-section: Data for section" section-key "AFTER merge:" (clj->js (get-in updated-db path)))
+        updated-db))))
 
 ;; Specific handlers for auxiliary exam file list management (canonical structure)
 (rf/reg-event-db ::add-aux-exam-file

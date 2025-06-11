@@ -216,7 +216,9 @@
       [:div {:style {:padding "10px"}} "暂无精神及神经肌肉系统评估数据可供总结。"])))
 
 (defn mental-neuromuscular-system-detailed-view [props]
+  (timbre/info "mental-neuromuscular-system-detailed-view: Props received:" (clj->js props))
   (let [{:keys [report-form-instance-fn patient-id mn-data on-show-summary]} props
+        _ (timbre/info "mental-neuromuscular-system-detailed-view: mn-data from props:" (clj->js mn-data))
         [form] (Form.useForm)
         ;; 初始化表单值的数据处理流程
         initial-form-values (let [data-from-db (or mn-data {}) ; 1. 从数据库获取原始数据，如果为空则使用空 map
@@ -229,18 +231,23 @@
                                                          data-with-enum-defaults
                                                          assessment-specs/精神及神经肌肉系统Spec)]
                               final-initial-values)
+        _ (timbre/info "mental-neuromuscular-system-detailed-view: Calculated initial-form-values:" (clj->js initial-form-values))
         ;; 表单提交时的处理函数
         on-finish-fn (fn [values]
-                       (let [values-clj (js->clj values :keywordize-keys true) ; 1. 将 JS 表单值转换为 ClojureScript map
+                       (timbre/info "mental-neuromuscular-system-detailed-view: on-finish-fn - raw JS values from form:" values)
+                       (let [values-clj (js->clj values :keywordize-keys true)
+                             _ (timbre/info "mental-neuromuscular-system-detailed-view: on-finish-fn - values-clj after js->clj:" (clj->js values-clj))
                              ;; 2. 自动将所有 dayjs 对象转换回 ISO 日期字符串，以便存储或传输
                              transformed-values (form-utils/transform-date-fields-for-submission
                                                   values-clj
                                                   assessment-specs/精神及神经肌肉系统Spec)]
+                         (timbre/info "mental-neuromuscular-system-detailed-view: on-finish-fn - transformed-values for dispatch:" (clj->js transformed-values))
                          (rf/dispatch [::events/update-canonical-assessment-section :精神及神经肌肉系统 transformed-values])))]
 
     ;; Effect to update form when mn-data (and thus initial-form-values) changes
     (React/useEffect
      (fn []
+       (timbre/info "mental-neuromuscular-system-detailed-view: useEffect [initial-form-values] triggered. current initial-form-values:" (clj->js initial-form-values))
        (.resetFields form)
        (.setFieldsValue form (clj->js initial-form-values))
        js/undefined) ; Return undefined for cleanup
@@ -1156,7 +1163,9 @@
       [:div {:style {:padding "10px"}} "暂无椎管内麻醉相关评估数据可供总结。"])))
 
 (defn spinal-anesthesia-assessment-detailed-view [props]
+  (timbre/info "spinal-anesthesia-assessment-detailed-view: Props received:" (clj->js props))
   (let [{:keys [report-form-instance-fn patient-id saa-data on-show-summary]} props
+        _ (timbre/info "spinal-anesthesia-assessment-detailed-view: saa-data from props:" (clj->js saa-data))
         [form] (Form.useForm)
         initial-form-values (let [data-from-db (or saa-data {})
                                   ;; No date preprocessing for this spec
@@ -1164,14 +1173,17 @@
                                                          data-from-db
                                                          assessment-specs/椎管内麻醉相关评估Spec)]
                               final-initial-values)
+        _ (timbre/info "spinal-anesthesia-assessment-detailed-view: Calculated initial-form-values:" (clj->js initial-form-values))
         on-finish-fn (fn [values]
+                       (timbre/info "spinal-anesthesia-assessment-detailed-view: on-finish-fn - raw JS values from form:" values)
                        (let [values-clj (js->clj values :keywordize-keys true)]
-                         ;; No date transformation for submission for this spec
+                         (timbre/info "spinal-anesthesia-assessment-detailed-view: on-finish-fn - values-clj for dispatch:" (clj->js values-clj))
                          (rf/dispatch [::events/update-canonical-assessment-section :椎管内麻醉相关评估 values-clj])))]
 
     ;; Effect to update form when saa-data (and thus initial-form-values) changes
     (React/useEffect
      (fn []
+       (timbre/info "spinal-anesthesia-assessment-detailed-view: useEffect [initial-form-values] triggered. current initial-form-values:" (clj->js initial-form-values))
        (.resetFields form)
        (.setFieldsValue form (clj->js initial-form-values))
        js/undefined) ; Return undefined for cleanup
