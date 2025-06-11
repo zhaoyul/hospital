@@ -55,17 +55,24 @@
 
 (defn- normalize-entry-data
   "一个辅助函数，用于预处理特定的映射结构数据条目。
-  它主要处理包含 :内容 键的映射：
-  - 如果数据是类似 {:内容 val} 的映射，且 val 被视为空值（例如 nil、空字符串），
+  它主要处理包含 :内容 或 :结果 键的映射：
+  - 如果数据是类似 {:内容 val} 或 {:结果 val} 的映射，且 val 被视为空值（例如 nil、空字符串），
     则此函数返回 nil，从而有效地将该条目标记为待省略。
-  - 如果数据是类似 {:内容 val} 的映射，且 val 存在，则提取并返回 val。
-  其他数据类型或不包含 :内容 键的映射结构将原样返回。"
+  - 如果数据是类似 {:内容 val} 或 {:结果 val} 的映射，且 val 存在，则提取并返回 val。
+  其他数据类型或不包含这些特定键的映射结构将原样返回。"
   [data]
   (if (map? data)
     (cond
-      ;; Removed: (or (= data {:有无 "无"}) (= data {:有无 :无})) :无
+      ;; Check for {:内容 val} where val is not present
       (and (contains? data :内容) (not (is-val-present? (:内容 data)))) nil
+      ;; Check for {:结果 val} where val is not present
+      (and (contains? data :结果) (not (is-val-present? (:结果 data)))) nil
+
+      ;; If {:内容 val} and val is present, return val
       (contains? data :内容) (:内容 data)
+      ;; If {:结果 val} and val is present, return val
+      (contains? data :结果) (:结果 data)
+
       :else data)
     data))
 
