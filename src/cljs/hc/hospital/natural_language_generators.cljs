@@ -7,7 +7,7 @@
 (defonce control-word-config
   {:有无 {:positive :有,
           :negative :无,
-          :label-suffix "史",
+          :label-suffix "", ; 由 "史" 修改为此
           :positive-prefix "",
           :negative-prefix "无",
           :omit-if-negative true} ; Default to omit negative "有无" unless for specific conditions
@@ -24,7 +24,7 @@
           :negative-prefix "",
           :omit-if-negative false} ; Usually we want to state "XX状态：正常"
    ;; Specific override for certain fields where "无XX史" is desired
-   :心脏起搏器植入史 {:positive :有, :negative :无, :label-suffix "史", :negative-prefix "无", :omit-if-negative true}
+   :心脏起搏器植入史 {:positive :有, :negative :无, :label-suffix "", :negative-prefix "无", :omit-if-negative true} ; label-suffix 修改为 ""
    ;; Add other fields that need explicit negation if their :有无 is :无
    })
 
@@ -217,16 +217,45 @@
            (for [item items] [:li {:key (str item)} item])])
 
         :nested-group
-        (when (seq content)
-          (cond
+        (when (seq content) ; C4.L1
+          (cond ; C4.L2
             ;; Specific renderers for complex groups
             (= label "高血压") (render-hypertension-details content)
             ;; Add other custom group renderers here if needed
             ;; (= label "心律失常") (render-arrhythmia-details content)
-            :else ;; Default rendering for nested groups
-            [:div.nested-group {:style {:margin-left "15px"}}
-             (when label [:div [:strong label "："]])
-             (parts->hiccup content)]))
+            :else ;; 默认的嵌套组渲染逻辑
+            (let [child-parts content ; 'content' 是子部件的向量
+                  num-child-parts (count child-parts)]
+              (if (and (= 1 num-child-parts)
+                       (let [child-part (first child-parts)]
+                         (or (= (:type child-part) :atomic-value)
+                             (and (= (:type child-part) :key-value)
+                                  (string? (:value child-part)))))) ; 检查子部件是否适合内联 ; if 的条件
+                ;; --- 新的内联渲染逻辑 --- (if 的 then 分支)
+                (let [child-part (first child-parts)
+                      parent-label label] ; 'label' 是父 group 的标签
+                  [:div.nested-group-inline ;; 可以用新 class 区分，或只用 :div
+                   (if parent-label
+                     (if (= (:type child-part) :atomic-value)
+                       ;; 父标签：子原子值 (例如：父：值)
+                       [:span [:strong parent-label "："] " " (:value child-part)]
+                       ;; 父标签：子标签：子值 (例如：父：子标签：值)
+                       [:span [:strong parent-label "：" (:label child-part) "："] " " (:value child-part)])
+                     ;; 如果没有父标签 (通常 :nested-group 都有父标签，但作为健壮性考虑)
+                     (if (= (:type child-part) :atomic-value)
+                       [:span (:value child-part)]
+                       [:span [:strong (:label child-part) "："] " " (:value child-part)])
+                   ) ; 关闭 (if parent-label...)
+                  ]) ; 关闭 [:div.nested-group-inline ...]
+                ;; --- 回退到旧的多行渲染逻辑 --- (if 的 else 分支)
+                (do ;; 使用 do 来明确这里是 if 的 else 分支
+                  [:div.nested-group {:style {:margin-left "15px"}}
+                   (when label [:div [:strong label "："]])
+                   (parts->hiccup content)]) ; 关闭 [:div.nested-group ...]
+              ) ; 关闭 (if (and (= 1 num-child-parts) ...))
+            ) ; 关闭 (let [child-parts ...])
+          ) ; 关闭 (cond ...)
+        ) ; 关闭 (when (seq content) ...)
 
         :atomic-value
         [:span value]
