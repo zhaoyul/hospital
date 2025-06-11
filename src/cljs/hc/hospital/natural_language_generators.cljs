@@ -53,6 +53,22 @@
     (boolean? value) (if value "是" "否")
     :else (str value)))
 
+(defn- normalize-entry-data
+  "Helper function to preprocess certain map-structured data entries.
+  It handles maps containing a :内容 key:
+  - If the data is a map like {:内容 val} where val is considered not present (e.g., nil, blank string),
+    this function returns nil, effectively marking the entry for omission.
+  - If the data is a map like {:内容 val} where val is present, it extracts and returns val.
+  Other data types or map structures are returned unchanged."
+  [data]
+  (if (map? data)
+    (cond
+      ;; Removed: (or (= data {:有无 "无"}) (= data {:有无 :无})) :无
+      (and (contains? data :内容) (not (is-val-present? (:内容 data)))) nil
+      (contains? data :内容) (:内容 data)
+      :else data)
+    data))
+
 (declare generate-description-parts parts->hiccup)
 
 (defn generate-description-parts
@@ -82,17 +98,50 @@
             (let [parts (reduce
                          (fn [acc [field-key entry-schema-wrapper entry-optional? entry-properties]] ; Destructure entry correctly
                            (let [entry-schema (m/schema entry-schema-wrapper)
-                                 entry-data (get data field-key)
+                                 original-entry-data (get data field-key)
                                  label (schema-key->display-label field-key)]
-                             (if-not (is-val-present? entry-data)
+                             ;; Explicitly omit entries if their entire data is the specific map pattern e.g. {:有无 "无"}.
+                             ;; This handles cases where such a map represents a negative/empty value that should be hidden,
+                             ;; regardless of whether the field-key itself is a configured control word.
+                             (if (or (= original-entry-data {:有无 "无"})
+                                     (= original-entry-data {:有无 :无}))
                                acc
-                               (cond
-                                 ;; NEW Condition: Check if entry-data is a map with only a :描述 key
-                                 (and (map? entry-data)
+                               (let [;; Normalize data for other patterns, e.g., extracting value from {:内容 ...}
+                                     ;; or converting {:内容 nil} to nil for omission.
+                                     entry-data (normalize-entry-data original-entry-data)]
+                                 (if-not (is-val-present? entry-data) ;; Omit if normalized data is not considered present
+                                   acc
+                                   (cond
+                                     ;; NEW Condition: Check if entry-data is a map with only a :描述 key
+                                ;; This condition should use the normalized entry-data
+                                (and (map? original-entry-data) ; Check original-entry-data for structure
+                                     (= 1 (count (keys original-entry-data)))
+                                     (contains? original-entry-data :描述)
+                                     (not (is-val-present? entry-data)) ; but use normalized for presence of content
+                                     (not (or (= field-key :详情) (= field-key :描述))))
+                                ;; If normalized 'entry-data' (which would be (:描述 original-entry-data)) is not present,
+                                ;; we effectively skip this, which is the desired outcome.
+                                ;; If it *is* present, this specific :描述 block might not be what we want.
+                                ;; The original logic was to extract :描述 if it's the *only* key.
+                                ;; Let's refine: if original was a map like {:描述 "foo"}, entry-data is now "foo".
+                                ;; If original was {:描述 nil} or {:描述 ""}, entry-data is now nil.
+                                ;; The original condition `(and (map? entry-data) ... (contains? entry-data :描述))`
+                                ;; would now apply to the *normalized* data. If data was `{:内容 {:描述 "..."}}`,
+                                ;; normalized could be `{:描述 "..."}`.
+                                ;; The goal is to simplify `{:描述 "val"}` to just `"val"` for formatting if :描述 is the only content.
+                                ;; However, normalize-entry-data already handles `{:内容 "val"}` -> `"val"`.
+                                ;; If we have `data` that is `{:描述 "the_description_text"}`
+                                ;; `normalize-entry-data` will return `{:描述 "the_description_text"}` (no change by default path).
+                                ;; So the original condition for :描述 needs to be re-evaluated carefully.
+
+                                ;; Let's look at the specific case: `(and (map? entry-data) (= 1 (count (keys entry-data))) (contains? entry-data :描述))`
+                                ;; If `original-entry-data` was `{:描述 "..."}`, `entry-data` is still `{:描述 "..."}`.
+                                ;; This block should then format the value of :描述.
+                                (and (map? entry-data) ; Check normalized entry-data
                                       (= 1 (count (keys entry-data)))
                                       (contains? entry-data :描述)
                                       (not (or (= field-key :详情) (= field-key :描述))))
-                                 (let [desc-val (get entry-data :描述)
+                                (let [desc-val (:描述 entry-data) ; Use normalized entry-data
                                        ;; Attempt to get schema for the :描述 value itself
                                        desc-val-schema (when entry-schema
                                                          (when-let [map-entries (m/entries entry-schema)]
@@ -105,9 +154,12 @@
 
                                  ;; Existing condition for when field-key IS :详情 or :描述
                                  (or (= field-key :详情) (= field-key :描述))
-                                 (if (map? entry-data)
-                                   (into acc (generate-description-parts entry-data entry-schema))
-                                   (let [val-str (format-value entry-data entry-schema)]
+                                ;; If entry-data was {:内容 "details"}, it's now "details".
+                                ;; If it was {:内容 {:foo "bar"}}, it's now {:foo "bar"}.
+                                ;; So, we need to handle both cases: string (already normalized) or map.
+                                (if (map? entry-data) ; Use normalized entry-data
+                                  (into acc (generate-description-parts entry-data entry-schema)) ; Pass normalized
+                                  (let [val-str (format-value entry-data entry-schema)] ; Pass normalized
                                      (if (is-val-present? val-str)
                                        (conj acc {:type :key-value :label label :value val-str})
                                        acc)))
@@ -121,6 +173,7 @@
                                        full-label (str label label-suffix)
                                        part-base {:original-key field-key :label label :prefix (:positive-prefix control-def "")}]
                                    (cond
+                                    ;; Use normalized entry-data for comparison
                                      (= entry-data positive-val)
                                      (conj acc (assoc part-base :type :statement :positive true))
                                      (= entry-data negative-val)
@@ -128,13 +181,16 @@
                                        acc
                                        (conj acc (assoc part-base :type :statement :positive false :prefix (:negative-prefix control-def ""))))
                                      :else ; Data doesn't match positive or negative, treat as key-value
+                                     ;; format-value expects the actual value, not a map containing it (unless schema expects map)
                                      (conj acc {:type :key-value :label full-label :value (format-value entry-data entry-schema)})))
 
                                  ;; Default handling for nested groups / key-values (when no other condition met)
                                  :else
+                                 ;; Pass normalized entry-data to recursive calls
                                  (let [child-parts (generate-description-parts entry-data entry-schema)]
                                    (if (seq child-parts)
                                      (conj acc {:type :nested-group :label label :content child-parts})
+                                     ;; format-value expects the actual value
                                      (let [formatted-atomic-val (format-value entry-data entry-schema)]
                                        (if (is-val-present? formatted-atomic-val)
                                          (conj acc {:type :key-value :label label :value formatted-atomic-val})
