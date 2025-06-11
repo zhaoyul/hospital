@@ -228,19 +228,24 @@
                                   final-initial-values (form-utils/preprocess-date-fields
                                                          data-with-enum-defaults
                                                          assessment-specs/精神及神经肌肉系统Spec)]
-                              (timbre/info "mental-neuromuscular-system-detailed-view: final initial-form-values after processing:" (clj->js final-initial-values)) ; Logging after all processing
                               final-initial-values)
         ;; 表单提交时的处理函数
         on-finish-fn (fn [values]
-                       (timbre/info "mental-neuromuscular-system-detailed-view: on-finish-fn raw JS values:" values)
                        (let [values-clj (js->clj values :keywordize-keys true) ; 1. 将 JS 表单值转换为 ClojureScript map
-                             _ (timbre/info "mental-neuromuscular-system-detailed-view: on-finish-fn cljs values-clj before transformation:" (clj->js values-clj))
                              ;; 2. 自动将所有 dayjs 对象转换回 ISO 日期字符串，以便存储或传输
                              transformed-values (form-utils/transform-date-fields-for-submission
                                                   values-clj
                                                   assessment-specs/精神及神经肌肉系统Spec)]
-                         (timbre/info "mental-neuromuscular-system-detailed-view: on-finish-fn transformed-values for dispatch:" (clj->js transformed-values))
                          (rf/dispatch [::events/update-canonical-assessment-section :精神及神经肌肉系统 transformed-values])))]
+
+    ;; Effect to update form when mn-data (and thus initial-form-values) changes
+    (React/useEffect
+     (fn []
+       (.resetFields form)
+       (.setFieldsValue form (clj->js initial-form-values))
+       js/undefined) ; Return undefined for cleanup
+     #js [initial-form-values]) ; Dependency: re-run if initial-form-values changes reference
+
     (React/useEffect (fn []
                        (when report-form-instance-fn
                          (report-form-instance-fn :精神及神经肌肉系统 form))
@@ -1153,12 +1158,25 @@
 (defn spinal-anesthesia-assessment-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id saa-data on-show-summary]} props
         [form] (Form.useForm)
-        initial-form-values (form-utils/apply-enum-defaults-to-data
-                              (or saa-data {})
-                              assessment-specs/椎管内麻醉相关评估Spec)
+        initial-form-values (let [data-from-db (or saa-data {})
+                                  ;; No date preprocessing for this spec
+                                  final-initial-values (form-utils/apply-enum-defaults-to-data
+                                                         data-from-db
+                                                         assessment-specs/椎管内麻醉相关评估Spec)]
+                              final-initial-values)
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)]
+                         ;; No date transformation for submission for this spec
                          (rf/dispatch [::events/update-canonical-assessment-section :椎管内麻醉相关评估 values-clj])))]
+
+    ;; Effect to update form when saa-data (and thus initial-form-values) changes
+    (React/useEffect
+     (fn []
+       (.resetFields form)
+       (.setFieldsValue form (clj->js initial-form-values))
+       js/undefined) ; Return undefined for cleanup
+     #js [initial-form-values]) ; Dependency: re-run if initial-form-values changes reference
+
     (React/useEffect (fn []
                        (when report-form-instance-fn
                          (report-form-instance-fn :椎管内麻醉相关评估 form))
