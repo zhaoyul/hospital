@@ -2,67 +2,84 @@
   (:require
    [integrant.core :as ig]
    [clojure.tools.logging :as log]
-   [hugsql.core :as hugsql]) ;; Added HugSQL
-  (:import (oracle.jdbc.pool OracleDataSource)))
+   [conman.core :as conman]))
 
-(defmethod ig/init-key :db.oracle/connection
-  [_ {:keys [jdbc-url user password]}]
+;; Conman version of init-key for :db.oracle/connection
+(defmethod ig/init-key :db.oracle/connection [_ pool-spec]
   (try
-    (log/info "Attempting to connect to Oracle database directly using OracleDataSource and configure implicit caching:" jdbc-url)
-    (let [ods (OracleDataSource.)]
-      (.setURL ods jdbc-url)
-      (.setUser ods user)
-      (.setPassword ods password)
-
-      (let [cacheProps (java.util.Properties.)]
-        (.setProperty cacheProps "ConnectionCachingEnabled" "true")
-        (.setProperty cacheProps "ConnectionCacheName" "OracleHISCache")
-        (.setProperty cacheProps "MinLimit" "1")
-        (.setProperty cacheProps "MaxLimit" "10")
-        ;; Add other properties like "InitialLimit", "MaxStatementsLimit" if desired
-        (.setConnectionCacheProperties ods cacheProps))
-
-      (.startImplicitConnectionCache ods) ; Start the cache
-
-      (log/info "Successfully configured OracleDataSource and started implicit cache for:" jdbc-url)
-      ods)
+    (log/info "Attempting to connect to Oracle database using conman with pool-spec:" pool-spec)
+    (conman/connect! pool-spec)
     (catch Exception e
-      (log/error (str "Failed to configure OracleDataSource or start implicit cache (" jdbc-url "). Error: " (.getMessage e)) e)
-      (log/warn (str "Application will continue without Oracle DB functionality due to OracleDataSource setup failure."))
+      (log/error (str "Failed to connect to Oracle database using conman. Error: " (.getMessage e)) e)
+      (log/warn (str "Application will continue without Oracle DB functionality due to conman connection failure."))
       nil)))
 
-(defmethod ig/halt-key! :db.oracle/connection
-  [_ ^OracleDataSource datasource]
-  (when datasource
+;; Suspend database connection (noop for conman)
+(defmethod ig/suspend-key! :db.oracle/connection [_ _])
+
+;; Conman version of halt-key! for :db.oracle/connection
+(defmethod ig/halt-key! :db.oracle/connection [_ conn]
+  (when conn
     (try
-      (log/info "Stopping OracleDataSource implicit connection cache...")
-      (.stopImplicitConnectionCache datasource)
-      (log/info "Implicit connection cache stopped.")
-      (log/info "Closing OracleDataSource...")
-      (.close datasource)
-      (log/info "OracleDataSource closed.")
+      (log/info "Closing oracle connection pool using conman")
+      (conman/disconnect! conn)
+      (log/info "Oracle connection pool closed via conman.")
       (catch Exception e
-        (log/warn (str "Error stopping/closing OracleDataSource: " (.getMessage e)) e)))))
+        (log/warn (str "Error closing conman connection pool: " (.getMessage e)) e)))))
 
-;; Function to create a NOP (no-operation) query function map
-(defn create-nop-oracle-query-fn [filename]
-  (log/warn (str "Oracle DB connection is not available. Using NOP query functions for file: " filename))
-  (fn
-    ([_query-name] (log/warn "Oracle NOP query called") nil)
-    ([_query-name _params] (log/warn "Oracle NOP query called with params") nil)))
-
-(defmethod ig/init-key :db.oracle/query-fn
-  [_ {:keys [conn filename options] :as config}]
-  (if conn
+;; Conman version of resume-key for :db.oracle/connection
+(defmethod ig/resume-key :db.oracle/connection [key opts old-opts old-impl]
+  (if (= opts old-opts)
+    old-impl
     (do
-      (log/info "Oracle connection available, initializing HugSQL functions for file:" filename)
-      ;; This assumes that standard HugSQL functions are generated using map-of-db-fns
-      ;; and then they use the provided :conn.
-      ;; The actual Conman/Kit integration might use a slightly different helper,
-      ;; but the principle is that it needs the 'conn'.
-      ;; We are essentially re-implementing what conman's query-fn-component would do here.
-      (hugsql/map-of-db-fns filename (assoc options :db conn)))
-    (create-nop-oracle-query-fn filename)))
+      (ig/halt-key! key old-impl)
+      (ig/init-key key opts))))
 
-;; No halt-key! needed for :db.oracle/query-fn as it doesn't own resources itself.
-;; The connection it uses is managed by :db.oracle/connection's halt-key!
+;; Conman version of init-key for :db.oracle/query-fn
+(defmethod ig/init-key :db.oracle/query-fn
+  [_ {:keys [conn options filename filenames env] :or {options {}}}]
+  (let [filenames-vec (or filenames [filename])
+        load-queries (fn []
+                       (log/info "Loading HugSQL queries from files:" filenames-vec)
+                       (apply conman/bind-connection-map conn options filenames-vec))]
+    ;; queries-dev and queries-prod definitions
+    (defn queries-dev [load-fn]
+      (fn
+        ([query params]
+         (conman/query (load-fn) query params))
+        ([db query params & opts]
+         (apply conman/query db (load-fn) query params opts))))
+    (defn queries-prod [load-fn]
+      (let [queries (load-fn)]
+        (fn
+          ([query params]
+           (conman/query queries query params))
+          ([db query params & opts]
+           (apply conman/query db queries query params opts)))))
+    ;; Actual return logic:
+    (if-not conn
+      (do (log/warn "Oracle DB connection is not available for query-fn. Query functions will not be operational.")
+          (fn [& args]
+            (log/error "Query function called but Oracle connection is not available. Args:" args)
+            nil))
+      (with-meta
+        (if (= env :dev)
+          (do
+            (log/info "Oracle query-fn running in :dev mode (queries will be reloaded on each call).")
+            (queries-dev load-queries))
+          (do
+            (log/info "Oracle query-fn running in :prod mode (queries loaded once).")
+            (queries-prod load-queries)))
+        {})))) ; Closes with-meta, if-not's else branch, and the let block
+
+;; Suspend key for query-fn
+(defmethod ig/suspend-key! :db.oracle/query-fn [_ _])
+
+;; Resume key for query-fn
+(defmethod ig/resume-key :db.oracle/query-fn
+  [k {:keys [filename filenames] :as opts} old-opts old-impl]
+  (if (= opts old-opts)
+    (do (log/info k "resume check for :db.oracle/query-fn. Same configuration, re-using existing component.") old-impl)
+    (do (log/info k "resume check for :db.oracle/query-fn. Configuration changed, re-initializing component.")
+        (ig/halt-key! k old-impl)
+        (ig/init-key k opts))))
