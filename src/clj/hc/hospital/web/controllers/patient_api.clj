@@ -30,13 +30,13 @@
           raw-aux-exams (:auxiliary-examination body {})
           raw-physical-exam (:physical-examination body {})
 
-          to-boolean (fn [val]
-                       (cond
-                         (boolean? val) val
-                         (string? val) (not (or (= (str/lower-case val) "no")
-                                                (= (str/lower-case val) "false")
-                                                (str/blank? val)))
-                         :else false))
+          boolean (fn [val]
+                    (cond
+                      (boolean? val) val
+                      (string? val) (not (or (= (str/lower-case val) "no")
+                                             (= (str/lower-case val) "false")
+                                             (str/blank? val)))
+                      :else false))
 
           parse-int-safe (fn [val]
                            (try (some-> val str str/trim Integer/parseInt) (catch Exception _ nil)))
@@ -67,15 +67,15 @@
                       :呼吸次每分 (parse-int-safe (:respiratory_rate raw-basic-info))
                       :体温摄氏度 (try (some-> raw-basic-info :temperature str str/trim Double/parseDouble) (catch Exception _ nil))
                       :SpO2百分比 (parse-int-safe (:spo2 raw-basic-info))}
-           :medical_history (ctl/spy :info {:allergy {:has_history (to-boolean (:allergy-history raw-medical-summary))
-                                                      :details (:allergen raw-medical-summary)
-                                                      :last_reaction_date (:allergy-date raw-medical-summary)}
-                                            :smoking {:has_history (to-boolean (:smoking-history raw-medical-summary))
-                                                      :years (parse-int-safe (:smoking-years raw-medical-summary))
-                                                      :cigarettes_per_day (parse-int-safe (:cigarettes-per-day raw-medical-summary))}
-                                            :drinking {:has_history (to-boolean (:drinking-history raw-medical-summary))
-                                                       :years (parse-int-safe (:drinking-years raw-medical-summary))
-                                                       :alcohol_per_day (:alcohol-per-day raw-medical-summary)}})
+           :medical_history {:allergy {:has_history (boolean (:allergy-history raw-medical-summary))
+                                       :details (:allergen raw-medical-summary)
+                                       :last_reaction_date (:allergy-date raw-medical-summary)}
+                             :smoking {:has_history (boolean (:smoking-history raw-medical-summary))
+                                       :years (parse-int-safe (:smoking-years raw-medical-summary))
+                                       :cigarettes_per_day (parse-int-safe (:cigarettes-per-day raw-medical-summary))}
+                             :drinking {:has_history (boolean (:drinking-history raw-medical-summary))
+                                        :years (parse-int-safe (:drinking-years raw-medical-summary))
+                                        :alcohol_per_day (:alcohol-per-day raw-medical-summary)}}
            :physical_examination {:mental_state nil
                                   :activity_level nil
                                   :bp_systolic nil
@@ -99,27 +99,27 @@
                                   :other_findings (:other raw-physical-exam)}
            :comorbidities (let [get-comorb-data (fn [comorb-map key-path] (get-in comorb-map key-path))
                                 spec-meds-info (:special-medications raw-comorbidities {})]
-                            {:respiratory {:has (to-boolean (get-comorb-data raw-comorbidities [:respiratory-disease :has]))
+                            {:respiratory {:has (boolean (get-comorb-data raw-comorbidities [:respiratory-disease :has]))
                                            :details (get-comorb-data raw-comorbidities [:respiratory-disease :details])}
-                             :cardiovascular {:has (to-boolean (get-comorb-data raw-comorbidities [:cardiovascular-disease :has]))
+                             :cardiovascular {:has (boolean (get-comorb-data raw-comorbidities [:cardiovascular-disease :has]))
                                               :details (get-comorb-data raw-comorbidities [:cardiovascular-disease :details])}
-                             :endocrine {:has (to-boolean (get-comorb-data raw-comorbidities [:endocrine-disease :has]))
+                             :endocrine {:has (boolean (get-comorb-data raw-comorbidities [:endocrine-disease :has]))
                                          :details (get-comorb-data raw-comorbidities [:endocrine-disease :details])}
-                             :neuro_psychiatric {:has (to-boolean (get-comorb-data raw-comorbidities [:neuropsychiatric-disease :has]))
+                             :neuro_psychiatric {:has (boolean (get-comorb-data raw-comorbidities [:neuropsychiatric-disease :has]))
                                                  :details (get-comorb-data raw-comorbidities [:neuropsychiatric-disease :details])}
-                             :neuromuscular {:has (to-boolean (get-comorb-data raw-comorbidities [:neuromuscular-disease :has]))
+                             :neuromuscular {:has (boolean (get-comorb-data raw-comorbidities [:neuromuscular-disease :has]))
                                              :details (get-comorb-data raw-comorbidities [:neuromuscular-disease :details])}
-                             :hepatic {:has (to-boolean (get-comorb-data raw-comorbidities [:liver-disease :has]))
+                             :hepatic {:has (boolean (get-comorb-data raw-comorbidities [:liver-disease :has]))
                                        :details (get-comorb-data raw-comorbidities [:liver-disease :details])}
-                             :renal {:has (to-boolean (get-comorb-data raw-comorbidities [:kidney-disease :has]))
+                             :renal {:has (boolean (get-comorb-data raw-comorbidities [:kidney-disease :has]))
                                      :details (get-comorb-data raw-comorbidities [:kidney-disease :details])}
-                             :musculoskeletal {:has (to-boolean (get-comorb-data raw-comorbidities [:skeletal-system-disease :has]))
+                             :musculoskeletal {:has (boolean (get-comorb-data raw-comorbidities [:skeletal-system-disease :has]))
                                                :details (get-comorb-data raw-comorbidities [:skeletal-system-disease :details])}
-                             :malignant_hyperthermia_fh {:has (to-boolean (get-comorb-data raw-comorbidities [:family-malignant-hyperthermia :has]))
+                             :malignant_hyperthermia_fh {:has (boolean (get-comorb-data raw-comorbidities [:family-malignant-hyperthermia :has]))
                                                          :details (get-comorb-data raw-comorbidities [:family-malignant-hyperthermia :details])}
-                             :anesthesia_surgery_history {:has (to-boolean (get-comorb-data raw-comorbidities [:past-anesthesia-surgery :has]))
+                             :anesthesia_surgery_history {:has (boolean (get-comorb-data raw-comorbidities [:past-anesthesia-surgery :has]))
                                                           :details (get-comorb-data raw-comorbidities [:past-anesthesia-surgery :details])}
-                             :special_medications {:has_taken (to-boolean (:used spec-meds-info))
+                             :special_medications {:has_taken (boolean (:used spec-meds-info))
                                                    :details (:details spec-meds-info)
                                                    :last_dose_time (:last-time spec-meds-info)}})
            :auxiliary_examinations (if (seq raw-aux-exams)
@@ -303,8 +303,8 @@
                                              (cheshire/parse-string (:assessment_data final-local-assessment) true))]
                 (if final-local-assessment
                   (http-response/ok {:message (if was-inserted?
-                                                 (str "成功从HIS获取并创建新患者记录: " patientIdInput)
-                                                 (str "成功从HIS获取患者信息，本地记录已存在: " patientIdInput))
+                                                (str "成功从HIS获取并创建新患者记录: " patientIdInput)
+                                                (str "成功从HIS获取患者信息，本地记录已存在: " patientIdInput))
                                      :patientIdInput patientIdInput
                                      ;; 返回从HIS直接获取的基础信息，以及完整的本地评估记录（包含了解析后的assessment_data）
                                      :his_info patient-info-from-his ; 保留原始HIS信息以供参考
@@ -313,11 +313,7 @@
                   (do
                     (log/error "在插入/确认后，无法在本地数据库中检索到患者评估，患者ID：" patientIdInput)
                     (http-response/internal-server-error
-                     {:message (str "处理患者信息后无法在本地检索: " patientIdInput)})))))))
-          (do
-            (log/info "HIS中未找到患者信息，输入ID:" patientIdInput)
-            (http-response/not-found {:message (str "HIS中未找到患者信息，输入ID: " patientIdInput)
-                                      :patientIdInput patientIdInput}))))
+                     {:message (str "处理患者信息后无法在本地检索: " patientIdInput)}))))))))
       (catch Exception e
         (log/error e (str "查询HIS或处理本地患者记录时出错，输入ID: " patientIdInput) (ex-message e))
         (http-response/internal-server-error {:message "处理患者信息时发生内部错误"})))))

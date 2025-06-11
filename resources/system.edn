@@ -80,4 +80,4 @@
  :db.oracle/query-fn
  {:conn     #ig/ref :db.oracle/connection
   :options  {} ;; Add any Oracle-specific options if needed
-  :filename "sql/oracle_his_queries.sql"}
+  :filename "sql/oracle_his_queries.sql"}}
