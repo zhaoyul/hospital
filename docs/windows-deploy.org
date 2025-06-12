@@ -1,4 +1,13 @@
 #+TITLE: 麻醉评估系统Windows Server 2019 部署手册
+#+Author: 青岛红创
+#+STARTUP: indent
+#+LATEX_COMPILER: xelatex
+#+LATEX_CLASS: elegantpaper
+#+OPTIONS: prop:t
+#+LATEX_HEADER: \setCJKmainfont{Hiragino Sans GB}
+#+SETUPFILE: https://gitee.com/zhaoyuKevin/org-theme/raw/master/org/3vyd.setup
+#+PROPERTY: header-args :eval never-export
+
 
 本文档介绍如何在 *Windows Server 2019* 环境下使用 *PowerShell* 部署 ~hospital~ 项目. 部署时假设你已经获得了包含所有前端资源的 ~hospital-standalone.jar~, 无需在目标服务器上重新打包或构建.
 
