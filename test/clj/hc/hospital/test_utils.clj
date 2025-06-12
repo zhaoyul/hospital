@@ -25,36 +25,50 @@
       :response
       (update :body (fnil bs/to-string ""))))
 
-(defn GET [app path params headers]
-  (-> (p/session app)
-      (p/request path
-                 :request-method :get
-                 :content-type "application/edn"
-                 :headers headers
-                 :params params)
-      (get-response)))
+(defn GET
+  ([app path]
+   (GET app path {} {}))
+  ([app path params]
+   (GET app path params {}))
+  ([app path params headers]
+   (-> (p/session app)
+       (p/request path
+                  :request-method :get
+                  :content-type "application/edn"
+                  :headers headers
+                  :params params)
+       (get-response))))
 
-(defn POST [app path body headers]
-  (-> (p/session app)
-      (p/request path
-                 :request-method :post
-                 :content-type "application/json" ; Assuming JSON for POST
-                 :headers headers
-                 :body (if (string? body) body (bs/to-string body))) ; Ensure body is a string
-      (get-response)))
+(defn POST
+  ([app path body]
+   (POST app path body {}))
+  ([app path body headers]
+   (-> (p/session app)
+       (p/request path
+                  :request-method :post
+                  :content-type "application/json" ; Assuming JSON for POST
+                  :headers headers
+                  :body (if (string? body) body (bs/to-string body))) ; Ensure body is a string
+       (get-response))))
 
-(defn PUT [app path body headers]
-  (-> (p/session app)
-      (p/request path
-                 :request-method :put
-                 :content-type "application/json" ; Assuming JSON for PUT
-                 :headers headers
-                 :body (if (string? body) body (bs/to-string body))) ; Ensure body is a string
-      (get-response)))
+(defn PUT
+  ([app path body]
+   (PUT app path body {}))
+  ([app path body headers]
+   (-> (p/session app)
+       (p/request path
+                  :request-method :put
+                  :content-type "application/json" ; Assuming JSON for PUT
+                  :headers headers
+                  :body (if (string? body) body (bs/to-string body))) ; Ensure body is a string
+       (get-response))))
 
-(defn DELETE [app path headers]
-  (-> (p/session app)
-      (p/request path
-                 :request-method :delete
-                 :headers headers)
-      (get-response)))
+(defn DELETE
+  ([app path]
+   (DELETE app path {}))
+  ([app path headers]
+   (-> (p/session app)
+       (p/request path
+                  :request-method :delete
+                  :headers headers)
+       (get-response))))
