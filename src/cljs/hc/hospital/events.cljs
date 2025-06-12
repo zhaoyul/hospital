@@ -5,6 +5,7 @@
             [hc.hospital.db :as app-db]
             [ajax.core :as ajax]
             [clojure.string :as str]
+            [hc.hospital.utils :as utils]
             [taoensso.timbre :as timbre]))
 
 ;; 默认的规范评估数据结构
@@ -47,7 +48,8 @@
 (rf/reg-event-db ::initialize-db
   (fn [_ _]
     (-> app-db/default-db
-        (assoc :anesthesia {:current-assessment-canonical default-canonical-assessment})
+        (assoc :anesthesia {:current-assessment-canonical default-canonical-assessment
+                            :date-range [(utils/now) (utils/now)]})
         ;; 初始化二维码扫描模态框相关状态
         (assoc :qr-scan-modal-visible? false)
         (assoc :qr-scan-input-value ""))))
