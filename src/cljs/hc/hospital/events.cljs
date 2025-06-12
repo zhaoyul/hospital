@@ -1,13 +1,15 @@
 (ns hc.hospital.events
+  "事件处理逻辑，负责与后端通信并更新应用状态。"
   (:require [re-frame.core :as rf]
             [day8.re-frame.http-fx]
             [hc.hospital.db :as app-db]
             [ajax.core :as ajax]
-            [clojure.string :as str] ; Added for filename extraction if needed
+            [clojure.string :as str]
             [taoensso.timbre :as timbre]))
 
-;; -- Default Canonical Assessment Structure --
+;; 默认的规范评估数据结构
 (def default-canonical-assessment
+  "系统初始化时使用的评估模板。"
   {:基本信息 {:门诊号 nil, :姓名 nil, :身份证号 nil, :手机号 nil, :性别 nil,
             :年龄 nil, :院区 nil, :患者提交时间 nil, :评估更新时间 nil,
             :评估状态 "待评估", :医生姓名 nil, :评估备注 nil, :身高cm nil,
@@ -208,6 +210,7 @@
     {:dispatch-later [{:ms 30 :dispatch [::save-final-assessment]}]}))
 
 (rf/reg-event-fx ::save-final-assessment
+  "将当前评估结果提交到服务器，成功后刷新患者列表。"
   [(when ^boolean goog.DEBUG re-frame.core/debug)]
   (fn [{:keys [db]} _]
     (let [current-patient-id (get-in db [:anesthesia :current-patient-id])
