@@ -47,3 +47,12 @@
 - `shadow-cljs.edn`: ClojureScript 构建配置，定义了 `:app` 和 `:patient-app` 两个目标。
 - `kit.edn`: Kit 框架模块配置。
 - `build.clj`: Uberjar 构建脚本。
+
+## 5. 提交和 PR 流程
+
+在修改 `src/clj` 或 `resources` 目录下的后端代码后，必须遵循以下步骤：
+
+1. 执行 `clj -M:test` 运行所有后端测试。
+2. 仅当测试全部通过时，才可生成并提交 Pull Request。
+3. 如因已知的失败测试导致测试未通过，应在说明中提及，不要尝试修复这些测试。
+
