@@ -72,12 +72,10 @@
                               :test {:jdbc-url "jdbc:sqlite:hospital_test.db"},
                               :prod {:jdbc-url #or [#env JDBC_URL "jdbc:sqlite:hospital.db"]}}
 
- :db.oracle/connection #profile {:dev  {:jdbc-url  "jdbc:oracle:thin:@localhost:1521/FREEPDB1"
-                                        :username  "myuser"
-                                        :password  "MyUserPassword123"}
-                                 :prod {:jdbc-url      "jdbc:oracle:thin:@192.192.2.11:1521/his"
-                                        :user          "comanes"
-                                        :password      "comanes"}
+ :db.oracle/connection #profile {:dev  {:jdbc-url  "jdbc:sqlite:file:his_mem_db?mode=memory&cache=shared"}
+                                 :prod {:jdbc-url  #or [#env ORACLE_JDBC_URL "jdbc:oracle:thin:@192.192.2.11:1521/his"]
+                                        :user      #or [#env ORACLE_USERNAME "comanes"]
+                                        :password  #or [#env ORACLE_PASSWORD "comanes"]}
                                  ;; Test environment can be added if needed
                                  ;; :test {:adapter       "oracle"
                                  ;;        :jdbc-url      "jdbc:oracle:thin:@//localhost:1521/TESTDB"
