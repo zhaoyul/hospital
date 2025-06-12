@@ -690,7 +690,7 @@
                  :style {:background "#1890ff" :borderColor "#1890ff" :color "white"}} ; Added styling
      "打印表单"])])
 
-(defn- assessment-header [patient-name patient-status]
+(defn- assessment-header [patient-name patient-status current-patient-id]
   [:div {:style {:display "flex"
                  :justifyContent "space-between"
                  :alignItems "center"
@@ -698,7 +698,8 @@
                  :borderBottom "1px solid #f0f0f0"
                  :background "#fff"}}
    [:h3 {:style {:margin 0 :fontSize "16px" :fontWeight "500"}} patient-name]
-   [assessment-action-buttons patient-status]])
+   (when current-patient-id
+     [assessment-action-buttons patient-status])])
 
 (defn- assessment []
   (let [card-form-instances (r/atom {})
@@ -768,7 +769,8 @@
 (defn anesthesia-content []
   (let [basic-info @(rf/subscribe [::subs/canonical-basic-info])
         patient-name (get basic-info :name "未知患者")
-        patient-status (get basic-info :评估状态 "待评估")]
+        patient-status (get basic-info :评估状态 "待评估")
+        current-patient-id @(rf/subscribe [::subs/current-patient-id])]
     [:> Layout.Content {:style {:margin 0 :minHeight 280 :overflow "hidden" :display "flex" :flexDirection "row"}}
    ;; 左侧患者列表区域
    [:> Card {:style {:width "350px"
@@ -789,5 +791,5 @@
                   :overflow "hidden"
                   :display "flex"
                   :flexDirection "column"}}
-    [assessment-header patient-name patient-status]
+    [assessment-header patient-name patient-status current-patient-id]
     [assessment]]]))
