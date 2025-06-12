@@ -21,6 +21,7 @@
                 statements (->> (str/split sql-text #";\s*")
                                 (map str/trim)
                                 (remove empty?))]
+            (jdbc/execute! conn ["ATTACH DATABASE ':memory:' AS his50;"])
             (doseq [stmt statements]
               (jdbc/execute! conn [stmt])))))
       conn)
