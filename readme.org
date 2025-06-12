@@ -282,22 +282,13 @@
 ** 3. 运行 Clojure 测试 (后端)
    执行以下命令来运行后端的测试套件：
    #+BEGIN_SRC bash
-   clj -M:test
+   # 运行所有后端单元测试
+   ./scripts/run-tests.sh
    # 或者
    make test
    #+END_SRC
-   - 测试使用了 `clojure.test`。
-   - 测试辅助函数位于 `test/clj/hc/hospital/test_utils.clj`。
-   - 测试默认使用 `:test` profile。
-
-   *重要提示:* 当前 Clojure 测试套件存在一些已知问题，导致测试无法全部通过。在执行测试时请注意以下几点：
-   - *`hc.hospital.core-test`*: 包含一个简单的断言失败 (`expected: 1, actual: 2`)。
-   - *`hc.hospital.web.controllers.doctor-api-test`*:
-     - 医生登出 API 未能正确设置 Cookie 以使其立即失效。
-     - 在测试某个 API 端点时，发生了 JSON 解析错误 (`java.lang.ClassCastException`)。
-   - *`hc.hospital.specs.assessment-complete-cn-spec-test`*: 此测试套件中的15个测试用例因 `:test-chuck-not-available` 错误而失败。这表明 `test.chuck` 库（用于 Malli Schema 的生成式测试）在测试环境中可能未正确配置或不可用。
-
-   建议在进一步开发或部署前调查并解决这些测试问题，以确保后端代码的稳定性和正确性。
+   - 测试使用 `clojure.test` 并在 `:test` profile 下执行。
+   - 辅助函数位于 `test/clj/hc/hospital/test_utils.clj`，运行测试时会自动启动集成系统并使用 SQLite 测试数据库。
 
 * 构建和部署
 ** 构建 Uberjar (独立 Jar 包)
