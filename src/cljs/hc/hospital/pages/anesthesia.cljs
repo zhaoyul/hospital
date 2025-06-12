@@ -38,6 +38,7 @@
 
 (defn patient-list-filters []
   (let [date-range @(rf/subscribe [::subs/date-range])
+        status @(rf/subscribe [::subs/assessment-status-filter])
         assessment-status-options [{:value "all" :label "全部状态"}
                                    {:value "待评估" :label "待评估"}
                                    {:value "已批准" :label "已批准"}
@@ -68,7 +69,9 @@
      [:> Select
       {:style {:width "100%" :marginBottom "16px"}
        :placeholder "评估状态: 请选择"
-       :options assessment-status-options}]
+       :options assessment-status-options
+       :value status
+       :onChange #(rf/dispatch [::events/set-assessment-status-filter %])}]
 
      ;; 搜索框
      [:> Input.Search
