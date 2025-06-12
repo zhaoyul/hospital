@@ -166,6 +166,25 @@
     [:> Form.Item {:name (clj->js form-path) :label label-text}
      [:> Checkbox.Group {:options (clj->js options)}]]))
 
+;; Malli 类型与对应的表单组件映射关系
+(def malli-basic-renderers
+  {:string render-text-input
+   :int render-number-input
+   :double render-number-input
+   :float render-number-input
+   :enum (fn [field-schema form-path label-text]
+           (let [enum-count (count (get-malli-children field-schema))]
+             (if (> enum-count 3)
+               (render-select field-schema form-path label-text)
+               (render-radio-group field-schema form-path label-text))))
+   :vector (fn [field-schema form-path label-text]
+             (if (= :enum (get-malli-type (first (get-malli-children field-schema))))
+               (render-checkbox-group field-schema form-path label-text)
+               (do (timbre/warn "Unsupported vector child type" label-text) nil)))
+   :boolean (fn [_ field-path label-text]
+              (render-radio-group assessment-specs/是否Enum field-path label-text))
+   :or render-number-input})
+
 (defn my-comp [control-config parent-form-path first-field-key first-field-schema-wrapper
                 form-instance first-field-optional? first-entry-props  remaining-entries]
   (let [show-on-value (:show-on-value control-config)
@@ -236,12 +255,12 @@
                 :style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
           [render-map-schema-fields detail-schema detail-path form-instance]]))]))
 
-(defn render-form-item-from-spec [[field-key field-schema optional? parent-form-path form-instance entry-props]]
-  (let [;; form-path is the full path to the current field/group being processed: (conj parent-form-path field-key)
-        ;; label-text is the label for the current field/group
+
+(defn render-form-item-from-spec
+  [[field-key field-schema optional? parent-form-path form-instance entry-props]]
+  (let [form-path  (conj parent-form-path field-key)
         label-text (or (:label entry-props) (keyword->label field-key))
         malli-type (get-malli-type field-schema)
-        malli-props (get-malli-properties field-schema)
         is-cond-map (is-conditional-map-schema? field-schema)]
 
     (cond
@@ -249,54 +268,33 @@
       [:f> render-conditional-map-section field-key field-schema parent-form-path form-instance entry-props]
 
       (= malli-type :map)
-      [:div {:key (str (name field-key) "-map-section") :style {:marginBottom "10px"}}
-       [:h4 {:style {:fontSize "15px" :marginBottom "8px" :borderBottom "1px solid #f0f0f0" :paddingBottom "4px"}} label-text]
-       [render-map-schema-fields field-schema (conj parent-form-path field-key) form-instance]]
-
-      (= malli-type :string)
-      [render-text-input field-schema (conj parent-form-path field-key) label-text]
-
-      (or (= malli-type :int) (= malli-type :double) (= malli-type :float))
-      [render-number-input field-schema (conj parent-form-path field-key) label-text]
-
-      (= malli-type :enum)
-      (let [enum-count (count (get-malli-children field-schema))]
-        (if (> enum-count 3)
-          [render-select field-schema (conj parent-form-path field-key) label-text]
-          [render-radio-group field-schema (conj parent-form-path field-key) label-text]))
-
-      (= malli-type :vector)
-      (if (= :enum (get-malli-type (first (get-malli-children field-schema))))
-        [render-checkbox-group field-schema (conj parent-form-path field-key) label-text]
-        (do (timbre/warn "Unsupported vector child type for field " field-key) nil))
+      [:div {:key (str (name field-key) "-map-section")
+             :style {:marginBottom "10px"}}
+       [:h4 {:style {:fontSize "15px" :marginBottom "8px" :borderBottom "1px solid #f0f0f0" :paddingBottom "4px"}}
+        label-text]
+       [render-map-schema-fields field-schema form-path form-instance]]
 
       (is-date-string-schema? field-schema)
-      [render-datepicker field-schema (conj parent-form-path field-key) label-text]
+      [render-datepicker field-schema form-path label-text]
 
-      (= malli-type :boolean)
-      [render-radio-group assessment-specs/是否Enum (conj parent-form-path field-key) label-text]
-
-      ;; Handling for :malli.core/val and :maybe should pass the correct parent-form-path
       (= malli-type :malli.core/val)
       (let [unwrapped-schema (first (get-malli-children field-schema))
-            unwrapped-schema-props (when unwrapped-schema (get-malli-properties unwrapped-schema))]
+            unwrapped-props  (when unwrapped-schema (get-malli-properties unwrapped-schema))]
         (if unwrapped-schema
-          [render-form-item-from-spec [field-key unwrapped-schema optional? parent-form-path form-instance unwrapped-schema-props]]
-          (do (timbre/warn (str "Malli type :malli.core/val for field " field-key " has no child schema."))
+          [render-form-item-from-spec [field-key unwrapped-schema optional? parent-form-path form-instance unwrapped-props]]
+          (do (timbre/warn "Malli type :malli.core/val for field" field-key "has no child schema.")
               [:p (str "No child schema for :malli.core/val type for " label-text)])))
-
-      (= malli-type :or)
-      [render-number-input field-schema (conj parent-form-path field-key) label-text]
 
       (= malli-type :maybe)
       (let [unwrapped-schema (first (get-malli-children field-schema))
-            unwrapped-schema-props (when unwrapped-schema (get-malli-properties unwrapped-schema))]
+            unwrapped-props  (when unwrapped-schema (get-malli-properties unwrapped-schema))]
         (if unwrapped-schema
-          ;; For :maybe, the item itself isn't a new path segment, so parent-form-path remains the same.
-          ;; The field is inherently optional due to :maybe, so pass true for optional?.
-          [render-form-item-from-spec [field-key unwrapped-schema true parent-form-path form-instance unwrapped-schema-props]]
-          (do (timbre/warn (str "Malli type :maybe for field " field-key " has no child schema."))
+          [render-form-item-from-spec [field-key unwrapped-schema true parent-form-path form-instance unwrapped-props]]
+          (do (timbre/warn "Malli type :maybe for field" field-key "has no child schema.")
               [:p (str "No child schema for :maybe type for " label-text)])))
+
       :else
-      (do (timbre/warn (str "No renderer for malli type: " malli-type " of field " field-key " schema: " (pr-str field-schema)))
-          [:p (str "Unrecognized type: " malli-type " for " label-text)]))))
+      (if-let [renderer (malli-basic-renderers malli-type)]
+        (renderer field-schema form-path label-text)
+        (do (timbre/warn "No renderer for malli type:" malli-type "of field" field-key)
+            [:p (str "Unrecognized type: " malli-type " for " label-text)])))))
