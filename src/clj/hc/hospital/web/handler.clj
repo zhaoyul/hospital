@@ -12,7 +12,6 @@
    [ring.util.http-response :as http-response]))
 
 (defmethod ig/init-key :handler/ring
-  "创建主 Ring 处理器"
   [_ {:keys [router api-path] :as opts}]
   (ring/ring-handler
    (router)
@@ -36,7 +35,6 @@
    {:middleware [(middleware/wrap-base opts)]}))
 
 (defmethod ig/init-key :router/routes
-  "初始化路由集合"
   [_ {:keys [routes]}]
   (mapv (fn [route]
           (if (fn? route)
@@ -45,7 +43,6 @@
         routes))
 
 (defmethod ig/init-key :router/core
-  "根据环境创建路由器"
   [_ {:keys [routes env] :as opts}]
   (if (= env :dev)
     #(ring/router ["" opts routes] #_{:reitit.middleware/transform dev/print-request-diffs})

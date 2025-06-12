@@ -38,7 +38,6 @@
 (derive :reitit.routes/api :reitit/routes)
 
 (defmethod ig/init-key :reitit.routes/api
-  "初始化 API 路由组件"
   [_ {:keys [base-path]
       :or   {base-path ""}
       :as   opts}]

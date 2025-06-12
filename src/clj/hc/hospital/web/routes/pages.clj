@@ -50,7 +50,6 @@
 (derive :reitit.routes/pages :reitit/routes)
 
 (defmethod ig/init-key :reitit.routes/pages
-  "初始化页面路由组件"
   [_ {:keys [base-path]
       :or   {base-path ""}
       :as   opts}]

@@ -210,7 +210,6 @@
     {:dispatch-later [{:ms 30 :dispatch [::save-final-assessment]}]}))
 
 (rf/reg-event-fx ::save-final-assessment
-  "将当前评估结果提交到服务器，成功后刷新患者列表。"
   [(when ^boolean goog.DEBUG re-frame.core/debug)]
   (fn [{:keys [db]} _]
     (let [current-patient-id (get-in db [:anesthesia :current-patient-id])
