@@ -75,9 +75,9 @@
  :db.oracle/connection #profile {:dev  {:jdbc-url  "jdbc:oracle:thin:@localhost:1521/FREEPDB1"
                                         :username  "myuser"
                                         :password  "MyUserPassword123"}
-                                 :prod {:jdbc-url      #env ORACLE_PROD_JDBC_URL
-                                        :user          #env ORACLE_PROD_USER
-                                        :password      #env ORACLE_PROD_PASSWORD}
+                                 :prod {:jdbc-url      "jdbc:oracle:thin:@192.192.2.11:1521/his"
+                                        :user          "comanes"
+                                        :password      "comanes"}
                                  ;; Test environment can be added if needed
                                  ;; :test {:adapter       "oracle"
                                  ;;        :jdbc-url      "jdbc:oracle:thin:@//localhost:1521/TESTDB"
