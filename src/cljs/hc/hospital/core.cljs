@@ -11,7 +11,10 @@
    [taoensso.timbre :as timbre]
    [hc.hospital.pages.anesthesia-home :refer [anesthesia-home-page]]
    ;; 已移除登录页面引用: [hc.hospital.pages.login :refer [login-page]]
-   ["antd" :as antd :refer [Button Spin]])) ; 已添加 Spin 作为加载指示器
+   ["antd" :as antd :refer [Button Spin ConfigProvider]] ; 引入 ConfigProvider
+   ["antd/es/locale/zh_CN" :default zhCN] ; 中文本地化
+   ["dayjs/locale/zh-cn"]
+   ["dayjs" :as dayjs]))
 
 ;; 导入 Ant Design CSS
 ;;(js/require "antd/dist/reset.css")
@@ -54,13 +57,18 @@
   "重新挂载根React组件到DOM中。通常在开发环境代码热重载后调用。"
   []
   (timbre/info "重新挂载应用")
-  (d/render [:f> app-root] (.getElementById js/document "app")))
+  (d/render
+   [:> ConfigProvider {:locale zhCN}
+    [:f> app-root]]
+   (.getElementById js/document "app")))
 
 (defn ^:export ^:dev/once init!
   "应用初始化函数。设置日志，处理登录状态，并挂载根组件。"
   []
   (timbre/info "正在初始化应用...")
   (timbre/debug "调试模式已启用。")
+  ;; 设置 dayjs 全局语言为中文
+  (.locale dayjs "zh-cn")
 
   (if (identical? "true" (js/localStorage.getItem "justLoggedIn"))
     (do
