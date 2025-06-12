@@ -5,7 +5,7 @@
             [integrant.core :as ig]
             [ring.util.codec :as codec]))
 
-(use-fixtures :once system-fixture)
+(use-fixtures :once (system-fixture))
 
 (defn get-app []
   (get-in @*sys* [:ring/handler :handler]))

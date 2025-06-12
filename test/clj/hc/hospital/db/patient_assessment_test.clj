@@ -4,7 +4,7 @@
             [cheshire.core :as json]
             [integrant.core :as ig]))
 
-(use-fixtures :once system-fixture)
+(use-fixtures :once (system-fixture))
 
 (defn get-query-fn []
   (get-in @*sys* [:db.sql/query-fn :query-fn]))

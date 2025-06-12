@@ -10,7 +10,7 @@
   []
   (or @core/system state/system))
 
-(def *sys* core/system)
+(def ^:dynamic *sys* core/system)
 
 (defn system-fixture
   []
