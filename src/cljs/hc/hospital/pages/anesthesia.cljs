@@ -694,16 +694,13 @@
                  :borderBottom "1px solid #f0f0f0"
                  :background "#fff"}}
    [:h3 {:style {:margin 0 :fontSize "16px" :fontWeight "500"}} patient-name]
-   ;; Leave some space before the action buttons
-   [:div {:style {:marginLeft "16px"}}
+   ;; Keep some space on the left of the action buttons
+   [:div {:style {:marginLeft "auto"}}
     [assessment-action-buttons patient-status]]])
 
 (defn- assessment []
   (let [card-form-instances (r/atom {})
         current-patient-id @(rf/subscribe [::subs/current-patient-id])
-        basic-info @(rf/subscribe [::subs/canonical-basic-info])
-        patient-name (get basic-info :name "未知患者")
-        patient-status (get basic-info :评估状态 "待评估")
 
         register-form-instance (fn [card-key form-instance]
                                  (swap! card-form-instances assoc card-key form-instance))
@@ -733,10 +730,7 @@
                         "保存评估结果"]])]
     (if current-patient-id
       ;; 有选择患者时的视图
-      [:div {:style {:height "calc(100vh - 64px)" :display "flex" :flexDirection "column"}}
-       ;; Header showing selected patient and available actions
-       [assessment-header patient-name patient-status]
-
+      [:div {:style {:display "flex" :flexDirection "column" :height "calc(100vh - 64px)"}}
        ;; Main scrollable content area for cards
        [:div {:style {:padding "16px" :overflowY "auto" :flexGrow 1 :background "#f0f2f5"}}
         [:f> patient-info-card {:report-form-instance-fn register-form-instance}]
@@ -770,7 +764,10 @@
        [:> Empty {:description "请从左侧选择一位患者开始评估"}]])))
 
 (defn anesthesia-content []
-  [:> Layout.Content {:style {:margin 0 :minHeight 280 :overflow "hidden" :display "flex" :flexDirection "row"}}
+  (let [basic-info @(rf/subscribe [::subs/canonical-basic-info])
+        patient-name (get basic-info :name "未知患者")
+        patient-status (get basic-info :评估状态 "待评估")]
+    [:> Layout.Content {:style {:margin 0 :minHeight 280 :overflow "hidden" :display "flex" :flexDirection "row"}}
    ;; 左侧患者列表区域
    [:> Card {:style {:width "350px"
                      :minWidth "300px"
@@ -785,5 +782,10 @@
      [patient-list-panel]]]
 
    ;; 右侧评估详情区域
-   [:div {:style {:flexGrow 1 :background "#f0f2f5" :overflow "hidden"}}
-    [assessment]]])
+   [:div {:style {:flexGrow 1
+                  :background "#f0f2f5"
+                  :overflow "hidden"
+                  :display "flex"
+                  :flexDirection "column"}}
+    [assessment-header patient-name patient-status]
+    [assessment]]]))
