@@ -260,9 +260,9 @@
         (if patient-info-from-his
           (do
             (log/info "HIS中找到患者信息:" patient-info-from-his)
-            (let [his-name (get patient-info-from-his :NAME) ; HIS视图字段通常大写
-                  his-sex (get patient-info-from-his :SEX)
-                  his-dob (get patient-info-from-his :DATE_OF_BIRTH) ; 可能需要日期格式转换
+            (let [his-name (get patient-info-from-his :name) ; HIS视图字段通常大写
+                  his-sex (get patient-info-from-his :sex)
+                  his-dob (get patient-info-from-his :date_of_birth) ; 可能需要日期格式转换
                   current-time-str (str (Instant/now))
 
                   ;; 构建用于本地存储的 assessment_data
