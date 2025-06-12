@@ -1,4 +1,5 @@
 (ns hc.hospital.web.routes.api
+  "公共 API 路由"
   (:require
    [hc.hospital.web.controllers.health :as health]
    [hc.hospital.web.middleware.exception :as exception]
@@ -14,38 +15,30 @@
   {:coercion   malli/coercion
    :muuntaja   formats/instance
    :swagger    {:id ::api}
-   :middleware [;; query-params & form-params
-                parameters/parameters-middleware
-                  ;; content-negotiation
+   :middleware [parameters/parameters-middleware
                 muuntaja/format-negotiate-middleware
-                  ;; encoding response body
                 muuntaja/format-response-middleware
-                  ;; exception handling
                 coercion/coerce-exceptions-middleware
-                  ;; decoding request body
                 muuntaja/format-request-middleware
-                  ;; coercing response bodys
                 coercion/coerce-response-middleware
-                  ;; coercing request parameters
                 coercion/coerce-request-middleware
-                  ;; exception handling
                 exception/wrap-exception]})
 
-;; Routes
-(defn api-routes [_opts]
+(defn api-routes
+  "构建 API 路由"
+  [_opts]
   [["/swagger.json"
     {:get {:no-doc  true
            :swagger {:info {:title "hc.hospital API"}}
            :handler (swagger/create-swagger-handler)}}]
    ["/health"
-    ;; note that use of the var is necessary
-    ;; for reitit to reload routes without
-    ;; restarting the system
+    ;; 使用 var 以便路由热重载
     {:get #'health/healthcheck!}]])
 
 (derive :reitit.routes/api :reitit/routes)
 
 (defmethod ig/init-key :reitit.routes/api
+  "初始化 API 路由组件"
   [_ {:keys [base-path]
       :or   {base-path ""}
       :as   opts}]
