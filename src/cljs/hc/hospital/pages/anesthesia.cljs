@@ -668,13 +668,11 @@
                          :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :评估备注] (-> % .-target .-value)])}]])) ; Updated path
 
 (defn- assessment-action-buttons [patient-status]
-  ;; Add left margin so the button group doesn't sit flush against
-  ;; the surrounding elements
-  [:> Space {:style {:marginLeft "16px"}} ; Removed marginBottom, parent will handle layout
-   [:> Button {:type "primary" :icon (r/as-element [:> CheckCircleOutlined])
-               :on-click #(rf/dispatch [::events/approve-patient])
-               :style {:background "#52c41a" :borderColor "#52c41a"}}
-    "批准"]
+  [:> Space {}
+    [:> Button {:type "primary" :icon (r/as-element [:> CheckCircleOutlined])
+                :on-click #(rf/dispatch [::events/approve-patient])
+                :style {:background "#52c41a" :borderColor "#52c41a"}}
+     "批准"]
    [:> Button {:type "primary" :icon (r/as-element [:> ClockCircleOutlined])
                :on-click #(rf/dispatch [::events/postpone-patient])
                :style {:background "#faad14" :borderColor "#faad14"}}
@@ -687,7 +685,18 @@
      [:> Button {:icon (r/as-element [:> PrinterOutlined])
                  :on-click #(js/window.print)
                  :style {:background "#1890ff" :borderColor "#1890ff" :color "white"}} ; Added styling
-      "打印表单"])])
+     "打印表单"])])
+
+(defn- assessment-header [patient-name patient-status]
+  [:div {:style {:display "flex"
+                 :alignItems "center"
+                 :padding "12px 16px"
+                 :borderBottom "1px solid #f0f0f0"
+                 :background "#fff"}}
+   [:h3 {:style {:margin 0 :fontSize "16px" :fontWeight "500"}} patient-name]
+   ;; Leave some space before the action buttons
+   [:div {:style {:marginLeft "16px"}}
+    [assessment-action-buttons patient-status]]])
 
 (defn- assessment []
   (let [card-form-instances (r/atom {})
@@ -725,15 +734,8 @@
     (if current-patient-id
       ;; 有选择患者时的视图
       [:div {:style {:height "calc(100vh - 64px)" :display "flex" :flexDirection "column"}}
-       ;; Top bar with Patient Name and Action Buttons
-       [:div {:style {:display "flex"
-                      :justifyContent "space-between"
-                      :alignItems "center"
-                      :padding "12px 16px"
-                      :borderBottom "1px solid #f0f0f0"
-                      :background "#fff"}}
-        [:h3 {:style {:margin 0 :fontSize "16px" :fontWeight "500"}} patient-name]
-        [assessment-action-buttons patient-status]]
+       ;; Header showing selected patient and available actions
+       [assessment-header patient-name patient-status]
 
        ;; Main scrollable content area for cards
        [:div {:style {:padding "16px" :overflowY "auto" :flexGrow 1 :background "#f0f2f5"}}
