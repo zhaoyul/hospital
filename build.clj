@@ -16,12 +16,7 @@
 (def target-dir "target")
 (def class-dir (str target-dir "/" "classes"))
 (def uber-file (format "%s/%s-standalone.jar" target-dir (name lib)))
-(def basis
-  ;; Include production source and resources so that namespaces such as
-  ;; `hc.hospital.env` resolve during compilation.  These paths are not part of
-  ;; `deps.edn` by default, so we add them via `:extra` to the basis.
-  (b/create-basis {:project "deps.edn"
-                   :extra {:paths ["env/prod/clj" "env/prod/resources"]}}))
+(def basis (b/create-basis {:project "deps.edn"}))
 
 (defn write-version-file []
   (println "Writing version.properties file...")
@@ -60,11 +55,7 @@
                 :basis basis
                 :src-dirs ["src/clj"]})
   (println "After b/write-pom, before b/copy-dir")
-  ;; Copy only resource files to the class directory so that the
-  ;; resulting JAR contains compiled bytecode without the original
-  ;; Clojure source. This mirrors the behaviour of Leiningen's
-  ;; :omit-source setting.
-  (b/copy-dir {:src-dirs ["resources" "env/prod/resources"]
+  (b/copy-dir {:src-dirs ["src/clj" "resources" "env/prod/resources" "env/prod/clj"]
                :target-dir class-dir})
   (println "After b/copy-dir"))
 
