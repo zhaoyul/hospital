@@ -102,8 +102,8 @@
        [right-side active-tab]]
       ;; 在页面底部渲染二维码扫描模态框
       (when qr-modal-visible?
-        [qr-scan-modal {:visible? qr-modal-visible?
-                        :on-ok (fn [patient-id]
-                                 ;; 点击确定时，派发事件以通过API查询HIS中的患者信息
-                                 (rf/dispatch [::events/find-patient-by-id-in-his patient-id]))
-                        :on-cancel #(rf/dispatch [::events/close-qr-scan-modal])}])]]))
+        [:f> qr-scan-modal {:visible? qr-modal-visible?
+                            :on-ok (fn [patient-id]
+                                     ;; 点击确定时，派发事件以通过API查询HIS中的患者信息
+                                     (rf/dispatch [::events/find-patient-by-id-in-his patient-id]))
+                            :on-cancel #(rf/dispatch [::events/close-qr-scan-modal])}])]]))
