@@ -93,8 +93,7 @@
 
 (defn anesthesia-home-page []
   (let [active-tab @(rf/subscribe [::subs/active-tab])
-        qr-modal-visible? @(rf/subscribe [::subs/qr-scan-modal-visible?])
-        qr-input-value @(rf/subscribe [::subs/qr-scan-input-value])]
+        qr-modal-visible? @(rf/subscribe [::subs/qr-scan-modal-visible?])]
     [:> Layout {:style {:minHeight "100vh"}}
      [sider-bar active-tab]
      [:> Layout {:style {:display "flex" :flexDirection "column"}}
@@ -104,9 +103,7 @@
       ;; 在页面底部渲染二维码扫描模态框
       (when qr-modal-visible?
         [qr-scan-modal {:visible? qr-modal-visible?
-                        :input-value qr-input-value
-                        :on-input-change (fn [e] (rf/dispatch [::events/set-qr-scan-input (-> e .-target .-value)]))
-                        :on-ok (fn []
+                        :on-ok (fn [patient-id]
                                  ;; 点击确定时，派发事件以通过API查询HIS中的患者信息
-                                 (rf/dispatch [::events/find-patient-by-id-in-his qr-input-value]))
+                                 (rf/dispatch [::events/find-patient-by-id-in-his patient-id]))
                         :on-cancel #(rf/dispatch [::events/close-qr-scan-modal])}])]]))
