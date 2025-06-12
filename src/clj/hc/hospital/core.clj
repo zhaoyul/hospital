@@ -1,6 +1,6 @@
 (ns hc.hospital.core
   (:require
-   [clojure.tools.logging :as log]
+   [taoensso.timbre :as log]
    [integrant.core :as ig]
    [hc.hospital.web.routes.pages]
    [hc.hospital.config :as config]

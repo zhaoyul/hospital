@@ -3,7 +3,7 @@
    [cheshire.core :as cheshire]
    [cheshire.core :as cheshire]
    [clojure.string :as str]
-   [clojure.tools.logging :as log]
+   [taoensso.timbre :as log :refer [spy]]
    [ring.util.http-response :as http-response]
    [hc.hospital.db.his-patient-queries :as his-queries]) ; 新增的 require
   (:import
