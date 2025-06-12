@@ -55,7 +55,7 @@
                 :basis basis
                 :src-dirs ["src/clj"]})
   (println "After b/write-pom, before b/copy-dir")
-  (b/copy-dir {:src-dirs ["src/clj" "resources" "env/prod/resources" "env/prod/clj"]
+  (b/copy-dir {:src-dirs ["resources" "env/prod/resources" "env/prod/clj"]
                :target-dir class-dir})
   (println "After b/copy-dir"))
 
