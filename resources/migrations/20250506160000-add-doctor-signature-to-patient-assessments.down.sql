@@ -1,1 +1,1 @@
-ALTER TABLE patient_assessments DROP COLUMN IF EXISTS doctor_signature_b64;
+ALTER TABLE patient_assessments DROP COLUMN doctor_signature_b64;

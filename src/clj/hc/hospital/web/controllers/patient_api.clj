@@ -263,6 +263,7 @@
             (let [his-name (get patient-info-from-his :name) ; HIS视图字段通常大写
                   his-sex (get patient-info-from-his :sex)
                   his-dob (get patient-info-from-his :date_of_birth) ; 可能需要日期格式转换
+                  id      (log/spy :info  (:id_no patient-info-from-his))
                   current-time-str (str (Instant/now))
 
                   ;; 构建用于本地存储的 assessment_data
@@ -270,6 +271,7 @@
                               :性别 his-sex
                               :出生日期 (if his-dob (str his-dob) nil) ; 确保为字符串或nil
                               :门诊号 patientIdInput ; 使用查询ID作为本地的门诊号/患者ID
+                              :身份证号 id
                               :患者来源 "HIS扫码"
                               :评估状态 "待评估" ; 初始状态
                               :患者提交时间 current-time-str
