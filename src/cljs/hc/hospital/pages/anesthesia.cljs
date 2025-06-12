@@ -152,14 +152,12 @@
                                 (rf/dispatch [::events/update-canonical-assessment-section :基本信息 values-clj])))
                   :key patient-id} ; Ensure form re-initializes when patient changes
          [:> Form.Item {:label "术前诊断" :name :术前诊断}
-          [:> Input.TextArea {:placeholder "请输入术前诊断"
-                              :rows 2
-                              :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :术前诊断] (-> % .-target .-value)])}]]
+          [:> Input {:placeholder "请输入术前诊断"
+                     :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :术前诊断] (-> % .-target .-value)])}]]
 
          [:> Form.Item {:label "拟施手术" :name :拟施手术}
-          [:> Input.TextArea {:placeholder "请输入拟施手术"
-                              :rows 2
-                              :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :拟施手术] (-> % .-target .-value)])}]]]]
+          [:> Input {:placeholder "请输入拟施手术"
+                     :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :拟施手术] (-> % .-target .-value)])}]]]]
        [:> Empty {:description "请先选择患者或患者无基本信息"}])]))
 
 (defn- general-condition-card "显示一般情况" []
