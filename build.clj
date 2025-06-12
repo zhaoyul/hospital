@@ -55,9 +55,10 @@
                 :basis basis
                 :src-dirs ["src/clj"]})
   (println "After b/write-pom, before b/copy-dir")
-  ;; Copy only resource files to the class directory so that
-  ;; the resulting jar contains compiled bytecode without the
-  ;; original Clojure source.
+  ;; Copy only resource files to the class directory so that the
+  ;; resulting JAR contains compiled bytecode without the original
+  ;; Clojure source. This mirrors the behaviour of Leiningen's
+  ;; :omit-source setting.
   (b/copy-dir {:src-dirs ["resources" "env/prod/resources"]
                :target-dir class-dir})
   (println "After b/copy-dir"))
