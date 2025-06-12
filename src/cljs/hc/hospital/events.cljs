@@ -175,9 +175,32 @@
     (assoc-in db [:anesthesia :search-term] term)))
 
 ;; --- Assessment Actions ---
-(rf/reg-event-fx ::approve-patient (fn [{:keys [db]} _] (js/alert (str "批准患者: " (get-in db [:anesthesia :current-patient-id]))) {}))
-(rf/reg-event-fx ::postpone-patient (fn [{:keys [db]} _] (js/alert (str "暂缓患者: " (get-in db [:anesthesia :current-patient-id]))) {}))
-(rf/reg-event-fx ::reject-patient (fn [{:keys [db]} _] (js/alert (str "驳回患者: " (get-in db [:anesthesia :current-patient-id]))) {}))
+(rf/reg-event-fx ::approve-patient
+  (fn [{:keys [db]} _]
+    (let [patient-id (get-in db [:anesthesia :current-patient-id])]
+      (if patient-id
+        {:fx [[:dispatch [::update-canonical-assessment-field [:基本信息 :评估状态] "已批准"]]
+              [:dispatch [::save-final-assessment]]]}
+        (do (timbre/warn "No patient selected to approve.")
+            {})))))
+
+(rf/reg-event-fx ::postpone-patient
+  (fn [{:keys [db]} _]
+    (let [patient-id (get-in db [:anesthesia :current-patient-id])]
+      (if patient-id
+        {:fx [[:dispatch [::update-canonical-assessment-field [:基本信息 :评估状态] "暂缓"]]
+              [:dispatch [::save-final-assessment]]]}
+        (do (timbre/warn "No patient selected to postpone.")
+            {})))))
+
+(rf/reg-event-fx ::reject-patient
+  (fn [{:keys [db]} _]
+    (let [patient-id (get-in db [:anesthesia :current-patient-id])]
+      (if patient-id
+        {:fx [[:dispatch [::update-canonical-assessment-field [:基本信息 :评估状态] "驳回"]]
+              [:dispatch [::save-final-assessment]]]}
+        (do (timbre/warn "No patient selected to reject.")
+            {})))))
 
 ;; --- Save Final Assessment ---
 (rf/reg-event-fx ::save-final-assessment-later

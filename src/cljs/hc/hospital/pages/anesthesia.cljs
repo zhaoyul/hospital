@@ -692,7 +692,7 @@
         current-patient-id @(rf/subscribe [::subs/current-patient-id])
         basic-info @(rf/subscribe [::subs/canonical-basic-info])
         patient-name (get basic-info :name "未知患者")
-        patient-status (get basic-info :assessment_status "待评估")
+        patient-status (get basic-info :评估状态 "待评估")
 
         register-form-instance (fn [card-key form-instance]
                                  (swap! card-form-instances assoc card-key form-instance))
