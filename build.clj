@@ -55,7 +55,10 @@
                 :basis basis
                 :src-dirs ["src/clj"]})
   (println "After b/write-pom, before b/copy-dir")
-  (b/copy-dir {:src-dirs ["src/clj" "resources" "env/prod/resources" "env/prod/clj"]
+  ;; Copy only resource files to the class directory so that
+  ;; the resulting jar contains compiled bytecode without the
+  ;; original Clojure source.
+  (b/copy-dir {:src-dirs ["resources" "env/prod/resources"]
                :target-dir class-dir})
   (println "After b/copy-dir"))
 
