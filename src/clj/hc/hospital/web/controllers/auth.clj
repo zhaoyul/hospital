@@ -1,6 +1,6 @@
 (ns hc.hospital.web.controllers.auth
   (:require
-   [clojure.tools.logging :as ctl]
+   [taoensso.timbre :as ctl]
    [hc.hospital.db.doctor :as doctor.db]
    [hc.hospital.web.pages.layout :as layout]
    [ring.util.http-response :as http-response]))

@@ -1,6 +1,6 @@
 (ns hc.hospital.web.routes.pages
   (:require
-   [clojure.tools.logging :as log]
+   [taoensso.timbre :as log]
    [hc.hospital.web.controllers.auth :as auth] ; Added auth controller
    [hc.hospital.web.middleware.auth :refer [wrap-restricted]]
    [hc.hospital.web.middleware.exception :as exception]

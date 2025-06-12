@@ -1,7 +1,7 @@
 (ns hc.hospital.db.oracle
   (:require
    [integrant.core :as ig]
-   [clojure.tools.logging :as log]
+   [taoensso.timbre :as log]
    [conman.core :as conman]))
 
 ;; Conman version of init-key for :db.oracle/connection

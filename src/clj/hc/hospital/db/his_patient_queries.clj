@@ -1,5 +1,5 @@
 (ns hc.hospital.db.his-patient-queries
-  (:require [clojure.tools.logging :as log]))
+  (:require [taoensso.timbre :as log]))
 
 ;; 这些函数期望接收一个 oracle-query-fn，该函数应与 oracle_his_queries.sql 文件绑定
 ;; 并且配置为 hugsql.core/def-db-fns 生成的函数集合中的特定查询函数。
