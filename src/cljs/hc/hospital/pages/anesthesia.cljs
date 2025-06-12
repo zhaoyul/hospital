@@ -668,7 +668,9 @@
                          :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :评估备注] (-> % .-target .-value)])}]])) ; Updated path
 
 (defn- assessment-action-buttons [patient-status]
-  [:> Space {} ; Removed marginBottom, parent will handle layout
+  ;; Add left margin so the button group doesn't sit flush against
+  ;; the surrounding elements
+  [:> Space {:style {:marginLeft "16px"}} ; Removed marginBottom, parent will handle layout
    [:> Button {:type "primary" :icon (r/as-element [:> CheckCircleOutlined])
                :on-click #(rf/dispatch [::events/approve-patient])
                :style {:background "#52c41a" :borderColor "#52c41a"}}
