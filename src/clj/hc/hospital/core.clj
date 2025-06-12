@@ -1,4 +1,5 @@
 (ns hc.hospital.core
+  "应用程序入口, 启动与停止整体系统"
   (:require
    [taoensso.timbre :as log]
    [integrant.core :as ig]
@@ -21,41 +22,54 @@
   (:import [java.util Properties])
   (:gen-class))
 
-;; log uncaught exceptions in threads
+(comment
+  "记录所有线程中的未捕获异常")
 (Thread/setDefaultUncaughtExceptionHandler
  (fn [thread ex]
    (log/error {:what :uncaught-exception
                :exception ex
                :where (str "Uncaught exception on" (.getName thread))})))
 
-(defonce system (atom nil))
+(defonce system
+  ^{:doc "保存 Integrant 系统状态的原子"}
+  (atom nil))
 
-(defn stop-app []
+(defn stop-app
+  "停止系统并执行自定义 :stop 钩子"
+  []
   ((or (:stop defaults) (fn [])))
   (some-> (deref system) (ig/halt!)))
 
-(defn start-app [& [params]]
+(defn start-app
+  "启动系统, 参数可传入自定义的 :start 钩子与配置选项"
+  [& [params]]
   ((or (:start params) (:start defaults) (fn [])))
   (->> (config/system-config (or (:opts params) (:opts defaults) {}))
-       (ig/expand)
-       (ig/init)
+       ig/expand
+       ig/init
        (reset! system)))
 
-(defn -main [& _]
+(defn- print-version-info
+  "读取并输出构建信息" [path]
+  (if-let [resource-url (io/resource path)]
+    (with-open [is (io/input-stream resource-url)]
+      (let [props (Properties.)]
+        (.load props is)
+        (println "Starting hc.hospital application...")
+        (println (str "Build Timestamp: " (.getProperty props "build.timestamp" "UNKNOWN")))
+        (println (str "Git Commit Hash: " (.getProperty props "git.commit.hash" "UNKNOWN")))))
+    (do
+      (println "Starting hc.hospital application...")
+      (println (str "WARNING: Version properties file not found at " path)))))
+
+(defn -main
+  "程序入口"
+  [& _]
   (let [properties-path "hc/hospital/version.properties"]
     (try
-      (if-let [resource-url (io/resource properties-path)]
-        (with-open [is (io/input-stream resource-url)]
-          (let [props (Properties.)]
-            (.load props is)
-            (println "Starting hc.hospital application...")
-            (println (str "Build Timestamp: " (.getProperty props "build.timestamp" "UNKNOWN")))
-            (println (str "Git Commit Hash: " (.getProperty props "git.commit.hash" "UNKNOWN")))))
-        (do ;; Explicitly use do for multiple expressions in if's false branch if needed, though here only one.
-          (println "Starting hc.hospital application...") ;; Print this regardless of version file
-          (println (str "WARNING: Version properties file not found at " properties-path))))
+      (print-version-info properties-path)
       (catch Exception e
-        (println "Starting hc.hospital application...") ;; Print this regardless of version file
+        (println "Starting hc.hospital application...")
         (println (str "ERROR: Could not load version information from " properties-path))
         (println (.getMessage e)))))
   (start-app)
