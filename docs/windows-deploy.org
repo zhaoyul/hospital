@@ -1,45 +1,47 @@
-#+TITLE: Windows Server 2019 部署手册
+#+TITLE: 麻醉评估系统Windows Server 2019 部署手册
 
-本文档介绍如何在 *Windows Server 2019* 环境下使用 *PowerShell* 部署 ~hospital~ 项目。部署时假设你已经获得了包含所有前端资源的 ~hospital-standalone.jar~，无需在目标服务器上重新打包或构建。
+本文档介绍如何在 *Windows Server 2019* 环境下使用 *PowerShell* 部署 ~hospital~ 项目. 部署时假设你已经获得了包含所有前端资源的 ~hospital-standalone.jar~, 无需在目标服务器上重新打包或构建.
 
 * 先决条件
-在开始部署之前，请确保已经安装并配置好以下软件：
-1. *JDK 17* 及以上版本。可以通过 ~winget~ 安装，例如：
+在开始部署之前, 请确保已经安装并配置好以下软件:
+1. *JDK 17* 及以上版本. 可以通过 ~winget~ 安装, 例如:
 #+BEGIN_SRC powershell
 winget install --id=EclipseAdoptium.Temurin.17.JDK -e
 #+END_SRC
-安装完成后重新打开 PowerShell，确保 ~java~ 命令可正常运行。
+安装完成后重新打开 PowerShell, 确保 ~java~ 命令可正常运行.
 
 * 获取 jar 包
-从发布渠道或构建环境中获取已经打包好的 ~hospital-standalone.jar~，并将其复制到服务器任意目录（下文示例使用 ~C:\apps\hospital~）。无需在服务器上克隆仓库或安装额外依赖。
+从发布渠道或构建环境中获取已经打包好的 ~hospital-standalone.jar~, 并将其复制到服务器任意目录(下文示例使用 ~C:\apps\hospital~). 无需在服务器上克隆仓库或安装额外依赖.
 
 * 配置环境变量
-~hospital-standalone.jar~ 已包含默认的 ~system.edn~，其中关键配置通过 ~#env~ 标签读取环境变量。只需在启动前设置以下变量即可：
+~hospital-standalone.jar~ 已包含默认的 ~system.edn~, 其中关键配置通过 ~#env~ 标签读取环境变量. 只需在启动前设置以下变量即可:
 #+BEGIN_SRC powershell
-$env:JDBC_URL = "jdbc:postgresql://<数据库地址>/<库名>"
+$env:JDBC_URL = "jdbc:oracle:thin:@192.192.2.11:1521/his"
 $env:COOKIE_SECRET = "请修改为安全的随机字符串"
 $env:PORT = 3000            # 可根据需要修改端口
+$env:ORACLE_PASSWORD = "数据库密码"
+$env:ORACLE_USERNAME = "数据库用户名"
 #+END_SRC
-如果想在每次系统启动时自动设置这些变量，可以将以上命令写入专用的启动脚本。
+如果想在每次系统启动时自动设置这些变量, 可以将以上命令写入专用的启动脚本.
 
 * 设置控制台编码
-为避免 PowerShell 显示中文时出现乱码，可在运行前执行：
+为避免 PowerShell 显示中文时出现乱码, 可在运行前执行:
 #+BEGIN_SRC powershell
 chcp 65001
 #+END_SRC
-必要时也可以在启动命令中加入 ~-Dfile.encoding=UTF-8~，让 JVM 使用统一的 UTF-8 编码。
+必要时也可以在启动命令中加入 ~-Dfile.encoding=UTF-8~, 让 JVM 使用统一的 UTF-8 编码.
 
 * 运行
-将 jar 包放置好并配置好环境变量后，使用以下命令启动服务（假设 jar 位于 ~C:\apps\hospital~）：
+将 jar 包放置好并配置好环境变量后, 使用以下命令启动服务(假设 jar 位于 ~C:\apps\hospital~):
 #+BEGIN_SRC powershell
 java -jar C:\apps\hospital\hospital-standalone.jar
 #+END_SRC
-启动后即可通过 ~http://<服务器IP>:$env:PORT~ 访问应用。
+启动后即可通过 ~http://<服务器IP>:$env:PORT~ 访问应用.
 
-如需在后台运行或注册为 Windows 服务，可结合 ~nssm~ 或 ~New-Service~ 等工具自行配置。
+如需在后台运行或注册为 Windows 服务, 可结合 ~nssm~ 或 ~New-Service~ 等工具自行配置.
 
 * 常见问题
-- 如遇端口冲突，可修改 ~PORT~ 环境变量后重新启动。
-- 确保在生产环境中为 ~COOKIE_SECRET~ 指定足够强度的随机值。
+- 如遇端口冲突, 可修改 ~PORT~ 环境变量后重新启动.
+- 确保在生产环境中为 ~COOKIE_SECRET~ 指定足够强度的随机值.
 
-以上即为在 Windows Server 2019 上部署 ~hospital~ 项目的基本步骤，如有更多定制化需求，可根据实际情况调整脚本。
+以上即为在 Windows Server 2019 上部署 ~hospital~ 项目的基本步骤, 如有更多定制化需求, 可根据实际情况调整脚本.
