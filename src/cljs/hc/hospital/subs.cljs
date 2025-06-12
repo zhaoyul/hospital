@@ -165,7 +165,8 @@
 (rf/reg-sub ::liver-kidney-system-data
   :<- [::current-canonical-assessment]
   (fn [assessment _]
-    (or (:肝肾系统 assessment) {}))) ; Return empty map if nil
+    ;; 与事件及规范中的字段保持一致
+    (or (:肝肾病史 assessment) {}))) ; Return empty map if nil
 
 ;; Digestive System - New
 (rf/reg-sub ::digestive-system-data
@@ -195,7 +196,8 @@
 (rf/reg-sub ::special-disease-history-data
   :<- [::current-canonical-assessment]
   (fn [assessment _]
-    (or (:特殊病史 assessment) {}))) ; Return empty map if nil
+    ;; 原字段名与规范不一致，修正为 :特殊疾病病史
+    (or (:特殊疾病病史 assessment) {}))) ; Return empty map if nil
 
 ;; Nutritional Assessment - New
 (rf/reg-sub ::nutritional-assessment-data
@@ -224,7 +226,8 @@
 (rf/reg-sub ::spinal-anesthesia-assessment-data
   :<- [::current-canonical-assessment]
   (fn [assessment _]
-    (or (:椎管内麻醉评估 assessment) {})))
+    ;; 对应事件和表单中的 :椎管内麻醉相关评估
+    (or (:椎管内麻醉相关评估 assessment) {})))
 
 (rf/reg-sub ::doctors
   (fn [db _]
