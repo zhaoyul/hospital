@@ -1,8 +1,9 @@
 (ns hc.hospital.pages.questionnaire
+  "问卷列表页面，展示患者提交的问卷。"
   (:require
    ["@ant-design/icons" :as icons]
    ["dayjs" :as dayjs]
-   ["antd" :refer [Button DatePicker Input Pagination Space Table Tag]] ; Added Modal, Table, Space, Button, DatePicker, Input, Pagination
+   ["antd" :refer [Button DatePicker Input Pagination Space Table Tag]]
    [reagent.core :as r]))
 
 ;; Define columns for the questionnaire table
@@ -60,10 +61,10 @@
        [:> Space {:align "center"} ; Ensure alignment for items in this Space
         [:span "填写日期:"]
         [:> DatePicker {:defaultValue (dayjs @start-date "YYYY-MM-DD") :onChange (fn [_ date-string] (reset! start-date date-string))}] ; Changed date to _
-        [:span {:style {:margin "0 8px"}} "至"] ; Added margin for separator
+        [:span {:style {:margin "0 8px"}} "至"]
         [:> DatePicker {:defaultValue (dayjs @end-date "YYYY-MM-DD") :onChange (fn [_ date-string] (reset! end-date date-string))}]] ; Changed date to _
        [:> Input {:placeholder "输入姓名/身份证号搜索"
-                  :style {:width "320px" :flexGrow 1 :maxWidth "320px"} ; Added flexGrow and maxWidth
+                  :style {:width "320px" :flexGrow 1 :maxWidth "320px"}
                   :prefix (r/as-element [:> icons/SearchOutlined])
                   :value @search-text
                   :on-change (fn [e] (reset! search-text (-> e .-target .-value)))}]
