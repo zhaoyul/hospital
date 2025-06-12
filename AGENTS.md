@@ -35,6 +35,7 @@
     - Javascript 依赖通过 `yarn add <package>` 管理。
 - **测试:**
     - 所有新功能或 bug 修复都应伴随相应的测试。
+    - 如果修改了前端代码，请在生成 PR 之前运行 `npx shadow-cljs compile app`，确保编译顺利完成。
     - 运行后端测试的命令是 `clj -M:test`。
     - **注意:** `readme.org` 中已指出当前测试套件存在已知失败。在修复相关模块前，请不要尝试“修复”这些已知的测试失败。
 
