@@ -142,6 +142,9 @@
         "ARHWQVLGPBGEFRZW")。*生产环境中必须更改此值!*
     -   `JDBC~URL~`: 生产数据库的连接 URL (开发/测试环境使用 SQLite
         文件)。
+    -   `ORACLE_JDBC_URL`: 生产环境下 HIS Oracle 数据库的连接 URL。
+    -   `ORACLE_USERNAME`: 生产环境下 HIS Oracle 数据库的用户名。
+    -   `ORACLE_PASSWORD`: 生产环境下 HIS Oracle 数据库的密码。
 -   **环境特定配置**: `env/dev` 和 `env/prod`
     目录包含特定于环境的配置和代码, 例如 `env.clj` 和
     `dev~middleware~.clj`。
@@ -191,6 +194,9 @@
     # 需要设置生产环境所需的环境变量
     export JDBC_URL="<your_production_database_url>"
     export COOKIE_SECRET="<your_strong_production_secret>"
+    export ORACLE_JDBC_URL="<your_oracle_url>"      # HIS Oracle 连接 URL
+    export ORACLE_USERNAME="<your_oracle_user>"     # HIS Oracle 用户名
+    export ORACLE_PASSWORD="<your_oracle_password>" # HIS Oracle 密码
     export PORT=8080 # (可选)
     java -jar target/hospital-standalone.jar
     ```

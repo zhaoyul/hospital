@@ -1,14 +1,30 @@
 (ns hc.hospital.db.oracle
   (:require
    [integrant.core :as ig]
-   [taoensso.timbre :as log]
-   [conman.core :as conman]))
+
+   [clojure.tools.logging :as log]
+   [conman.core :as conman]
+   [clojure.java.io :as io]
+   [clojure.string :as str]
+   [next.jdbc :as jdbc]))
 
 ;; Conman version of init-key for :db.oracle/connection
-(defmethod ig/init-key :db.oracle/connection [_ pool-spec]
+(defmethod ig/init-key :db.oracle/connection [_ {:keys [jdbc-url] :as pool-spec}]
   (try
-    (log/info "Attempting to connect to Oracle database using conman with pool-spec:" pool-spec)
-    (conman/connect! pool-spec)
+    (log/info "Attempting to connect to Oracle database using conman with pool-spec:" (dissoc pool-spec :password))
+    (let [conn (conman/connect! pool-spec)]
+      (when (and jdbc-url
+                 (str/includes? jdbc-url "sqlite")
+                 (str/includes? jdbc-url "memory"))
+        (log/info "Initializing SQLite in-memory HIS database")
+        (when-let [sql-rsrc (io/resource "sql/his_dev_setup.sql")]
+          (let [sql-text (slurp sql-rsrc)
+                statements (->> (str/split sql-text #";\s*")
+                                (map str/trim)
+                                (remove empty?))]
+            (doseq [stmt statements]
+              (jdbc/execute! conn [stmt])))))
+      conn)
     (catch Exception e
       (log/error (str "Failed to connect to Oracle database using conman. Error: " (.getMessage e)) e)
       (log/warn (str "Application will continue without Oracle DB functionality due to conman connection failure."))
