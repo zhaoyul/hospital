@@ -1,12 +1,11 @@
 (ns hc.hospital.db.oracle
   (:require
    [integrant.core :as ig]
-
-   [clojure.tools.logging :as log]
-   [conman.core :as conman]
    [clojure.java.io :as io]
    [clojure.string :as str]
-   [next.jdbc :as jdbc]))
+   [next.jdbc :as jdbc]
+   [taoensso.timbre :as log]
+   [conman.core :as conman]))
 
 ;; Conman version of init-key for :db.oracle/connection
 (defmethod ig/init-key :db.oracle/connection [_ {:keys [jdbc-url] :as pool-spec}]
