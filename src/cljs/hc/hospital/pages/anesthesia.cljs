@@ -660,15 +660,15 @@
 
 ;; 辅助函数，用于显示备注信息 (now part of basic_info)
 (defn- remarks-card []
-  (let [assessment-notes (rf/subscribe [::subs/canonical-basic-info :评估备注])] ; Updated subscription path
+  (let [basic-info @(rf/subscribe [::subs/canonical-basic-info])]
     [custom-styled-card
      [:> MessageOutlined {:style {:marginRight "8px"}}]
-     "评估备注" ; Changed title to be more specific
-     "#fffaf0" ; Header background color
-     [:> Input.TextArea {:rows 4 ; Increased rows for better visibility
-                         :value (or @assessment-notes "") ; Deref the atom from subscription
+     "评估备注"
+     "#fffaf0"
+     [:> Input.TextArea {:rows 4
+                         :value (or (:评估备注 basic-info) "")
                          :placeholder "评估备注（如有特殊情况请在此注明）"
-                         :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :评估备注] (-> % .-target .-value)])}]])) ; Updated path
+                         :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :评估备注] (-> % .-target .-value)])}]]))
 
 (defn- assessment-action-buttons [patient-status]
   [:> Space {}
