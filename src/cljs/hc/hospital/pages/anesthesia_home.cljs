@@ -71,12 +71,6 @@
         [:> Tag {:color "processing" :style {:marginRight "8px"}} "聊城市人民医院"]
         [:> Typography.Text {:style {:marginRight "8px"}} (or (:name current-doctor) "医生")]
         [:> icons/DownOutlined {:style {:color "rgba(0, 0, 0, 0.45)" :marginLeft "8px" :marginRight "16px"}}] ; Added margin-left and right for spacing
-        ;; 新增扫码签到按钮
-        [:> Button {:type "primary" ; 使用 primary 类型使其更突出
-                    :icon (r/as-element [:> icons/QrcodeOutlined]) ; 二维码图标
-                    :style {:marginRight "16px"} ; 与退出登录按钮保持间距
-                    :on-click #(rf/dispatch [::events/open-qr-scan-modal])}
-         "扫码签到"]
         [:> Button {:type "default"
                     :icon (r/as-element [:> icons/LogoutOutlined])
                     :on-click #(rf/dispatch [::events/handle-logout])}
