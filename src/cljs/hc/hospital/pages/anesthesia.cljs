@@ -671,7 +671,7 @@
                          :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :评估备注] (-> % .-target .-value)])}]]))
 
 (defn- assessment-action-buttons [patient-status]
-  [:> Space {}
+  [:> Space {:style {:marginLeft "16px"}}
     [:> Button {:type "primary" :icon (r/as-element [:> CheckCircleOutlined])
                 :on-click #(rf/dispatch [::events/approve-patient])
                 :style {:background "#52c41a" :borderColor "#52c41a"}}
@@ -692,14 +692,13 @@
 
 (defn- assessment-header [patient-name patient-status]
   [:div {:style {:display "flex"
+                 :justifyContent "space-between"
                  :alignItems "center"
                  :padding "12px 16px"
                  :borderBottom "1px solid #f0f0f0"
                  :background "#fff"}}
    [:h3 {:style {:margin 0 :fontSize "16px" :fontWeight "500"}} patient-name]
-   ;; Keep some space on the left of the action buttons
-   [:div {:style {:marginLeft "auto"}}
-    [assessment-action-buttons patient-status]]])
+   [assessment-action-buttons patient-status]])
 
 (defn- assessment []
   (let [card-form-instances (r/atom {})
