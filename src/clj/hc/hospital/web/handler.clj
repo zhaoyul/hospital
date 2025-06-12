@@ -1,4 +1,5 @@
 (ns hc.hospital.web.handler
+  "组装 Ring 处理器与路由"
   (:require
    [hc.hospital.web.middleware.core :as middleware]
    [hc.hospital.web.routes.doctor-api]
@@ -7,16 +8,16 @@
    [integrant.core :as ig]
    [reitit.ring :as ring]
    [reitit.ring.middleware.dev :as dev]
-   [reitit.swagger-ui :as swagger-ui] ;; 引入新路由命名空间
+   [reitit.swagger-ui :as swagger-ui]
    [ring.util.http-response :as http-response]))
 
 (defmethod ig/init-key :handler/ring
+  "创建主 Ring 处理器"
   [_ {:keys [router api-path] :as opts}]
   (ring/ring-handler
    (router)
    (ring/routes
-    ;; Handle trailing slash in routes - add it + redirect to it
-    ;; https://github.com/metosin/reitit/blob/master/doc/ring/slash_handler.md
+    ;; 统一处理尾随斜杠
     (ring/redirect-trailing-slash-handler)
     (ring/create-resource-handler {:path "/"})
     (when (some? api-path)
@@ -35,6 +36,7 @@
    {:middleware [(middleware/wrap-base opts)]}))
 
 (defmethod ig/init-key :router/routes
+  "初始化路由集合"
   [_ {:keys [routes]}]
   (mapv (fn [route]
           (if (fn? route)
@@ -43,6 +45,7 @@
         routes))
 
 (defmethod ig/init-key :router/core
+  "根据环境创建路由器"
   [_ {:keys [routes env] :as opts}]
   (if (= env :dev)
     #(ring/router ["" opts routes] #_{:reitit.middleware/transform dev/print-request-diffs})
