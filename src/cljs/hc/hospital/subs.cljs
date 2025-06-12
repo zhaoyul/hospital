@@ -1,9 +1,10 @@
 (ns hc.hospital.subs
+  "订阅定义，提供组件访问应用状态的方式。"
   (:require [re-frame.core :as rf]
             [clojure.string :as str]
             [hc.hospital.utils :as utils]
             [taoensso.timbre :as timbre :refer [spy]]
-            [dayjs :as dayjs])) ; 确保引入 dayjs
+            [dayjs :as dayjs]))
 
 (rf/reg-sub ::all-patient-assessments
   (fn [db _]
@@ -34,12 +35,11 @@
   :<- [::search-term]
   :<- [::date-range]
   :<- [::assessment-status-filter]
-  ;; Removed :<- [::anesthesia-example-patients]
-  (fn [[api-assessments search-term date-range-moments status-filter] _] ;; Removed example-patients
-    (letfn [(format-gender [g] (case g "男" "男" "女" "女" "其他" "其他" "未知")) ; Updated to match spec if different
+  (fn [[api-assessments search-term date-range-moments status-filter] _]
+    (letfn [(format-gender [g] (case g "男" "男" "女" "女" "其他" "其他" "未知"))
             (format-date-str [d] (when d (utils/format-date d "YYYY-MM-DD")))
             (patient-from-api-assessment [assessment]
-              ;; Accessing canonical structure directly from :assessment_data, now using Chinese keys
+              ;; 直接从 canonical 结构提取数据
               (let [basic-info (get-in assessment [:assessment_data :基本信息] {})
                     anesthesia-plan (get-in assessment [:assessment_data :麻醉评估与医嘱] {})]
                 {:key (:patient_id assessment) ; patient_id is from the wrapper, not assessment_data
@@ -55,7 +55,6 @@
       (let [patients-from-api (if (seq api-assessments)
                                 (mapv patient-from-api-assessment api-assessments)
                                 [])
-            ;; Removed example patients logic as primary display
             display-patients patients-from-api
 
             [start-moment end-moment] date-range-moments

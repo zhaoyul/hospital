@@ -1,10 +1,11 @@
 (ns hc.hospital.pages.anesthesia-home
+  "医生端首页布局，包含侧边栏及顶部导航。"
   (:require
    ["@ant-design/icons" :as icons]
    ["dayjs" :as dayjs]
-   ["antd" :refer [Avatar Button DatePicker Input Layout Menu Modal Pagination Space Table Tag Typography]] ; Added Modal, Table, Space, Button, DatePicker, Input, Pagination
+   ["antd" :refer [Avatar Button DatePicker Input Layout Menu Modal Pagination Space Table Tag Typography]]
    [hc.hospital.events :as events]
-   [hc.hospital.components.qr-scan-modal :refer [qr-scan-modal]] ; 引入二维码扫描模态框组件
+   [hc.hospital.components.qr-scan-modal :refer [qr-scan-modal]]
    [hc.hospital.pages.anesthesia :refer [anesthesia-content]]
    [hc.hospital.pages.comps :refer [custom-sider-trigger]]
    [hc.hospital.pages.settings :refer [system-settings-content]]
@@ -66,11 +67,11 @@
               ;; :on-click #(rf/dispatch [::events/toggle-user-dropdown]) ; 稍后可以为用户下拉菜单添加事件
               }
         [:> Avatar {:icon (r/as-element [:> icons/UserOutlined])
-                    :style {:marginRight "8px" :backgroundColor "#1890ff"}}] ; Added background color
+                    :style {:marginRight "8px" :backgroundColor "#1890ff"}}]
         ;; 地点标签 - 根据图片硬编码
         [:> Tag {:color "processing" :style {:marginRight "8px"}} "聊城市人民医院"]
         [:> Typography.Text {:style {:marginRight "8px"}} (or (:name current-doctor) "医生")]
-        [:> icons/DownOutlined {:style {:color "rgba(0, 0, 0, 0.45)" :marginLeft "8px" :marginRight "16px"}}] ; Added margin-left and right for spacing
+        [:> icons/DownOutlined {:style {:color "rgba(0, 0, 0, 0.45)" :marginLeft "8px" :marginRight "16px"}}]
         [:> Button {:type "default"
                     :icon (r/as-element [:> icons/LogoutOutlined])
                     :on-click #(rf/dispatch [::events/handle-logout])}
@@ -82,9 +83,9 @@
 
 (defn right-side "患者麻醉管理\"patients\", 问卷列表\"assessment\", 系统设置\"settings\"" [active-tab]
   [:> Layout {:style {:height "calc(100vh - 64px)"
-                      :overflow "auto" ;; Changed from hidden to auto
-                      :background "#f0f2f5"}} ;; Added background color to match prototype
-   [:div {:style {:padding "24px"}} ;; Added common styling wrapper and height adjustment
+                      :overflow "auto"
+                      :background "#f0f2f5"}}
+   [:div {:style {:padding "24px"}}
     (case active-tab
       "patients" [anesthesia-content]
       "assessment" [questionnaire-list-content] ;; Use the new component
