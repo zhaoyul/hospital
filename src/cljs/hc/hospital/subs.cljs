@@ -153,7 +153,8 @@
 (rf/reg-sub ::mental-neuromuscular-system-data
   :<- [::current-canonical-assessment]
   (fn [assessment _] ; assessment here is the result from ::current-canonical-assessment
-    (or (:精神神经肌肉系统 assessment) {})))
+    ;; 与事件及 canonical assessment 保持一致
+    (or (:精神及神经肌肉系统 assessment) {})))
 
 ;; Endocrine System - New
 (rf/reg-sub ::endocrine-system-data
