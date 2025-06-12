@@ -10,23 +10,22 @@
                                           QrcodeOutlined SaveOutlined
                                           SolutionOutlined SyncOutlined
                                           UploadOutlined UserOutlined]]
-   ["dayjs" :as dayjs] ; Added Image, Modal
-   ;; 确保 antd/Form 等组件已引入
+   ["dayjs" :as dayjs]
    ["antd" :refer [Button Card Col DatePicker Descriptions Empty Form Input
-                   InputNumber Layout Modal Radio Row Select Space Tag Upload]] ; Removed Tooltip as it's not used, Added Checkbox
+                   InputNumber Layout Modal Radio Row Select Space Tag Upload]]
    [hc.hospital.events :as events]
    [hc.hospital.pages.assessment-cards :as acards]
    [hc.hospital.subs :as subs]
    [hc.hospital.ui-helpers :refer [custom-styled-card]]
    [hc.hospital.utils :as utils]
-   [hc.hospital.form-utils :as form-utils] ; Added form-utils
-   [hc.hospital.specs.assessment-complete-cn-spec :as assessment-specs] ; Added assessment-specs
-   [malli.core :as m] ; Added malli.core
+   [hc.hospital.form-utils :as form-utils]
+   [hc.hospital.specs.assessment-complete-cn-spec :as assessment-specs]
+   [malli.core :as m]
    [re-frame.core :as rf]
    [reagent.core :as r]
-   ["react" :as React] ; Added React for useEffect
+   ["react" :as React]
    [taoensso.timbre :as timbre]
-   ["signature_pad" :as SignaturePad])) ; Added SignaturePad & ui-helpers require
+   ["signature_pad" :as SignaturePad]))
 
 ;; Define common grid style maps and helper function
 (def ^:private grid-style-4-col
@@ -408,9 +407,9 @@
                                                   [:neuromuscular {:optional true} [:map {:closed true} [:has {:optional true} :boolean] [:details {:optional true} :string]]]
                                                   [:hepatic {:optional true} [:map {:closed true} [:has {:optional true} :boolean] [:details {:optional true} :string]]]
                                                   [:renal {:optional true} [:map {:closed true} [:has {:optional true} :boolean] [:details {:optional true} :string]]]
-                                                  [:musculoskeletal {:optional true} [:map {:closed true} [:has {:optional true} :boolean] [:details {:optional true} :string]]] ; Added back
-                                                  [:malignant_hyperthermia_fh {:optional true} [:map {:closed true} [:has {:optional true} :boolean] [:details {:optional true} :string]]] ; Added back
-                                                  [:anesthesia_surgery_history {:optional true} [:map {:closed true} [:has {:optional true} :boolean] [:details {:optional true} :string]]] ; Added back
+                                                  [:musculoskeletal {:optional true} [:map {:closed true} [:has {:optional true} :boolean] [:details {:optional true} :string]]]
+                                                  [:malignant_hyperthermia_fh {:optional true} [:map {:closed true} [:has {:optional true} :boolean] [:details {:optional true} :string]]]
+                                                  [:anesthesia_surgery_history {:optional true} [:map {:closed true} [:has {:optional true} :boolean] [:details {:optional true} :string]]]
                                                   [:special_medications {:optional true}
                                                    [:map {:closed true}
                                                     [:has_taken {:optional true} :boolean]
@@ -687,7 +686,7 @@
    (when (= patient-status "已批准") ; Check for the correct status string
      [:> Button {:icon (r/as-element [:> PrinterOutlined])
                  :on-click #(js/window.print)
-                 :style {:background "#1890ff" :borderColor "#1890ff" :color "white"}} ; Added styling
+                 :style {:background "#1890ff" :borderColor "#1890ff" :color "white"}}
      "打印表单"])])
 
 (defn- assessment-header [patient-name patient-status current-patient-id]

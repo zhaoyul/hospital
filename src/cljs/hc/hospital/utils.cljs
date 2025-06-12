@@ -1,10 +1,12 @@
 (ns hc.hospital.utils
+  "工具函数集，处理日期格式化等通用逻辑。"
   (:require ["dayjs" :as dayjs]))
 
-(defn event-value [event]
+(defn event-value
+  "从表单事件中提取输入值。"
+  [event]
   (.. event -target -value))
 
-;; 将字符串转换为JS日期对象
 (defn parse-date
   "将日期字符串转换为dayjs对象，如果无效则返回nil"
   [date-str]
@@ -13,7 +15,6 @@
       (when (.isValid date)
         date))))
 
-;; 将JS日期对象格式化为字符串
 (defn format-date
   "将dayjs对象或日期字符串格式化为指定格式"
   [date format]
@@ -22,11 +23,9 @@
       (when dayjs-obj
         (.format dayjs-obj format)))))
 
-;; 创建当前日期的dayjs对象
 (defn now []
   (dayjs))
 
-;; 将日期转换为dayjs对象（与moment兼容的接口）
 (defn to-dayjs
   "将日期字符串或普通JS日期对象转换为dayjs对象（用于日期选择器等组件）"
   [date]
@@ -35,7 +34,6 @@
       (string? date) (parse-date date)
       :else (dayjs date))))
 
-;; 将日期对象转换为ISO格式字符串
 (defn date->iso-string
   "将dayjs对象转换为ISO格式字符串，适用于API交互"
   [date]
@@ -53,7 +51,6 @@
   (when (and d (instance? js/Object d) (.isValid (dayjs d))) ; Ensure d is a dayjs object and valid
     (.format (dayjs d) format-string)))
 
-;; 将数字转换为罗马数字
 (defn to-roman
   "将数字转换为罗马数字表示，支持1-10"
   [num]
@@ -70,7 +67,7 @@
         (condp = input-type
           "date" (.format date-obj "YYYY-MM-DD")
           "datetime-local" (.format date-obj "YYYY-MM-DDTHH:mm")
-          ;; else, return original value if it's already a string, or nil
+          ;; 其他情况：若为字符串则原样返回，否则返回 nil
           (if (string? value) value nil))))))
 
 (defn display-value 

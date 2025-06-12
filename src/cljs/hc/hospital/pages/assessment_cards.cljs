@@ -1,4 +1,5 @@
 (ns hc.hospital.pages.assessment-cards
+  "评估表页面各个表单卡片的组合与布局。"
   (:require
    ["@ant-design/icons"  :refer [AppleOutlined CloudOutlined CoffeeOutlined
                                  ExperimentOutlined GatewayOutlined
@@ -6,7 +7,6 @@
                                  MedicineBoxOutlined NodeIndexOutlined
                                  ProjectOutlined SecurityScanOutlined
                                  UserOutlined WarningOutlined WomanOutlined]]
-   ;; Added Row and Col back as they are used for the summary button layout.
    ["antd" :refer [Form Row Col]]
    ["react" :as React]
    [clojure.string :as str]
@@ -20,7 +20,7 @@
    [hc.hospital.subs :as subs]
    [hc.hospital.utils :as utils]
    [hc.hospital.ui-helpers :as ui-helpers]
-   [hc.hospital.natural-language-generators :as nlg] ; Added nlg
+   [hc.hospital.natural-language-generators :as nlg]
    [hc.hospital.form-utils :as form-utils]
    [re-frame.core :as rf]
    [reagent.core :as r]))
