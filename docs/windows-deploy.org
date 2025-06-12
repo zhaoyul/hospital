@@ -14,10 +14,11 @@
 * 先决条件
 在开始部署之前, 请确保已经安装并配置好以下软件:
 1. *JDK 17* 及以上版本. 可以通过 ~winget~ 安装, 例如:
-#+BEGIN_SRC powershell
-winget install --id=EclipseAdoptium.Temurin.17.JDK -e
-#+END_SRC
-安装完成后重新打开 PowerShell, 确保 ~java~ 命令可正常运行.
+  #+BEGIN_SRC powershell
+  winget install --id=EclipseAdoptium.Temurin.17.JDK -e
+  #+END_SRC
+  安装完成后重新打开 PowerShell, 确保 ~java~ 命令可正常运行.
+2. 不联网情况下, 可以[[https://www.azul.com/downloads/][在zulu网站下载]]
 
 * 获取 jar 包
 从发布渠道或构建环境中获取已经打包好的 ~hospital-standalone.jar~, 并将其复制到服务器任意目录(下文示例使用 ~C:\apps\hospital~). 无需在服务器上克隆仓库或安装额外依赖.

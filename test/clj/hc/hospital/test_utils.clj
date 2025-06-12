@@ -10,6 +10,8 @@
   []
   (or @core/system state/system))
 
+(def *sys* core/system)
+
 (defn system-fixture
   []
   (fn [f]

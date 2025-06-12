@@ -77,11 +77,7 @@
                                         :user      #or [#env ORACLE_USERNAME "comanes"]
                                         :password  #or [#env ORACLE_PASSWORD "comanes"]}
                                  ;; Test environment can be added if needed
-                                 ;; :test {:adapter       "oracle"
-                                 ;;        :jdbc-url      "jdbc:oracle:thin:@//localhost:1521/TESTDB"
-                                 ;;        :user          "test_user"
-                                 ;;        :password      "test_pass"}
-                                 }
+                                 :test {:jdbc-url  "jdbc:sqlite:file:his_mem_db?mode=memory&cache=shared"}}
 
  :db.oracle/query-fn
  {:conn     #ig/ref :db.oracle/connection
