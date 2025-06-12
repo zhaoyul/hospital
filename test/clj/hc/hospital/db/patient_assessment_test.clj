@@ -7,7 +7,12 @@
 (use-fixtures :once (system-fixture))
 
 (defn get-query-fn []
-  (get-in @*sys* [:db.sql/query-fn :query-fn]))
+  ;; Depending on how the system initializes `:db.sql/query-fn` it may be
+  ;; available directly as a function or nested under :query-fn.  Handle both
+  ;; cases so tests don't fail if the structure changes.
+  (let [system @*sys*]
+    (or (get system :db.sql/query-fn)
+        (get-in system [:db.sql/query-fn :query-fn]))))
 
 (deftest patient-assessment-signature-test
   (let [query-fn (get-query-fn)

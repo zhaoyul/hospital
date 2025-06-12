@@ -11,7 +11,12 @@
   (get-in @*sys* [:ring/handler :handler]))
 
 (defn get-query-fn []
-  (get-in @*sys* [:db.sql/query-fn :query-fn]))
+  ;; In some setups the query-fn is stored directly under :db.sql/query-fn,
+  ;; while in others it is nested under :query-fn.  Support both to avoid nil
+  ;; dereferences during tests.
+  (let [system @*sys*]
+    (or (get system :db.sql/query-fn)
+        (get-in system [:db.sql/query-fn :query-fn]))))
 
 (deftest patient-assessment-api-signature-test
   (let [app (get-app)
