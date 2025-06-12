@@ -130,4 +130,15 @@
           (is (pos? (count doctors-list)) "医生列表不应为空")
           ;; 可以进一步检查列表中的医生信息是否符合预期
           (is (some #(= "列表医生1" (:name %)) doctors-list) "列表中应包含测试医生1")
-          (is (some #(= "列表医生2" (:name %)) doctors-list) "列表中应包含测试医生2"))))))
+          (is (some #(= "列表医生2" (:name %)) doctors-list) "列表中应包含测试医生2"))))
+
+    (testing "获取当前登录医生信息"
+      (let [_ (doctor.db/create-doctor! query-fn {:username "me_doc" :password "pwd" :name "自我医生"})
+            me-doc (doctor.db/get-doctor-by-username query-fn "me_doc")
+            req (-> (mock/request :get "/api/me")
+                    (assoc :identity (:id me-doc))
+                    (assoc :integrant-deps {:query-fn query-fn}))
+            resp (handler req)
+            body (json/parse-string (:body resp) keyword)]
+        (is (= 200 (:status resp)))
+        (is (= "me_doc" (get-in body [:doctor :username]))))))

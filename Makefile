@@ -7,8 +7,10 @@ run:
 repl:
 	clj -M:dev:nrepl
 
+.PHONY: test
+
 test:
-	clj -M:test -m kaocha.runner
+        clojure -M:test
 
 uberjar:
 	clj -T:build all
