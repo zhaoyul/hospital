@@ -210,7 +210,7 @@
   (create-detailed-view {:section-key :内分泌系统
                          :section-spec assessment-specs/内分泌系统Spec
                          :data-prop :endo-data
-                         :form-key-suffix "endocrine-system-spec"})
+                         :form-key-suffix "endocrine-system-spec"}))
 
 (defn endocrine-system-card "内分泌系统" [props]
   (let [view-state (r/atom :summary)
@@ -279,7 +279,7 @@
   (create-detailed-view {:section-key :消化系统
                          :section-spec assessment-specs/消化系统Spec
                          :data-prop :ds-data
-                         :form-key-suffix "digestive-system-spec"})
+                         :form-key-suffix "digestive-system-spec"}))
 
 (defn digestive-system-card  "消化系统" [props]
   (let [view-state (r/atom :summary)
@@ -313,7 +313,7 @@
   (create-detailed-view {:section-key :血液系统
                          :section-spec assessment-specs/血液系统Spec
                          :data-prop :hs-data
-                         :form-key-suffix "hematologic-system-spec"})
+                         :form-key-suffix "hematologic-system-spec"}))
 
 (defn hematologic-system-card "血液系统" [props]
   (let [view-state (r/atom :summary)
@@ -347,7 +347,7 @@
   (create-detailed-view {:section-key :免疫系统
                          :section-spec assessment-specs/免疫系统Spec
                          :data-prop :is-data
-                         :form-key-suffix "immune-system-spec"})
+                         :form-key-suffix "immune-system-spec"}))
 
 (defn immune-system-card        "免疫系统" [props]
   (let [view-state (r/atom :summary)
@@ -381,7 +381,7 @@
   (create-detailed-view {:section-key :特殊用药史
                          :section-spec assessment-specs/特殊用药史Spec
                          :data-prop :smh-data
-                         :form-key-suffix "special-medication-history-spec"})
+                         :form-key-suffix "special-medication-history-spec"}))
 
 (defn special-medication-history-card "特殊用药史" [props]
   (let [view-state (r/atom :summary)
@@ -415,7 +415,7 @@
   (create-detailed-view {:section-key :特殊疾病病史
                          :section-spec assessment-specs/特殊疾病病史Spec
                          :data-prop :sdh-data
-                         :form-key-suffix "special-disease-history-spec"})
+                         :form-key-suffix "special-disease-history-spec"}))
 
 (defn special-disease-history-card "特殊疾病病史" [props]
   (let [view-state (r/atom :summary)
@@ -456,7 +456,7 @@
                                         [:p {:style {:fontSize "12px" :color "gray"}} "每项“是”计1分，总分≥2分提示存在营养风险，建议进一步评估。"]]
                                        [:div {:style {:padding "8px" :border "1px solid #d9d9d9" :borderRadius "2px" :marginTop "10px"}}
                                         [:h5 {:style {:marginBottom "4px"}} "FRAIL 结论:"]
-                                        [:p {:style {:fontSize "12px" :color "gray"}} "0 分：健康；" [:br] "1-2 分：衰弱前期；" [:br] "≥3 分：衰弱。"]]]})
+                                        [:p {:style {:fontSize "12px" :color "gray"}} "0 分：健康；" [:br] "1-2 分：衰弱前期；" [:br] "≥3 分：衰弱。"]]]}))
 
 (defn nutritional-assessment-card "营养评估" [props]
   (let [view-state (r/atom :summary)
@@ -490,7 +490,7 @@
   (create-detailed-view {:section-key :妊娠
                          :section-spec assessment-specs/妊娠Spec
                          :data-prop :pa-data
-                         :form-key-suffix "pregnancy-assessment-spec"})
+                         :form-key-suffix "pregnancy-assessment-spec"}))
 
 (defn pregnancy-assessment-card "妊娠" [props]
   (let [view-state (r/atom :summary)
