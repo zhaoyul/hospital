@@ -84,15 +84,42 @@
            extra-content
            [:> Row {:justify "end" :style {:marginTop "20px"}}
             [:> Col
-             [:> Form.Item
-              [:button {:type "button"
-                        :on-click on-show-summary
-                        :style {:padding "5px 10px"
-                                :background-color "#f0f0f0"
-                                :border "1px solid #ccc"
-                                :border-radius "4px"
-                                :cursor "pointer"}}
-               "返回总结"]]]]]}]))))
+           [:> Form.Item
+            [:button {:type "button"
+                      :on-click on-show-summary
+                      :style {:padding "5px 10px"
+                              :background-color "#f0f0f0"
+                              :border "1px solid #ccc"
+                              :border-radius "4px"
+                              :cursor "pointer"}}
+             "返回总结"]]]]]}]))))
+
+;; ---------------------------------------------------------------------------
+;; 通用评估卡片生成器
+;; ---------------------------------------------------------------------------
+(defn create-assessment-card
+  "根据给定配置生成可在总结和详细视图间切换的评估卡片组件。"
+  [{:keys [icon title header-color data-sub data-key summary-view detailed-view]}]
+  (fn [props]
+    (let [view-state (r/atom :summary)
+          show-summary #(reset! view-state :summary)
+          toggle-view #(reset! view-state (if (= @view-state :summary) :detailed :summary))
+          patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
+          card-data @(rf/subscribe [data-sub])]
+      (fn []
+        [ui-helpers/custom-styled-card
+         [:> icon {:style {:marginRight "8px"}}]
+         title
+         header-color
+         (if (= @view-state :summary)
+           [summary-view {data-key card-data}]
+           [:f> detailed-view (merge props {:patient-id patient-id
+                                           data-key card-data
+                                           :on-show-summary show-summary})])
+         :on-click toggle-view
+         :view-state @view-state
+         :card-style {:cursor "pointer"}
+         :card-body-style {:padding "0px"}]))))
 
 
 (defn- circulatory-system-summary-view [props]
@@ -108,26 +135,14 @@
                          :form-key-suffix "circulatory-system-spec"
                          :preprocess-dates? true}))
 
-(defn circulatory-system-card "循环系统" [props]
-  (let [view-state (r/atom :summary) ; Manages :summary or :detailed view
-        show-summary-fn #(reset! view-state :summary)
-        toggle-view-fn #(reset! view-state (if (= @view-state :summary) :detailed :summary))
-        patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
-        circulatory-data @(rf/subscribe [::subs/circulatory-system-data])]
-    (fn []
-      [ui-helpers/custom-styled-card
-       [:> HeartOutlined {:style {:marginRight "8px"}}]
-       "循环系统"
-       "#e6f7ff"
-       (if (= @view-state :summary)
-         [circulatory-system-summary-view {:circulatory-data circulatory-data}]
-         [:f> circulatory-system-detailed-view (merge props {:patient-id patient-id
-                                                             :circulatory-data circulatory-data
-                                                             :on-show-summary show-summary-fn})])
-       :on-click toggle-view-fn
-       :view-state @view-state
-       :card-style {:cursor "pointer"}
-       :card-body-style {:padding "0px"}])))
+(def circulatory-system-card
+  (create-assessment-card {:icon HeartOutlined
+                           :title "循环系统"
+                           :header-color "#e6f7ff"
+                           :data-sub ::subs/circulatory-system-data
+                           :data-key :circulatory-data
+                           :summary-view circulatory-system-summary-view
+                           :detailed-view circulatory-system-detailed-view}))
 
 (defn- respiratory-system-summary-view [props]
   (let [{:keys [respiratory-data]} props]
@@ -142,26 +157,14 @@
                          :form-key-suffix "respiratory-system-spec"
                          :preprocess-dates? true}))
 
-(defn respiratory-system-card "呼吸系统" [props]
-  (let [view-state (r/atom :summary)
-        show-summary-fn #(reset! view-state :summary)
-        toggle-view-fn #(reset! view-state (if (= @view-state :summary) :detailed :summary))
-        patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
-        respiratory-data @(rf/subscribe [::subs/respiratory-system-data])]
-    (fn []
-      [ui-helpers/custom-styled-card
-       [:> CloudOutlined {:style {:marginRight "8px"}}]
-       "呼吸系统"
-       "#e6fffb"
-       (if (= @view-state :summary)
-         [respiratory-system-summary-view {:respiratory-data respiratory-data}]
-         [:f> respiratory-system-detailed-view (merge props {:patient-id patient-id
-                                                             :respiratory-data respiratory-data
-                                                             :on-show-summary show-summary-fn})])
-       :on-click toggle-view-fn
-       :view-state @view-state
-       :card-style {:cursor "pointer"}
-       :card-body-style {:padding "0px"}])))
+(def respiratory-system-card
+  (create-assessment-card {:icon CloudOutlined
+                           :title "呼吸系统"
+                           :header-color "#e6fffb"
+                           :data-sub ::subs/respiratory-system-data
+                           :data-key :respiratory-data
+                           :summary-view respiratory-system-summary-view
+                           :detailed-view respiratory-system-detailed-view}))
 
 ;; Mental Neuromuscular System Card
 (defn- mental-neuromuscular-system-summary-view [props]
@@ -178,26 +181,14 @@
                          :preprocess-dates? true
                          :watch-data? true}))
 
-(defn mental-neuromuscular-system-card "精神及神经肌肉系统" [props]
-  (let [view-state (r/atom :summary)
-        show-summary-fn #(reset! view-state :summary)
-        toggle-view-fn #(reset! view-state (if (= @view-state :summary) :detailed :summary))
-        patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
-        mn-data @(rf/subscribe [::subs/mental-neuromuscular-system-data])]
-    (fn []
-      [ui-helpers/custom-styled-card
-       [:> NodeIndexOutlined {:style {:marginRight "8px"}}]
-       "精神及神经肌肉系统"
-       "#f6ffed"
-       (if (= @view-state :summary)
-         [mental-neuromuscular-system-summary-view {:mn-data mn-data}]
-         [:f> mental-neuromuscular-system-detailed-view (merge props {:patient-id patient-id
-                                                                      :mn-data mn-data
-                                                                      :on-show-summary show-summary-fn})])
-       :on-click toggle-view-fn
-       :view-state @view-state
-       :card-style {:cursor "pointer"}
-       :card-body-style {:padding "0px"}])))
+(def mental-neuromuscular-system-card
+  (create-assessment-card {:icon NodeIndexOutlined
+                           :title "精神及神经肌肉系统"
+                           :header-color "#f6ffed"
+                           :data-sub ::subs/mental-neuromuscular-system-data
+                           :data-key :mn-data
+                           :summary-view mental-neuromuscular-system-summary-view
+                           :detailed-view mental-neuromuscular-system-detailed-view}))
 
 ;; Endocrine System Card
 (defn- endocrine-system-summary-view [props]
@@ -212,26 +203,14 @@
                          :data-prop :endo-data
                          :form-key-suffix "endocrine-system-spec"}))
 
-(defn endocrine-system-card "内分泌系统" [props]
-  (let [view-state (r/atom :summary)
-        show-summary-fn #(reset! view-state :summary)
-        toggle-view-fn #(reset! view-state (if (= @view-state :summary) :detailed :summary))
-        patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
-        endo-data @(rf/subscribe [::subs/endocrine-system-data])]
-    (fn []
-      [ui-helpers/custom-styled-card
-       [:> ExperimentOutlined {:style {:marginRight "8px"}}]
-       "内分泌系统"
-       "#f9f0ff"
-       (if (= @view-state :summary)
-         [endocrine-system-summary-view {:endo-data endo-data}]
-         [:f> endocrine-system-detailed-view (merge props {:patient-id patient-id
-                                                           :endo-data endo-data
-                                                           :on-show-summary show-summary-fn})])
-       :on-click toggle-view-fn
-       :view-state @view-state
-       :card-style {:cursor "pointer"}
-       :card-body-style {:padding "0px"}])))
+(def endocrine-system-card
+  (create-assessment-card {:icon ExperimentOutlined
+                           :title "内分泌系统"
+                           :header-color "#f9f0ff"
+                           :data-sub ::subs/endocrine-system-data
+                           :data-key :endo-data
+                           :summary-view endocrine-system-summary-view
+                           :detailed-view endocrine-system-detailed-view}))
 
 ;; Liver Kidney System Card
 (defn- liver-kidney-system-summary-view [props]
@@ -247,26 +226,14 @@
                          :form-key-suffix "liver-kidney-system-spec"
                          :preprocess-dates? true}))
 
-(defn liver-kidney-system-card "肝肾病史" [props]
-  (let [view-state (r/atom :summary)
-        show-summary-fn #(reset! view-state :summary)
-        toggle-view-fn #(reset! view-state (if (= @view-state :summary) :detailed :summary))
-        patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
-        lk-data @(rf/subscribe [::subs/liver-kidney-system-data])]
-    (fn []
-      [ui-helpers/custom-styled-card
-       [:> ProjectOutlined {:style {:marginRight "8px"}}]
-       "肝肾病史"
-       "#fff7e6"
-       (if (= @view-state :summary)
-         [liver-kidney-system-summary-view {:lk-data lk-data}]
-         [:f> liver-kidney-system-detailed-view (merge props {:patient-id patient-id
-                                                              :lk-data lk-data
-                                                              :on-show-summary show-summary-fn})])
-       :on-click toggle-view-fn
-       :view-state @view-state
-       :card-style {:cursor "pointer"}
-       :card-body-style {:padding "0px"}])))
+(def liver-kidney-system-card
+  (create-assessment-card {:icon ProjectOutlined
+                           :title "肝肾病史"
+                           :header-color "#fff7e6"
+                           :data-sub ::subs/liver-kidney-system-data
+                           :data-key :lk-data
+                           :summary-view liver-kidney-system-summary-view
+                           :detailed-view liver-kidney-system-detailed-view}))
 
 ;; Digestive System Card
 (defn- digestive-system-summary-view [props]
@@ -281,26 +248,14 @@
                          :data-prop :ds-data
                          :form-key-suffix "digestive-system-spec"}))
 
-(defn digestive-system-card  "消化系统" [props]
-  (let [view-state (r/atom :summary)
-        show-summary-fn #(reset! view-state :summary)
-        toggle-view-fn #(reset! view-state (if (= @view-state :summary) :detailed :summary))
-        patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
-        ds-data @(rf/subscribe [::subs/digestive-system-data])]
-    (fn []
-      [ui-helpers/custom-styled-card
-       [:> CoffeeOutlined {:style {:marginRight "8px"}}]
-       "消化系统"
-       "#eff8ff"
-       (if (= @view-state :summary)
-         [digestive-system-summary-view {:ds-data ds-data}]
-         [:f> digestive-system-detailed-view (merge props {:patient-id patient-id
-                                                           :ds-data ds-data
-                                                           :on-show-summary show-summary-fn})])
-       :on-click toggle-view-fn
-       :view-state @view-state
-       :card-style {:cursor "pointer"}
-       :card-body-style {:padding "0px"}])))
+(def digestive-system-card
+  (create-assessment-card {:icon CoffeeOutlined
+                           :title "消化系统"
+                           :header-color "#eff8ff"
+                           :data-sub ::subs/digestive-system-data
+                           :data-key :ds-data
+                           :summary-view digestive-system-summary-view
+                           :detailed-view digestive-system-detailed-view}))
 
 ;; Hematologic System Card
 (defn- hematologic-system-summary-view [props]
@@ -315,26 +270,14 @@
                          :data-prop :hs-data
                          :form-key-suffix "hematologic-system-spec"}))
 
-(defn hematologic-system-card "血液系统" [props]
-  (let [view-state (r/atom :summary)
-        show-summary-fn #(reset! view-state :summary)
-        toggle-view-fn #(reset! view-state (if (= @view-state :summary) :detailed :summary))
-        patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
-        hs-data @(rf/subscribe [::subs/hematologic-system-data])]
-    (fn []
-      [ui-helpers/custom-styled-card
-       [:> ExperimentOutlined {:style {:marginRight "8px"}}]
-       "血液系统"
-       "#fff0f6"
-       (if (= @view-state :summary)
-         [hematologic-system-summary-view {:hs-data hs-data}]
-         [:f> hematologic-system-detailed-view (merge props {:patient-id patient-id
-                                                             :hs-data hs-data
-                                                             :on-show-summary show-summary-fn})])
-       :on-click toggle-view-fn
-       :view-state @view-state
-       :card-style {:cursor "pointer"}
-       :card-body-style {:padding "0px"}])))
+(def hematologic-system-card
+  (create-assessment-card {:icon ExperimentOutlined
+                           :title "血液系统"
+                           :header-color "#fff0f6"
+                           :data-sub ::subs/hematologic-system-data
+                           :data-key :hs-data
+                           :summary-view hematologic-system-summary-view
+                           :detailed-view hematologic-system-detailed-view}))
 
 ;; Immune System Card
 (defn- immune-system-summary-view [props]
@@ -349,26 +292,14 @@
                          :data-prop :is-data
                          :form-key-suffix "immune-system-spec"}))
 
-(defn immune-system-card        "免疫系统" [props]
-  (let [view-state (r/atom :summary)
-        show-summary-fn #(reset! view-state :summary)
-        toggle-view-fn #(reset! view-state (if (= @view-state :summary) :detailed :summary))
-        patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
-        is-data @(rf/subscribe [::subs/immune-system-data])]
-    (fn []
-      [ui-helpers/custom-styled-card
-       [:> SecurityScanOutlined {:style {:marginRight "8px"}}]
-       "免疫系统"
-       "#f6ffed"
-       (if (= @view-state :summary)
-         [immune-system-summary-view {:is-data is-data}]
-         [:f> immune-system-detailed-view (merge props {:patient-id patient-id
-                                                        :is-data is-data
-                                                        :on-show-summary show-summary-fn})])
-       :on-click toggle-view-fn
-       :view-state @view-state
-       :card-style {:cursor "pointer"}
-       :card-body-style {:padding "0px"}])))
+(def immune-system-card
+  (create-assessment-card {:icon SecurityScanOutlined
+                           :title "免疫系统"
+                           :header-color "#f6ffed"
+                           :data-sub ::subs/immune-system-data
+                           :data-key :is-data
+                           :summary-view immune-system-summary-view
+                           :detailed-view immune-system-detailed-view}))
 
 ;; Special Medication History Card
 (defn- special-medication-history-summary-view [props]
@@ -383,26 +314,14 @@
                          :data-prop :smh-data
                          :form-key-suffix "special-medication-history-spec"}))
 
-(defn special-medication-history-card "特殊用药史" [props]
-  (let [view-state (r/atom :summary)
-        show-summary-fn #(reset! view-state :summary)
-        toggle-view-fn #(reset! view-state (if (= @view-state :summary) :detailed :summary))
-        patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
-        smh-data @(rf/subscribe [::subs/special-medication-history-data])]
-    (fn []
-      [ui-helpers/custom-styled-card
-       [:> MedicineBoxOutlined {:style {:marginRight "8px"}}]
-       "特殊用药史"
-       "#fffbe6"
-       (if (= @view-state :summary)
-         [special-medication-history-summary-view {:smh-data smh-data}]
-         [:f> special-medication-history-detailed-view (merge props {:patient-id patient-id
-                                                                     :smh-data smh-data
-                                                                     :on-show-summary show-summary-fn})])
-       :on-click toggle-view-fn
-       :view-state @view-state
-       :card-style {:cursor "pointer"}
-       :card-body-style {:padding "0px"}])))
+(def special-medication-history-card
+  (create-assessment-card {:icon MedicineBoxOutlined
+                           :title "特殊用药史"
+                           :header-color "#fffbe6"
+                           :data-sub ::subs/special-medication-history-data
+                           :data-key :smh-data
+                           :summary-view special-medication-history-summary-view
+                           :detailed-view special-medication-history-detailed-view}))
 
 ;; Special Disease History Card
 (defn- special-disease-history-summary-view [props]
@@ -417,26 +336,14 @@
                          :data-prop :sdh-data
                          :form-key-suffix "special-disease-history-spec"}))
 
-(defn special-disease-history-card "特殊疾病病史" [props]
-  (let [view-state (r/atom :summary)
-        show-summary-fn #(reset! view-state :summary)
-        toggle-view-fn #(reset! view-state (if (= @view-state :summary) :detailed :summary))
-        patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
-        sdh-data @(rf/subscribe [::subs/special-disease-history-data])]
-    (fn []
-      [ui-helpers/custom-styled-card
-       [:> WarningOutlined {:style {:marginRight "8px"}}]
-       "特殊疾病病史"
-       "#fff1f0"
-       (if (= @view-state :summary)
-         [special-disease-history-summary-view {:sdh-data sdh-data}]
-         [:f> special-disease-history-detailed-view (merge props {:patient-id patient-id
-                                                                  :sdh-data sdh-data
-                                                                  :on-show-summary show-summary-fn})])
-       :on-click toggle-view-fn
-       :view-state @view-state
-       :card-style {:cursor "pointer"}
-       :card-body-style {:padding "0px"}])))
+(def special-disease-history-card
+  (create-assessment-card {:icon WarningOutlined
+                           :title "特殊疾病病史"
+                           :header-color "#fff1f0"
+                           :data-sub ::subs/special-disease-history-data
+                           :data-key :sdh-data
+                           :summary-view special-disease-history-summary-view
+                           :detailed-view special-disease-history-detailed-view}))
 
 ;; Nutritional Assessment Card
 (defn- nutritional-assessment-summary-view [props]
@@ -458,26 +365,14 @@
                                         [:h5 {:style {:marginBottom "4px"}} "FRAIL 结论:"]
                                         [:p {:style {:fontSize "12px" :color "gray"}} "0 分：健康；" [:br] "1-2 分：衰弱前期；" [:br] "≥3 分：衰弱。"]]]}))
 
-(defn nutritional-assessment-card "营养评估" [props]
-  (let [view-state (r/atom :summary)
-        show-summary-fn #(reset! view-state :summary)
-        toggle-view-fn #(reset! view-state (if (= @view-state :summary) :detailed :summary))
-        patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
-        na-data @(rf/subscribe [::subs/nutritional-assessment-data])]
-    (fn []
-      [ui-helpers/custom-styled-card
-       [:> AppleOutlined {:style {:marginRight "8px"}}]
-       "营养评估"
-       "#f0fff0"
-       (if (= @view-state :summary)
-         [nutritional-assessment-summary-view {:na-data na-data}]
-         [:f> nutritional-assessment-detailed-view (merge props {:patient-id patient-id
-                                                                 :na-data na-data
-                                                                 :on-show-summary show-summary-fn})])
-       :on-click toggle-view-fn
-       :view-state @view-state
-       :card-style {:cursor "pointer"}
-       :card-body-style {:padding "0px"}])))
+(def nutritional-assessment-card
+  (create-assessment-card {:icon AppleOutlined
+                           :title "营养评估"
+                           :header-color "#f0fff0"
+                           :data-sub ::subs/nutritional-assessment-data
+                           :data-key :na-data
+                           :summary-view nutritional-assessment-summary-view
+                           :detailed-view nutritional-assessment-detailed-view}))
 
 ;; Pregnancy Assessment Card
 (defn- pregnancy-assessment-summary-view [props]
@@ -492,26 +387,14 @@
                          :data-prop :pa-data
                          :form-key-suffix "pregnancy-assessment-spec"}))
 
-(defn pregnancy-assessment-card "妊娠" [props]
-  (let [view-state (r/atom :summary)
-        show-summary-fn #(reset! view-state :summary)
-        toggle-view-fn #(reset! view-state (if (= @view-state :summary) :detailed :summary))
-        patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
-        pa-data @(rf/subscribe [::subs/pregnancy-assessment-data])]
-    (fn []
-      [ui-helpers/custom-styled-card
-       [:> WomanOutlined {:style {:marginRight "8px"}}]
-       "妊娠"
-       "#fff0f6"
-       (if (= @view-state :summary)
-         [pregnancy-assessment-summary-view {:pa-data pa-data}]
-         [:f> pregnancy-assessment-detailed-view (merge props {:patient-id patient-id
-                                                               :pa-data pa-data
-                                                               :on-show-summary show-summary-fn})])
-       :on-click toggle-view-fn
-       :view-state @view-state
-       :card-style {:cursor "pointer"}
-       :card-body-style {:padding "0px"}])))
+(def pregnancy-assessment-card
+  (create-assessment-card {:icon WomanOutlined
+                           :title "妊娠"
+                           :header-color "#fff0f6"
+                           :data-sub ::subs/pregnancy-assessment-data
+                           :data-key :pa-data
+                           :summary-view pregnancy-assessment-summary-view
+                           :detailed-view pregnancy-assessment-detailed-view}))
 
 ;; Surgical Anesthesia History Card
 (defn- surgical-anesthesia-history-summary-view [props]
@@ -527,26 +410,14 @@
                          :form-key-suffix "surgical-anesthesia-history-spec"
                          :preprocess-dates? true}))
 
-(defn surgical-anesthesia-history-card "手术麻醉史" [props]
-  (let [view-state (r/atom :summary)
-        show-summary-fn #(reset! view-state :summary)
-        toggle-view-fn #(reset! view-state (if (= @view-state :summary) :detailed :summary))
-        patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
-        sah-data @(rf/subscribe [::subs/surgical-anesthesia-history-data])]
-    (fn []
-      [ui-helpers/custom-styled-card
-       [:> HistoryOutlined {:style {:marginRight "8px"}}]
-       "手术麻醉史"
-       "#e6f7ff"
-       (if (= @view-state :summary)
-         [surgical-anesthesia-history-summary-view {:sah-data sah-data}]
-         [:f> surgical-anesthesia-history-detailed-view (merge props {:patient-id patient-id
-                                                                      :sah-data sah-data
-                                                                      :on-show-summary show-summary-fn})])
-       :on-click toggle-view-fn
-       :view-state @view-state
-       :card-style {:cursor "pointer"}
-       :card-body-style {:padding "0px"}])))
+(def surgical-anesthesia-history-card
+  (create-assessment-card {:icon HistoryOutlined
+                           :title "手术麻醉史"
+                           :header-color "#e6f7ff"
+                           :data-sub ::subs/surgical-anesthesia-history-data
+                           :data-key :sah-data
+                           :summary-view surgical-anesthesia-history-summary-view
+                           :detailed-view surgical-anesthesia-history-detailed-view}))
 
 ;; Airway Assessment Card
 (defn- airway-assessment-summary-view [props]
@@ -620,26 +491,14 @@
                               :cursor "pointer"}}
              "返回总结"]]]]]}])))
 
-(defn airway-assessment-card "气道评估" [props]
-  (let [view-state (r/atom :summary)
-        show-summary-fn #(reset! view-state :summary)
-        toggle-view-fn #(reset! view-state (if (= @view-state :summary) :detailed :summary))
-        patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
-        aa-data @(rf/subscribe [::subs/airway-assessment-data])]
-    (fn []
-      [ui-helpers/custom-styled-card
-       [:> NodeIndexOutlined {:style {:marginRight "8px"}}]
-       "气道评估"
-       "#fff7e6"
-       (if (= @view-state :summary)
-         [airway-assessment-summary-view {:aa-data aa-data}]
-         [:f> airway-assessment-detailed-view (merge props {:patient-id patient-id
-                                                            :aa-data aa-data
-                                                            :on-show-summary show-summary-fn})])
-       :on-click toggle-view-fn
-       :view-state @view-state
-       :card-style {:cursor "pointer"}
-       :card-body-style {:padding "0px"}])))
+(def airway-assessment-card
+  (create-assessment-card {:icon NodeIndexOutlined
+                           :title "气道评估"
+                           :header-color "#fff7e6"
+                           :data-sub ::subs/airway-assessment-data
+                           :data-key :aa-data
+                           :summary-view airway-assessment-summary-view
+                           :detailed-view airway-assessment-detailed-view}))
 
 ;; Spinal Anesthesia Assessment Card
 (defn- spinal-anesthesia-assessment-summary-view [props]
@@ -707,23 +566,11 @@
                               :cursor "pointer"}}
              "返回总结"]]]]]}])))
 
-(defn spinal-anesthesia-assessment-card "椎管内麻醉相关评估" [props]
-  (let [view-state (r/atom :summary)
-        show-summary-fn #(reset! view-state :summary)
-        toggle-view-fn #(reset! view-state (if (= @view-state :summary) :detailed :summary))
-        patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
-        saa-data @(rf/subscribe [::subs/spinal-anesthesia-assessment-data])]
-    (fn []
-      [ui-helpers/custom-styled-card
-       [:> GatewayOutlined {:style {:marginRight "8px"}}]
-       "椎管内麻醉相关评估"
-       "#f0f5ff"
-       (if (= @view-state :summary)
-         [spinal-anesthesia-assessment-summary-view {:saa-data saa-data}]
-         [:f> spinal-anesthesia-assessment-detailed-view (merge props {:patient-id patient-id
-                                                                       :saa-data saa-data
-                                                                       :on-show-summary show-summary-fn})])
-       :on-click toggle-view-fn
-       :view-state @view-state
-       :card-style {:cursor "pointer"}
-       :card-body-style {:padding "0px"}])))
+(def spinal-anesthesia-assessment-card
+  (create-assessment-card {:icon GatewayOutlined
+                           :title "椎管内麻醉相关评估"
+                           :header-color "#f0f5ff"
+                           :data-sub ::subs/spinal-anesthesia-assessment-data
+                           :data-key :saa-data
+                           :summary-view spinal-anesthesia-assessment-summary-view
+                           :detailed-view spinal-anesthesia-assessment-detailed-view}))
