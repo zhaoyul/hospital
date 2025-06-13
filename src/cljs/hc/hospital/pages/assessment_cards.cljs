@@ -28,69 +28,85 @@
 
 ;; Data-driven rendering helpers have been moved to hc.hospital.pages.assessment-form-generators
 
+;; ---------------------------------------------------------------------------
+;; 通用详细表单视图生成器
+;; ---------------------------------------------------------------------------
+(defn create-detailed-view
+  "根据传入配置生成标准的详细评估表单视图组件。"
+  [{:keys [section-key section-spec data-prop form-key-suffix
+           preprocess-dates? watch-data? extra-content]}]
+  (fn [props]
+    (let [{:keys [report-form-instance-fn patient-id on-show-summary]} props
+          section-data (get props data-prop)
+          [form] (Form.useForm)
+          data-with-enums (form-utils/apply-enum-defaults-to-data
+                           (or section-data {})
+                           section-spec)
+          initial-form-values (if preprocess-dates?
+                                (form-utils/preprocess-date-fields
+                                 data-with-enums section-spec)
+                                data-with-enums)
+          on-finish-fn (fn [values]
+                         (let [values-clj (js->clj values :keywordize-keys true)
+                               final-values (if preprocess-dates?
+                                              (form-utils/transform-date-fields-for-submission
+                                               values-clj section-spec)
+                                              values-clj)]
+                           (rf/dispatch [::events/update-canonical-assessment-section
+                                         section-key final-values])))]
+      (React/useEffect
+       (fn []
+         (when report-form-instance-fn
+           (report-form-instance-fn section-key form))
+         js/undefined)
+       #js [])
+      (when watch-data?
+        (React/useEffect
+         (fn []
+           (.resetFields form)
+           (.setFieldsValue form (clj->js initial-form-values))
+           js/undefined)
+         #js [initial-form-values]))
+      (let [form-items (into [:<>]
+                             (mapv (fn [[field-key field-schema optional? _]]
+                                     (afg/render-form-item-from-spec
+                                      [field-key field-schema optional? [] form]))
+                                   (m/entries section-spec)))]
+        [afc/patient-assessment-card-wrapper
+         {:patient-id patient-id
+          :form-instance form
+          :form-key (str patient-id "-" form-key-suffix)
+          :initial-data initial-form-values
+          :on-finish-handler on-finish-fn
+          :children
+          [:<>
+           form-items
+           extra-content
+           [:> Row {:justify "end" :style {:marginTop "20px"}}
+            [:> Col
+             [:> Form.Item
+              [:button {:type "button"
+                        :on-click on-show-summary
+                        :style {:padding "5px 10px"
+                                :background-color "#f0f0f0"
+                                :border "1px solid #ccc"
+                                :border-radius "4px"
+                                :cursor "pointer"}}
+               "返回总结"]]]]]}]))))
+
+
 (defn- circulatory-system-summary-view [props]
   (let [{:keys [circulatory-data]} props]
     [summary/assessment-summary {:data circulatory-data
                                  :schema assessment-specs/循环系统Spec
                                  :section-key :循环系统}]))
 
-(defn- circulatory-system-detailed-view [props]
-  (let [{:keys [report-form-instance-fn patient-id circulatory-data on-show-summary]} props
-        [form] (Form.useForm)
-        ;; 初始化表单值的数据处理流程
-        initial-form-values (let [data-from-db (or circulatory-data {}) ; 1. 从数据库获取原始数据，如果为空则使用空 map
-                                  ;; 2. 应用枚举字段的默认值
-                                  data-with-enum-defaults (form-utils/apply-enum-defaults-to-data
-                                                            data-from-db
-                                                            assessment-specs/循环系统Spec)
-                                  ;; 3. 自动将所有在 Spec 中标记为 :is-date? true 的日期字符串转换为 dayjs 对象
-                                  data-with-parsed-dates (form-utils/preprocess-date-fields
-                                                           data-with-enum-defaults
-                                                           assessment-specs/循环系统Spec)
-                                  ;; 最终的初始值，移除了手动的 default-values-override 和 merge
-                                  final-initial-values data-with-parsed-dates]
-                              ;; 此前的 cond-> 逻辑块已根据用户反馈移除 (用于处理特定字段如 :有无 的显式设置)。
-                              ;; 现在直接返回经过枚举默认化和日期自动预处理后的数据。
-                              final-initial-values)
-        ;; 表单提交时的处理函数
-        on-finish-fn (fn [values]
-
-                       (let [values-clj (js->clj values :keywordize-keys true) ; 1. 将 JS 表单值转换为 ClojureScript map
-                             ;; 2. 自动将所有 dayjs 对象转换回 ISO 日期字符串，以便存储或传输
-                             transformed-values (form-utils/transform-date-fields-for-submission
-                                                  values-clj
-                                                  assessment-specs/循环系统Spec)]
-                         (rf/dispatch [::events/update-canonical-assessment-section :循环系统 transformed-values])))]
-    (React/useEffect (fn []
-                       (when report-form-instance-fn
-                         (report-form-instance-fn :循环系统 form))
-                       js/undefined)
-                     #js [])
-    (let [section-spec assessment-specs/循环系统Spec
-          form-items (into [:<>]
-                           (mapv (fn [[field-key field-schema optional? _]]
-                                   (afg/render-form-item-from-spec [field-key field-schema optional? [] form]))
-                                 (m/entries section-spec)))]
-      [afc/patient-assessment-card-wrapper
-       {:patient-id patient-id
-        :form-instance form
-        :form-key (str patient-id "-circulatory-system-spec")
-        :initial-data initial-form-values
-        :on-finish-handler on-finish-fn
-        :children
-        [:<>
-         form-items
-         [:> Row {:justify "end" :style {:marginTop "20px"}}
-          [:> Col
-           [:> Form.Item
-            [:button {:type "button"
-                      :on-click on-show-summary
-                      :style {:padding "5px 10px"
-                              :background-color "#f0f0f0"
-                              :border "1px solid #ccc"
-                              :border-radius "4px"
-                              :cursor "pointer"}}
-             "返回总结"]]]]]}])))
+(def circulatory-system-detailed-view
+  (create-detailed-view {:section-key :循环系统
+                         :section-spec assessment-specs/循环系统Spec
+                         :data-prop :circulatory-data
+                         :form-key-suffix "circulatory-system-spec"
+                         :preprocess-dates? true}))
 
 (defn circulatory-system-card "循环系统" [props]
   (let [view-state (r/atom :summary) ; Manages :summary or :detailed view
@@ -119,58 +135,12 @@
                                  :schema assessment-specs/呼吸系统Spec
                                  :section-key :呼吸系统}]))
 
-(defn respiratory-system-detailed-view [props]
-  (let [{:keys [report-form-instance-fn patient-id respiratory-data on-show-summary]} props
-        [form] (Form.useForm)
-        ;; 初始化表单值的数据处理流程
-        initial-form-values (let [data-from-db (or respiratory-data {}) ; 1. 从数据库获取原始数据，如果为空则使用空 map
-                                  ;; 2. 应用枚举字段的默认值
-                                  data-with-enum-defaults (form-utils/apply-enum-defaults-to-data
-                                                            data-from-db
-                                                            assessment-specs/呼吸系统Spec)
-                                  ;; 3. 自动将所有在 Spec 中标记为 :is-date? true 的日期字符串转换为 dayjs 对象
-                                  final-initial-values (form-utils/preprocess-date-fields
-                                                         data-with-enum-defaults
-                                                         assessment-specs/呼吸系统Spec)]
-                              final-initial-values)
-        ;; 表单提交时的处理函数
-        on-finish-fn (fn [values]
-                       (let [values-clj (js->clj values :keywordize-keys true) ; 1. 将 JS 表单值转换为 ClojureScript map
-                             ;; 2. 自动将所有 dayjs 对象转换回 ISO 日期字符串，以便存储或传输
-                             transformed-values (form-utils/transform-date-fields-for-submission
-                                                  values-clj
-                                                  assessment-specs/呼吸系统Spec)]
-                         (rf/dispatch [::events/update-canonical-assessment-section :呼吸系统 transformed-values])))]
-    (React/useEffect (fn []
-                       (when report-form-instance-fn
-                         (report-form-instance-fn :呼吸系统 form))
-                       js/undefined)
-                     #js [])
-    (let [section-spec assessment-specs/呼吸系统Spec
-          form-items (into [:<>]
-                           (mapv (fn [[field-key field-schema optional? _]]
-                                   (afg/render-form-item-from-spec [field-key field-schema optional? [] form]))
-                                 (m/entries section-spec)))]
-      [afc/patient-assessment-card-wrapper
-       {:patient-id patient-id
-        :form-instance form
-        :form-key (str patient-id "-respiratory-system-spec")
-        :initial-data initial-form-values
-        :on-finish-handler on-finish-fn
-        :children
-        [:<>
-         form-items
-         [:> Row {:justify "end" :style {:marginTop "20px"}}
-          [:> Col
-           [:> Form.Item
-            [:button {:type "button"
-                      :on-click on-show-summary
-                      :style {:padding "5px 10px"
-                              :background-color "#f0f0f0"
-                              :border "1px solid #ccc"
-                              :border-radius "4px"
-                              :cursor "pointer"}}
-             "返回总结"]]]]]}])))
+(def respiratory-system-detailed-view
+  (create-detailed-view {:section-key :呼吸系统
+                         :section-spec assessment-specs/呼吸系统Spec
+                         :data-prop :respiratory-data
+                         :form-key-suffix "respiratory-system-spec"
+                         :preprocess-dates? true}))
 
 (defn respiratory-system-card "呼吸系统" [props]
   (let [view-state (r/atom :summary)
@@ -200,67 +170,13 @@
                                  :schema assessment-specs/精神及神经肌肉系统Spec
                                  :section-key :精神及神经肌肉系统}]))
 
-(defn mental-neuromuscular-system-detailed-view [props]
-  (let [{:keys [report-form-instance-fn patient-id mn-data on-show-summary]} props
-        [form] (Form.useForm)
-        ;; 初始化表单值的数据处理流程
-        initial-form-values (let [data-from-db (or mn-data {}) ; 1. 从数据库获取原始数据，如果为空则使用空 map
-                                  ;; 2. 应用枚举字段的默认值
-                                  data-with-enum-defaults (form-utils/apply-enum-defaults-to-data
-                                                            data-from-db
-                                                            assessment-specs/精神及神经肌肉系统Spec)
-                                  ;; 3. 自动将所有在 Spec 中标记为 :is-date? true 的日期字符串转换为 dayjs 对象
-                                  final-initial-values (form-utils/preprocess-date-fields
-                                                         data-with-enum-defaults
-                                                         assessment-specs/精神及神经肌肉系统Spec)]
-                              final-initial-values)
-        ;; 表单提交时的处理函数
-        on-finish-fn (fn [values]
-                       (let [values-clj (js->clj values :keywordize-keys true)
-                             ;; 2. 自动将所有 dayjs 对象转换回 ISO 日期字符串，以便存储或传输
-                             transformed-values (form-utils/transform-date-fields-for-submission
-                                                  values-clj
-                                                  assessment-specs/精神及神经肌肉系统Spec)]
-                         (rf/dispatch [::events/update-canonical-assessment-section :精神及神经肌肉系统 transformed-values])))]
-
-    ;; Effect to update form when mn-data (and thus initial-form-values) changes
-    (React/useEffect
-     (fn []
-       (.resetFields form)
-       (.setFieldsValue form (clj->js initial-form-values))
-       js/undefined) ; Return undefined for cleanup
-     #js [initial-form-values]) ; Dependency: re-run if initial-form-values changes reference
-
-    (React/useEffect (fn []
-                       (when report-form-instance-fn
-                         (report-form-instance-fn :精神及神经肌肉系统 form))
-                       js/undefined)
-                     #js [])
-    (let [section-spec assessment-specs/精神及神经肌肉系统Spec
-          form-items (into [:<>]
-                           (mapv (fn [[field-key field-schema optional? _]]
-                                   (afg/render-form-item-from-spec [field-key field-schema optional? [] form]))
-                                 (m/entries section-spec)))]
-      [afc/patient-assessment-card-wrapper
-       {:patient-id patient-id
-        :form-instance form
-        :form-key (str patient-id "-mental-neuromuscular-system-spec")
-        :initial-data initial-form-values
-        :on-finish-handler on-finish-fn
-        :children
-        [:<>
-         form-items
-         [:> Row {:justify "end" :style {:marginTop "20px"}}
-          [:> Col
-           [:> Form.Item
-            [:button {:type "button"
-                      :on-click on-show-summary
-                      :style {:padding "5px 10px"
-                              :background-color "#f0f0f0"
-                              :border "1px solid #ccc"
-                              :border-radius "4px"
-                              :cursor "pointer"}}
-             "返回总结"]]]]]}])))
+(def mental-neuromuscular-system-detailed-view
+  (create-detailed-view {:section-key :精神及神经肌肉系统
+                         :section-spec assessment-specs/精神及神经肌肉系统Spec
+                         :data-prop :mn-data
+                         :form-key-suffix "mental-neuromuscular-system-spec"
+                         :preprocess-dates? true
+                         :watch-data? true}))
 
 (defn mental-neuromuscular-system-card "精神及神经肌肉系统" [props]
   (let [view-state (r/atom :summary)
@@ -290,45 +206,11 @@
                                  :schema assessment-specs/内分泌系统Spec
                                  :section-key :内分泌系统}]))
 
-(defn endocrine-system-detailed-view [props]
-  (let [{:keys [report-form-instance-fn patient-id endo-data on-show-summary]} props
-        [form] (Form.useForm)
-        initial-form-values (form-utils/apply-enum-defaults-to-data
-                              (or endo-data {})
-                              assessment-specs/内分泌系统Spec)
-        on-finish-fn (fn [values]
-                       (rf/dispatch [::events/update-canonical-assessment-section :内分泌系统 (js->clj values :keywordize-keys true)]))]
-    (React/useEffect (fn []
-                       (when report-form-instance-fn
-                         (report-form-instance-fn :内分泌系统 form))
-                       js/undefined)
-                     #js [])
-    (let [section-spec assessment-specs/内分泌系统Spec
-          form-items (into
-                      [:<>]
-                      (mapv (fn [[field-key field-schema optional? _]]
-                              (afg/render-form-item-from-spec [field-key field-schema optional? [] form]))
-                            (m/entries section-spec)))]
-      [afc/patient-assessment-card-wrapper
-       {:patient-id patient-id
-        :form-instance form
-        :form-key (str patient-id "-endocrine-system-spec")
-        :initial-data initial-form-values
-        :on-finish-handler on-finish-fn
-        :children
-        [:<>
-         form-items
-         [:> Row {:justify "end" :style {:marginTop "20px"}}
-          [:> Col
-           [:> Form.Item
-            [:button {:type "button"
-                      :on-click on-show-summary
-                      :style {:padding "5px 10px"
-                              :background-color "#f0f0f0"
-                              :border "1px solid #ccc"
-                              :border-radius "4px"
-                              :cursor "pointer"}}
-             "返回总结"]]]]]}])))
+(def endocrine-system-detailed-view
+  (create-detailed-view {:section-key :内分泌系统
+                         :section-spec assessment-specs/内分泌系统Spec
+                         :data-prop :endo-data
+                         :form-key-suffix "endocrine-system-spec"})
 
 (defn endocrine-system-card "内分泌系统" [props]
   (let [view-state (r/atom :summary)
@@ -358,53 +240,12 @@
                                  :schema assessment-specs/肝肾病史Spec
                                  :section-key :肝肾病史}]))
 
-(defn liver-kidney-system-detailed-view [props]
-  (let [{:keys [report-form-instance-fn patient-id lk-data on-show-summary]} props
-        [form] (Form.useForm)
-        initial-form-values (let [data-from-db (or lk-data {})
-                                  data-with-enum-defaults (form-utils/apply-enum-defaults-to-data
-                                                            data-from-db
-                                                            assessment-specs/肝肾病史Spec)]
-                              (form-utils/preprocess-date-fields
-                                data-with-enum-defaults
-                                assessment-specs/肝肾病史Spec))
-        on-finish-fn (fn [values]
-                       (let [values-clj (js->clj values :keywordize-keys true)
-                             transformed-values (form-utils/transform-date-fields-for-submission
-                                                  values-clj
-                                                  assessment-specs/肝肾病史Spec)]
-                         (rf/dispatch [::events/update-canonical-assessment-section :肝肾病史 transformed-values])))]
-    (React/useEffect (fn []
-                       (when report-form-instance-fn
-                         (report-form-instance-fn :肝肾病史 form))
-                       js/undefined)
-                     #js [])
-    (let [section-spec assessment-specs/肝肾病史Spec
-          form-items (into
-                      [:<>]
-                      (mapv (fn [[field-key field-schema optional? _]]
-                              (afg/render-form-item-from-spec [field-key field-schema optional? [] form]))
-                            (m/entries section-spec)))]
-      [afc/patient-assessment-card-wrapper
-       {:patient-id patient-id
-        :form-instance form
-        :form-key (str patient-id "-liver-kidney-system-spec")
-        :initial-data initial-form-values
-        :on-finish-handler on-finish-fn
-        :children
-        [:<>
-         form-items
-         [:> Row {:justify "end" :style {:marginTop "20px"}}
-          [:> Col
-           [:> Form.Item
-            [:button {:type "button"
-                      :on-click on-show-summary
-                      :style {:padding "5px 10px"
-                              :background-color "#f0f0f0"
-                              :border "1px solid #ccc"
-                              :border-radius "4px"
-                              :cursor "pointer"}}
-             "返回总结"]]]]]}])))
+(def liver-kidney-system-detailed-view
+  (create-detailed-view {:section-key :肝肾病史
+                         :section-spec assessment-specs/肝肾病史Spec
+                         :data-prop :lk-data
+                         :form-key-suffix "liver-kidney-system-spec"
+                         :preprocess-dates? true}))
 
 (defn liver-kidney-system-card "肝肾病史" [props]
   (let [view-state (r/atom :summary)
@@ -434,46 +275,11 @@
                                  :schema assessment-specs/消化系统Spec
                                  :section-key :消化系统}]))
 
-(defn digestive-system-detailed-view [props]
-  (let [{:keys [report-form-instance-fn patient-id ds-data on-show-summary]} props
-        [form] (Form.useForm)
-        initial-form-values (form-utils/apply-enum-defaults-to-data
-                              (or ds-data {})
-                              assessment-specs/消化系统Spec)
-        on-finish-fn (fn [values]
-                       (let [values-clj (js->clj values :keywordize-keys true)]
-                         (rf/dispatch [::events/update-canonical-assessment-section :消化系统 values-clj])))]
-    (React/useEffect (fn []
-                       (when report-form-instance-fn
-                         (report-form-instance-fn :消化系统 form))
-                       js/undefined)
-                     #js [])
-    (let [section-spec assessment-specs/消化系统Spec
-          form-items (into
-                      [:<>]
-                      (mapv (fn [[field-key field-schema optional? _]]
-                              (afg/render-form-item-from-spec [field-key field-schema optional? [] form]))
-                            (m/entries section-spec)))]
-      [afc/patient-assessment-card-wrapper
-       {:patient-id patient-id
-        :form-instance form
-        :form-key (str patient-id "-digestive-system-spec")
-        :initial-data initial-form-values
-        :on-finish-handler on-finish-fn
-        :children
-        [:<>
-         form-items
-         [:> Row {:justify "end" :style {:marginTop "20px"}}
-          [:> Col
-           [:> Form.Item
-            [:button {:type "button"
-                      :on-click on-show-summary
-                      :style {:padding "5px 10px"
-                              :background-color "#f0f0f0"
-                              :border "1px solid #ccc"
-                              :border-radius "4px"
-                              :cursor "pointer"}}
-             "返回总结"]]]]]}])))
+(def digestive-system-detailed-view
+  (create-detailed-view {:section-key :消化系统
+                         :section-spec assessment-specs/消化系统Spec
+                         :data-prop :ds-data
+                         :form-key-suffix "digestive-system-spec"})
 
 (defn digestive-system-card  "消化系统" [props]
   (let [view-state (r/atom :summary)
@@ -503,45 +309,11 @@
                                  :schema assessment-specs/血液系统Spec
                                  :section-key :血液系统}]))
 
-(defn hematologic-system-detailed-view [props]
-  (let [{:keys [report-form-instance-fn patient-id hs-data on-show-summary]} props
-        [form] (Form.useForm)
-        initial-form-values (form-utils/apply-enum-defaults-to-data
-                              (or hs-data {})
-                              assessment-specs/血液系统Spec)
-        on-finish-fn (fn [values]
-                       (rf/dispatch [::events/update-canonical-assessment-section :血液系统 (js->clj values :keywordize-keys true)]))]
-    (React/useEffect (fn []
-                       (when report-form-instance-fn
-                         (report-form-instance-fn :血液系统 form))
-                       js/undefined)
-                     #js [])
-    (let [section-spec assessment-specs/血液系统Spec
-          form-items (into
-                      [:<>]
-                      (mapv (fn [[field-key field-schema optional? _]]
-                              (afg/render-form-item-from-spec [field-key field-schema optional? [] form]))
-                            (m/entries section-spec)))]
-      [afc/patient-assessment-card-wrapper
-       {:patient-id patient-id
-        :form-instance form
-        :form-key (str patient-id "-hematologic-system-spec")
-        :initial-data initial-form-values
-        :on-finish-handler on-finish-fn
-        :children
-        [:<>
-         form-items
-         [:> Row {:justify "end" :style {:marginTop "20px"}}
-          [:> Col
-           [:> Form.Item
-            [:button {:type "button"
-                      :on-click on-show-summary
-                      :style {:padding "5px 10px"
-                              :background-color "#f0f0f0"
-                              :border "1px solid #ccc"
-                              :border-radius "4px"
-                              :cursor "pointer"}}
-             "返回总结"]]]]]}])))
+(def hematologic-system-detailed-view
+  (create-detailed-view {:section-key :血液系统
+                         :section-spec assessment-specs/血液系统Spec
+                         :data-prop :hs-data
+                         :form-key-suffix "hematologic-system-spec"})
 
 (defn hematologic-system-card "血液系统" [props]
   (let [view-state (r/atom :summary)
@@ -571,46 +343,11 @@
                                  :schema assessment-specs/免疫系统Spec
                                  :section-key :免疫系统}]))
 
-(defn immune-system-detailed-view [props]
-  (let [{:keys [report-form-instance-fn patient-id is-data on-show-summary]} props
-        [form] (Form.useForm)
-        initial-form-values (form-utils/apply-enum-defaults-to-data
-                              (or is-data {})
-                              assessment-specs/免疫系统Spec)
-        on-finish-fn (fn [values]
-                       (let [values-clj (js->clj values :keywordize-keys true)]
-                         (rf/dispatch [::events/update-canonical-assessment-section :免疫系统 values-clj])))]
-    (React/useEffect (fn []
-                       (when report-form-instance-fn
-                         (report-form-instance-fn :免疫系统 form))
-                       js/undefined)
-                     #js [])
-    (let [section-spec assessment-specs/免疫系统Spec
-          form-items (into
-                      [:<>]
-                      (mapv (fn [[field-key field-schema optional? _]]
-                              (afg/render-form-item-from-spec [field-key field-schema optional? [] form]))
-                            (m/entries section-spec)))]
-      [afc/patient-assessment-card-wrapper
-       {:patient-id patient-id
-        :form-instance form
-        :form-key (str patient-id "-immune-system-spec")
-        :initial-data initial-form-values
-        :on-finish-handler on-finish-fn
-        :children
-        [:<>
-         form-items
-         [:> Row {:justify "end" :style {:marginTop "20px"}}
-          [:> Col
-           [:> Form.Item
-            [:button {:type "button"
-                      :on-click on-show-summary
-                      :style {:padding "5px 10px"
-                              :background-color "#f0f0f0"
-                              :border "1px solid #ccc"
-                              :border-radius "4px"
-                              :cursor "pointer"}}
-             "返回总结"]]]]]}])))
+(def immune-system-detailed-view
+  (create-detailed-view {:section-key :免疫系统
+                         :section-spec assessment-specs/免疫系统Spec
+                         :data-prop :is-data
+                         :form-key-suffix "immune-system-spec"})
 
 (defn immune-system-card        "免疫系统" [props]
   (let [view-state (r/atom :summary)
@@ -640,46 +377,11 @@
                                  :schema assessment-specs/特殊用药史Spec
                                  :section-key :特殊用药史}]))
 
-(defn special-medication-history-detailed-view [props]
-  (let [{:keys [report-form-instance-fn patient-id smh-data on-show-summary]} props
-        [form] (Form.useForm)
-        initial-form-values (form-utils/apply-enum-defaults-to-data
-                              (or smh-data {})
-                              assessment-specs/特殊用药史Spec)
-        on-finish-fn (fn [values]
-                       (let [values-clj (js->clj values :keywordize-keys true)]
-                         (rf/dispatch [::events/update-canonical-assessment-section :特殊用药史 values-clj])))]
-    (React/useEffect (fn []
-                       (when report-form-instance-fn
-                         (report-form-instance-fn :特殊用药史 form))
-                       js/undefined)
-                     #js [])
-    (let [section-spec assessment-specs/特殊用药史Spec
-          form-items (into
-                      [:<>]
-                      (mapv (fn [[field-key field-schema optional? _]]
-                              (afg/render-form-item-from-spec [field-key field-schema optional? [] form]))
-                            (m/entries section-spec)))]
-      [afc/patient-assessment-card-wrapper
-       {:patient-id patient-id
-        :form-instance form
-        :form-key (str patient-id "-special-medication-history-spec")
-        :initial-data initial-form-values
-        :on-finish-handler on-finish-fn
-        :children
-        [:<>
-         form-items
-         [:> Row {:justify "end" :style {:marginTop "20px"}}
-          [:> Col
-           [:> Form.Item
-            [:button {:type "button"
-                      :on-click on-show-summary
-                      :style {:padding "5px 10px"
-                              :background-color "#f0f0f0"
-                              :border "1px solid #ccc"
-                              :border-radius "4px"
-                              :cursor "pointer"}}
-             "返回总结"]]]]]}])))
+(def special-medication-history-detailed-view
+  (create-detailed-view {:section-key :特殊用药史
+                         :section-spec assessment-specs/特殊用药史Spec
+                         :data-prop :smh-data
+                         :form-key-suffix "special-medication-history-spec"})
 
 (defn special-medication-history-card "特殊用药史" [props]
   (let [view-state (r/atom :summary)
@@ -709,46 +411,11 @@
                                  :schema assessment-specs/特殊疾病病史Spec
                                  :section-key :特殊疾病病史}]))
 
-(defn special-disease-history-detailed-view [props]
-  (let [{:keys [report-form-instance-fn patient-id sdh-data on-show-summary]} props
-        [form] (Form.useForm)
-        initial-form-values (form-utils/apply-enum-defaults-to-data
-                              (or sdh-data {})
-                              assessment-specs/特殊疾病病史Spec)
-        on-finish-fn (fn [values]
-                       (let [values-clj (js->clj values :keywordize-keys true)]
-                         (rf/dispatch [::events/update-canonical-assessment-section :特殊疾病病史 values-clj])))]
-    (React/useEffect (fn []
-                       (when report-form-instance-fn
-                         (report-form-instance-fn :特殊疾病病史 form))
-                       js/undefined)
-                     #js [])
-    (let [section-spec assessment-specs/特殊疾病病史Spec
-          form-items (into
-                      [:<>]
-                      (mapv (fn [[field-key field-schema optional? _]]
-                              (afg/render-form-item-from-spec [field-key field-schema optional? [] form]))
-                            (m/entries section-spec)))]
-      [afc/patient-assessment-card-wrapper
-       {:patient-id patient-id
-        :form-instance form
-        :form-key (str patient-id "-special-disease-history-spec")
-        :initial-data initial-form-values
-        :on-finish-handler on-finish-fn
-        :children
-        [:<>
-         form-items
-         [:> Row {:justify "end" :style {:marginTop "20px"}}
-          [:> Col
-           [:> Form.Item
-            [:button {:type "button"
-                      :on-click on-show-summary
-                      :style {:padding "5px 10px"
-                              :background-color "#f0f0f0"
-                              :border "1px solid #ccc"
-                              :border-radius "4px"
-                              :cursor "pointer"}}
-             "返回总结"]]]]]}])))
+(def special-disease-history-detailed-view
+  (create-detailed-view {:section-key :特殊疾病病史
+                         :section-spec assessment-specs/特殊疾病病史Spec
+                         :data-prop :sdh-data
+                         :form-key-suffix "special-disease-history-spec"})
 
 (defn special-disease-history-card "特殊疾病病史" [props]
   (let [view-state (r/atom :summary)
@@ -778,55 +445,18 @@
                                  :schema assessment-specs/营养评估Spec
                                  :section-key :营养评估}]))
 
-(defn nutritional-assessment-detailed-view [props]
-  (let [{:keys [report-form-instance-fn patient-id na-data on-show-summary]} props
-        [form] (Form.useForm)
-        initial-form-values (form-utils/apply-enum-defaults-to-data
-                              (or na-data {})
-                              assessment-specs/营养评估Spec)
-        on-finish-fn (fn [values]
-                       (let [values-clj (js->clj values :keywordize-keys true)]
-                         (rf/dispatch [::events/update-canonical-assessment-section :营养评估 values-clj])))]
-    (React/useEffect (fn []
-                       (when report-form-instance-fn
-                         (report-form-instance-fn :营养评估 form))
-                       js/undefined)
-                     #js [])
-    (let [section-spec assessment-specs/营养评估Spec
-          form-items (into
-                      [:<>]
-                      (mapv (fn [[field-key field-schema optional? _]]
-                              (afg/render-form-item-from-spec [field-key field-schema optional? [] form]))
-                            (m/entries section-spec)))]
-      [afc/patient-assessment-card-wrapper
-       {:patient-id patient-id
-        :form-instance form
-        :form-key (str patient-id "-nutritional-assessment-spec")
-        :initial-data initial-form-values
-        :on-finish-handler on-finish-fn
-        :children
-        [:<>
-         form-items
-         [:div {:style {:padding "8px" :border "1px solid #d9d9d9" :borderRadius "2px" :marginBottom "16px" :marginTop "10px"}}
-          [:h5 {:style {:marginBottom "4px"}} "营养评分说明:"]
-          [:p {:style {:fontSize "12px" :color "gray"}} "每项“是”计1分，总分≥2分提示存在营养风险，建议进一步评估。"]]
-         [:div {:style {:padding "8px" :border "1px solid #d9d9d9" :borderRadius "2px" :marginTop "10px"}}
-          [:h5 {:style {:marginBottom "4px"}} "FRAIL 结论:"]
-          [:p {:style {:fontSize "12px" :color "gray"}}
-           "0 分：健康；" [:br]
-           "1-2 分：衰弱前期；" [:br]
-           "≥3 分：衰弱。"]]
-         [:> Row {:justify "end" :style {:marginTop "20px"}}
-          [:> Col
-           [:> Form.Item
-            [:button {:type "button"
-                      :on-click on-show-summary
-                      :style {:padding "5px 10px"
-                              :background-color "#f0f0f0"
-                              :border "1px solid #ccc"
-                              :border-radius "4px"
-                              :cursor "pointer"}}
-             "返回总结"]]]]]}])))
+(def nutritional-assessment-detailed-view
+  (create-detailed-view {:section-key :营养评估
+                         :section-spec assessment-specs/营养评估Spec
+                         :data-prop :na-data
+                         :form-key-suffix "nutritional-assessment-spec"
+                         :extra-content [:<>
+                                       [:div {:style {:padding "8px" :border "1px solid #d9d9d9" :borderRadius "2px" :marginBottom "16px" :marginTop "10px"}}
+                                        [:h5 {:style {:marginBottom "4px"}} "营养评分说明:"]
+                                        [:p {:style {:fontSize "12px" :color "gray"}} "每项“是”计1分，总分≥2分提示存在营养风险，建议进一步评估。"]]
+                                       [:div {:style {:padding "8px" :border "1px solid #d9d9d9" :borderRadius "2px" :marginTop "10px"}}
+                                        [:h5 {:style {:marginBottom "4px"}} "FRAIL 结论:"]
+                                        [:p {:style {:fontSize "12px" :color "gray"}} "0 分：健康；" [:br] "1-2 分：衰弱前期；" [:br] "≥3 分：衰弱。"]]]})
 
 (defn nutritional-assessment-card "营养评估" [props]
   (let [view-state (r/atom :summary)
@@ -856,46 +486,11 @@
                                  :schema assessment-specs/妊娠Spec
                                  :section-key :妊娠}]))
 
-(defn pregnancy-assessment-detailed-view [props]
-  (let [{:keys [report-form-instance-fn patient-id pa-data on-show-summary]} props
-        [form] (Form.useForm)
-        initial-form-values (form-utils/apply-enum-defaults-to-data
-                              (or pa-data {})
-                              assessment-specs/妊娠Spec)
-        on-finish-fn (fn [values]
-                       (let [values-clj (js->clj values :keywordize-keys true)]
-                         (rf/dispatch [::events/update-canonical-assessment-section :妊娠 values-clj])))]
-    (React/useEffect (fn []
-                       (when report-form-instance-fn
-                         (report-form-instance-fn :妊娠 form)) ; Use spec keyword
-                       js/undefined)
-                     #js [])
-    (let [section-spec assessment-specs/妊娠Spec
-          form-items (into
-                      [:<>]
-                      (mapv (fn [[field-key field-schema optional? _]]
-                              (afg/render-form-item-from-spec [field-key field-schema optional? [] form]))
-                            (m/entries section-spec)))]
-      [afc/patient-assessment-card-wrapper
-       {:patient-id patient-id
-        :form-instance form
-        :form-key (str patient-id "-pregnancy-assessment-spec")
-        :initial-data initial-form-values
-        :on-finish-handler on-finish-fn
-        :children
-        [:<>
-         form-items
-         [:> Row {:justify "end" :style {:marginTop "20px"}}
-          [:> Col
-           [:> Form.Item
-            [:button {:type "button"
-                      :on-click on-show-summary
-                      :style {:padding "5px 10px"
-                              :background-color "#f0f0f0"
-                              :border "1px solid #ccc"
-                              :border-radius "4px"
-                              :cursor "pointer"}}
-             "返回总结"]]]]]}])))
+(def pregnancy-assessment-detailed-view
+  (create-detailed-view {:section-key :妊娠
+                         :section-spec assessment-specs/妊娠Spec
+                         :data-prop :pa-data
+                         :form-key-suffix "pregnancy-assessment-spec"})
 
 (defn pregnancy-assessment-card "妊娠" [props]
   (let [view-state (r/atom :summary)
@@ -925,59 +520,12 @@
                                  :schema assessment-specs/手术麻醉史Spec
                                  :section-key :手术麻醉史}]))
 
-(defn surgical-anesthesia-history-detailed-view [props]
-  (let [{:keys [report-form-instance-fn patient-id sah-data on-show-summary]} props
-        [form] (Form.useForm)
-        ;; 初始化表单值的数据处理流程
-        initial-form-values (let [data-from-db (or sah-data {}) ; 1. 从数据库获取原始数据，如果为空则使用空 map
-                                  ;; 2. 应用枚举字段的默认值
-                                  data-with-enum-defaults (form-utils/apply-enum-defaults-to-data
-                                                            data-from-db
-                                                            assessment-specs/手术麻醉史Spec)
-                                  ;; 3. 自动将所有在 Spec 中标记为 :is-date? true 的日期字符串转换为 dayjs 对象
-                                  final-initial-values (form-utils/preprocess-date-fields
-                                                         data-with-enum-defaults
-                                                         assessment-specs/手术麻醉史Spec)]
-                              final-initial-values)
-        ;; 表单提交时的处理函数
-        on-finish-fn (fn [values]
-                       (let [values-clj (js->clj values :keywordize-keys true) ; 1. 将 JS 表单值转换为 ClojureScript map
-                             ;; 2. 自动将所有 dayjs 对象转换回 ISO 日期字符串，以便存储或传输
-                             transformed-values (form-utils/transform-date-fields-for-submission
-                                                  values-clj
-                                                  assessment-specs/手术麻醉史Spec)]
-                         (rf/dispatch [::events/update-canonical-assessment-section :手术麻醉史 transformed-values])))]
-    (React/useEffect (fn []
-                       (when report-form-instance-fn
-                         (report-form-instance-fn :手术麻醉史 form))
-                       js/undefined)
-                     #js [])
-    (let [section-spec assessment-specs/手术麻醉史Spec
-          form-items (into
-                      [:<>]
-                      (mapv (fn [[field-key field-schema optional? _]]
-                              (afg/render-form-item-from-spec [field-key field-schema optional? [] form]))
-                            (m/entries section-spec)))]
-      [afc/patient-assessment-card-wrapper
-       {:patient-id patient-id
-        :form-instance form
-        :form-key (str patient-id "-surgical-anesthesia-history-spec")
-        :initial-data initial-form-values
-        :on-finish-handler on-finish-fn
-        :children
-        [:<>
-         form-items
-         [:> Row {:justify "end" :style {:marginTop "20px"}}
-          [:> Col
-           [:> Form.Item
-            [:button {:type "button"
-                      :on-click on-show-summary
-                      :style {:padding "5px 10px"
-                              :background-color "#f0f0f0"
-                              :border "1px solid #ccc"
-                              :border-radius "4px"
-                              :cursor "pointer"}}
-             "返回总结"]]]]]}])))
+(def surgical-anesthesia-history-detailed-view
+  (create-detailed-view {:section-key :手术麻醉史
+                         :section-spec assessment-specs/手术麻醉史Spec
+                         :data-prop :sah-data
+                         :form-key-suffix "surgical-anesthesia-history-spec"
+                         :preprocess-dates? true}))
 
 (defn surgical-anesthesia-history-card "手术麻醉史" [props]
   (let [view-state (r/atom :summary)
