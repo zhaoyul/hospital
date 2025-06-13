@@ -6,25 +6,22 @@
                                  HeartOutlined HistoryOutlined
                                  MedicineBoxOutlined NodeIndexOutlined
                                  ProjectOutlined SecurityScanOutlined
-                                 UserOutlined WarningOutlined WomanOutlined]]
-   ["antd" :refer [Form Row Col]]
+                                 WarningOutlined WomanOutlined]]
+   ["antd" :refer [Col Form Row]]
    ["react" :as React]
-   [clojure.string :as str]
-   [taoensso.timbre :as timbre] ; Removed :refer [spy]
-   [malli.core :as m]
-   ;; Removed malli.util :as mu as it's likely unused here after refactoring
    [hc.hospital.components.assessment-form-components :as afc]
+   [hc.hospital.components.summary-components :as summary]
+   [hc.hospital.events :as events]
+   [hc.hospital.form-utils :as form-utils]
    [hc.hospital.pages.assessment-form-generators :as afg]
    [hc.hospital.specs.assessment-complete-cn-spec :as assessment-specs]
-   [hc.hospital.events :as events]
    [hc.hospital.subs :as subs]
-   [hc.hospital.utils :as utils]
-  [hc.hospital.ui-helpers :as ui-helpers]
-  [hc.hospital.natural-language-generators :as nlg]
-  [hc.hospital.components.summary-components :as summary]
-  [hc.hospital.form-utils :as form-utils]
-  [re-frame.core :as rf]
-  [reagent.core :as r]))
+   [hc.hospital.ui-helpers :as ui-helpers]
+   [malli.core :as m] ;; Removed malli.util :as mu as it's likely unused here after refactoring
+   [re-frame.core :as rf]
+   [reagent.core :as r]
+   [taoensso.timbre :as timbre] ; Removed :refer [spy]
+))
 
 ;; Data-driven rendering helpers have been moved to hc.hospital.pages.assessment-form-generators
 
