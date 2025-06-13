@@ -89,6 +89,33 @@
 
     (testing "清理测试数据"
       (let [delete-result (query-fn :delete-patient-assessment-by-id! {:patient_id patient-id})]
-        (is (= 1 delete-result) "删除操作应返回影响的行数为1")
+(is (= 1 delete-result) "删除操作应返回影响的行数为1")
         (let [retrieved-after-delete (query-fn :get-patient-assessment-by-id {:patient_id patient-id})]
           (is (nil? retrieved-after-delete) "删除后应无法从数据库检索到评估"))))))
+
+(deftest patient-find-and-list-test
+  (let [query-fn (get-query-fn)
+        patient-id "HISPAT001"
+        _ (query-fn :delete-patient-assessment-by-id! {:patient_id patient-id})
+        oracle-stub (fn [& _] {:name "李四" :sex "女" :date_of_birth "1985-01-01" :id_no "ID01"})]
+
+    (testing "通过HIS查询并创建本地记录"
+      (let [resp (patient-api/find-patient-by-id-handler {:parameters {:path {:patientIdInput patient-id}}
+                                                         :query-fn query-fn
+                                                         :oracle-query-fn oracle-stub})
+            body (:body resp)]
+        (is (= 200 (:status resp)))
+        (is (= patient-id (:patientIdInput body)))
+        (is (= "李四" (get-in body [:his_info :name])))
+        (is (some? (query-fn :get-patient-assessment-by-id {:patient_id patient-id}))))
+
+    (testing "获取所有患者评估列表"
+      (let [resp (patient-api/get-all-patient-assessments-handler {:parameters {:query {}}
+                                                                  :query-fn query-fn})
+            body (:body resp)]
+        (is (= 200 (:status resp)))
+        (is (vector? body))
+        (is (pos? (count body)))))
+
+    (testing "清理创建的记录"
+      (query-fn :delete-patient-assessment-by-id! {:patient_id patient-id}))))

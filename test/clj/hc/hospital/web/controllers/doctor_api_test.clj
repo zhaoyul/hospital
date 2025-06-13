@@ -130,4 +130,46 @@
           (is (pos? (count doctors-list)) "医生列表不应为空")
           ;; 可以进一步检查列表中的医生信息是否符合预期
           (is (some #(= "列表医生1" (:name %)) doctors-list) "列表中应包含测试医生1")
-          (is (some #(= "列表医生2" (:name %)) doctors-list) "列表中应包含测试医生2"))))))
+(is (some #(= "列表医生2" (:name %)) doctors-list) "列表中应包含测试医生2"))))))
+
+(deftest doctor-api-update-tests
+  (let [{:keys [query-fn]} (get-handler-and-query-fn)]
+    (doctor.db/create-doctor! query-fn {:username "update_doc" :password "p1" :name "旧名"})
+    (let [doc (doctor.db/get-doctor-by-username query-fn "update_doc")
+          id (:id doc)]
+      (testing "获取个人信息"
+        (let [resp (doctor-api.ctlr/get-current-doctor-profile {:integrant-deps {:query-fn query-fn}
+                                                               :identity id})]
+          (is (= 200 (:status resp)))
+          (is (= id (get-in resp [:body :doctor :id])))))
+
+      (testing "根据ID获取医生"
+        (let [resp (doctor-api.ctlr/get-doctor-by-id {:path-params {:id (str id)}
+                                                      :integrant-deps {:query-fn query-fn}})]
+          (is (= 200 (:status resp)))
+          (is (= id (get-in resp [:body :doctor :id])))))
+
+      (testing "更新姓名"
+        (let [resp (doctor-api.ctlr/update-doctor-name! {:path-params {:id (str id)}
+                                                         :body-params {:name "新名"}
+                                                         :integrant-deps {:query-fn query-fn}
+                                                         :identity id})]
+          (is (= 200 (:status resp)))
+          (is (= "新名" (:name (doctor.db/get-doctor-by-id query-fn id))))))
+
+      (testing "更新密码"
+        (let [resp (doctor-api.ctlr/update-doctor-password! {:path-params {:id (str id)}
+                                                             :body-params {:new_password "newpass"}
+                                                             :integrant-deps {:query-fn query-fn}
+                                                             :identity id})
+              verified (doctor.db/verify-doctor-credentials query-fn "update_doc" "newpass")]
+          (is (= 200 (:status resp)))
+          (is (some? verified))))
+
+      (testing "删除医生"
+        (let [resp (doctor-api.ctlr/delete-doctor! {:path-params {:id (str id)}
+                                                    :integrant-deps {:query-fn query-fn}
+                                                    :identity id})
+              deleted (doctor.db/get-doctor-by-id query-fn id)]
+          (is (= 200 (:status resp)))
+          (is (nil? deleted)))))))
