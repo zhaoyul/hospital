@@ -19,26 +19,20 @@
    [hc.hospital.events :as events]
    [hc.hospital.subs :as subs]
    [hc.hospital.utils :as utils]
-   [hc.hospital.ui-helpers :as ui-helpers]
-   [hc.hospital.natural-language-generators :as nlg]
-   [hc.hospital.form-utils :as form-utils]
-   [re-frame.core :as rf]
-   [reagent.core :as r]))
+  [hc.hospital.ui-helpers :as ui-helpers]
+  [hc.hospital.natural-language-generators :as nlg]
+  [hc.hospital.components.summary-components :as summary]
+  [hc.hospital.form-utils :as form-utils]
+  [re-frame.core :as rf]
+  [reagent.core :as r]))
 
 ;; Data-driven rendering helpers have been moved to hc.hospital.pages.assessment-form-generators
 
 (defn- circulatory-system-summary-view [props]
   (let [{:keys [circulatory-data]} props]
-    (if (seq circulatory-data)
-      (nlg/generate-summary-component circulatory-data
-                                      assessment-specs/循环系统Spec
-                                      :循环系统)
-      ;; When circulatory-data is nil or empty, provide a consistent empty state structure
-      [:div.summary-section {:key :circulatory-system-empty
-                             :style {:padding "10px" :border "1px solid #ddd" :margin-bottom "10px" :border-radius "4px"}}
-       [:h3 {:style {:font-size "16px" :font-weight "bold" :margin-top "0" :margin-bottom "8px"}}
-        (nlg/schema-key->display-label :循环系统) "："]
-       [:p {:style {:margin "0"}} "暂无数据可供总结。"]])))
+    [summary/assessment-summary {:data circulatory-data
+                                 :schema assessment-specs/循环系统Spec
+                                 :section-key :循环系统}]))
 
 (defn- circulatory-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id circulatory-data on-show-summary]} props
@@ -121,12 +115,9 @@
 
 (defn- respiratory-system-summary-view [props]
   (let [{:keys [respiratory-data]} props]
-    (if (seq respiratory-data)
-      (let [summary-hiccup (nlg/generate-summary-component respiratory-data assessment-specs/呼吸系统Spec :呼吸系统)]
-        (if (or (not (vector? summary-hiccup)) (seq summary-hiccup))
-          summary-hiccup
-          [:div {:style {:padding "10px"}} "暂无呼吸系统评估数据可供总结 (内容为空)。"]))
-      [:div {:style {:padding "10px"}} "暂无呼吸系统评估数据可供总结。"])))
+    [summary/assessment-summary {:data respiratory-data
+                                 :schema assessment-specs/呼吸系统Spec
+                                 :section-key :呼吸系统}]))
 
 (defn respiratory-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id respiratory-data on-show-summary]} props
@@ -205,12 +196,9 @@
 ;; Mental Neuromuscular System Card
 (defn- mental-neuromuscular-system-summary-view [props]
   (let [{:keys [mn-data]} props]
-    (if (seq mn-data)
-      (let [summary-hiccup (nlg/generate-summary-component mn-data assessment-specs/精神及神经肌肉系统Spec :精神及神经肌肉系统)]
-        (if (or (not (vector? summary-hiccup)) (seq summary-hiccup))
-          summary-hiccup
-          [:div {:style {:padding "10px"}} "暂无精神及神经肌肉系统评估数据可供总结 (内容为空)。"]))
-      [:div {:style {:padding "10px"}} "暂无精神及神经肌肉系统评估数据可供总结。"])))
+    [summary/assessment-summary {:data mn-data
+                                 :schema assessment-specs/精神及神经肌肉系统Spec
+                                 :section-key :精神及神经肌肉系统}]))
 
 (defn mental-neuromuscular-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id mn-data on-show-summary]} props
@@ -298,12 +286,9 @@
 ;; Endocrine System Card
 (defn- endocrine-system-summary-view [props]
   (let [{:keys [endo-data]} props]
-    (if (seq endo-data)
-      (let [summary-hiccup (nlg/generate-summary-component endo-data assessment-specs/内分泌系统Spec :内分泌系统)]
-        (if (or (not (vector? summary-hiccup)) (seq summary-hiccup))
-          summary-hiccup
-          [:div {:style {:padding "10px"}} "暂无内分泌系统评估数据可供总结 (内容为空)。"]))
-      [:div {:style {:padding "10px"}} "暂无内分泌系统评估数据可供总结。"])))
+    [summary/assessment-summary {:data endo-data
+                                 :schema assessment-specs/内分泌系统Spec
+                                 :section-key :内分泌系统}]))
 
 (defn endocrine-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id endo-data on-show-summary]} props
@@ -369,12 +354,9 @@
 ;; Liver Kidney System Card
 (defn- liver-kidney-system-summary-view [props]
   (let [{:keys [lk-data]} props]
-    (if (seq lk-data)
-      (let [summary-hiccup (nlg/generate-summary-component lk-data assessment-specs/肝肾病史Spec :肝肾病史)]
-        (if (or (not (vector? summary-hiccup)) (seq summary-hiccup))
-          summary-hiccup
-          [:div {:style {:padding "10px"}} "暂无肝肾病史评估数据可供总结 (内容为空)。"]))
-      [:div {:style {:padding "10px"}} "暂无肝肾病史评估数据可供总结。"])))
+    [summary/assessment-summary {:data lk-data
+                                 :schema assessment-specs/肝肾病史Spec
+                                 :section-key :肝肾病史}]))
 
 (defn liver-kidney-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id lk-data on-show-summary]} props
@@ -448,12 +430,9 @@
 ;; Digestive System Card
 (defn- digestive-system-summary-view [props]
   (let [{:keys [ds-data]} props]
-    (if (seq ds-data)
-      (let [summary-hiccup (nlg/generate-summary-component ds-data assessment-specs/消化系统Spec :消化系统)]
-        (if (or (not (vector? summary-hiccup)) (seq summary-hiccup))
-          summary-hiccup
-          [:div {:style {:padding "10px"}} "暂无消化系统评估数据可供总结 (内容为空)。"]))
-      [:div {:style {:padding "10px"}} "暂无消化系统评估数据可供总结。"])))
+    [summary/assessment-summary {:data ds-data
+                                 :schema assessment-specs/消化系统Spec
+                                 :section-key :消化系统}]))
 
 (defn digestive-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id ds-data on-show-summary]} props
@@ -520,12 +499,9 @@
 ;; Hematologic System Card
 (defn- hematologic-system-summary-view [props]
   (let [{:keys [hs-data]} props]
-    (if (seq hs-data)
-      (let [summary-hiccup (nlg/generate-summary-component hs-data assessment-specs/血液系统Spec :血液系统)]
-        (if (or (not (vector? summary-hiccup)) (seq summary-hiccup))
-          summary-hiccup
-          [:div {:style {:padding "10px"}} "暂无血液系统评估数据可供总结 (内容为空)。"]))
-      [:div {:style {:padding "10px"}} "暂无血液系统评估数据可供总结。"])))
+    [summary/assessment-summary {:data hs-data
+                                 :schema assessment-specs/血液系统Spec
+                                 :section-key :血液系统}]))
 
 (defn hematologic-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id hs-data on-show-summary]} props
@@ -591,12 +567,9 @@
 ;; Immune System Card
 (defn- immune-system-summary-view [props]
   (let [{:keys [is-data]} props]
-    (if (seq is-data)
-      (let [summary-hiccup (nlg/generate-summary-component is-data assessment-specs/免疫系统Spec :免疫系统)]
-        (if (or (not (vector? summary-hiccup)) (seq summary-hiccup))
-          summary-hiccup
-          [:div {:style {:padding "10px"}} "暂无免疫系统评估数据可供总结 (内容为空)。"]))
-      [:div {:style {:padding "10px"}} "暂无免疫系统评估数据可供总结。"])))
+    [summary/assessment-summary {:data is-data
+                                 :schema assessment-specs/免疫系统Spec
+                                 :section-key :免疫系统}]))
 
 (defn immune-system-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id is-data on-show-summary]} props
@@ -663,12 +636,9 @@
 ;; Special Medication History Card
 (defn- special-medication-history-summary-view [props]
   (let [{:keys [smh-data]} props]
-    (if (seq smh-data)
-      (let [summary-hiccup (nlg/generate-summary-component smh-data assessment-specs/特殊用药史Spec :特殊用药史)]
-        (if (or (not (vector? summary-hiccup)) (seq summary-hiccup))
-          summary-hiccup
-          [:div {:style {:padding "10px"}} "暂无特殊用药史评估数据可供总结 (内容为空)。"]))
-      [:div {:style {:padding "10px"}} "暂无特殊用药史评估数据可供总结。"])))
+    [summary/assessment-summary {:data smh-data
+                                 :schema assessment-specs/特殊用药史Spec
+                                 :section-key :特殊用药史}]))
 
 (defn special-medication-history-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id smh-data on-show-summary]} props
@@ -735,12 +705,9 @@
 ;; Special Disease History Card
 (defn- special-disease-history-summary-view [props]
   (let [{:keys [sdh-data]} props]
-    (if (seq sdh-data)
-      (let [summary-hiccup (nlg/generate-summary-component sdh-data assessment-specs/特殊疾病病史Spec :特殊疾病病史)]
-        (if (or (not (vector? summary-hiccup)) (seq summary-hiccup))
-          summary-hiccup
-          [:div {:style {:padding "10px"}} "暂无特殊疾病病史评估数据可供总结 (内容为空)。"]))
-      [:div {:style {:padding "10px"}} "暂无特殊疾病病史评估数据可供总结。"])))
+    [summary/assessment-summary {:data sdh-data
+                                 :schema assessment-specs/特殊疾病病史Spec
+                                 :section-key :特殊疾病病史}]))
 
 (defn special-disease-history-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id sdh-data on-show-summary]} props
@@ -807,12 +774,9 @@
 ;; Nutritional Assessment Card
 (defn- nutritional-assessment-summary-view [props]
   (let [{:keys [na-data]} props]
-    (if (seq na-data)
-      (let [summary-hiccup (nlg/generate-summary-component na-data assessment-specs/营养评估Spec :营养评估)]
-        (if (or (not (vector? summary-hiccup)) (seq summary-hiccup))
-          summary-hiccup
-          [:div {:style {:padding "10px"}} "暂无营养评估数据可供总结 (内容为空)。"]))
-      [:div {:style {:padding "10px"}} "暂无营养评估数据可供总结。"])))
+    [summary/assessment-summary {:data na-data
+                                 :schema assessment-specs/营养评估Spec
+                                 :section-key :营养评估}]))
 
 (defn nutritional-assessment-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id na-data on-show-summary]} props
@@ -888,12 +852,9 @@
 ;; Pregnancy Assessment Card
 (defn- pregnancy-assessment-summary-view [props]
   (let [{:keys [pa-data]} props]
-    (if (seq pa-data)
-      (let [summary-hiccup (nlg/generate-summary-component pa-data assessment-specs/妊娠Spec :妊娠)]
-        (if (or (not (vector? summary-hiccup)) (seq summary-hiccup))
-          summary-hiccup
-          [:div {:style {:padding "10px"}} "暂无妊娠评估数据可供总结 (内容为空)。"]))
-      [:div {:style {:padding "10px"}} "暂无妊娠评估数据可供总结。"])))
+    [summary/assessment-summary {:data pa-data
+                                 :schema assessment-specs/妊娠Spec
+                                 :section-key :妊娠}]))
 
 (defn pregnancy-assessment-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id pa-data on-show-summary]} props
@@ -960,12 +921,9 @@
 ;; Surgical Anesthesia History Card
 (defn- surgical-anesthesia-history-summary-view [props]
   (let [{:keys [sah-data]} props]
-    (if (seq sah-data)
-      (let [summary-hiccup (nlg/generate-summary-component sah-data assessment-specs/手术麻醉史Spec :手术麻醉史)]
-        (if (or (not (vector? summary-hiccup)) (seq summary-hiccup))
-          summary-hiccup
-          [:div {:style {:padding "10px"}} "暂无手术麻醉史评估数据可供总结 (内容为空)。"]))
-      [:div {:style {:padding "10px"}} "暂无手术麻醉史评估数据可供总结。"])))
+    [summary/assessment-summary {:data sah-data
+                                 :schema assessment-specs/手术麻醉史Spec
+                                 :section-key :手术麻醉史}]))
 
 (defn surgical-anesthesia-history-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id sah-data on-show-summary]} props
@@ -1045,12 +1003,9 @@
 ;; Airway Assessment Card
 (defn- airway-assessment-summary-view [props]
   (let [{:keys [aa-data]} props]
-    (if (seq aa-data)
-      (let [summary-hiccup (nlg/generate-summary-component aa-data assessment-specs/气道评估Spec :气道评估)]
-        (if (or (not (vector? summary-hiccup)) (seq summary-hiccup))
-          summary-hiccup
-          [:div {:style {:padding "10px"}} "暂无气道评估数据可供总结 (内容为空)。"]))
-      [:div {:style {:padding "10px"}} "暂无气道评估数据可供总结。"])))
+    [summary/assessment-summary {:data aa-data
+                                 :schema assessment-specs/气道评估Spec
+                                 :section-key :气道评估}]))
 
 (defn airway-assessment-detailed-view [props]
   (let [{:keys [report-form-instance-fn patient-id aa-data on-show-summary]} props
@@ -1141,12 +1096,9 @@
 ;; Spinal Anesthesia Assessment Card
 (defn- spinal-anesthesia-assessment-summary-view [props]
   (let [{:keys [saa-data]} props]
-    (if (seq saa-data)
-      (let [summary-hiccup (nlg/generate-summary-component saa-data assessment-specs/椎管内麻醉相关评估Spec :椎管内麻醉相关评估)]
-        (if (or (not (vector? summary-hiccup)) (seq summary-hiccup))
-          summary-hiccup
-          [:div {:style {:padding "10px"}} "暂无椎管内麻醉相关评估数据可供总结 (内容为空)。"]))
-      [:div {:style {:padding "10px"}} "暂无椎管内麻醉相关评估数据可供总结。"])))
+    [summary/assessment-summary {:data saa-data
+                                 :schema assessment-specs/椎管内麻醉相关评估Spec
+                                 :section-key :椎管内麻醉相关评估}]))
 
 (defn spinal-anesthesia-assessment-detailed-view [props]
   (timbre/info "spinal-anesthesia-assessment-detailed-view: Props received:" (clj->js props))
