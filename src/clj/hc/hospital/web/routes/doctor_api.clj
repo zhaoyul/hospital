@@ -31,8 +31,7 @@
      :post {:summary "注册新医生"
             :tags ["医生用户"]
             :parameters {:body {:username string? :password string? :name string?}}
-            :handler #(doctor-api/register-doctor! {:integrant-deps opts :body-params (-> % :body-params)})}}
-    ]
+            :handler #(doctor-api/register-doctor! {:integrant-deps opts :body-params (-> % :body-params)})}}]
    ["/users/login"
     {:post {:summary "医生登录"
             :tags ["医生用户"]

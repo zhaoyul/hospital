@@ -81,8 +81,7 @@
                       :defaultCurrent 1
                       :total 24
                       :pageSize 8
-                      :showTotal (fn [total _] (str "共 " total " 条"))}] ; Changed range to _
-      ]
+                      :showTotal (fn [total _] (str "共 " total " 条"))}] ] ; Changed range to _
      ;; Modals (placeholders for now)
      ;; Link Patient Modal
      ;; [:> Modal {:title "关联患者" :visible false :onOk #() :onCancel #()}]
