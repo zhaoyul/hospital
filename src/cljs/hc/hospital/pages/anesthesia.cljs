@@ -5,27 +5,25 @@
                                           ClockCircleOutlined
                                           CloseCircleOutlined EditOutlined
                                           FileTextOutlined HeartOutlined
-                                          MedicineBoxOutlined MessageOutlined
-                                          PrinterOutlined ProfileOutlined
-                                          QrcodeOutlined SaveOutlined
-                                          SolutionOutlined SyncOutlined
-                                          UploadOutlined UserOutlined]]
-   ["dayjs" :as dayjs]
+                                          MessageOutlined PrinterOutlined
+                                          ProfileOutlined QrcodeOutlined
+                                          SaveOutlined SolutionOutlined
+                                          SyncOutlined UploadOutlined
+                                          UserOutlined]]
    ["antd" :refer [Button Card Col DatePicker Descriptions Empty Form Input
                    InputNumber Layout Modal Radio Row Select Space Tag Upload]]
+   ["react" :as React]
+   ["signature_pad" :as SignaturePad]
    [hc.hospital.events :as events]
+   [hc.hospital.form-utils :as form-utils]
    [hc.hospital.pages.assessment-cards :as acards]
+   [hc.hospital.specs.assessment-complete-cn-spec :as assessment-specs]
    [hc.hospital.subs :as subs]
    [hc.hospital.ui-helpers :refer [custom-styled-card]]
    [hc.hospital.utils :as utils]
-   [hc.hospital.form-utils :as form-utils]
-   [hc.hospital.specs.assessment-complete-cn-spec :as assessment-specs]
-   [malli.core :as m]
    [re-frame.core :as rf]
    [reagent.core :as r]
-   ["react" :as React]
-   [taoensso.timbre :as timbre]
-   ["signature_pad" :as SignaturePad]))
+   [taoensso.timbre :as timbre]))
 
 ;; Define common grid style maps and helper function
 (def ^:private grid-style-4-col
@@ -63,9 +61,9 @@
      ;; 申请日期过滤
      [:div {:style {:display "flex" :alignItems "center" :marginBottom "12px"}}
       [:span {:style {:width label-width
-                       :textAlign "left"
-                       :color "#666"
-                       :marginRight "8px"}}
+                      :textAlign "left"
+                      :color "#666"
+                      :marginRight "8px"}}
        "申请日期:"]
       [:> DatePicker.RangePicker
        {:style {:flex "1"}
@@ -75,9 +73,9 @@
      ;; 评估状态过滤
      [:div {:style {:display "flex" :alignItems "center" :marginBottom "12px"}}
       [:span {:style {:width label-width
-                       :textAlign "left"
-                       :color "#666"
-                       :marginRight "8px"}}
+                      :textAlign "left"
+                      :color "#666"
+                      :marginRight "8px"}}
        "状态:"]
       [:> Select
        {:style {:flex "1"}
@@ -89,9 +87,9 @@
      ;; 患者搜索过滤
      [:div {:style {:display "flex" :alignItems "center"}}
       [:span {:style {:width label-width
-                       :textAlign "left"
-                       :color "#666"
-                       :marginRight "8px"}}
+                      :textAlign "left"
+                      :color "#666"
+                      :marginRight "8px"}}
        "患者:"]
       [:> Input.Search
        {:style {:flex "1"}
@@ -689,10 +687,10 @@
 
 (defn- assessment-action-buttons [patient-status]
   [:> Space {:style {:marginLeft "16px"}}
-    [:> Button {:type "primary" :icon (r/as-element [:> CheckCircleOutlined])
-                :on-click #(rf/dispatch [::events/approve-patient])
-                :style {:background "#52c41a" :borderColor "#52c41a"}}
-     "批准"]
+   [:> Button {:type "primary" :icon (r/as-element [:> CheckCircleOutlined])
+               :on-click #(rf/dispatch [::events/approve-patient])
+               :style {:background "#52c41a" :borderColor "#52c41a"}}
+    "批准"]
    [:> Button {:type "primary" :icon (r/as-element [:> ClockCircleOutlined])
                :on-click #(rf/dispatch [::events/postpone-patient])
                :style {:background "#faad14" :borderColor "#faad14"}}
@@ -705,7 +703,7 @@
      [:> Button {:icon (r/as-element [:> PrinterOutlined])
                  :on-click #(js/window.print)
                  :style {:background "#1890ff" :borderColor "#1890ff" :color "white"}}
-     "打印表单"])])
+      "打印表单"])])
 
 (defn- assessment-header [patient-name patient-status current-patient-id]
   [:div {:style {:display "flex"
@@ -785,28 +783,28 @@
 
 (defn anesthesia-content []
   (let [basic-info @(rf/subscribe [::subs/canonical-basic-info])
-        patient-name (get basic-info :name "未知患者")
+        patient-name (get basic-info :姓名 "未知患者")
         patient-status (get basic-info :评估状态 "待评估")
         current-patient-id @(rf/subscribe [::subs/current-patient-id])]
     [:> Layout.Content {:style {:margin 0 :minHeight 280 :overflow "hidden" :display "flex" :flexDirection "row"}}
-   ;; 左侧患者列表区域
-   [:> Card {:style {:width "400px"
-                     :minWidth "350px"
-                     :height "calc(100vh - 64px)" ; 假设顶部导航栏高度为 64px
-                     :borderRight "1px solid #f0f0f0"
-                     :display "flex"
-                     :flexDirection "column"
-                     :padding "0"}}
+     ;; 左侧患者列表区域
+     [:> Card {:style {:width "400px"
+                       :minWidth "350px"
+                       :height "calc(100vh - 64px)" ; 假设顶部导航栏高度为 64px
+                       :borderRight "1px solid #f0f0f0"
+                       :display "flex"
+                       :flexDirection "column"
+                       :padding "0"}}
 
-    ;; 患者列表主体
-    [:div {:style {:flexGrow 1 :overflowY "auto"}}
-     [patient-list-panel]]]
+      ;; 患者列表主体
+      [:div {:style {:flexGrow 1 :overflowY "auto"}}
+       [patient-list-panel]]]
 
-   ;; 右侧评估详情区域
-   [:div {:style {:flexGrow 1
-                  :background "#f0f2f5"
-                  :overflow "hidden"
-                  :display "flex"
-                  :flexDirection "column"}}
-    [assessment-header patient-name patient-status current-patient-id]
-    [assessment]]]))
+     ;; 右侧评估详情区域
+     [:div {:style {:flexGrow 1
+                    :background "#f0f2f5"
+                    :overflow "hidden"
+                    :display "flex"
+                    :flexDirection "column"}}
+      [assessment-header patient-name patient-status current-patient-id]
+      [assessment]]]))
