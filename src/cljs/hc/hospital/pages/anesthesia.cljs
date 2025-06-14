@@ -53,10 +53,8 @@
        "同步申请"]
       [:> Button {:type "default"
                   :icon (r/as-element [:> icons/QrcodeOutlined]) ; 二维码图标
-                  :style {:marginRight "16px"} ; 与退出登录按钮保持间距
                   :on-click #(rf/dispatch [::events/open-qr-scan-modal])}
        "扫码签到"]]
-
      ;; 申请日期
      [:div {:style {:marginBottom "8px" :color "#666"}} "申请日期:"]
      [:> DatePicker.RangePicker
@@ -706,9 +704,9 @@
 
         save-button (fn []
                       [:> Layout.Footer {:style {:padding "10px 0"
-                                           :background "white"
-                                           :borderTop "1px solid #f0f0f0"
-                                           :textAlign "center"}}
+                                                 :background "white"
+                                                 :borderTop "1px solid #f0f0f0"
+                                                 :textAlign "center"}}
                        [:> Button {:type "primary"
                                    :size "large"
                                    :icon (r/as-element [:> SaveOutlined])
