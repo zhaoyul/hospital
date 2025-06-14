@@ -26,4 +26,8 @@
                                                          :init-fn hc.hospital.patient.core/init!}}
                               :devtools   {:after-load hc.hospital.patient.core/mount-root}}
                 :test {:target :browser-test
-                       :test-dir "target/browser-test"}}}
+                       :test-dir "target/browser-test"}
+                :storybook {:target :esm
+                             :output-dir "target/storybook"
+                             :modules {:stories {:entries [hc.hospital.stories.button]}}}}
+}
