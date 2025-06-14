@@ -359,9 +359,8 @@
 (rf/reg-event-db ::initialize-doctors
   (fn [db _]
     (if (empty? (get-in db [:doctors]))
-      (assoc db :doctors [{:name "马志明" :username "mazhiming" :role "麻醉医生" :signature nil}]
+      (assoc db :doctors [{:name "马志明" :username "mazhiming" :role "麻醉医生" :signature nil}])
              ;; Add more mock doctors if needed or ensure this is loaded from backend
-             )
       db)))
 
 (rf/reg-event-db ::set-active-tab
@@ -395,8 +394,7 @@
           (if (not= -1 existing-doctor-idx)
             (assoc-in db [:doctors existing-doctor-idx] form-values) ; Update existing
             (update db :doctors conj form-values))) ; Add new
-        (timbre/error "Cannot change username during edit yet.") ; Simple prevention for now
-        )
+        (timbre/error "Cannot change username during edit yet.") ; Simple prevention for now)
       (assoc db :doctor-modal-visible? false :editing-doctor nil))))
 
 (rf/reg-event-db ::delete-doctor

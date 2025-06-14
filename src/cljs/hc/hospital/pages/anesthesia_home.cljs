@@ -66,8 +66,7 @@
      ;; 右侧：用户信息
      (when is-logged-in?
        [:div {:style {:display "flex" :alignItems "center" :cursor "pointer"}
-              ;; :on-click #(rf/dispatch [::events/toggle-user-dropdown]) ; 稍后可以为用户下拉菜单添加事件
-              }
+              } ;; :on-click #(rf/dispatch [::events/toggle-user-dropdown]) ; 稍后可以为用户下拉菜单添加事件
         [:> Avatar {:icon (r/as-element [:> icons/UserOutlined])
                     :style {:marginRight "8px" :backgroundColor "#1890ff"}}]
         ;; 地点标签 - 根据图片硬编码
