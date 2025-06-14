@@ -16,3 +16,5 @@
     - 迁移脚本应尽可能编写为可重复执行而不会出错（例如，使用 `CREATE TABLE IF NOT EXISTS`）。
 - **添加默认用户:**
     - 如需添加新用户，应遵循 `readme.org` 中描述的流程：在 REPL 中使用 `buddy.hashers/derive` 生成密码哈希，然后将 `INSERT` 语句放入新的迁移文件中。
+- **语句分隔符:**
+    - 每条 SQL 语句之间必须使用 `--;;` 作为分隔符，以确保 Migratus 能正确解析脚本。

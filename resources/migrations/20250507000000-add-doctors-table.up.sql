@@ -7,6 +7,7 @@ CREATE TABLE users (
   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
+--;;
 -- 插入默认管理员账号
 INSERT INTO users (username, password_hash, name, role, created_at, updated_at)
 VALUES (
@@ -17,6 +18,7 @@ VALUES (
     datetime('now'),
     datetime('now')
 );
+--;;
 
 -- 插入示例医生账号
 INSERT INTO users (username, password_hash, name, role, created_at, updated_at)
@@ -28,3 +30,4 @@ VALUES (
     datetime('now'),
     datetime('now')
 );
+--;;
