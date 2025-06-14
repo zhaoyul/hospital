@@ -2,7 +2,7 @@
   "组装 Ring 处理器与路由"
   (:require
    [hc.hospital.web.middleware.core :as middleware]
-   [hc.hospital.web.routes.doctor-api]
+   [hc.hospital.web.routes.user-api]
    [hc.hospital.web.routes.patient-api]
    [hc.hospital.web.routes.patient-pages]
    [integrant.core :as ig]

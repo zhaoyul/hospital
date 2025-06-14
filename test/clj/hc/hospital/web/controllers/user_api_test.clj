@@ -1,11 +1,11 @@
-(ns hc.hospital.web.controllers.doctor-api-test
+(ns hc.hospital.web.controllers.user-api-test
   (:require [clojure.test :refer :all]
             [hc.hospital.test-utils :as tu]
             [ring.mock.request :as mock]
             [cheshire.core :as json]
             [clojure.string :as str]
-            [hc.hospital.web.controllers.doctor-api :as doctor-api.ctlr] ;; 引入被测试的控制器命名空间
-            [hc.hospital.db.doctor :as doctor.db])) ;; 引入医生数据库操作命名空间
+            [hc.hospital.web.controllers.user-api :as user-api.ctlr] ;; 引入被测试的控制器命名空间
+            [hc.hospital.db.user :as user.db])) ;; 引入用户数据库操作命名空间
 
 ;; :once fixture 确保测试系统在所有测试开始前启动一次，并在结束后关闭。
 (use-fixtures :once (tu/system-fixture))
@@ -22,28 +22,28 @@
     {:handler handler
      :query-fn query-fn}))
 
-(deftest doctor-api-controller-tests
+(deftest user-api-controller-tests
   (let [{:keys [handler query-fn]} (get-handler-and-query-fn) ;; 解构获取到的 handler 和 query-fn
         _ (assert handler "Ring handler 不能为空")
         _ (assert query-fn "数据库查询函数 query-fn 不能为空")]
 
     (testing "医生注册 API"
       (testing "成功注册"
-        (let [response (tu/POST handler "/api/doctors" ;; 构造 POST 请求
+        (let [response (tu/POST handler "/api/users" ;; 构造 POST 请求
                                 (json/encode {:username "api_doc1" :password "apipass" :name "API医生"})
                                 {"content-type" "application/json"})]
           (is (= 200 (:status response)) "响应状态码应为 200")
-          (is (str/includes? (:body response) "医生注册成功") "响应体应包含成功信息")))
+          (is (str/includes? (:body response) "用户注册成功") "响应体应包含成功信息")))
       (testing "用户名已存在"
         ;; 先创建一个同名用户
-        (tu/POST handler "/api/doctors" (json/encode {:username "api_doc_dup" :password "pass" :name "Dup"}) {})
-        (let [response (tu/POST handler "/api/doctors"
+        (tu/POST handler "/api/users" (json/encode {:username "api_doc_dup" :password "pass" :name "Dup"}) {})
+        (let [response (tu/POST handler "/api/users"
                                 (json/encode {:username "api_doc_dup" :password "pass" :name "Dup Again"})
                                 {"content-type" "application/json"})]
           (is (= 409 (:status response)) "响应状态码应为 409 (Conflict)")
           (is (str/includes? (:body response) "用户名已存在") "响应体应包含用户名已存在的信息")))
       (testing "缺少参数（例如密码）"
-        (let [response (tu/POST handler "/api/doctors"
+        (let [response (tu/POST handler "/api/users"
                                 (json/encode {:username "incomplete_doc" :name "残缺医生"}) ;; 故意缺少 password
                                 {"content-type" "application/json"})]
           (is (= 400 (:status response)) "响应状态码应为 400 (Bad Request)")
@@ -55,7 +55,7 @@
     (testing "医生登录和登出 API"
       (let [login-username "login_doc" ;; 用于登录测试的用户名
             login-password "login_pass" ;; 用于登录测试的密码
-            _ (doctor.db/create-doctor! query-fn {:username login-username :password login-password :name "登录测试医生"})] ;; 前置条件：创建测试医生
+            _ (user.db/create-user! query-fn {:username login-username :password login-password :name "登录测试医生" :signature_b64 nil})] ;; 前置条件：创建测试医生
 
         (testing "成功登录"
           (let [response (tu/POST handler "/api/users/login"
@@ -109,12 +109,12 @@
 
     (testing "获取医生列表 (模拟已认证用户)"
       ;; 前置条件：创建一些医生数据，以便列表非空
-      (doctor.db/create-doctor! query-fn {:username "doc_list_1" :password "p" :name "列表医生1"})
-      (doctor.db/create-doctor! query-fn {:username "doc_list_2" :password "p" :name "列表医生2"})
+      (user.db/create-user! query-fn {:username "doc_list_1" :password "p" :name "列表医生1" :signature_b64 nil})
+      (user.db/create-user! query-fn {:username "doc_list_2" :password "p" :name "列表医生2" :signature_b64 nil})
 
       ;; 模拟一个已认证的医生用户身份 (通常由认证中间件如 buddy-auth 设置在 request map 的 :identity key)
       (let [authenticated-identity {:id 99 :username "test_auth_user" :roles #{:doctor}} ;; 模拟的身份信息，id 和 roles 根据实际需要
-            mock-req (-> (mock/request :get "/api/doctors")
+            mock-req (-> (mock/request :get "/api/users")
                          ;; 将模拟的身份信息放入请求 map 中
                          (assoc :identity authenticated-identity)
                          ;; 如果控制器直接从 request map 的 :integrant-deps 中取依赖，则需要此行
@@ -132,44 +132,44 @@
           (is (some #(= "列表医生1" (:name %)) doctors-list) "列表中应包含测试医生1")
 (is (some #(= "列表医生2" (:name %)) doctors-list) "列表中应包含测试医生2"))))))
 
-(deftest doctor-api-update-tests
+(deftest user-api-update-tests
   (let [{:keys [query-fn]} (get-handler-and-query-fn)]
-    (doctor.db/create-doctor! query-fn {:username "update_doc" :password "p1" :name "旧名"})
-    (let [doc (doctor.db/get-doctor-by-username query-fn "update_doc")
+    (user.db/create-user! query-fn {:username "update_doc" :password "p1" :name "旧名" :signature_b64 nil})
+    (let [doc (user.db/get-user-by-username query-fn "update_doc")
           id (:id doc)]
       (testing "获取个人信息"
-        (let [resp (doctor-api.ctlr/get-current-doctor-profile {:integrant-deps {:query-fn query-fn}
+        (let [resp (user-api.ctlr/get-current-user-profile {:integrant-deps {:query-fn query-fn}
                                                                :identity id})]
           (is (= 200 (:status resp)))
           (is (= id (get-in resp [:body :doctor :id])))))
 
       (testing "根据ID获取医生"
-        (let [resp (doctor-api.ctlr/get-doctor-by-id {:path-params {:id (str id)}
+        (let [resp (user-api.ctlr/get-user-by-id {:path-params {:id (str id)}
                                                       :integrant-deps {:query-fn query-fn}})]
           (is (= 200 (:status resp)))
           (is (= id (get-in resp [:body :doctor :id])))))
 
       (testing "更新姓名"
-        (let [resp (doctor-api.ctlr/update-doctor-name! {:path-params {:id (str id)}
-                                                         :body-params {:name "新名"}
+        (let [resp (user-api.ctlr/update-user-info! {:path-params {:id (str id)}
+                                                         :body-params {:name "新名" :role "麻醉医生" :signature_b64 nil}
                                                          :integrant-deps {:query-fn query-fn}
                                                          :identity id})]
           (is (= 200 (:status resp)))
-          (is (= "新名" (:name (doctor.db/get-doctor-by-id query-fn id))))))
+          (is (= "新名" (:name (user.db/get-user-by-id query-fn id))))))
 
       (testing "更新密码"
-        (let [resp (doctor-api.ctlr/update-doctor-password! {:path-params {:id (str id)}
+        (let [resp (user-api.ctlr/update-user-password! {:path-params {:id (str id)}
                                                              :body-params {:new_password "newpass"}
                                                              :integrant-deps {:query-fn query-fn}
                                                              :identity id})
-              verified (doctor.db/verify-doctor-credentials query-fn "update_doc" "newpass")]
+              verified (user.db/verify-credentials query-fn "update_doc" "newpass")]
           (is (= 200 (:status resp)))
           (is (some? verified))))
 
       (testing "删除医生"
-        (let [resp (doctor-api.ctlr/delete-doctor! {:path-params {:id (str id)}
+        (let [resp (user-api.ctlr/delete-user! {:path-params {:id (str id)}
                                                     :integrant-deps {:query-fn query-fn}
                                                     :identity id})
-              deleted (doctor.db/get-doctor-by-id query-fn id)]
+              deleted (user.db/get-user-by-id query-fn id)]
           (is (= 200 (:status resp)))
           (is (nil? deleted)))))))

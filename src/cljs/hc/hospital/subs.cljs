@@ -229,17 +229,18 @@
     ;; 对应事件和表单中的 :椎管内麻醉相关评估
     (or (:椎管内麻醉相关评估 assessment) {})))
 
-(rf/reg-sub ::doctors
-  (fn [db _]
-    (get db :doctors []))) ; Default to empty vector if not present
 
-(rf/reg-sub ::doctor-modal-visible?
+(rf/reg-sub ::users
   (fn [db _]
-    (get db :doctor-modal-visible? false))) ; Default to false
+    (get db :users []))) ; Default to empty vector if not present
 
-(rf/reg-sub ::editing-doctor
+(rf/reg-sub ::user-modal-visible?
   (fn [db _]
-    (get db :editing-doctor {}))) ; Default to empty map
+    (get db :user-modal-visible? false))) ; Default to false
+
+(rf/reg-sub ::editing-user
+  (fn [db _]
+    (get db :editing-user {}))) ; Default to empty map
 
 (rf/reg-sub ::current-doctor
   (fn [db _]

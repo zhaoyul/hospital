@@ -121,11 +121,11 @@
   │   │       ├── core.clj   # 应用入口 (启动/停止)
   │   │       ├── db         # 数据库交互逻辑 (如 user.clj)
   │   │       └── web        # Web 相关代码
-  │   │           ├── controllers # 控制器 (业务逻辑处理: doctor_api, patient, patient_api)
+  │   │           ├── controllers # 控制器 (业务逻辑处理: user_api, patient, patient_api)
   │   │           ├── handler.clj # Ring/Reitit 处理程序设置
   │   │           ├── middleware  # 中间件 (auth, core, exception, formats)
   │   │           ├── pages       # 页面布局 (Selmer)
-  │   │           └── routes      # 路由定义 (Reitit: api, doctor_api, pages, patient_api, patient_pages)
+  │   │           └── routes      # 路由定义 (Reitit: api, user_api, pages, patient_api, patient_pages)
   │   └── cljs               # ClojureScript 源代码 (前端)
   │       └── hc/hospital
   │           ├── components # Reagent/Ant Design 组件封装 (antd.cljs, form_components.cljs)
@@ -175,12 +175,12 @@
   - =web/routes/pages.clj=: 后端渲染的页面路由 (医生管理端主页).
   - =web/routes/patient_pages.clj=: 患者问卷表单页面路由 (=/patient/fill=).
   - =web/routes/patient_api.clj=: 患者问卷提交相关 API.
-  - =web/routes/doctor_api.clj=: 医生用户认证和管理 API.
+  - =web/routes/user_api.clj=: 医生用户认证和管理 API.
 - *API 控制器*: 位于 =web/controllers/*=.
   - =health.clj=: 健康检查.
   - =patient.clj=: 渲染患者问卷页面.
   - =patient_api.clj=: 处理患者问卷提交.姓名转拼音 (使用 HanLP).
-  - =doctor_api.clj=: 处理医生注册,登录,登出,信息获取,修改,删除等.
+  - =user_api.clj=: 处理医生注册,登录,登出,信息获取,修改,删除等.
 - *数据库交互*:
   - Conman 和 HugSQL: SQL 查询定义在 =resources/sql/queries.sql=.
   - Migratus: 数据库迁移脚本在 =resources/migrations/*=.
@@ -234,7 +234,7 @@
 - *登录*:
   - 医生在前端输入用户名密码.
   - 前端通过 AJAX POST 请求到 =/api/users/login=.
-  - 后端 =hc.hospital.web.controllers.doctor-api/login-doctor!= 处理:
+  - 后端 =hc.hospital.web.controllers.user-api/login-user!= 处理:
     - 验证凭据 (与 =users= 表中的 =password_hash= 比较).
     - 成功则在 session 中存入医生信息 (如 =:identity=).
 - *查看患者列表*:
@@ -254,7 +254,7 @@
     - 后端 =hc.hospital.web.controllers.patient-api/update-assessment-by-patient-id!= 处理:
       - 更新 =patient_assessments= 表中对应记录的 =assessment_data=.
 - *其他医生操作*:
-  - 注册、登出、修改密码等通过 =/api/doctors/*= 相关端点处理.
+  - 注册、登出、修改密码等通过 =/api/users/*= 相关端点处理.
 
 ** 3. HIS 系统集成 (需求提及.当前未实现)
 - 需求文档 (=docs/requirment.md=) 提及 HIS 系统接口导入患者数据.并与扫码填<x_bin_118>患者匹配.这是未来的一个数据来源.
@@ -292,7 +292,7 @@
 
    *重要提示:* 当前 Clojure 测试套件存在一些已知问题，导致测试无法全部通过。在执行测试时请注意以下几点：
    - *`hc.hospital.core-test`*: 包含一个简单的断言失败 (`expected: 1, actual: 2`)。
-   - *`hc.hospital.web.controllers.doctor-api-test`*:
+   - *`hc.hospital.web.controllers.user-api-test`*:
      - 医生登出 API 未能正确设置 Cookie 以使其立即失效。
      - 在测试某个 API 端点时，发生了 JSON 解析错误 (`java.lang.ClassCastException`)。
    - *`hc.hospital.specs.assessment-complete-cn-spec-test`*: 此测试套件中的15个测试用例因 `:test-chuck-not-available` 错误而失败。这表明 `test.chuck` 库（用于 Malli Schema 的生成式测试）在测试环境中可能未正确配置或不可用。

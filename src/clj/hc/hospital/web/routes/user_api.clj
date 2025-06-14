@@ -1,6 +1,6 @@
-(ns hc.hospital.web.routes.doctor-api
+(ns hc.hospital.web.routes.user-api
   (:require
-   [hc.hospital.web.controllers.doctor-api :as doctor-api]
+   [hc.hospital.web.controllers.user-api :as user-api]
    [hc.hospital.web.middleware.auth :refer [wrap-restricted]]
    [hc.hospital.web.middleware.exception :as exception]
    [hc.hospital.web.middleware.formats :as formats]
@@ -21,69 +21,72 @@
                 muuntaja/format-request-middleware
                 exception/wrap-exception]})
 
-;; API routes for doctors
-(defn doctor-api-routes [opts]
-  [["/doctors"
-    {:get {:summary "获取医生列表 (需要认证)"
-           :handler doctor-api/list-doctors
+;; API routes for users
+(defn user-api-routes [opts]
+  [["/users"
+    {:get {:summary "获取用户列表 (需要认证)"
+           :handler user-api/list-users
            :tags ["医生用户"]
            :middleware [wrap-restricted]}
-     :post {:summary "注册新医生"
-            :tags ["医生用户"]
-            :parameters {:body {:username string? :password string? :name string? :role string?}}
-            :handler #(doctor-api/register-doctor! {:integrant-deps opts :body-params (-> % :body-params)})}}
+     :post {:summary "注册新用户"
+           :tags ["医生用户"]
+           :parameters {:body {:username string? :password string? :name string? :role string?}}
+           :handler #(user-api/register-user! {:integrant-deps opts :body-params (-> % :body-params)})}}
     ]
    ["/users/login"
-    {:post {:summary "医生登录"
+    {:post {:summary "用户登录"
             :tags ["医生用户"]
             :parameters {:body {:username string? :password string?}}
-            :handler #(doctor-api/login-doctor! {:integrant-deps opts :body-params (-> % :body-params)})}}]
+            :handler #(user-api/login-user! {:integrant-deps opts :body-params (-> % :body-params)})}}]
    ["/users/logout"
-    {:post {:summary "医生登出 (需要认证)"
+    {:post {:summary "用户登出 (需要认证)"
             :tags ["医生用户"]
-            :handler doctor-api/logout-doctor!
+            :handler user-api/logout-user!
             :middleware [wrap-restricted]}}]
    ["/me" ; Changed from "/user/me"
-    {:get {:summary "获取当前登录医生的信息 (需要认证)"
-           :handler #(doctor-api/get-current-doctor-profile
+    {:get {:summary "获取当前登录用户的信息 (需要认证)"
+           :handler #(user-api/get-current-user-profile
                       {:integrant-deps opts
                        :identity (-> % :identity :id)})
            :tags ["医生用户"]
            :middleware [wrap-restricted]}}]
    ["/user/:id"
-    {:get {:summary "根据ID获取医生信息 (需要认证)"
+    {:get {:summary "根据ID获取用户信息 (需要认证)"
            :tags ["医生用户"]
            :parameters {:path {:id int?}}
-           :handler doctor-api/get-doctor-by-id
+           :handler user-api/get-user-by-id
            :middleware [wrap-restricted]}
-     :put {:summary "更新医生姓名 (需要认证，医生只能更新自己的信息)"
+     :put {:summary "更新用户信息 (需要认证，用户只能更新自己的信息)"
            :tags ["医生用户"]
-           :parameters {:path {:id int?} :body {:name string?}}
-           :handler #(doctor-api/update-doctor-name! {:integrant-deps opts :body-params (-> % :body-params)})
+           :parameters {:path {:id int?}
+                        :body {:name string?
+                               :role string?
+                               :signature_b64 [:maybe string?]}}
+           :handler #(user-api/update-user-info! {:integrant-deps opts :body-params (-> % :body-params)})
            :middleware [wrap-restricted]}
-     :delete {:summary "删除医生 (需要认证，通常管理员权限)"
+     :delete {:summary "删除用户 (需要认证，通常管理员权限)"
               :tags ["医生用户"]
               :parameters {:path {:id int?}}
-              :handler doctor-api/delete-doctor!
+              :handler user-api/delete-user!
               :middleware [wrap-restricted]}}]
    ["/user/:id/role"
-    {:put {:summary "更新医生角色 (需要管理员)"
+    {:put {:summary "更新用户角色 (需要管理员)"
            :tags ["医生用户"]
            :parameters {:path {:id int?} :body {:role string?}}
-           :handler #(doctor-api/update-doctor-role! {:integrant-deps opts :body-params (-> % :body-params)})
+           :handler #(user-api/update-user-role! {:integrant-deps opts :body-params (-> % :body-params)})
            :middleware [wrap-restricted]}}]
    ["/user/:id/password"
-    {:put {:summary "更新医生密码 (需要认证，医生只能更新自己的密码)"
+    {:put {:summary "更新用户密码 (需要认证，用户只能更新自己的密码)"
            :tags ["医生用户"]
            :parameters {:path {:id int?} :body {:new_password string?}}
-           :handler #(doctor-api/update-doctor-password! {:integrant-deps opts :body-params (-> % :body-params)})
+           :handler #(user-api/update-user-password! {:integrant-deps opts :body-params (-> % :body-params)})
            :middleware [wrap-restricted]}}]])
 
 ;; Derive this route set from :reitit/routes
-(derive :reitit.routes/doctor-api :reitit/routes)
+(derive :reitit.routes/user-api :reitit/routes)
 
-(defmethod ig/init-key :reitit.routes/doctor-api
+(defmethod ig/init-key :reitit.routes/user-api
   [_ {:keys [base-path query-fn]
       :or {base-path "/api"}
       :as opts}]
-  (fn [] [base-path route-data (doctor-api-routes (assoc opts :query-fn query-fn))]))
+  (fn [] [base-path route-data (user-api-routes (assoc opts :query-fn query-fn))]))

@@ -355,53 +355,95 @@
     {:dispatch [::clear-current-doctor]}))
 
 
-;; Doctor management events - seem unrelated to patient assessment form changes, so keep them.
-(rf/reg-event-db ::initialize-doctors
-  (fn [db _]
-    (if (empty? (get-in db [:doctors]))
-      (assoc db :doctors [{:name "马志明" :username "mazhiming" :role "麻醉医生" :signature nil}]
-             ;; Add more mock doctors if needed or ensure this is loaded from backend
-             )
-      db)))
+(rf/reg-event-fx ::initialize-users
+  (fn [_ _]
+    {:dispatch [::fetch-users]}))
+
+(rf/reg-event-fx ::fetch-users
+  (fn [_ _]
+    {:http-xhrio {:method :get
+                  :uri "/api/users"
+                  :response-format (ajax/json-response-format {:keywords? true})
+                  :on-success [::set-users]
+                  :on-failure [::fetch-users-failed]}}))
+
+(rf/reg-event-db ::set-users
+  (fn [db [_ {:keys [doctors]}]]
+    (assoc db :users doctors)))
+
+(rf/reg-event-db ::fetch-users-failed
+  (fn [db [_ error]]
+    (timbre/error "获取医生列表失败" error)
+    db))
 
 (rf/reg-event-db ::set-active-tab
   (fn [db [_ tab]]
     (assoc-in db [:anesthesia :active-tab] tab))) ; Ensure path is correct
 
-(rf/reg-event-db ::open-doctor-modal
-  (fn [db [_ doctor-data]]
+(rf/reg-event-db ::open-user-modal
+  (fn [db [_ user-data]]
     (assoc db
-           :doctor-modal-visible? true
-           :editing-doctor (or doctor-data {}))))
+           :user-modal-visible? true
+           :editing-user (or user-data {}))))
 
-(rf/reg-event-db ::close-doctor-modal
+(rf/reg-event-db ::close-user-modal
   (fn [db _]
     (assoc db
-           :doctor-modal-visible? false
-           :editing-doctor nil)))
+           :user-modal-visible? false
+           :editing-user nil)))
 
-(rf/reg-event-db ::update-editing-doctor-field
+(rf/reg-event-db ::update-editing-user-field
   (fn [db [_ field value]]
-    (assoc-in db [:editing-doctor field] value)))
+    (assoc-in db [:editing-user field] value)))
 
-(rf/reg-event-db ::save-doctor
-  (fn [db [_ form-values]]
-    (let [editing-doctor (get db :editing-doctor {})
-          doctors (get db :doctors [])
-          username-to-save (:username form-values)]
-      (if (or (empty? (:username editing-doctor)) (= (:username editing-doctor) username-to-save)) ; New or same username
-        (let [existing-doctor-idx (if-not (empty? (:username editing-doctor))
-                                    (.findIndex doctors #(= (:username %) (:username editing-doctor))))]
-          (if (not= -1 existing-doctor-idx)
-            (assoc-in db [:doctors existing-doctor-idx] form-values) ; Update existing
-            (update db :doctors conj form-values))) ; Add new
-        (timbre/error "Cannot change username during edit yet.") ; Simple prevention for now
-        )
-      (assoc db :doctor-modal-visible? false :editing-doctor nil))))
+(rf/reg-event-fx ::save-user
+  (fn [{:keys [db]} [_ form-values]]
+    (let [editing-user (get db :editing-user {})
+          id (:id editing-user)
+          payload (assoc form-values :signature_b64 (:signature form-values))]
+      (if id
+        {:http-xhrio {:method :put
+                      :uri (str "/api/user/" id)
+                      :params payload
+                      :format (ajax/json-request-format)
+                      :response-format (ajax/json-response-format {:keywords? true})
+                      :on-success [::save-user-success]
+                      :on-failure [::save-user-failed]}}
+        {:http-xhrio {:method :post
+                      :uri "/api/users"
+                      :params (assoc payload :password "defaultpass")
+                      :format (ajax/json-request-format)
+                      :response-format (ajax/json-response-format {:keywords? true})
+                      :on-success [::save-user-success]
+                      :on-failure [::save-user-failed]}})))
 
-(rf/reg-event-db ::delete-doctor
-  (fn [db [_ username]]
-    (update db :doctors (fn [doctors] (vec (remove #(= username (:username %)) doctors))))))
+(rf/reg-event-fx ::save-user-success
+  (fn [{:keys [db]} _]
+    {:dispatch-n [[::close-user-modal]
+                  [::fetch-users]]}))
+
+(rf/reg-event-db ::save-user-failed
+  (fn [db [_ error]]
+    (timbre/error "保存医生失败" error)
+    db))
+
+(rf/reg-event-fx ::delete-user
+  (fn [{:keys [db]} [_ id]]
+    {:http-xhrio {:method :delete
+                  :uri (str "/api/user/" id)
+                  :response-format (ajax/json-response-format {:keywords? true})
+                  :on-success [::delete-user-success]
+                  :on-failure [::delete-user-failed]}}))
+
+(rf/reg-event-fx ::delete-user-success
+  (fn [_ _]
+    {:dispatch [::fetch-users]}))
+
+(rf/reg-event-db ::delete-user-failed
+  (fn [db [_ error]]
+    (timbre/error "删除医生失败" error)
+    db))
+
 
 ;; --- 二维码扫描模态框事件 ---
 ;; 打开二维码扫描模态框

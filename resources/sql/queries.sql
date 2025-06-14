@@ -43,8 +43,8 @@ DELETE FROM patient_assessments WHERE patient_id = :patient_id;
 
 -- :name create-user! :! :n
 -- :doc 创建一个新用户
-INSERT INTO users (username, password_hash, name, role)
-VALUES (:username, :password_hash, :name, :role);
+INSERT INTO users (username, password_hash, name, role, signature_b64)
+VALUES (:username, :password_hash, :name, :role, :signature_b64);
 
 -- :name get-user-by-username :? :1
 -- :doc 根据用户名获取用户信息
@@ -52,11 +52,11 @@ SELECT * FROM users WHERE username = :username;
 
 -- :name get-user-by-id :? :1
 -- :doc 根据ID获取用户信息
-SELECT id, username, name, role, created_at, updated_at FROM users WHERE id = :id;
+SELECT id, username, name, role, signature_b64, created_at, updated_at FROM users WHERE id = :id;
 
 -- :name list-users :*
 -- :doc 列出所有用户信息 (不包含密码)
-SELECT id, username, name, role, created_at, updated_at FROM users ORDER BY created_at DESC;
+SELECT id, username, name, role, signature_b64, created_at, updated_at FROM users ORDER BY created_at DESC;
 
 -- :name update-user-password! :! :n
 -- :doc 更新用户密码
@@ -74,6 +74,15 @@ WHERE id = :id;
 -- :doc 更新用户角色
 UPDATE users
 SET role = :role, updated_at = datetime('now')
+WHERE id = :id;
+
+-- :name update-user-info! :! :n
+-- :doc 更新用户姓名、角色和签名
+UPDATE users
+SET name = :name,
+    role = :role,
+    signature_b64 = :signature_b64,
+    updated_at = datetime('now')
 WHERE id = :id;
 
 -- :name delete-user! :! :n
