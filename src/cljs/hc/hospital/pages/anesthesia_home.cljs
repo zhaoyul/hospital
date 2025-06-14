@@ -15,10 +15,11 @@
    [reagent.core :as r]
    [taoensso.timbre :as timbre]))
 
-(def menu-items
-  [{:key "1" :icon (r/as-element [:> icons/ProfileOutlined]) :label "麻醉管理"}
-   {:key "2" :icon (r/as-element [:> icons/FileAddOutlined]) :label "问卷列表"}
-   {:key "3" :icon (r/as-element [:> icons/SettingOutlined]) :label "系统管理"}])
+
+(defn menu-items [role]
+  (cond-> [{:key "1" :icon (r/as-element [:> icons/ProfileOutlined]) :label "麻醉管理"}
+           {:key "2" :icon (r/as-element [:> icons/FileAddOutlined]) :label "问卷列表"}]
+    (= role "管理员") (conj {:key "3" :icon (r/as-element [:> icons/SettingOutlined]) :label "系统管理"})))
 
 (defn sider-bar [active-tab]
   (let [sidebar-collapsed? (r/atom true)]
@@ -30,21 +31,22 @@
                         :trigger nil
                         :collapsible true}
        [custom-sider-trigger sidebar-collapsed? #(swap! sidebar-collapsed? not)]
-       [:> Menu {:mode "inline"
-                 :inlineCollapsed @sidebar-collapsed?
-                 :selectedKeys [(case active-tab
-                                  "patients" "1"
-                                  "assessment" "2"
-                                  "settings" "3" ; Map "settings" tab to key "3"
-                                  "1")] ; Default to "1" if no match
-                 :onClick (fn [item]
-                            (rf/dispatch (timbre/spy :info [::events/set-active-tab
-                                                            (condp = (.-key item)
-                                                              "1" "patients"
-                                                              "2" "assessment"
-                                                              "3" "settings")]))) ; Key "3" maps to "settings"
-                 :style {:height "100%" :borderRight 0}
-                 :items menu-items}]])))
+        (let [role (:role @(rf/subscribe [::subs/current-doctor]))]
+          [:> Menu {:mode "inline"
+                    :inlineCollapsed @sidebar-collapsed?
+                    :selectedKeys [(case active-tab
+                                     "patients" "1"
+                                     "assessment" "2"
+                                     "settings" "3"
+                                     "1")]
+                    :onClick (fn [item]
+                               (rf/dispatch [::events/set-active-tab
+                                             (condp = (.-key item)
+                                               "1" "patients"
+                                               "2" "assessment"
+                                               "3" "settings")]))
+                    :style {:height "100%" :borderRight 0}
+                    :items (clj->js (menu-items role))}])])))
 
 ;; 新增顶部导航栏组件
 (defn app-header []
@@ -84,15 +86,17 @@
      ]))
 
 (defn right-side "患者麻醉管理\"patients\", 问卷列表\"assessment\", 系统设置\"settings\"" [active-tab]
-   [:> Layout {:style {:height "calc(100vh - 64px)"
-                      :overflow "auto"
-                      :background "#f0f2f5"}}
-    [:div {:style {:padding "16px"}}
+  (let [role (:role @(rf/subscribe [::subs/current-doctor]))]
+    [:> Layout {:style {:height "calc(100vh - 64px)"
+                        :overflow "auto"
+                        :background "#f0f2f5"}}
+     [:div {:style {:padding "24px"}}
       (case active-tab
         "patients" [anesthesia-content]
-        "assessment" [questionnaire-list-content] ;; Use the new component
-        "settings" [:f> system-settings-content]
-        [:div "未知标签页内容"])]]) ; Removed inline style from default case as it's handled by the wrapper
+        "assessment" [questionnaire-list-content]
+        "settings" (when (= role "管理员") [:f> system-settings-content])
+        [:div "未知标签页内容"])]])) ; Removed inline style from default case as it's handled by the wrapper
+
 
 (defn anesthesia-home-page []
   (let [active-tab @(rf/subscribe [::subs/active-tab])
