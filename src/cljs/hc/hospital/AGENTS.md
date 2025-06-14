@@ -30,5 +30,5 @@
 
 - 项目已集成 Storybook，便于在浏览器中预览和调试 UI 组件。
 - 如需展示 ClojureScript 组件，请在 `src/cljs/hc/hospital/stories/` 下创建示例文件，并在 `src/stories/` 中编写对应的 `*.stories.js(x)`。
-- 编译 Storybook 依赖的代码：`npx shadow-cljs compile storybook`，产物位于 `target/storybook/stories.js`。
-- 启动交互式预览：`yarn storybook`。
+- Storybook 脚本会先运行 `shadow-cljs compile storybook`，生成 `target/storybook/stories.js`。
+- 使用 `yarn storybook` 启动本地预览（默认端口 6006），或执行 `yarn build-storybook` 构建静态站点。
