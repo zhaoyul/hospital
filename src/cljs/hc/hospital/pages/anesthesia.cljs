@@ -44,8 +44,12 @@
                                    {:value "已驳回" :label "已驳回"}
                                    {:value "已暂缓" :label "已暂缓"}]]
     [:div {:style {:padding "16px" :borderBottom "1px solid #f0f0f0"}}
-     ;; 按钮组
-     [:> Space {:style {:marginBottom "16px" :width "100%"}}
+     ;; 按钮组，两侧对齐
+     [:> Space {:style {:marginBottom "16px"
+                        :width "100%"
+                        :display "flex"
+                        :justifyContent "space-between"
+                        :alignItems "center"}}
       [:> Button {:type "primary"
                   :icon (r/as-element [:> SyncOutlined])
                   :onClick #(rf/dispatch [::events/sync-applications]) ; 您需要定义此事件
