@@ -790,8 +790,8 @@
         current-patient-id @(rf/subscribe [::subs/current-patient-id])]
     [:> Layout.Content {:style {:margin 0 :minHeight 280 :overflow "hidden" :display "flex" :flexDirection "row"}}
    ;; 左侧患者列表区域
-   [:> Card {:style {:width "350px"
-                     :minWidth "300px"
+   [:> Card {:style {:width "400px"
+                     :minWidth "350px"
                      :height "calc(100vh - 64px)" ; 假设顶部导航栏高度为 64px
                      :borderRight "1px solid #f0f0f0"
                      :display "flex"
