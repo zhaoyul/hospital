@@ -21,3 +21,8 @@ modules/
 .lsp/.cache/
 /code-prompt.md
 /resources/hc/
+
+# Yarn PnP
+.pnp.*
+.yarn/unplugged/
+.yarn/install-state.gz
