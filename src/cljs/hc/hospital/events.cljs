@@ -50,7 +50,8 @@
   (fn [_ _]
     (-> app-db/default-db
         (assoc :anesthesia {:current-assessment-canonical default-canonical-assessment
-                            :date-range [(utils/now) (utils/now)]})
+                            :date-range [(utils/now) (utils/now)]
+                            :active-tab "patients"})
         ;; 初始化二维码扫描模态框相关状态
         (assoc :qr-scan-modal-visible? false)
         (assoc :qr-scan-input-value ""))))
@@ -388,7 +389,8 @@
 
 (rf/reg-event-fx ::navigate-tab
   (fn [{:keys [db]} [_ tab]]
-    {:navigate-tab tab}))
+    {:navigate-tab tab
+     :db (assoc-in db [:anesthesia :active-tab] tab)}))
 
 (rf/reg-event-db ::open-user-modal
   (fn [db [_ user-data]]
