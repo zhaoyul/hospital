@@ -17,17 +17,15 @@
    [hc.hospital.specs.assessment-complete-cn-spec :as assessment-specs]
    [hc.hospital.subs :as subs]
    [hc.hospital.ui-helpers :as ui-helpers]
-   [malli.core :as m] ;; Removed malli.util :as mu as it's likely unused here after refactoring
+   [malli.core :as m]
    [re-frame.core :as rf]
    [reagent.core :as r]
-   [taoensso.timbre :as timbre] ; Removed :refer [spy]
-))
+   [taoensso.timbre :as timbre]
+   ))
 
-;; Data-driven rendering helpers have been moved to hc.hospital.pages.assessment-form-generators
 
-;; ---------------------------------------------------------------------------
-;; 通用详细表单视图生成器
-;; ---------------------------------------------------------------------------
+(def ^:private default-header-color "评估卡片统一的头部底色" "#e6fffb")
+
 (defn create-detailed-view
   "根据传入配置生成标准的详细评估表单视图组件。"
   [{:keys [section-key section-spec data-prop form-key-suffix
@@ -81,19 +79,16 @@
            extra-content
            [:> Row {:justify "end" :style {:marginTop "20px"}}
             [:> Col
-           [:> Form.Item
-            [:button {:type "button"
-                      :on-click on-show-summary
-                      :style {:padding "5px 10px"
-                              :background-color "#f0f0f0"
-                              :border "1px solid #ccc"
-                              :border-radius "4px"
-                              :cursor "pointer"}}
-             "返回总结"]]]]]}]))))
+             [:> Form.Item
+              [:button {:type "button"
+                        :on-click on-show-summary
+                        :style {:padding "5px 10px"
+                                :background-color "#f0f0f0"
+                                :border "1px solid #ccc"
+                                :border-radius "4px"
+                                :cursor "pointer"}}
+               "返回总结"]]]]]}]))))
 
-;; ---------------------------------------------------------------------------
-;; 通用评估卡片生成器
-;; ---------------------------------------------------------------------------
 (defn create-assessment-card
   "根据给定配置生成可在总结和详细视图间切换的评估卡片组件。"
   [{:keys [icon title header-color data-sub data-key summary-view detailed-view]}]
@@ -111,8 +106,8 @@
          (if (= @view-state :summary)
            [summary-view {data-key card-data}]
            [:f> detailed-view (merge props {:patient-id patient-id
-                                           data-key card-data
-                                           :on-show-summary show-summary})])
+                                            data-key card-data
+                                            :on-show-summary show-summary})])
          :on-click toggle-view
          :view-state @view-state
          :card-style {:cursor "pointer"}
@@ -135,7 +130,7 @@
 (def circulatory-system-card
   (create-assessment-card {:icon HeartOutlined
                            :title "循环系统"
-                           :header-color "#e6f7ff"
+                           :header-color default-header-color
                            :data-sub ::subs/circulatory-system-data
                            :data-key :circulatory-data
                            :summary-view circulatory-system-summary-view
@@ -157,7 +152,7 @@
 (def respiratory-system-card
   (create-assessment-card {:icon CloudOutlined
                            :title "呼吸系统"
-                           :header-color "#e6fffb"
+                           :header-color default-header-color
                            :data-sub ::subs/respiratory-system-data
                            :data-key :respiratory-data
                            :summary-view respiratory-system-summary-view
@@ -181,7 +176,7 @@
 (def mental-neuromuscular-system-card
   (create-assessment-card {:icon NodeIndexOutlined
                            :title "精神及神经肌肉系统"
-                           :header-color "#f6ffed"
+                           :header-color default-header-color
                            :data-sub ::subs/mental-neuromuscular-system-data
                            :data-key :mn-data
                            :summary-view mental-neuromuscular-system-summary-view
@@ -203,7 +198,7 @@
 (def endocrine-system-card
   (create-assessment-card {:icon ExperimentOutlined
                            :title "内分泌系统"
-                           :header-color "#f9f0ff"
+                           :header-color default-header-color
                            :data-sub ::subs/endocrine-system-data
                            :data-key :endo-data
                            :summary-view endocrine-system-summary-view
@@ -226,7 +221,7 @@
 (def liver-kidney-system-card
   (create-assessment-card {:icon ProjectOutlined
                            :title "肝肾病史"
-                           :header-color "#fff7e6"
+                           :header-color default-header-color
                            :data-sub ::subs/liver-kidney-system-data
                            :data-key :lk-data
                            :summary-view liver-kidney-system-summary-view
@@ -248,7 +243,7 @@
 (def digestive-system-card
   (create-assessment-card {:icon CoffeeOutlined
                            :title "消化系统"
-                           :header-color "#eff8ff"
+                           :header-color default-header-color
                            :data-sub ::subs/digestive-system-data
                            :data-key :ds-data
                            :summary-view digestive-system-summary-view
@@ -270,7 +265,7 @@
 (def hematologic-system-card
   (create-assessment-card {:icon ExperimentOutlined
                            :title "血液系统"
-                           :header-color "#fff0f6"
+                           :header-color default-header-color
                            :data-sub ::subs/hematologic-system-data
                            :data-key :hs-data
                            :summary-view hematologic-system-summary-view
@@ -292,7 +287,7 @@
 (def immune-system-card
   (create-assessment-card {:icon SecurityScanOutlined
                            :title "免疫系统"
-                           :header-color "#f6ffed"
+                           :header-color default-header-color
                            :data-sub ::subs/immune-system-data
                            :data-key :is-data
                            :summary-view immune-system-summary-view
@@ -314,7 +309,7 @@
 (def special-medication-history-card
   (create-assessment-card {:icon MedicineBoxOutlined
                            :title "特殊用药史"
-                           :header-color "#fffbe6"
+                           :header-color default-header-color
                            :data-sub ::subs/special-medication-history-data
                            :data-key :smh-data
                            :summary-view special-medication-history-summary-view
@@ -336,7 +331,7 @@
 (def special-disease-history-card
   (create-assessment-card {:icon WarningOutlined
                            :title "特殊疾病病史"
-                           :header-color "#fff1f0"
+                           :header-color default-header-color
                            :data-sub ::subs/special-disease-history-data
                            :data-key :sdh-data
                            :summary-view special-disease-history-summary-view
@@ -365,7 +360,7 @@
 (def nutritional-assessment-card
   (create-assessment-card {:icon AppleOutlined
                            :title "营养评估"
-                           :header-color "#f0fff0"
+                           :header-color default-header-color
                            :data-sub ::subs/nutritional-assessment-data
                            :data-key :na-data
                            :summary-view nutritional-assessment-summary-view
@@ -387,7 +382,7 @@
 (def pregnancy-assessment-card
   (create-assessment-card {:icon WomanOutlined
                            :title "妊娠"
-                           :header-color "#fff0f6"
+                           :header-color default-header-color
                            :data-sub ::subs/pregnancy-assessment-data
                            :data-key :pa-data
                            :summary-view pregnancy-assessment-summary-view
@@ -410,7 +405,7 @@
 (def surgical-anesthesia-history-card
   (create-assessment-card {:icon HistoryOutlined
                            :title "手术麻醉史"
-                           :header-color "#e6f7ff"
+                           :header-color default-header-color
                            :data-sub ::subs/surgical-anesthesia-history-data
                            :data-key :sah-data
                            :summary-view surgical-anesthesia-history-summary-view
@@ -491,7 +486,7 @@
 (def airway-assessment-card
   (create-assessment-card {:icon NodeIndexOutlined
                            :title "气道评估"
-                           :header-color "#fff7e6"
+                           :header-color default-header-color
                            :data-sub ::subs/airway-assessment-data
                            :data-key :aa-data
                            :summary-view airway-assessment-summary-view
@@ -566,7 +561,7 @@
 (def spinal-anesthesia-assessment-card
   (create-assessment-card {:icon GatewayOutlined
                            :title "椎管内麻醉相关评估"
-                           :header-color "#f0f5ff"
+                           :header-color default-header-color
                            :data-sub ::subs/spinal-anesthesia-assessment-data
                            :data-key :saa-data
                            :summary-view spinal-anesthesia-assessment-summary-view
