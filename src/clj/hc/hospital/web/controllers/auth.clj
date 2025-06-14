@@ -1,7 +1,7 @@
 (ns hc.hospital.web.controllers.auth
   (:require
    [taoensso.timbre :as ctl]
-   [hc.hospital.db.doctor :as doctor.db]
+   [hc.hospital.db.user :as user.db]
    [hc.hospital.web.pages.layout :as layout]
    [ring.util.http-response :as http-response]))
 
@@ -18,9 +18,9 @@
     :as request}]
   (if (or (empty? username) (empty? password))
     (layout/render request "login.html" {:error "用户名和密码不能为空"})
-    (if-let [doctor (doctor.db/verify-doctor-credentials query-fn username password)]
+    (if-let [user (user.db/verify-credentials query-fn username password)]
       (let [session (:session request)
-            updated-session (assoc session :identity {:id (:id doctor) :username (:username doctor)})]
+            updated-session (assoc session :identity {:id (:id user) :username (:username user) :role (:role user)})]
         (-> (http-response/found "/")   ; Redirect to home page after login
             (assoc :session updated-session)))
       (layout/render request "login.html" {:error "无效的用户名或密码"}))))

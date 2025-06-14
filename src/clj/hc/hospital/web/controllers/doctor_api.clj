@@ -1,17 +1,17 @@
 (ns hc.hospital.web.controllers.doctor-api
   (:require
-   [hc.hospital.db.doctor :as doctor.db]
+   [hc.hospital.db.user :as user.db]
    [ring.util.http-response :as http-response]
    [buddy.auth :as auth]))
 
 (defn register-doctor!
   "注册新医生 API"
-  [{{:keys [username password name]} :body-params
+  [{{:keys [username password name role]} :body-params
     {:keys [query-fn]} :integrant-deps}]
   (if (or (empty? username) (empty? password))
     (http-response/bad-request {:error "用户名和密码不能为空"})
     (try
-      (doctor.db/create-doctor! query-fn {:username username :password password :name name})
+      (user.db/create-user! query-fn {:username username :password password :name name :role (or role "麻醉医生")})
       (http-response/ok {:message "医生注册成功"})
       (catch Exception e
         (if (re-find #"UNIQUE constraint failed: doctors.username" (.getMessage e))
@@ -27,7 +27,7 @@
     {:keys [query-fn]} :integrant-deps :as m}]
   (if (or (empty? username) (empty? password))
     (http-response/bad-request {:error "用户名和密码不能为空"})
-    (if-let [doctor (doctor.db/verify-doctor-credentials query-fn username password)]
+    (if-let [doctor (user.db/verify-credentials query-fn username password)]
       (let [session (assoc session :identity (:id doctor))] ; buddy.auth 使用 :identity
         (-> (http-response/ok {:message "登录成功" :doctor (dissoc doctor :password_hash)})
             (assoc :session session)))
@@ -44,7 +44,7 @@
   [{{:keys [query-fn]} :integrant-deps
     authenticated-doctor-id :identity}] ; :identity is injected by Buddy auth
   (if authenticated-doctor-id
-    (if-let [doctor (doctor.db/get-doctor-by-id query-fn authenticated-doctor-id)]
+    (if-let [doctor (user.db/get-user-by-id query-fn authenticated-doctor-id)]
       (http-response/ok {:doctor (dissoc doctor :password_hash)}) ; Return doctor details
       (http-response/not-found {:error "Logged-in doctor data not found in DB."})) ; Should be rare if ID is from session
     (http-response/unauthorized {:error "Not authenticated"})))
@@ -52,7 +52,7 @@
 (defn list-doctors
   "获取医生列表 API (需要认证)"
   [{{:keys [query-fn]} :integrant-deps}]
-  (if-let [doctors (doctor.db/list-doctors query-fn)]
+  (if-let [doctors (user.db/list-users query-fn)]
     (http-response/ok {:doctors doctors})
     (http-response/internal-server-error {:error "获取医生列表失败"})))
 
@@ -60,7 +60,7 @@
   "根据ID获取医生信息 API (需要认证)"
   [{{:keys [id]} :path-params
     {:keys [query-fn]} :integrant-deps}]
-  (if-let [doctor (doctor.db/get-doctor-by-id query-fn (Integer/parseInt id))]
+  (if-let [doctor (user.db/get-user-by-id query-fn (Integer/parseInt id))]
     (http-response/ok {:doctor doctor})
     (http-response/not-found {:error "未找到指定ID的医生"})))
 
@@ -74,7 +74,7 @@
   (if-not (= (Integer/parseInt id) authenticated-doctor)
     (http-response/forbidden {:error "无权修改其他医生信息"})
     (try
-      (doctor.db/update-doctor-name! query-fn (Integer/parseInt id) name)
+      (user.db/update-user-name! query-fn (Integer/parseInt id) name)
       (http-response/ok {:message "医生姓名更新成功"})
       (catch Exception e
         (println "更新医生姓名时发生错误:" e)
@@ -91,11 +91,23 @@
     (if-not (= (Integer/parseInt id) authenticated-doctor)
       (http-response/forbidden {:error "无权修改其他医生密码"})
       (try
-        (doctor.db/update-doctor-password! query-fn (Integer/parseInt id) new_password)
+        (user.db/update-user-password! query-fn (Integer/parseInt id) new_password)
         (http-response/ok {:message "医生密码更新成功"})
         (catch Exception e
           (println "更新医生密码时发生错误:" e)
           (http-response/internal-server-error {:error "更新医生密码失败"}))))))
+
+(defn update-doctor-role!
+  "更新医生角色 API (需要管理员权限)"
+  [{{:keys [id]} :path-params
+    {:keys [role]} :body-params
+    {:keys [query-fn]} :integrant-deps}]
+  (try
+    (user.db/update-user-role! query-fn (Integer/parseInt id) role)
+    (http-response/ok {:message "角色更新成功"})
+    (catch Exception e
+      (println "更新医生角色时发生错误:" e)
+      (http-response/internal-server-error {:error "更新医生角色失败"}))))
 
 
 (defn delete-doctor!
@@ -105,7 +117,7 @@
     authenticated-doctor :identity}] ; 示例中简单检查是否登录，实际应有更严格权限
    ;; 实际应用中，删除操作应有更严格的权限控制，例如检查 authenticated-doctor 是否为管理员
   (try
-    (doctor.db/delete-doctor! query-fn (Integer/parseInt id))
+    (user.db/delete-user! query-fn (Integer/parseInt id))
     (http-response/ok {:message "医生删除成功"})
     (catch Exception e
       (println "删除医生时发生错误:" e)

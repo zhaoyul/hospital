@@ -1,1 +1,1 @@
-DROP TABLE doctors;
+DROP TABLE users;

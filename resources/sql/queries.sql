@@ -39,37 +39,43 @@ ORDER BY updated_at DESC;
 -- :doc Deletes a patient assessment by patient_id
 DELETE FROM patient_assessments WHERE patient_id = :patient_id;
 
--- 医生相关操作
+-- 用户相关操作
 
--- :name create-doctor! :! :n
--- :doc 创建一个新医生
-INSERT INTO doctors (username, password_hash, name)
-VALUES (:username, :password_hash, :name);
+-- :name create-user! :! :n
+-- :doc 创建一个新用户
+INSERT INTO users (username, password_hash, name, role)
+VALUES (:username, :password_hash, :name, :role);
 
--- :name get-doctor-by-username :? :1
--- :doc 根据用户名获取医生信息
-SELECT * FROM doctors WHERE username = :username;
+-- :name get-user-by-username :? :1
+-- :doc 根据用户名获取用户信息
+SELECT * FROM users WHERE username = :username;
 
--- :name get-doctor-by-id :? :1
--- :doc 根据ID获取医生信息
-SELECT id, username, name, created_at, updated_at FROM doctors WHERE id = :id;
+-- :name get-user-by-id :? :1
+-- :doc 根据ID获取用户信息
+SELECT id, username, name, role, created_at, updated_at FROM users WHERE id = :id;
 
--- :name list-doctors :*
--- :doc 列出所有医生信息 (不包含密码)
-SELECT id, username, name, created_at, updated_at FROM doctors ORDER BY created_at DESC;
+-- :name list-users :*
+-- :doc 列出所有用户信息 (不包含密码)
+SELECT id, username, name, role, created_at, updated_at FROM users ORDER BY created_at DESC;
 
--- :name update-doctor-password! :! :n
--- :doc 更新医生密码
-UPDATE doctors
+-- :name update-user-password! :! :n
+-- :doc 更新用户密码
+UPDATE users
 SET password_hash = :password_hash, updated_at = datetime('now')
 WHERE id = :id;
 
--- :name update-doctor-name! :! :n
--- :doc 更新医生姓名
-UPDATE doctors
+-- :name update-user-name! :! :n
+-- :doc 更新用户姓名
+UPDATE users
 SET name = :name, updated_at = datetime('now')
 WHERE id = :id;
 
--- :name delete-doctor! :! :n
--- :doc 根据ID删除医生
-DELETE FROM doctors WHERE id = :id;
+-- :name update-user-role! :! :n
+-- :doc 更新用户角色
+UPDATE users
+SET role = :role, updated_at = datetime('now')
+WHERE id = :id;
+
+-- :name delete-user! :! :n
+-- :doc 根据ID删除用户
+DELETE FROM users WHERE id = :id;

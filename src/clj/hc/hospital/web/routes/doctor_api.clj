@@ -30,7 +30,7 @@
            :middleware [wrap-restricted]}
      :post {:summary "注册新医生"
             :tags ["医生用户"]
-            :parameters {:body {:username string? :password string? :name string?}}
+            :parameters {:body {:username string? :password string? :name string? :role string?}}
             :handler #(doctor-api/register-doctor! {:integrant-deps opts :body-params (-> % :body-params)})}}
     ]
    ["/users/login"
@@ -66,6 +66,12 @@
               :parameters {:path {:id int?}}
               :handler doctor-api/delete-doctor!
               :middleware [wrap-restricted]}}]
+   ["/user/:id/role"
+    {:put {:summary "更新医生角色 (需要管理员)"
+           :tags ["医生用户"]
+           :parameters {:path {:id int?} :body {:role string?}}
+           :handler #(doctor-api/update-doctor-role! {:integrant-deps opts :body-params (-> % :body-params)})
+           :middleware [wrap-restricted]}}]
    ["/user/:id/password"
     {:put {:summary "更新医生密码 (需要认证，医生只能更新自己的密码)"
            :tags ["医生用户"]
