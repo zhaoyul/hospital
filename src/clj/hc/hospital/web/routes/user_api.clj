@@ -25,7 +25,7 @@
 (defn user-api-routes [opts]
   [["/users"
     {:get {:summary "获取用户列表 (需要认证)"
-           :handler user-api/list-users
+           :handler (fn [req] (user-api/list-users (assoc req :integrant-deps opts)))
            :tags ["医生用户"]
            :middleware [wrap-restricted]}
      :post {:summary "注册新用户"
@@ -54,7 +54,7 @@
     {:get {:summary "根据ID获取用户信息 (需要认证)"
            :tags ["医生用户"]
            :parameters {:path {:id int?}}
-           :handler user-api/get-user-by-id
+           :handler (fn [req] (user-api/get-user-by-id (assoc req :integrant-deps opts)))
            :middleware [wrap-restricted]}
      :put {:summary "更新用户信息 (需要认证，用户只能更新自己的信息)"
            :tags ["医生用户"]
@@ -67,7 +67,7 @@
      :delete {:summary "删除用户 (需要认证，通常管理员权限)"
               :tags ["医生用户"]
               :parameters {:path {:id int?}}
-              :handler user-api/delete-user!
+              :handler (fn [req] (user-api/delete-user! (assoc req :integrant-deps opts)))
               :middleware [wrap-restricted]}}]
    ["/user/:id/role"
     {:put {:summary "更新用户角色 (需要管理员)"
