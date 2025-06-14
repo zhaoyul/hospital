@@ -10,7 +10,7 @@
       (let [summary-hiccup (nlg/generate-summary-component data schema section-key)]
         (if (and summary-hiccup (vector? summary-hiccup) (seq summary-hiccup))
           summary-hiccup
-          [:div {:style {:padding "10px"}}
+          [:> Space {:style {:padding "10px"}}
            (str "暂无" label "评估数据可供总结 (内容为空)。")]))
-      [:div {:style {:padding "10px"}}
+      [:> Space {:style {:padding "10px"}}
        (str "暂无" label "评估数据可供总结。")])))

@@ -43,7 +43,7 @@
                                    {:value "已批准" :label "已批准"}
                                    {:value "已驳回" :label "已驳回"}
                                    {:value "已暂缓" :label "已暂缓"}]]
-    [:div {:style {:padding "16px" :borderBottom "1px solid #f0f0f0"}}
+    [:> Layout.Content {:style {:padding "16px" :borderBottom "1px solid #f0f0f0"}}
      ;; 按钮组，两侧对齐
      [:> Space {:style {:marginBottom "16px"
                         :width "100%"
@@ -60,7 +60,7 @@
                   :on-click #(rf/dispatch [::events/open-qr-scan-modal])}
        "扫码签到"]]
      ;; 申请日期
-     [:div {:style {:marginBottom "8px" :color "#666"}} "申请日期:"]
+     [:> Typography.Text {:style {:marginBottom "8px" :color "#666"}} "申请日期:"]
      [:> DatePicker.RangePicker
       {:style {:width "100%" :marginBottom "12px"}
        :value date-range
@@ -83,19 +83,17 @@
 (defn patient-list []
   (let [patients @(rf/subscribe [::subs/filtered-patients])
         current-patient-id @(rf/subscribe [::subs/current-patient-id])]
-    [:div {:style {:height "100%" :overflowY "auto"}} ; Outer :div vector starts
+    [:> Layout.Content {:style {:height "100%" :overflowY "auto"}} ; Outer content starts
      (if (seq patients)
        (for [item patients]
          ^{:key (:key item)}
-         [:div {:style {:padding "10px 12px"
-                        :borderBottom "1px solid #f0f0f0"
-                        :display "flex"
-                        :justifyContent "space-between"
-                        :alignItems "center"
-                        :background (when (= (:key item) current-patient-id) "#e6f7ff")
-                        :cursor "pointer"}
-                :onClick #(rf/dispatch [::events/select-patient (:key item)])}
-          [:div {:style {:display "flex" :alignItems "center"}}
+         [:> Row {:style {:padding "10px 12px"
+                          :borderBottom "1px solid #f0f0f0"
+                          :background (when (= (:key item) current-patient-id) "#e6f7ff")
+                          :cursor "pointer"}
+                   :justify "space-between" :align "middle"
+                   :onClick #(rf/dispatch [::events/select-patient (:key item)])}
+          [:> Space {:align "center"}
            [:> UserOutlined {:style {:marginRight "8px" :fontSize "16px"}}]
            [:div
             [:div {:style {:fontWeight "500"}} (:name item)]
@@ -135,9 +133,9 @@
      "患者基本信息"
      "#e6fffb" ; Header background color
      (if (seq basic-info)
-       [:div ; Main container for card content
+       [:> Space {:direction "vertical"} ; Main container for card content
         ;; Display-only information (can be styled as before)
-        [:div {:style {:display "flex" :flex-wrap "wrap" :align-items "center" :padding "10px 0" :marginBottom "10px"}}
+        [:> Space {:wrap true :align "center" :style {:padding "10px 0" :marginBottom "10px"}}
          [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "门诊号: " (get basic-info :门诊号 "未知"))]
          [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "姓名: " (get basic-info :姓名 "未知"))]
          [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "性别: " (get basic-info :性别 "未知"))]
@@ -187,8 +185,8 @@
                  :initialValues (clj->js basic-info-data) ; Use basic-info-data
                  :key patient-id} ; Key to re-initialize form when patient changes
         ;; 第一部分：身高、体重、精神状态、活动能力
-        [:div {:key "vital-signs-group-1"}
-         [:div {:style (assoc grid-style-4-col :marginBottom "16px")}
+        [:> Space {:key "vital-signs-group-1" :direction "vertical"}
+         [:> Space {:style (assoc grid-style-4-col :marginBottom "16px")}
           [:> Form.Item {:label "身高" :name :身高cm} ; Updated name
            [:> InputNumber {:placeholder "cm"
                             :addonAfter "cm"
@@ -218,8 +216,8 @@
         ;; [:> Divider {:style {:margin "0 0 16px 0"}}]
 
         ;; 第二部分：血压、脉搏、呼吸、体温、SpO2
-        [:div {:key "vital-signs-group-2"}
-         [:div {:style {:display "flex" :flexWrap "wrap" :gap "8px 24px"}} ; 增大列间距
+        [:> Space {:key "vital-signs-group-2" :direction "vertical"}
+         [:> Space {:wrap true :style {:gap "8px 24px"}} ; 增大列间距
           ;; 血压 - Temporarily commented out as per instructions
           #_[:> Form.Item {:label "血压"}
              [:> Space {:align "center"} ; Use Space as the single child
@@ -274,7 +272,7 @@
 
 
 (defn- render-allergy-section [medical-history]
-  [:div {:style {:marginBottom "16px"}}
+  [:> Space {:style {:marginBottom "16px"} :direction "vertical"}
    [:> Form.Item {:label "过敏史" :name [:allergy :has_history]} ; Path matches canonical
     [:> Radio.Group {;; :value (get-in medical-history [:allergy :has_history]) ; Let Form handle
                      :onChange #(let [val (-> % .-target .-value)]
@@ -298,7 +296,7 @@
                        :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:medical_history :allergy :last_reaction_date] (utils/date->iso-string %)])}]]])])
 
 (defn- render-lifestyle-section [medical-history]
-  [:div
+  [:> Space {:direction "vertical"}
    ;; 吸烟史
    [:> Form.Item {:label "吸烟史" :name [:smoking :has_history]} ; Path matches canonical
     [:> Radio.Group {;; :value (get-in medical-history [:smoking :has_history]) ; Let Form handle
@@ -689,12 +687,11 @@
      "打印表单"])])
 
 (defn- assessment-header [patient-name patient-status current-patient-id]
-  [:div {:style {:display "flex"
-                 :justifyContent "space-between"
-                 :alignItems "center"
-                 :padding "12px 16px"
-                 :borderBottom "1px solid #f0f0f0"
-                 :background "#fff"}}
+  [:> Row {:justify "space-between"
+           :align "middle"
+           :style {:padding "12px 16px"
+                   :borderBottom "1px solid #f0f0f0"
+                   :background "#fff"}}
    [:h3 {:style {:margin 0 :fontSize "16px" :fontWeight "500"}} patient-name]
    (when current-patient-id
      [assessment-action-buttons patient-status])])
@@ -761,8 +758,8 @@
        [save-button]]
 
       ;; 无选择患者时的空状态
-      [:div {:style {:display "flex" :justifyContent "center" :alignItems "center" :height "100%"}}
-       [:> Empty {:description "请从左侧选择一位患者开始评估"}]])))
+      [:> Row {:justify "center" :align "middle" :style {:height "100%"}}
+       [:> Empty {:description "请从左侧选择一位患者开始评估"}]])]))
 
 (defn anesthesia-content []
   (let [basic-info @(rf/subscribe [::subs/canonical-basic-info])
@@ -780,14 +777,14 @@
                      :padding "0"}}
 
     ;; 患者列表主体
-    [:div {:style {:flexGrow 1 :overflowY "auto"}}
+    [:> Layout.Content {:style {:flexGrow 1 :overflowY "auto"}}
      [patient-list-panel]]]
 
    ;; 右侧评估详情区域
-   [:div {:style {:flexGrow 1
-                  :background "#f0f2f5"
-                  :overflow "hidden"
-                  :display "flex"
-                  :flexDirection "column"}}
+   [:> Layout {:style {:flexGrow 1
+                       :background "#f0f2f5"
+                       :overflow "hidden"
+                       :display "flex"
+                       :flexDirection "column"}}
     [assessment-header patient-name patient-status current-patient-id]
     [assessment]]]))

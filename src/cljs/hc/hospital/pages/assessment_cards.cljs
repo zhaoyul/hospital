@@ -355,10 +355,10 @@
                          :data-prop :na-data
                          :form-key-suffix "nutritional-assessment-spec"
                          :extra-content [:<>
-                                       [:div {:style {:padding "8px" :border "1px solid #d9d9d9" :borderRadius "2px" :marginBottom "16px" :marginTop "10px"}}
+                                       [:> Card {:style {:padding "8px" :marginBottom "16px" :marginTop "10px"}}
                                         [:h5 {:style {:marginBottom "4px"}} "营养评分说明:"]
                                         [:p {:style {:fontSize "12px" :color "gray"}} "每项“是”计1分，总分≥2分提示存在营养风险，建议进一步评估。"]]
-                                       [:div {:style {:padding "8px" :border "1px solid #d9d9d9" :borderRadius "2px" :marginTop "10px"}}
+                                       [:> Card {:style {:padding "8px" :marginTop "10px"}}
                                         [:h5 {:style {:marginBottom "4px"}} "FRAIL 结论:"]
                                         [:p {:style {:fontSize "12px" :color "gray"}} "0 分：健康；" [:br] "1-2 分：衰弱前期；" [:br] "≥3 分：衰弱。"]]]}))
 

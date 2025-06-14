@@ -22,7 +22,7 @@
                                    :fontSize "18px" :fontWeight 500 :color "#333"}}
       "系统设置"]
 
-     [:div {:style {:marginBottom "16px"}}
+     [:> Space {:style {:marginBottom "16px"}}
       [:> Button {:type "primary"
                   :icon (r/as-element [:> icons/PlusOutlined])
                   :on-click (fn []
@@ -145,6 +145,6 @@
                                       false)}
            (if (and editing-user (:signature editing-user) (not (object? (:signature editing-user))))
              [:img {:src (:signature editing-user) :alt "签名" :style {:width "100%"}}]
-             [:div
+             [:> Space {:direction "vertical" :align "center"}
               [:> icons/PlusOutlined]
-              [:div {:style {:marginTop 8}} "上传"]])]]]])]))
+              [:span {:style {:marginTop 8}} "上传"]])]]]])]))
