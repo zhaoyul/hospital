@@ -415,7 +415,7 @@
                       :format (ajax/json-request-format)
                       :response-format (ajax/json-response-format {:keywords? true})
                       :on-success [::save-user-success]
-                      :on-failure [::save-user-failed]}})))
+                      :on-failure [::save-user-failed]}}))))
 
 (rf/reg-event-fx ::save-user-success
   (fn [{:keys [db]} _]
