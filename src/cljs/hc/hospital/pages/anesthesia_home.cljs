@@ -87,7 +87,7 @@
 
 (defn right-side "患者麻醉管理\"patients\", 问卷列表\"assessment\", 系统设置\"settings\"" [active-tab]
 
-  (let [role (:role @(rf/subscribe [::subs/current-doctor]))]
+   (let [role (:role @(rf/subscribe [::subs/current-doctor]))]
     [:> Layout {:style {:height "calc(100vh - 64px)"
                         :overflow "auto"
                         :background "#f0f2f5"}}
