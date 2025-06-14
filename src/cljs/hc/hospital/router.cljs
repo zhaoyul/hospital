@@ -3,8 +3,7 @@
   (:require [reitit.frontend :as rf]
             [reitit.frontend.easy :as rfe]
             [re-frame.core :as rf-core]
-            [taoensso.timbre :as timbre]
-            [hc.hospital.events :as events]))
+            [taoensso.timbre :as timbre]))
 
 (def routes
   "路由表，定义页面标签与路径的映射。"
@@ -20,7 +19,7 @@
   (when match
     (let [tab (name (get-in match [:data :name]))]
       (timbre/debug "路由切换:" tab)
-      (rf-core/dispatch [::events/set-active-tab tab]))))
+      (rf-core/dispatch [:hc.hospital.events/set-active-tab tab]))))
 
 (defn init-router!
   "初始化路由并开始监听浏览器历史变化。"
