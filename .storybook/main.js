@@ -6,7 +6,7 @@ module.exports = {
     "@storybook/addon-interactions"
   ],
   framework: {
-    name: "@storybook/react-vite",
+    name: "@storybook/react",
     options: {}
   },
 };
