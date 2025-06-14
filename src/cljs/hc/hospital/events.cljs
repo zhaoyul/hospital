@@ -49,7 +49,8 @@
   (fn [_ _]
     (-> app-db/default-db
         (assoc :anesthesia {:current-assessment-canonical default-canonical-assessment
-                            :date-range [(utils/now) (utils/now)]})
+                            :date-range [(utils/now) (utils/now)]
+                            :patient-detail-tab "assessment"})
         ;; 初始化二维码扫描模态框相关状态
         (assoc :qr-scan-modal-visible? false)
         (assoc :qr-scan-input-value ""))))
@@ -82,7 +83,8 @@
     (if (nil? patient-key) ;; Handle deselection
       (-> db
           (assoc-in [:anesthesia :current-patient-id] nil)
-          (assoc-in [:anesthesia :current-assessment-canonical] default-canonical-assessment))
+          (assoc-in [:anesthesia :current-assessment-canonical] default-canonical-assessment)
+          (assoc-in [:anesthesia :patient-detail-tab] "assessment"))
       (let [all-assessments (get-in db [:anesthesia :all-patient-assessments])
             selected-full-assessment (first (filter #(= (:patient_id %) patient-key) all-assessments))
             canonical-assessment-data (when selected-full-assessment
@@ -92,7 +94,8 @@
             (assoc-in [:anesthesia :current-assessment-canonical]
                       (if (seq canonical-assessment-data)
                         canonical-assessment-data
-                        default-canonical-assessment)))))))
+                        default-canonical-assessment))
+            (assoc-in [:anesthesia :patient-detail-tab] "assessment"))))))
 
 
 ;; --- Updating Canonical Assessment Data ---
@@ -379,6 +382,10 @@
 (rf/reg-event-db ::set-active-tab
   (fn [db [_ tab]]
     (assoc-in db [:anesthesia :active-tab] tab))) ; Ensure path is correct
+
+(rf/reg-event-db ::set-patient-detail-tab
+  (fn [db [_ tab]]
+    (assoc-in db [:anesthesia :patient-detail-tab] tab)))
 
 (rf/reg-event-db ::open-user-modal
   (fn [db [_ user-data]]

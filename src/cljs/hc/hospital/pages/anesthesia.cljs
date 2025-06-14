@@ -10,8 +10,8 @@
                                           SaveOutlined SolutionOutlined
                                           SyncOutlined UploadOutlined
                                           UserOutlined]]
-   ["antd" :refer [Button Card Col DatePicker Descriptions Empty Form Input
-                   InputNumber Layout Modal Radio Row Select Space Tag Upload]]
+  ["antd" :refer [Button Card Col DatePicker Descriptions Empty Form Input
+                  InputNumber Layout Modal Radio Row Select Space Tag Upload Tabs Typography]]
    ["react" :as React]
    ["signature_pad" :as SignaturePad]
    [hc.hospital.events :as events]
@@ -705,16 +705,28 @@
                  :style {:background "#1890ff" :borderColor "#1890ff" :color "white"}}
       "打印表单"])])
 
+(defn- patient-tabs [patient-status]
+  (let [active-tab @(rf/subscribe [::subs/patient-detail-tab])
+        items (remove nil? [{:key "assessment" :label "评估"}
+                            (when (= patient-status "已批准")
+                              {:key "consent" :label "知情同意书"})])]
+    [:> Tabs {:items (clj->js items)
+              :activeKey active-tab
+              :onChange #(rf/dispatch [::events/set-patient-detail-tab %])
+              :style {:marginLeft "16px"}}]))
+
 (defn- assessment-header [patient-name patient-status current-patient-id]
-  [:div {:style {:display "flex"
-                 :justifyContent "space-between"
-                 :alignItems "center"
-                 :padding "12px 16px"
-                 :borderBottom "1px solid #f0f0f0"
-                 :background "#fff"}}
-   [:h3 {:style {:margin 0 :fontSize "16px" :fontWeight "500"}} patient-name]
+  [:> Row {:justify "space-between"
+           :align "middle"
+           :style {:padding "12px 16px"
+                   :borderBottom "1px solid #f0f0f0"
+                   :background "#fff"}}
+   [:> Col
+    [:> Space {:align "center"}
+     [:> Typography.Title {:level 5 :style {:margin 0}} patient-name]
+     [patient-tabs patient-status]]]
    (when current-patient-id
-     [assessment-action-buttons patient-status])])
+     [:> Col [assessment-action-buttons patient-status]])])
 
 (defn- assessment []
   (let [card-form-instances (r/atom {})
@@ -778,14 +790,21 @@
        [save-button]]
 
       ;; 无选择患者时的空状态
-      [:div {:style {:display "flex" :justifyContent "center" :alignItems "center" :height "100%"}}
-       [:> Empty {:description "请从左侧选择一位患者开始评估"}]])))
+      [:> Row {:justify "center" :align "middle" :style {:height "100%"}}
+       [:> Col
+        [:> Empty {:description "请从左侧选择一位患者开始评估"}]]])))
+
+(defn- consent-form-page []
+  [:> Space {:direction "vertical" :style {:padding "16px" :width "100%"}}
+   [:> Typography.Title {:level 5} "知情同意书"]
+   [:> Typography.Paragraph "此处显示知情同意书内容或表单。"]])
 
 (defn anesthesia-content []
   (let [basic-info @(rf/subscribe [::subs/canonical-basic-info])
         patient-name (get basic-info :姓名 "未知患者")
         patient-status (get basic-info :评估状态 "待评估")
-        current-patient-id @(rf/subscribe [::subs/current-patient-id])]
+        current-patient-id @(rf/subscribe [::subs/current-patient-id])
+        detail-tab @(rf/subscribe [::subs/patient-detail-tab])]
     [:> Layout.Content {:style {:margin 0 :minHeight 280 :overflow "hidden" :display "flex" :flexDirection "row"}}
      ;; 左侧患者列表区域
      [:> Card {:style {:width "400px"
@@ -807,4 +826,6 @@
                     :display "flex"
                     :flexDirection "column"}}
       [assessment-header patient-name patient-status current-patient-id]
-      [assessment]]]))
+      (case detail-tab
+        "consent" [consent-form-page]
+        [assessment])])))

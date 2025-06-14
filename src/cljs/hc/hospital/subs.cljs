@@ -14,6 +14,10 @@
   (fn [db _]
     (get-in db [:anesthesia :current-patient-id]))) ; 从 :anesthesia 模块获取
 
+(rf/reg-sub ::patient-detail-tab
+  (fn [db _]
+    (get-in db [:anesthesia :patient-detail-tab] "assessment")))
+
 (rf/reg-sub ::active-tab
   (fn [db _]
     (get-in db [:anesthesia :active-tab] "patients")))
