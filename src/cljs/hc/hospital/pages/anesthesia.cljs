@@ -706,15 +706,11 @@
       "打印表单"])])
 
 (defn- assessment-header [patient-name patient-status current-patient-id]
-  [:div {:style {:display "flex"
-                 :justifyContent "space-between"
-                 :alignItems "center"
-                 :padding "12px 16px"
-                 :borderBottom "1px solid #f0f0f0"
-                 :background "#fff"}}
-   [:h3 {:style {:margin 0 :fontSize "16px" :fontWeight "500"}} patient-name]
-   (when current-patient-id
-     [assessment-action-buttons patient-status])])
+  [:> Card {:style {:marginBottom "12px"}}
+   [:div {:style {:display "flex" :justifyContent "space-between" :alignItems "center"}}
+    [:h3 {:style {:fontSize "16px" :fontWeight "500"}} patient-name]
+    (when current-patient-id
+      [assessment-action-buttons patient-status])]])
 
 (defn- assessment []
   (let [card-form-instances (r/atom {})
@@ -746,65 +742,66 @@
                         "保存评估结果"]])]
     (if current-patient-id
       ;; 有选择患者时的视图
-      [:> Layout {:style {:display "flex" :flexDirection "column" :height "calc(100vh - 64px)"}}
-       ;; Main scrollable content area for cards
-       [:> Layout.Content {:style {:padding "16px" :overflowY "auto" :flexGrow 1 :background "#f0f2f5"}}
-        [:f> patient-info-card {:report-form-instance-fn register-form-instance}]
-        [general-condition-card]
-        [medical-history-summary-card]
-        [:f> acards/circulatory-system-card {:report-form-instance-fn register-form-instance}]
-        [:f> acards/respiratory-system-card {:report-form-instance-fn register-form-instance}]
-        [:f> acards/mental-neuromuscular-system-card {:report-form-instance-fn register-form-instance}]
-        [:f> acards/endocrine-system-card {:report-form-instance-fn register-form-instance}]
-        [:f> acards/liver-kidney-system-card {:report-form-instance-fn register-form-instance}]
-        [:f> acards/digestive-system-card {:report-form-instance-fn register-form-instance}]
-        [:f> acards/hematologic-system-card {:report-form-instance-fn register-form-instance}]
-        [:f> acards/immune-system-card {:report-form-instance-fn register-form-instance}]
-        [:f> acards/special-medication-history-card {:report-form-instance-fn register-form-instance}]
-        [:f> acards/special-disease-history-card {:report-form-instance-fn register-form-instance}]
-        [:f> acards/nutritional-assessment-card {:report-form-instance-fn register-form-instance}]
-        [:f> acards/pregnancy-assessment-card {:report-form-instance-fn register-form-instance}]
-        [:f> acards/surgical-anesthesia-history-card {:report-form-instance-fn register-form-instance}]
-        [:f> acards/airway-assessment-card {:report-form-instance-fn register-form-instance}]
-        [:f> acards/spinal-anesthesia-assessment-card {:report-form-instance-fn register-form-instance}]
+      (let [basic-info @(rf/subscribe [::subs/canonical-basic-info])
+            patient-name (get basic-info :姓名 "未知患者")
+            patient-status (get basic-info :评估状态 "待评估")
+            current-patient-id @(rf/subscribe [::subs/current-patient-id])]
+        [:> Layout {:style {:display "flex" :flexDirection "column" :height "calc(100vh - 64px)"}}
+         ;; Main scrollable content area for cards
+         [:> Layout.Content {:style {:padding "5px 12px" :overflowY "auto" :flexGrow 1 :background "#f0f2f5"}}
+          [assessment-header patient-name patient-status current-patient-id]
+          [:f> patient-info-card {:report-form-instance-fn register-form-instance}]
+          [general-condition-card]
+          [medical-history-summary-card]
+          [:f> acards/circulatory-system-card {:report-form-instance-fn register-form-instance}]
+          [:f> acards/respiratory-system-card {:report-form-instance-fn register-form-instance}]
+          [:f> acards/mental-neuromuscular-system-card {:report-form-instance-fn register-form-instance}]
+          [:f> acards/endocrine-system-card {:report-form-instance-fn register-form-instance}]
+          [:f> acards/liver-kidney-system-card {:report-form-instance-fn register-form-instance}]
+          [:f> acards/digestive-system-card {:report-form-instance-fn register-form-instance}]
+          [:f> acards/hematologic-system-card {:report-form-instance-fn register-form-instance}]
+          [:f> acards/immune-system-card {:report-form-instance-fn register-form-instance}]
+          [:f> acards/special-medication-history-card {:report-form-instance-fn register-form-instance}]
+          [:f> acards/special-disease-history-card {:report-form-instance-fn register-form-instance}]
+          [:f> acards/nutritional-assessment-card {:report-form-instance-fn register-form-instance}]
+          [:f> acards/pregnancy-assessment-card {:report-form-instance-fn register-form-instance}]
+          [:f> acards/surgical-anesthesia-history-card {:report-form-instance-fn register-form-instance}]
+          [:f> acards/airway-assessment-card {:report-form-instance-fn register-form-instance}]
+          [:f> acards/spinal-anesthesia-assessment-card {:report-form-instance-fn register-form-instance}]
 
-        [comorbidities-card]
-        ;; [physical-examination-card] ; Commented out as per instructions
-        [auxiliary-tests-card]
-        [preoperative-orders-card]
-        [remarks-card]
-        [signature-and-date-card]
-        ]
-       [save-button]]
+          [comorbidities-card]
+          ;; [physical-examination-card] ; Commented out as per instructions
+          [auxiliary-tests-card]
+          [preoperative-orders-card]
+          [remarks-card]
+          [signature-and-date-card]
+          ]
+         [save-button]])
 
       ;; 无选择患者时的空状态
       [:div {:style {:display "flex" :justifyContent "center" :alignItems "center" :height "100%"}}
        [:> Empty {:description "请从左侧选择一位患者开始评估"}]])))
 
 (defn anesthesia-content []
-  (let [basic-info @(rf/subscribe [::subs/canonical-basic-info])
-        patient-name (get basic-info :姓名 "未知患者")
-        patient-status (get basic-info :评估状态 "待评估")
-        current-patient-id @(rf/subscribe [::subs/current-patient-id])]
-    [:> Layout.Content {:style {:margin 0 :minHeight 280 :overflow "hidden" :display "flex" :flexDirection "row"}}
-     ;; 左侧患者列表区域
-     [:> Card {:style {:width "400px"
-                       :minWidth "350px"
-                       :height "calc(100vh - 64px)" ; 假设顶部导航栏高度为 64px
-                       :borderRight "1px solid #f0f0f0"
-                       :display "flex"
-                       :flexDirection "column"
-                       :padding "0"}}
+  [:> Layout.Content {:style {:margin 0 :minHeight 280 :overflow "hidden" :display "flex" :flexDirection "row"}}
+   ;; 左侧患者列表区域
+   [:> Card {:style {:width "400px"
+                     :minWidth "350px"
+                     :height "calc(100vh - 64px)" ; 假设顶部导航栏高度为 64px
+                     :borderRight "1px solid #f0f0f0"
+                     :display "flex"
+                     :flexDirection "column"
+                     :padding "0"}}
 
-      ;; 患者列表主体
-      [:div {:style {:flexGrow 1 :overflowY "auto"}}
-       [patient-list-panel]]]
+    ;; 患者列表主体
+    [:div {:style {:flexGrow 1 :overflowY "auto"}}
+     [patient-list-panel]]]
 
-     ;; 右侧评估详情区域
-     [:div {:style {:flexGrow 1
-                    :background "#f0f2f5"
-                    :overflow "hidden"
-                    :display "flex"
-                    :flexDirection "column"}}
-      [assessment-header patient-name patient-status current-patient-id]
-      [assessment]]]))
+   ;; 右侧评估详情区域
+   [:div {:style {:flexGrow 1
+                  :background "#f0f2f5"
+                  :overflow "hidden"
+                  :display "flex"
+                  :flexDirection "column"}}
+    
+    [assessment]]])
