@@ -51,7 +51,7 @@
                   :onClick #(rf/dispatch [::events/sync-applications]) ; 您需要定义此事件
                   :style {:display "flex" :alignItems "center"}}
        "同步申请"]
-      [:> Button {:type "primary"
+      [:> Button {:type "default"
                   :icon (r/as-element [:> icons/QrcodeOutlined]) ; 二维码图标
                   :style {:marginRight "16px"} ; 与退出登录按钮保持间距
                   :on-click #(rf/dispatch [::events/open-qr-scan-modal])}
@@ -756,7 +756,7 @@
         [remarks-card]
         [signature-and-date-card]
         ]
-       [save-button]]]
+       [save-button]]
 
       ;; 无选择患者时的空状态
       [:div {:style {:display "flex" :justifyContent "center" :alignItems "center" :height "100%"}}
