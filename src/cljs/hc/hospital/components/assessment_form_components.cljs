@@ -43,6 +43,6 @@
                                      (rf/dispatch [::events/update-form-field radio-name value]))}]]
       (when show-children?
         (if wrap?
-          [:div {:style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+          [:> Space {:direction "vertical" :style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
            (into [:<>] children)]
           (into [:<>] children)))])))

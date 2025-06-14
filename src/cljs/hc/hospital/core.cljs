@@ -31,9 +31,9 @@
      #js [])
 
     (if session-check-pending?
-      [:div {:style {:display "flex" :justifyContent "center" :alignItems "center" :height "100vh"}}
+      [:> Row {:justify "center" :align "middle" :style {:height "100vh"}}
        [:> antd/Spin {:tip "正在加载会话..." :size "large"}
-        [:div {:style {:width "100%" :height "100%"}}]]]
+        [:> Layout {:style {:width "100%" :height "100%"}}]]]
       (if is-logged-in?
         (do
           ;; 如果已登录，但当前路径为 /login 或 /login.html，则重定向到主应用页面。
@@ -49,7 +49,7 @@
         ;; ::session-check-failed 事件应该已经启动了到 /login 的重定向。
         ;; 当浏览器导航时，app-root 的这部分会短暂渲染。
         ;; 此处无需渲染 [login-page]，因为 /login 路径由后端处理。
-        [:div {:style {:textAlign "center" :paddingTop "50px"}}
+        [:> Space {:style {:textAlign "center" :paddingTop "50px"}}
          "正在重定向到登录页面..."]))))
 
 

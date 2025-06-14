@@ -1,7 +1,7 @@
 (ns hc.hospital.components.form-components
   (:require [reagent.core :as r]
             [re-frame.core :as rf]
-            ["antd" :refer [Card Content Collapse Space Text Col CheckBox Radio Row DatePicker Tag  Descriptions Empty Button Input InputNumber Select Form Layout Tooltip Upload Switch]]
+            ["antd" :refer [Card Content Collapse Space Text Typography Col CheckBox Radio Row DatePicker Tag  Descriptions Empty Button Input InputNumber Select Form Layout Tooltip Upload Switch]]
             [taoensso.timbre :as timbre]))
 
 ;; 创建一个"有无"选择组件，包含"无"和"有"的单选按钮，以及一个可选的描述输入框
@@ -70,10 +70,11 @@
 
 ;; 创建一个带标题的部分组件
 (defn section-title [{:keys [title margin-top]}]
-  [:div.section-title {:style {:fontWeight "bold"
-                               :fontSize "16px"
-                               :marginBottom "16px"
-                               :marginTop (or margin-top "24px")}}
+  [:> Typography.Title {:level 5
+                        :style {:fontWeight "bold"
+                                :fontSize "16px"
+                                :marginBottom "16px"
+                                :marginTop (or margin-top "24px")}}
    title])
 
 ;; 创建一个双列输入行，常用于并排的表单项

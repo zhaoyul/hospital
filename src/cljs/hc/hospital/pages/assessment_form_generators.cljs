@@ -231,10 +231,11 @@
     [:<> {:key (str (name field-key) "-conditional-section")}
      [render-form-item-from-spec [conditional-key actual-conditional-key-schema false (conj parent-form-path field-key) form-instance {:label label-text}]]
      (when-let [detail-schema (get options-map conditional-value-watch)]
-       (let [detail-path (conj parent-form-path field-key :详情)]
-         [:div {:key (str (name field-key) "-details-" conditional-value-watch)
-                :style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
-          [render-map-schema-fields detail-schema detail-path form-instance]]))]))
+        (let [detail-path (conj parent-form-path field-key :详情)]
+          [:> Space {:key (str (name field-key) "-details-" conditional-value-watch)
+                     :direction "vertical"
+                     :style {:marginLeft "20px" :borderLeft "2px solid #eee" :paddingLeft "15px"}}
+           [render-map-schema-fields detail-schema detail-path form-instance]]))]))
 
 (defn render-form-item-from-spec [[field-key field-schema optional? parent-form-path form-instance entry-props]]
   (let [;; form-path is the full path to the current field/group being processed: (conj parent-form-path field-key)
@@ -249,7 +250,9 @@
       [:f> render-conditional-map-section field-key field-schema parent-form-path form-instance entry-props]
 
       (= malli-type :map)
-      [:div {:key (str (name field-key) "-map-section") :style {:marginBottom "10px"}}
+      [:> Space {:key (str (name field-key) "-map-section")
+                 :direction "vertical"
+                 :style {:marginBottom "10px"}}
        [:h4 {:style {:fontSize "15px" :marginBottom "8px" :borderBottom "1px solid #f0f0f0" :paddingBottom "4px"}} label-text]
        [render-map-schema-fields field-schema (conj parent-form-path field-key) form-instance]]
 

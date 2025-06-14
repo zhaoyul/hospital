@@ -3,7 +3,7 @@
   (:require
    ["@ant-design/icons" :as icons]
    ["dayjs" :as dayjs]
-   ["antd" :refer [Button DatePicker Input Pagination Space Table Tag]]
+  ["antd" :refer [Button Card DatePicker Input Pagination Space Table Tag]]
    [reagent.core :as r]))
 
 ;; Define columns for the questionnaire table
@@ -56,23 +56,23 @@
         search-text (r/atom "")]
     [:<>
      ;; Search Area
-     [:div {:style {:background "#fff" :padding "16px" :border-radius "2px" :margin-bottom "16px"}}
+     [:> Card {:style {:marginBottom "16px"}}
       [:> Space {:style {:display "flex" :justifyContent "space-between" :alignItems "center"}}
        [:> Space {:align "center"} ; Ensure alignment for items in this Space
         [:span "填写日期:"]
         [:> DatePicker {:defaultValue (dayjs @start-date "YYYY-MM-DD") :onChange (fn [_ date-string] (reset! start-date date-string))}] ; Changed date to _
         [:span {:style {:margin "0 8px"}} "至"]
         [:> DatePicker {:defaultValue (dayjs @end-date "YYYY-MM-DD") :onChange (fn [_ date-string] (reset! end-date date-string))}]] ; Changed date to _
-       [:> Input {:placeholder "输入姓名/身份证号搜索"
-                  :style {:width "320px" :flexGrow 1 :maxWidth "320px"}
-                  :prefix (r/as-element [:> icons/SearchOutlined])
-                  :value @search-text
-                  :on-change (fn [e] (reset! search-text (-> e .-target .-value)))}]
-       [:> Space {}
-        [:> Button {:on-click #(.log js/console "Reset filters" (reset! start-date "2025-05-06") (reset! end-date "2025-05-06") (reset! search-text ""))} "重置"]
-        [:> Button {:type "primary" :icon (r/as-element [:> icons/SearchOutlined]) :on-click #(.log js/console "Search" @start-date @end-date @search-text)} "搜索"]]]]
+        [:> Input {:placeholder "输入姓名/身份证号搜索"
+                   :style {:width "320px" :flexGrow 1 :maxWidth "320px"}
+                   :prefix (r/as-element [:> icons/SearchOutlined])
+                   :value @search-text
+                   :on-change (fn [e] (reset! search-text (-> e .-target .-value)))}]
+        [:> Space {}
+          [:> Button {:on-click #(.log js/console "Reset filters" (reset! start-date "2025-05-06") (reset! end-date "2025-05-06") (reset! search-text ""))} "重置"]
+          [:> Button {:type "primary" :icon (r/as-element [:> icons/SearchOutlined]) :on-click #(.log js/console "Search" @start-date @end-date @search-text)} "搜索"]]]]
      ;; Questionnaire Table
-     [:div {:style {:background "#fff" :border-radius "2px"}} ; Removed padding: 0px
+     [:> Card {:style {:borderRadius "2px"}}
       [:> Table {:columns questionnaire-columns
                  :dataSource mock-questionnaire-data
                  :pagination false ;; We will use the separate Pagination component
@@ -81,7 +81,7 @@
                       :defaultCurrent 1
                       :total 24
                       :pageSize 8
-                      :showTotal (fn [total _] (str "共 " total " 条"))}] ; Changed range to _
+                      :showTotal (fn [total _] (str "共 " total " 条"))}]] ; Changed range to _
       ]
      ;; Modals (placeholders for now)
      ;; Link Patient Modal

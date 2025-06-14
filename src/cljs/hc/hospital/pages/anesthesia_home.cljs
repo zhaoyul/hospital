@@ -60,16 +60,15 @@
                 :justifyContent "space-between"
                 :borderBottom "1px solid #f0f0f0"
                 :height "64px"}}
-     [:div {:style {:display "flex" :alignItems "center"}}
+     [:> Space {:align "center"}
       ;; Using ApartmentOutlined as a placeholder for fas fa-hospital-user
       [:> icons/ApartmentOutlined {:style {:fontSize "24px" :color "#1890ff" :marginRight "10px"}}]
       [:> Typography.Title {:level 4 :style {:margin 0 :fontSize "18px"}} "麻醉信息管理平台"]]
 
      ;; 右侧：用户信息
      (when is-logged-in?
-       [:div {:style {:display "flex" :alignItems "center" :cursor "pointer"}
-              ;; :on-click #(rf/dispatch [::events/toggle-user-dropdown]) ; 稍后可以为用户下拉菜单添加事件
-              }
+       [:> Space {:align "center" :style {:cursor "pointer"}}
+        ;; :on-click #(rf/dispatch [::events/toggle-user-dropdown]) ; 稍后可以为用户下拉菜单添加事件
         [:> Avatar {:icon (r/as-element [:> icons/UserOutlined])
                     :style {:marginRight "8px" :backgroundColor "#1890ff"}}]
         ;; 地点标签 - 根据图片硬编码
@@ -81,7 +80,7 @@
                     :on-click #(rf/dispatch [::events/handle-logout])}
          "退出登录"]
         ;; 用户下拉菜单可以根据需要在此处条件渲染
-        ])
+        ]
      ;; If not logged in, this space will be empty or you can add a Login button here later
      ]))
 
@@ -91,7 +90,7 @@
     [:> Layout {:style {:height "calc(100vh - 64px)"
                         :overflow "auto"
                         :background "#f0f2f5"}}
-     [:div {:style {:padding "24px"}}
+     [:> Layout.Content {:style {:padding "24px"}}
       (case active-tab
         "patients" [anesthesia-content]
         "assessment" [questionnaire-list-content]
