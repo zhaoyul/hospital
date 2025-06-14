@@ -25,3 +25,10 @@
 - **UI 组件:**
     - 优先使用 `components/antd.cljs` 中已封装好的 Ant Design 组件。
     - 若需创建新的、可复用的表单组件或 UI 元素，应将其添加到 `components/form_components.cljs` 或其他合适的 `components` 命名空间下。
+
+## 3. Storybook 使用说明
+
+- 项目已集成 Storybook，便于在浏览器中预览和调试 UI 组件。
+- 如需展示 ClojureScript 组件，请在 `src/cljs/hc/hospital/stories/` 下创建示例文件，并在 `src/stories/` 中编写对应的 `*.stories.js(x)`。
+- 编译 Storybook 依赖的代码：`npx shadow-cljs compile storybook`，产物位于 `target/storybook/stories.js`。
+- 启动交互式预览：`yarn storybook`。
