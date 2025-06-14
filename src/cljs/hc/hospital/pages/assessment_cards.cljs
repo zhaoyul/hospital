@@ -20,9 +20,7 @@
    [malli.core :as m]
    [re-frame.core :as rf]
    [reagent.core :as r]
-   [taoensso.timbre :as timbre]
-   ))
-
+   [taoensso.timbre :as timbre]))
 
 (def ^:private default-header-color "评估卡片统一的头部底色" "#e6fffb")
 

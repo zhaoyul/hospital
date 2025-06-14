@@ -775,8 +775,7 @@
           [preoperative-orders-card]
           [remarks-card]
           [signature-and-date-card]
-          ]
-         [save-button]])
+          [save-button]]])
 
       ;; 无选择患者时的空状态
       [:div {:style {:display "flex" :justifyContent "center" :alignItems "center" :height "100%"}}
@@ -803,5 +802,4 @@
                   :overflow "hidden"
                   :display "flex"
                   :flexDirection "column"}}
-    
     [assessment]]])
