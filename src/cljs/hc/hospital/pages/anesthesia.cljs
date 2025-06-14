@@ -704,16 +704,11 @@
         register-form-instance (fn [card-key form-instance]
                                  (swap! card-form-instances assoc card-key form-instance))
 
-        save-button (fn [] ; Moved save-button inside assessment
-                      [:div {:style {:padding "10px 0"
-                                     :background "white"
-                                     :borderTop "1px solid #f0f0f0"
-                                     :textAlign "center"
-                                     :position "fixed"
-                                     :left 0
-                                     :right 0
-                                     :bottom 0
-                                     :zIndex 100}} ; Ensure it's above scrolled content
+        save-button (fn []
+                      [:> Layout.Footer {:style {:padding "10px 0"
+                                           :background "white"
+                                           :borderTop "1px solid #f0f0f0"
+                                           :textAlign "center"}}
                        [:> Button {:type "primary"
                                    :size "large"
                                    :icon (r/as-element [:> SaveOutlined])
@@ -727,13 +722,14 @@
                                                       (.submit form-inst))
                                                     (timbre/warn "No form instance found for card key:" card-key)))
                                                 (timbre/info "All card forms submitted, proceeding to save final assessment.")
-                                                (rf/dispatch [::events/save-final-assessment-later])))} ;; 稍等一会, db修改完成后再提交
+                                                (rf/dispatch [::events/save-final-assessment-later])))}
+                        ;; 稍等一会, db修改完成后再提交
                         "保存评估结果"]])]
     (if current-patient-id
       ;; 有选择患者时的视图
-      [:div {:style {:display "flex" :flexDirection "column" :height "calc(100vh - 64px)"}}
+      [:> Layout {:style {:display "flex" :flexDirection "column" :height "calc(100vh - 64px)"}}
        ;; Main scrollable content area for cards
-       [:div {:style {:padding "16px" :overflowY "auto" :flexGrow 1 :background "#f0f2f5"}}
+       [:> Layout.Content {:style {:padding "16px" :overflowY "auto" :flexGrow 1 :background "#f0f2f5"}}
         [:f> patient-info-card {:report-form-instance-fn register-form-instance}]
         [general-condition-card]
         [medical-history-summary-card]
@@ -759,7 +755,8 @@
         [preoperative-orders-card]
         [remarks-card]
         [signature-and-date-card]
-        [save-button]]] ; save-button is now called as a function defined in the let block
+        ]
+       [save-button]]]
 
       ;; 无选择患者时的空状态
       [:div {:style {:display "flex" :justifyContent "center" :alignItems "center" :height "100%"}}
