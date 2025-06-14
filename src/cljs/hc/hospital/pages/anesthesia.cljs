@@ -42,7 +42,8 @@
                                    {:value "待评估" :label "待评估"}
                                    {:value "已批准" :label "已批准"}
                                    {:value "已驳回" :label "已驳回"}
-                                   {:value "已暂缓" :label "已暂缓"}]]
+                                   {:value "已暂缓" :label "已暂缓"}]
+        label-width "60px"]
     [:div {:style {:padding "16px" :borderBottom "1px solid #f0f0f0"}}
      ;; 按钮组，两侧对齐
      [:> Space {:style {:marginBottom "16px"
@@ -59,26 +60,44 @@
                   :icon (r/as-element [:> icons/QrcodeOutlined]) ; 二维码图标
                   :on-click #(rf/dispatch [::events/open-qr-scan-modal])}
        "扫码签到"]]
-     ;; 申请日期
-     [:div {:style {:marginBottom "8px" :color "#666"}} "申请日期:"]
-     [:> DatePicker.RangePicker
-      {:style {:width "100%" :marginBottom "12px"}
-       :value date-range
-       :onChange #(rf/dispatch [::events/set-date-range %])}]
+     ;; 申请日期过滤
+     [:div {:style {:display "flex" :alignItems "center" :marginBottom "12px"}}
+      [:span {:style {:width label-width
+                       :textAlign "left"
+                       :color "#666"
+                       :marginRight "8px"}}
+       "申请日期:"]
+      [:> DatePicker.RangePicker
+       {:style {:flex "1"}
+        :value date-range
+        :onChange #(rf/dispatch [::events/set-date-range %])}]]
 
-     ;; 评估状态
-     [:> Select
-      {:style {:width "100%" :marginBottom "16px"}
-       :placeholder "评估状态: 请选择"
-       :options assessment-status-options
-       :value status
-       :onChange #(rf/dispatch [::events/set-assessment-status-filter %])}]
+     ;; 评估状态过滤
+     [:div {:style {:display "flex" :alignItems "center" :marginBottom "12px"}}
+      [:span {:style {:width label-width
+                       :textAlign "left"
+                       :color "#666"
+                       :marginRight "8px"}}
+       "状态:"]
+      [:> Select
+       {:style {:flex "1"}
+        :placeholder "评估状态: 请选择"
+        :options assessment-status-options
+        :value status
+        :onChange #(rf/dispatch [::events/set-assessment-status-filter %])}]]
 
-     ;; 搜索框
-     [:> Input.Search
-      {:placeholder "请输入患者姓名/门诊号"
-       :allowClear true
-       :onSearch #(rf/dispatch [::events/search-patients %])}]]))
+     ;; 患者搜索过滤
+     [:div {:style {:display "flex" :alignItems "center"}}
+      [:span {:style {:width label-width
+                       :textAlign "left"
+                       :color "#666"
+                       :marginRight "8px"}}
+       "患者:"]
+      [:> Input.Search
+       {:style {:flex "1"}
+        :placeholder "请输入患者姓名/门诊号"
+        :allowClear true
+        :onSearch #(rf/dispatch [::events/search-patients %])}]]]))
 
 (defn patient-list []
   (let [patients @(rf/subscribe [::subs/filtered-patients])
