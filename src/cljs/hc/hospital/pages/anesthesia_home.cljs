@@ -40,7 +40,7 @@
                                      "settings" "3"
                                      "1")]
                     :onClick (fn [item]
-                               (rf/dispatch [::events/set-active-tab
+                               (rf/dispatch [::events/navigate-tab
                                              (condp = (.-key item)
                                                "1" "patients"
                                                "2" "assessment"

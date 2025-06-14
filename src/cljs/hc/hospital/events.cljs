@@ -6,6 +6,7 @@
             [ajax.core :as ajax]
             [clojure.string :as str]
             [hc.hospital.utils :as utils]
+            [hc.hospital.router :as router]
             [taoensso.timbre :as timbre]))
 
 ;; 默认的规范评估数据结构
@@ -379,6 +380,15 @@
 (rf/reg-event-db ::set-active-tab
   (fn [db [_ tab]]
     (assoc-in db [:anesthesia :active-tab] tab))) ; Ensure path is correct
+
+(rf/reg-fx
+  ::navigate-tab
+  (fn [tab]
+    (router/navigate! tab)))
+
+(rf/reg-event-fx ::navigate-tab
+  (fn [{:keys [db]} [_ tab]]
+    {:navigate-tab tab}))
 
 (rf/reg-event-db ::open-user-modal
   (fn [db [_ user-data]]

@@ -14,7 +14,8 @@
    ["antd" :as antd :refer [Button Spin ConfigProvider]] ; 引入 ConfigProvider
    ["antd/es/locale/zh_CN" :default zhCN] ; 中文本地化
    ["dayjs/locale/zh-cn"]
-   ["dayjs" :as dayjs]))
+   ["dayjs" :as dayjs]
+   [hc.hospital.router :as router]))
 
 ;; 导入 Ant Design CSS
 ;;(js/require "antd/dist/reset.css")
@@ -79,5 +80,8 @@
       (timbre/info "正常应用初始化：派发 initialize-db 和 check-session 事件。")
       (rf/dispatch-sync [::events/initialize-db])
       (rf/dispatch [::events/check-session])))
+
+  ;; 初始化路由并监听浏览器历史
+  (router/init-router!)
 
   (mount-root))
