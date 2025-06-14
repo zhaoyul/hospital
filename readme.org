@@ -279,7 +279,18 @@
    #+END_SRC
    编译成功后，相关的 Javascript 文件会输出到 `target/classes/cljsbuild/public/js/` 目录下。这些是生产环境构建。
 
-** 3. 运行 Clojure 测试 (后端)
+** 3. 启动 Storybook (预览组件)
+   项目内置了 Storybook，可用于独立预览和调试前端组件。执行以下脚本会先编译 `:storybook` 构建目标，再启动本地服务：
+   #+BEGIN_SRC bash
+   yarn storybook
+   #+END_SRC
+   访问 [[http://localhost:6006]] 即可查看组件库。
+   若需构建静态站点，可执行：
+   #+BEGIN_SRC bash
+   yarn build-storybook
+   #+END_SRC
+
+** 4. 运行 Clojure 测试 (后端)
    执行以下命令来运行后端的测试套件：
    #+BEGIN_SRC bash
    clj -M:test
