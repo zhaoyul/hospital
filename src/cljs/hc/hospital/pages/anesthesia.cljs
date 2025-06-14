@@ -724,10 +724,10 @@
                                  (swap! card-form-instances assoc card-key form-instance))
 
         save-button (fn []
-                      [:> Layout.Footer {:style {:padding "10px 0"
-                                                 :background "white"
-                                                 :borderTop "1px solid #f0f0f0"
-                                                 :textAlign "center"}}
+                      [:div {:style {:padding "10px 0"
+                                      :background "white"
+                                      :borderTop "1px solid #f0f0f0"
+                                      :textAlign "center"}}
                        [:> Button {:type "primary"
                                    :size "large"
                                    :icon (r/as-element [:> SaveOutlined])
@@ -774,8 +774,7 @@
         [preoperative-orders-card]
         [remarks-card]
         [signature-and-date-card]
-        ]
-       [save-button]]
+        [save-button]]
 
       ;; 无选择患者时的空状态
       [:div {:style {:display "flex" :justifyContent "center" :alignItems "center" :height "100%"}}
