@@ -56,7 +56,7 @@
         search-text (r/atom "")]
     [:<>
      ;; Search Area
-     [:div {:style {:background "#fff" :padding "24px" :border-radius "2px" :margin-bottom "24px"}}
+     [:div {:style {:background "#fff" :padding "16px" :border-radius "2px" :margin-bottom "16px"}}
       [:> Space {:style {:display "flex" :justifyContent "space-between" :alignItems "center"}}
        [:> Space {:align "center"} ; Ensure alignment for items in this Space
         [:span "填写日期:"]
@@ -76,8 +76,8 @@
       [:> Table {:columns questionnaire-columns
                  :dataSource mock-questionnaire-data
                  :pagination false ;; We will use the separate Pagination component
-                 :style {:padding "0 24px"}}]
-      [:> Pagination {:style {:textAlign "right" :margin "16px 0" :padding "0 24px"} ; Adjusted margin and padding
+                 :style {:padding "0 16px"}}]
+      [:> Pagination {:style {:textAlign "right" :margin "16px 0" :padding "0 16px"}
                       :defaultCurrent 1
                       :total 24
                       :pageSize 8

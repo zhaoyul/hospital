@@ -25,6 +25,8 @@
     (fn [active-tab]
       [:> Layout.Sider {:theme "light"
                         :collapsed @sidebar-collapsed?
+                        :collapsedWidth 60
+                        :width 160
                         :trigger nil
                         :collapsible true}
        [custom-sider-trigger sidebar-collapsed? #(swap! sidebar-collapsed? not)]
@@ -49,13 +51,13 @@
   (let [current-doctor @(rf/subscribe [::subs/current-doctor])
         is-logged-in? @(rf/subscribe [::subs/is-logged-in])]
     [:> Layout.Header
-     {:style {:background "#fff"
-              :padding "0 24px" ; Adjusted padding
-              :display "flex"
-              :alignItems "center"
-              :justifyContent "space-between"
-              :borderBottom "1px solid #f0f0f0"
-              :height "64px"}}
+       {:style {:background "#fff"
+                :padding "0 16px"
+                :display "flex"
+                :alignItems "center"
+                :justifyContent "space-between"
+                :borderBottom "1px solid #f0f0f0"
+                :height "64px"}}
      [:div {:style {:display "flex" :alignItems "center"}}
       ;; Using ApartmentOutlined as a placeholder for fas fa-hospital-user
       [:> icons/ApartmentOutlined {:style {:fontSize "24px" :color "#1890ff" :marginRight "10px"}}]
@@ -82,15 +84,15 @@
      ]))
 
 (defn right-side "患者麻醉管理\"patients\", 问卷列表\"assessment\", 系统设置\"settings\"" [active-tab]
-  [:> Layout {:style {:height "calc(100vh - 64px)"
+   [:> Layout {:style {:height "calc(100vh - 64px)"
                       :overflow "auto"
                       :background "#f0f2f5"}}
-   [:div {:style {:padding "24px"}}
-    (case active-tab
-      "patients" [anesthesia-content]
-      "assessment" [questionnaire-list-content] ;; Use the new component
-      "settings" [:f> system-settings-content]
-      [:div "未知标签页内容"])]]) ; Removed inline style from default case as it's handled by the wrapper
+    [:div {:style {:padding "16px"}}
+      (case active-tab
+        "patients" [anesthesia-content]
+        "assessment" [questionnaire-list-content] ;; Use the new component
+        "settings" [:f> system-settings-content]
+        [:div "未知标签页内容"])]]) ; Removed inline style from default case as it's handled by the wrapper
 
 (defn anesthesia-home-page []
   (let [active-tab @(rf/subscribe [::subs/active-tab])
