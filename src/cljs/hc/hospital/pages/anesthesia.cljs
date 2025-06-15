@@ -705,7 +705,7 @@
                  :style {:background "#1890ff" :borderColor "#1890ff" :color "white"}}
       "打印表单"])])
 
-(defn- assessment-header [patient-name patient-status current-patient-id consent-open?]
+(defn- assessment-header [patient-name patient-status current-patient-id sedation-open? talk-open?]
   [:> Card {:style {:marginBottom "12px"}}
    [:div {:style {:display "flex" :justifyContent "space-between" :alignItems "center"}}
     [:h3 {:style {:fontSize "16px" :fontWeight "500"}} patient-name]
@@ -716,22 +716,37 @@
          [:<>
           [:> Button {:style {:marginLeft "8px"}
                       :type "primary"
-                      :on-click #(reset! consent-open? true)}
+                      :on-click #(reset! sedation-open? true)}
            "麻醉/辅助镇静知情同意书"]
-          [:> Modal {:open @consent-open?
+          [:> Modal {:open @sedation-open?
                      :footer nil
                      :title nil
                      :width "100%"
                      :style {:top 0}
                      :bodyStyle {:padding 0 :height "100vh"}
                      :destroyOnClose true
-                     :onCancel #(reset! consent-open? false)}
+                     :onCancel #(reset! sedation-open? false)}
            [:iframe {:src (str "/report/sedation-consent?patient-id=" current-patient-id)
+                     :style {:border "none" :width "100%" :height "100%"}}]]
+          [:> Button {:style {:marginLeft "8px"}
+                      :type "primary"
+                      :on-click #(reset! talk-open? true)}
+           "麻醉前谈话记录与知情同意书"]
+          [:> Modal {:open @talk-open?
+                     :footer nil
+                     :title nil
+                     :width "100%"
+                     :style {:top 0}
+                     :bodyStyle {:padding 0 :height "100vh"}
+                     :destroyOnClose true
+                     :onCancel #(reset! talk-open? false)}
+           [:iframe {:src (str "/report/pre-anesthesia-consent?patient-id=" current-patient-id)
                      :style {:border "none" :width "100%" :height "100%"}}]]])])]])
 
 (defn- assessment []
   (let [card-form-instances (r/atom {})
-        consent-open? (r/atom false)
+        sedation-open? (r/atom false)
+        talk-open? (r/atom false)
         current-patient-id @(rf/subscribe [::subs/current-patient-id])
 
         register-form-instance (fn [card-key form-instance]
@@ -767,7 +782,7 @@
         [:> Layout {:style {:display "flex" :flexDirection "column" :height "calc(100vh - 64px)"}}
          ;; Main scrollable content area for cards
          [:> Layout.Content {:style {:padding "5px 12px" :overflowY "auto" :flexGrow 1 :background "#f0f2f5"}}
-          [assessment-header patient-name patient-status current-patient-id consent-open?]
+          [assessment-header patient-name patient-status current-patient-id sedation-open? talk-open?]
           [:f> patient-info-card {:report-form-instance-fn register-form-instance}]
           [general-condition-card]
           [medical-history-summary-card]

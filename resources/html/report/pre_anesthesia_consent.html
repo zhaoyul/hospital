@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>麻醉前谈话记录与知情同意书</title>
+    <link href="/css/screen.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f0f2f5;
+        }
+        .form-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 3rem;
+            background: white;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            border-radius: 8px;
+        }
+        .title-block {
+            text-align: center;
+            margin-bottom: 2.5rem;
+        }
+        .title-block h1 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            letter-spacing: 0.15em;
+        }
+        .title-block h2 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            letter-spacing: 0.1em;
+            margin-top: 0.75rem;
+        }
+        p, li, span, label {
+            font-size: 1rem;
+            line-height: 2;
+        }
+        .input-line {
+            border-bottom: 1px solid #333;
+            padding: 0 0.25rem;
+            min-width: 4rem;
+            min-height: 1.5rem;
+            display: inline-block;
+            cursor: text;
+        }
+        .input-line.flex-grow {
+            flex-grow: 1;
+        }
+        .checkbox-item {
+            cursor: pointer;
+            margin-right: 1.5rem;
+            user-select: none;
+        }
+        .editable-input {
+            border: none;
+            outline: none;
+            background-color: #f0f8ff;
+            width: 100%;
+            height: 100%;
+            padding: 2px;
+            font-size: inherit;
+            font-family: inherit;
+            text-align: center;
+            box-shadow: 0 0 2px 1px rgba(59, 130, 246, .5);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="form-container">
+        <!-- Main Title -->
+        <div class="title-block">
+            <h1>聊城市人民医院</h1>
+            <h2>麻醉前谈话记录与知情同意书</h2>
+        </div>
+
+        <!-- Patient Information Section -->
+        <div class="space-y-6 text-base">
+            <div class="flex items-center">
+                <span>尊敬的</span>
+                <span class="input-line flex-grow mx-2 editable-field" data-field="name">&nbsp;</span>
+                <span>：</span>
+            </div>
+            <div class="flex flex-wrap items-center justify-between gap-y-4">
+                <div class="flex items-center">
+                    <span>性别</span>
+                    <span class="checkbox-item ml-4" data-group="gender" data-checked="false">□ 男</span>
+                    <span class="checkbox-item" data-group="gender" data-checked="false">□ 女</span>
+                </div>
+                <div class="flex items-center">
+                    <span>年龄</span>
+                    <span class="input-line text-center mx-2 editable-field" data-field="age">&nbsp;</span>
+                    <span>岁</span>
+                </div>
+                <div class="flex items-center">
+                    <span>W</span>
+                    <span class="input-line text-center mx-2 editable-field" data-field="weight">&nbsp;</span>
+                    <span>kg</span>
+                </div>
+            </div>
+            <div class="flex flex-wrap items-center justify-between gap-y-4">
+                <div class="flex items-center">
+                    <span>SPO2</span>
+                    <span class="input-line text-center mx-2 editable-field" data-field="spo2">&nbsp;</span>
+                    <span>%</span>
+                </div>
+                <div class="flex items-center">
+                    <span>HR</span>
+                    <span class="input-line text-center mx-2 editable-field" data-field="hr">&nbsp;</span>
+                    <span>次</span>
+                </div>
+                <div class="flex items-center">
+                    <span>BP</span>
+                    <span class="input-line text-center mx-2 editable-field" data-field="bp">&nbsp;</span>
+                    <span>mmHg</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Anesthesiologist Responsibility -->
+        <p class="mt-8">
+            麻醉医师按规章制度、医疗常规全面负责您围麻醉期各种病情变化的监测和相关处理。按照您目前的情况, 我们拟为您选择以下麻醉方法:
+        </p>
+
+        <!-- Anesthesia Method Selection -->
+        <div class="my-6 flex flex-wrap items-center">
+            <span class="checkbox-item" data-checked="false">□ 非气管插管静脉全麻</span>
+            <span class="checkbox-item" data-checked="false">□ 气管插管全麻</span>
+            <span class="checkbox-item" data-checked="false">□ 局(表)麻</span>
+            <span class="checkbox-item" data-checked="false">□ 基础麻醉</span>
+        </div>
+
+        <!-- Risks and Complications Section -->
+        <p>麻醉期间及麻醉后近期可能发生以下情况, 包括(但不限于):</p>
+        <ol class="list-decimal list-inside space-y-2 my-4">
+            <li>呼吸抑制, 误吸, 气道痉挛。</li>
+            <li>心肌抑制, 心律失常, 循环衰竭。</li>
+            <li>术后疼痛、躁动、恶心、呕吐, 苏醒延迟, 精神功能障碍。</li>
+            <li>药物高敏或过敏, 输液反应, 穿刺部位血肿。</li>
+            <li>个别患者可能发生严重意外甚至致残或危及生命。</li>
+            <li>患者潜在的或合并的心脑血管等其它疾病复发或加重、恶化。</li>
+            <li class="flex items-center">
+                <span>其它:</span>
+                <span class="input-line flex-grow ml-2 editable-field" data-field="other">&nbsp;</span>
+            </li>
+        </ol>
+
+        <!-- Consent Clause -->
+        <p class="mt-8">
+            一旦发生上述情况, 医务人员将按医疗原则予以尽力抢救, 但可能产生不良后果。如患者或被委托人对上述情况表示理解, 同意进行麻醉, 请签署姓名。
+        </p>
+
+        <!-- Signature Section -->
+        <div class="mt-12 space-y-8">
+            <div class="flex flex-wrap justify-end items-center gap-x-2">
+                <span>谈话医师签名:</span>
+                <span class="input-line editable-field" data-field="doctor" style="width: 12rem;">&nbsp;</span>
+                <div class="flex items-center ml-8">
+                    <span class="input-line text-center editable-field" data-field="dyear">&nbsp;</span><span>年</span>
+                    <span class="input-line text-center ml-2 editable-field" data-field="dmonth">&nbsp;</span><span>月</span>
+                    <span class="input-line text-center ml-2 editable-field" data-field="dday">&nbsp;</span><span>日</span>
+                    <span class="input-line text-center ml-2 editable-field" data-field="dhour">&nbsp;</span><span>时</span>
+                    <span class="input-line text-center ml-2 editable-field" data-field="dminute">&nbsp;</span><span>分</span>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-end items-center gap-x-2">
+                <span>被委托人签名:</span>
+                <span class="input-line editable-field" data-field="delegate" style="width: 12rem;">&nbsp;</span>
+                 <div class="flex items-center ml-8">
+                    <span class="input-line text-center editable-field" data-field="ayear">&nbsp;</span><span>年</span>
+                    <span class="input-line text-center ml-2 editable-field" data-field="amonth">&nbsp;</span><span>月</span>
+                    <span class="input-line text-center ml-2 editable-field" data-field="aday">&nbsp;</span><span>日</span>
+                    <span class="input-line text-center ml-2 editable-field" data-field="ahour">&nbsp;</span><span>时</span>
+                    <span class="input-line text-center ml-2 editable-field" data-field="aminute">&nbsp;</span><span>分</span>
+                </div>
+            </div>
+            <div class="flex flex-wrap justify-end items-center gap-x-2">
+                <span>患者签名:</span>
+                <span class="input-line editable-field" data-field="patient" style="width: 12rem;">&nbsp;</span>
+                <div class="flex items-center ml-8">
+                    <span class="input-line text-center editable-field" data-field="pyear">&nbsp;</span><span>年</span>
+                    <span class="input-line text-center ml-2 editable-field" data-field="pmonth">&nbsp;</span><span>月</span>
+                    <span class="input-line text-center ml-2 editable-field" data-field="pday">&nbsp;</span><span>日</span>
+                    <span class="input-line text-center ml-2 editable-field" data-field="phour">&nbsp;</span><span>时</span>
+                    <span class="input-line text-center ml-2 editable-field" data-field="pminute">&nbsp;</span><span>分</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            document.querySelectorAll('.editable-field').forEach(el => {
+                const key = el.dataset.field;
+                if (key && params.get(key)) {
+                    el.innerHTML = params.get(key);
+                }
+            });
+            const form = document.querySelector('.form-container');
+            form.addEventListener('click', (event) => {
+                const checkboxTarget = event.target.closest('.checkbox-item');
+                const editableTarget = event.target.closest('.editable-field');
+                if (checkboxTarget) {
+                    const isChecked = checkboxTarget.dataset.checked === 'true';
+                    const group = checkboxTarget.dataset.group;
+                    if (group) {
+                        form.querySelectorAll(`.checkbox-item[data-group="${group}"]`).forEach(el => {
+                            if (el !== checkboxTarget) {
+                                el.dataset.checked = 'false';
+                                el.textContent = el.textContent.replace('☑', '□');
+                            }
+                        });
+                    }
+                    checkboxTarget.dataset.checked = !isChecked;
+                    checkboxTarget.textContent = !isChecked ? checkboxTarget.textContent.replace('□', '☑') : checkboxTarget.textContent.replace('☑', '□');
+                }
+                if (editableTarget && !editableTarget.querySelector('.editable-input')) {
+                    const originalText = editableTarget.innerHTML.trim() === '&nbsp;' ? '' : editableTarget.innerHTML.trim();
+                    editableTarget.innerHTML = '';
+                    const input = document.createElement('input');
+                    input.type = 'text';
+                    input.value = originalText;
+                    input.className = 'editable-input';
+                    editableTarget.appendChild(input);
+                    input.focus();
+                    const saveChanges = () => {
+                        const newValue = input.value.trim();
+                        if (input.parentNode) {
+                           input.parentNode.innerHTML = newValue === '' ? '&nbsp;' : newValue;
+                        }
+                    };
+                    input.addEventListener('blur', saveChanges);
+                    input.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            input.blur();
+                        } else if (e.key === 'Escape') {
+                            if (input.parentNode) {
+                                input.parentNode.innerHTML = originalText === '' ? '&nbsp;' : originalText;
+                            }
+                        }
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>

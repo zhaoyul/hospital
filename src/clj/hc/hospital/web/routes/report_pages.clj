@@ -15,7 +15,8 @@
     #(wrap-anti-forgery % {:error-response error-page})))
 
 (defn report-page-routes [_opts]
-  [["/report/sedation-consent" {:get report/sedation-consent-page}]])
+  [["/report/sedation-consent" {:get report/sedation-consent-page}]
+   ["/report/pre-anesthesia-consent" {:get report/pre-anesthesia-consent-page}]])
 
 (def route-data
   {:middleware [(wrap-page-defaults)
