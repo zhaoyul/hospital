@@ -23,4 +23,4 @@
         (http-response/not-found {:message "未找到知情同意书"}))
       (catch Exception e
         (log/error e "查询知情同意书失败")
-        (http-response/internal-server-error {:message "查询失败"}))))
+        (http-response/internal-server-error {:message "查询失败"})))))
