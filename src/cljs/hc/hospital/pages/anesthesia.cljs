@@ -19,8 +19,9 @@
    [hc.hospital.pages.assessment-cards :as acards]
    [hc.hospital.specs.assessment-complete-cn-spec :as assessment-specs]
    [hc.hospital.subs :as subs]
-   [hc.hospital.ui-helpers :refer [custom-styled-card]]
-   [hc.hospital.utils :as utils]
+  [hc.hospital.ui-helpers :refer [custom-styled-card]]
+  [hc.hospital.components.layout-components :as layout-components]
+  [hc.hospital.utils :as utils]
    [re-frame.core :as rf]
    [reagent.core :as r]
    [taoensso.timbre :as timbre]))
@@ -42,7 +43,7 @@
                                    {:value "已驳回" :label "已驳回"}
                                    {:value "已暂缓" :label "已暂缓"}]
         label-width "60px"]
-    [:div {:style {:padding "16px" :borderBottom "1px solid #f0f0f0"}}
+    [layout-components/filter-panel
      ;; 按钮组，两侧对齐
      [:> Space {:style {:marginBottom "16px"
                         :width "100%"
@@ -51,15 +52,15 @@
                         :alignItems "center"}}
       [:> Button {:type "primary"
                   :icon (r/as-element [:> SyncOutlined])
-                  :onClick #(rf/dispatch [::events/sync-applications]) ; 您需要定义此事件
+                  :onClick #(rf/dispatch [::events/sync-applications])
                   :style {:display "flex" :alignItems "center"}}
        "同步申请"]
       [:> Button {:type "default"
-                  :icon (r/as-element [:> icons/QrcodeOutlined]) ; 二维码图标
+                  :icon (r/as-element [:> icons/QrcodeOutlined])
                   :on-click #(rf/dispatch [::events/open-qr-scan-modal])}
        "扫码签到"]]
      ;; 申请日期过滤
-     [:div {:style {:display "flex" :alignItems "center" :marginBottom "12px"}}
+     [:> Space {:align "center" :style {:width "100%"}}
       [:span {:style {:width label-width
                       :textAlign "left"
                       :color "#666"
@@ -71,7 +72,7 @@
         :onChange #(rf/dispatch [::events/set-date-range %])}]]
 
      ;; 评估状态过滤
-     [:div {:style {:display "flex" :alignItems "center" :marginBottom "12px"}}
+     [:> Space {:align "center" :style {:width "100%"}}
       [:span {:style {:width label-width
                       :textAlign "left"
                       :color "#666"
@@ -85,7 +86,7 @@
         :onChange #(rf/dispatch [::events/set-assessment-status-filter %])}]]
 
      ;; 患者搜索过滤
-     [:div {:style {:display "flex" :alignItems "center"}}
+     [:> Space {:align "center" :style {:width "100%"}}
       [:span {:style {:width label-width
                       :textAlign "left"
                       :color "#666"

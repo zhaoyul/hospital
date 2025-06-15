@@ -3,8 +3,9 @@
   (:require
    ["@ant-design/icons" :as icons]
    ["dayjs" :as dayjs]
-   ["antd" :refer [Button DatePicker Input Pagination Space Table Tag]]
-   [reagent.core :as r]))
+  ["antd" :refer [Button DatePicker Input Pagination Space Table Tag]]
+  [hc.hospital.components.layout-components :as layout-components]
+  [reagent.core :as r]))
 
 ;; Define columns for the questionnaire table
 (def questionnaire-columns
@@ -56,13 +57,13 @@
         search-text (r/atom "")]
     [:<>
      ;; Search Area
-     [:div {:style {:background "#fff" :padding "16px" :border-radius "2px" :margin-bottom "16px"}}
+     [layout-components/filter-panel
       [:> Space {:style {:display "flex" :justifyContent "space-between" :alignItems "center"}}
-       [:> Space {:align "center"} ; Ensure alignment for items in this Space
+       [:> Space {:align "center"}
         [:span "填写日期:"]
-        [:> DatePicker {:defaultValue (dayjs @start-date "YYYY-MM-DD") :onChange (fn [_ date-string] (reset! start-date date-string))}] ; Changed date to _
+        [:> DatePicker {:defaultValue (dayjs @start-date "YYYY-MM-DD") :onChange (fn [_ date-string] (reset! start-date date-string))}]
         [:span {:style {:margin "0 8px"}} "至"]
-        [:> DatePicker {:defaultValue (dayjs @end-date "YYYY-MM-DD") :onChange (fn [_ date-string] (reset! end-date date-string))}]] ; Changed date to _
+        [:> DatePicker {:defaultValue (dayjs @end-date "YYYY-MM-DD") :onChange (fn [_ date-string] (reset! end-date date-string))}]]
        [:> Input {:placeholder "输入姓名/身份证号搜索"
                   :style {:width "320px" :flexGrow 1 :maxWidth "320px"}
                   :prefix (r/as-element [:> icons/SearchOutlined])
