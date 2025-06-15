@@ -288,12 +288,39 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const params = new URLSearchParams(window.location.search);
-            document.querySelectorAll('.editable-field').forEach(el => {
-                const key = el.dataset.field;
-                if (key && params.get(key)) {
-                    el.innerHTML = params.get(key);
-                }
-            });
+            const patientId = params.get('patient-id');
+
+            const fillFields = (data = {}) => {
+                document.querySelectorAll('.editable-field').forEach(el => {
+                    const key = el.dataset.field;
+                    if (key && data[key] !== undefined) {
+                        el.innerHTML = data[key];
+                    } else if (key && params.get(key)) {
+                        el.innerHTML = params.get(key);
+                    }
+                });
+            };
+
+            if (patientId) {
+                fetch(`/api/patient/assessment/${patientId}`)
+                    .then(r => r.ok ? r.json() : Promise.reject('failed'))
+                    .then(info => {
+                        const b = info.assessment_data && info.assessment_data['基本信息'];
+                        const mapping = {name:'姓名', sex:'性别', age:'年龄', department:'院区', record:'门诊号', diagnosis:'术前诊断'};
+                        const result = {};
+                        if (b) {
+                            Object.keys(mapping).forEach(k => {
+                                if (b[mapping[k]] !== undefined) {
+                                    result[k] = b[mapping[k]];
+                                }
+                            });
+                        }
+                        fillFields(result);
+                    })
+                    .catch(() => fillFields());
+            } else {
+                fillFields();
+            }
 
             const form = document.querySelector('.consent-form');
 

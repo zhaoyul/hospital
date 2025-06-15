@@ -711,8 +711,7 @@
     [:h3 {:style {:fontSize "16px" :fontWeight "500"}} patient-name]
     (when current-patient-id
       [:<>
-       [assessment-action-buttons patient-status]
-       (when (= patient-status "已评估")
+       (when (= (timbre/spy :info patient-status) "已批准")
          [:<>
           [:> Button {:style {:marginLeft "8px"}
                       :type "primary"
@@ -741,7 +740,9 @@
                      :destroyOnClose true
                      :onCancel #(reset! talk-open? false)}
            [:iframe {:src (str "/report/pre-anesthesia-consent?patient-id=" current-patient-id)
-                     :style {:border "none" :width "100%" :height "100%"}}]]])])]])
+                     :style {:border "none" :width "100%" :height "100%"}}]]
+          [assessment-action-buttons patient-status]])
+        ])])
 
 (defn- assessment []
   (let [card-form-instances (r/atom {})
