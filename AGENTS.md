@@ -2,7 +2,7 @@
 
 ## 1. 项目目标
 
-本项目是一个基于 Clojure Kit 框架的门诊手术麻醉系统。核心功能包括患者端问卷填写、医生端数据查看与编辑，以及后台管理。AI 代理的任务是协助开发和维护此系统。
+本项目是一个基于 Clojure Kit 框架的门诊手术麻醉系统。核心功能包括患者端问卷填写、医生端数据查看与编辑、知情同意书生成，以及后台管理。AI 代理的任务是协助开发和维护此系统。
 
 ## 2. 核心技术栈
 
@@ -48,6 +48,7 @@
 - `shadow-cljs.edn`: ClojureScript 构建配置，定义了 `:app` 和 `:patient-app` 两个目标。
 - `kit.edn`: Kit 框架模块配置。
 - `build.clj`: Uberjar 构建脚本。
+- `resources/html/report/`: 存放麻醉/镇静知情同意书模板，对应路由在 `web/routes/report_pages.clj` 中定义。
 
 ## 5. 提交和 PR 流程
 

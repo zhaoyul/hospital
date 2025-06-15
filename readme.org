@@ -3,7 +3,7 @@
 #+OPTIONS: toc:nil num:nil
 
 * 项目简介
-~hospital~ 是一个使用 Kit 框架构建的 Web 应用程序.旨在为医院提供麻醉前评估等功能.项目包含患者端问卷填写,医生端数据查看与编辑,以及后台管理等模块.
+~hospital~ 是一个使用 Kit 框架构建的 Web 应用程序.旨在为医院提供麻醉前评估等功能.项目包含患者端问卷填写,医生端数据查看与编辑,知情同意书生成,以及后台管理等模块.
 
 * 先决条件
 在开始之前, 请确保你已经安装了以下软件:
@@ -103,7 +103,8 @@
   ├── resources              # 应用资源
   │   ├── html               # Selmer HTML 模板 (后端渲染和前端 CLJS 挂载点)
   │   │   ├── home.html      # 医生管理端挂载点
-  │   │   └── patient_form.html # 患者问卷挂载点
+  │   │   ├── patient_form.html # 患者问卷挂载点
+  │   │   └── report/        # 知情同意书模板 (sedation_consent.html 等)
   │   ├── migrations         #数据库迁移脚本
   │   │   ├── ...-add-patient-assessments-table.up.sql
   │   │   └── ...-add-users-table.up.sql
@@ -195,6 +196,7 @@
   - UI 框架: Reagent 和 Re-frame.
   - 状态管理: Re-frame (db, events, subs).
   - 主要页面: =pages/anesthesia_home.cljs=.包含患者列表,评估表单等.
+  - 已集成麻醉/辅助镇静知情同意书与麻醉前谈话知情同意书, 对应模板位于 =resources/html/report/=, 通过页面按钮以弹窗形式展示.
   - UI 组件库: Ant Design, 封装在 =components/antd.cljs=.自定义表单组件在 =components/form_components.cljs=.
 - *患者问卷端 (patient-app)*:
   - 入口: =patient/core.cljs=, 挂载到 =resources/html/patient_form.html= 的 =#patient-app= 元素.
@@ -369,7 +371,7 @@ ENTRYPOINT exec java $JAVA_OPTS -jar /hospital/hospital-standalone.jar
   - [ ] 医生端支持删除患者操作.
   - [ ] 医生能够看到所有患者.患者需要标注所属医生(只有所属医生能够编辑患者内容)-> 权限细化.
   - [ ] 评估表审核流程 (批准,暂缓,驳回状态流转).
-  - [ ] 填写知情同意书 (按照模版.医生填写).
+  - [x] 填写知情同意书 (麻醉/辅助镇静及麻醉前谈话记录).
   - [ ] 调用医生电子签名 (加到模版里).
   - [ ] 打印预览与打印功能.
   - [ ] 管理后台:医生列表 (院区.科室.账号增删改查.维护电子签名.从 HIS 同步花名册).字典管理.
