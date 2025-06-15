@@ -741,7 +741,8 @@
                      :onCancel #(reset! talk-open? false)}
            [:iframe {:src (str "/report/pre-anesthesia-consent?patient-id=" current-patient-id)
                      :style {:border "none" :width "100%" :height "100%"}}]]
-          [assessment-action-buttons patient-status]])
+          ])
+       [assessment-action-buttons patient-status]
        ])]])
 
 (defn- assessment []
