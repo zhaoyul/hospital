@@ -52,6 +52,8 @@
  ;; 添加新路由集
  :reitit.routes/patient-pages {:base-path "",
                                :env #ig/ref :system/env}
+ :reitit.routes/report-pages {:base-path "",
+                              :env #ig/ref :system/env}
  :reitit.routes/patient-api {:base-path "/api",
                              :env #ig/ref :system/env
                              :query-fn #ig/ref :db.sql/query-fn ;; For existing local DB queries
