@@ -88,3 +88,18 @@ WHERE id = :id;
 -- :name delete-user! :! :n
 -- :doc 根据ID删除用户
 DELETE FROM users WHERE id = :id;
+
+
+-- 知情同意书相关操作
+-- :name upsert-consent-form! :! :n
+-- :doc 保存或更新评估对应的知情同意书
+INSERT INTO consent_forms (assessment_id, sedation_form, pre_anesthesia_form, created_at, updated_at)
+VALUES (:assessment_id, :sedation_form, :pre_anesthesia_form, datetime('now'), datetime('now'))
+ON CONFLICT(assessment_id) DO UPDATE SET
+  sedation_form = excluded.sedation_form,
+  pre_anesthesia_form = excluded.pre_anesthesia_form,
+  updated_at = datetime('now');
+
+-- :name get-consent-form-by-assessment :? :1
+-- :doc 根据评估ID获取知情同意书
+SELECT * FROM consent_forms WHERE assessment_id = :assessment_id;

@@ -199,6 +199,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const params = new URLSearchParams(window.location.search);
             const patientId = params.get('patient-id');
+            let assessmentId = null;
 
             const fillFields = (data = {}) => {
                 document.querySelectorAll('.editable-field').forEach(el => {
@@ -215,6 +216,7 @@
                 fetch(`/api/patient/assessment/${patientId}`)
                     .then(r => r.ok ? r.json() : Promise.reject('failed'))
                     .then(info => {
+                        assessmentId = info.id;
                         const b = info.assessment_data && info.assessment_data['基本信息'];
                         const mapping = {name:'姓名', age:'年龄', weight:'体重kg', spo2:'SpO2百分比', hr:'脉搏次每分', bp:'血压mmHg'};
                         const result = {};
@@ -225,7 +227,16 @@
                                 }
                             });
                         }
-                        fillFields(result);
+                        fetch(`/api/consent-forms/${assessmentId}`)
+                          .then(r => r.ok ? r.json() : Promise.reject('no-consent'))
+                          .then(consent => {
+                              if (consent.pre_anesthesia_form) {
+                                  form.innerHTML = consent.pre_anesthesia_form;
+                              } else {
+                                  fillFields(result);
+                              }
+                          })
+                          .catch(() => fillFields(result));
                     })
                     .catch(() => fillFields());
             } else {
@@ -233,6 +244,14 @@
             }
 
             const form = document.querySelector('.form-container');
+            const saveConsent = () => {
+                if (!assessmentId) return;
+                fetch('/api/consent-forms', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({assessment_id: assessmentId, pre_anesthesia_form: form.innerHTML})
+                }).catch(err => console.error('save failed', err));
+            };
             form.addEventListener('click', (event) => {
                 const checkboxTarget = event.target.closest('.checkbox-item');
                 const editableTarget = event.target.closest('.editable-field');
@@ -249,6 +268,7 @@
                     }
                     checkboxTarget.dataset.checked = !isChecked;
                     checkboxTarget.textContent = !isChecked ? checkboxTarget.textContent.replace('□', '☑') : checkboxTarget.textContent.replace('☑', '□');
+                    saveConsent();
                 }
                 if (editableTarget && !editableTarget.querySelector('.editable-input')) {
                     const originalText = editableTarget.innerHTML.trim() === '&nbsp;' ? '' : editableTarget.innerHTML.trim();
@@ -264,6 +284,7 @@
                         if (input.parentNode) {
                            input.parentNode.innerHTML = newValue === '' ? '&nbsp;' : newValue;
                         }
+                        saveConsent();
                     };
                     input.addEventListener('blur', saveChanges);
                     input.addEventListener('keydown', (e) => {
