@@ -136,6 +136,7 @@
 
           patient-id (get-in transformed-data [:基本信息 :门诊号]) ; Updated path
           patient-name (get-in transformed-data [:基本信息 :姓名] "") ; Updated path
+          patient-status (get-in transformed-data [:基本信息 :评估状态])
           doctor-signature (get-in transformed-data [:基本信息 :医生签名图片]) ; Extract signature
           {:keys [pinyin initial]} (get-pinyin-parts patient-name) ; Assuming get-pinyin-parts is available
           assessment-data-json (cheshire/generate-string (update transformed-data :基本信息 dissoc  :医生签名图片))] ; Remove signature from JSON
@@ -151,6 +152,8 @@
               (query-fn :update-patient-assessment!
                         {:patient_id patient-id
                          :assessment_data assessment-data-json
+                         :patient_name patient-name
+                         :assessment_status patient-status
                          :patient_name_pinyin pinyin
                          :patient_name_initial initial
                          :doctor_signature_b64 doctor-signature}) ; Pass signature to DB
@@ -161,6 +164,8 @@
               (query-fn :insert-patient-assessment!
                         {:patient_id patient-id
                          :assessment_data assessment-data-json
+                         :patient_name patient-name
+                         :assessment_status patient-status
                          :patient_name_pinyin pinyin
                          :patient_name_initial initial
                          :doctor_signature_b64 doctor-signature}) ; Pass signature to DB
@@ -186,10 +191,20 @@
       (log/error e "查询评估数据时出错")
       (http-response/internal-server-error {:message "查询评估数据时出错"}))))
 
-(defn get-all-patient-assessments-handler [{:keys [query-fn] {{:keys [name_pinyin name_initial updated_from updated_to]} :query} :parameters :as _request}]
-  (log/info "查询所有患者评估数据, 参数:" {:name_pinyin name_pinyin :name_initial name_initial :updated_from updated_from :updated_to updated_to})
+(defn get-all-patient-assessments-handler
+  [{:keys [query-fn]
+    {{:keys [name status name_pinyin name_initial updated_from updated_to]} :query} :parameters
+    :as _request}]
+  (log/info "查询所有患者评估数据, 参数:" {:name name
+                                 :status status
+                                 :name_pinyin name_pinyin
+                                 :name_initial name_initial
+                                 :updated_from updated_from
+                                 :updated_to updated_to})
   (try
     (let [params-for-query (cond-> {}
+                             (not (str/blank? name)) (assoc :name (str "%" name "%"))
+                             (not (str/blank? status)) (assoc :status status)
                              (not (str/blank? name_pinyin)) (assoc :name_pinyin (str "%" name_pinyin "%"))
                              (not (str/blank? name_initial)) (assoc :name_initial name_initial)
                              (not (str/blank? updated_from)) (assoc :updated_from updated_from)
@@ -230,11 +245,14 @@
 
               updated-body (assoc-in body-without-signature [:基本信息 :评估更新时间] (str (Instant/now)))
               patient-name (get-in updated-body [:基本信息 :姓名] "")
+              patient-status (get-in updated-body [:基本信息 :评估状态])
               {:keys [pinyin initial]} (get-pinyin-parts patient-name)
               assessment-data-json (cheshire/generate-string updated-body)]
           (query-fn :update-patient-assessment!
                     {:patient_id patient-id
                      :assessment_data assessment-data-json
+                     :patient_name patient-name
+                     :assessment_status patient-status
                      :patient_name_pinyin pinyin
                      :patient_name_initial initial
                      :doctor_signature_b64 doctor-signature}) ; Pass signature to DB
@@ -294,6 +312,8 @@
                   (query-fn :insert-patient-assessment!
                             {:patient_id patientIdInput
                              :assessment_data assessment-data-json
+                             :patient_name his-name
+                             :assessment_status "待评估"
                              :patient_name_pinyin nil
                              :patient_name_initial nil
                              :doctor_signature_b64 nil}))

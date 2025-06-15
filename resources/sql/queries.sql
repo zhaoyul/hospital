@@ -4,14 +4,16 @@
 -- :name insert-patient-assessment! :! :n
 -- :doc 插入一个新的患者评估记录
 INSERT INTO patient_assessments
-(patient_id, assessment_data, patient_name_pinyin, patient_name_initial, doctor_signature_b64, created_at, updated_at) -- 中文注释：添加 doctor_signature_b64 列
-VALUES (:patient_id, :assessment_data, :patient_name_pinyin, :patient_name_initial, :doctor_signature_b64, datetime('now'), datetime('now')); -- 中文注释：添加 doctor_signature_b64 参数
+(patient_id, assessment_data, patient_name, assessment_status, patient_name_pinyin, patient_name_initial, doctor_signature_b64, created_at, updated_at) -- 中文注释：新增姓名和状态字段
+VALUES (:patient_id, :assessment_data, :patient_name, :assessment_status, :patient_name_pinyin, :patient_name_initial, :doctor_signature_b64, datetime('now'), datetime('now')); -- 中文注释：添加 doctor_signature_b64 参数
 
 -- 更新患者评估
 -- :name update-patient-assessment! :! :n
 -- :doc 更新现有的患者评估记录
 UPDATE patient_assessments
 SET assessment_data = :assessment_data,
+    patient_name = :patient_name,
+    assessment_status = :assessment_status,
     patient_name_pinyin = :patient_name_pinyin,
     patient_name_initial = :patient_name_initial,
     doctor_signature_b64 = :doctor_signature_b64, -- 中文注释：添加 doctor_signature_b64 更新
@@ -21,14 +23,18 @@ WHERE patient_id = :patient_id;
 -- 根据患者ID获取患者评估
 -- :name get-patient-assessment-by-id :? :1
 -- :doc 通过 patient_id 检索患者评估
-SELECT patient_id, assessment_data, patient_name_pinyin, patient_name_initial, doctor_signature_b64, created_at, updated_at -- 中文注释：选取 doctor_signature_b64 列
+SELECT patient_id, assessment_data, patient_name, assessment_status, patient_name_pinyin, patient_name_initial, doctor_signature_b64, created_at, updated_at -- 中文注释：选取 doctor_signature_b64 列
 FROM patient_assessments WHERE patient_id = :patient_id;
 
 -- 获取所有患者评估信息
 -- :name get-all-patient-assessments :*
--- :doc 检索所有患者的评估数据, 可选通过拼音、首字母和更新时间范围进行筛选
+-- :doc 检索所有患者的评估数据, 可选根据姓名、拼音、首字母、状态及更新时间范围进行筛选
 SELECT * FROM patient_assessments
 WHERE 1=1
+--~ (when (:name params)
+      "AND patient_name LIKE :name")
+--~ (when (:status params)
+      "AND assessment_status = :status")
 --~ (when (:name_pinyin params) "AND lower(patient_name_pinyin) LIKE lower(:name_pinyin)")
 --~ (when (:name_initial params) "AND lower(patient_name_initial) = lower(:name_initial)")
 --~ (when (:updated_from params) "AND updated_at >= :updated_from")

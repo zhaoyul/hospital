@@ -119,3 +119,36 @@
 
     (testing "清理创建的记录"
       (query-fn :delete-patient-assessment-by-id! {:patient_id patient-id}))))
+
+(deftest patient-assessment-filter-test
+  (let [query-fn (get-query-fn)
+        id1 "FILTER001"
+        id2 "FILTER002"
+        data1 {:基本信息 {:门诊号 id1 :姓名 "王五" :评估状态 "已批准" :评估更新时间 "2024-01-01"}}
+        data2 {:基本信息 {:门诊号 id2 :姓名 "赵六" :评估状态 "待评估" :评估更新时间 "2024-01-02"}}
+        json1 (json/generate-string data1)
+        json2 (json/generate-string data2)]
+    (query-fn :insert-patient-assessment! {:patient_id id1
+                                           :assessment_data json1
+                                           :patient_name "王五"
+                                           :assessment_status "已批准"
+                                           :patient_name_pinyin "wangwu"
+                                           :patient_name_initial "ww"
+                                           :doctor_signature_b64 nil})
+    (query-fn :insert-patient-assessment! {:patient_id id2
+                                           :assessment_data json2
+                                           :patient_name "赵六"
+                                           :assessment_status "待评估"
+                                           :patient_name_pinyin "zhaoliu"
+                                           :patient_name_initial "zl"
+                                           :doctor_signature_b64 nil})
+
+    (let [resp (patient-api/get-all-patient-assessments-handler {:parameters {:query {:status "已批准" :name_initial "ww"}}
+                                                                 :query-fn query-fn})
+          body (:body resp)]
+      (is (= 200 (:status resp)))
+      (is (= 1 (count body)))
+      (is (= id1 (:patient_id (first body)))))
+
+    (query-fn :delete-patient-assessment-by-id! {:patient_id id1})
+    (query-fn :delete-patient-assessment-by-id! {:patient_id id2})))

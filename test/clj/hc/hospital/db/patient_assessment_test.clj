@@ -26,6 +26,8 @@
       (let [insert-result (query-fn :insert-patient-assessment!
                                     {:patient_id patient-id
                                      :assessment_data assessment-data-json
+                                     :patient_name "测试"
+                                     :assessment_status "待评估"
                                      :patient_name_pinyin "ceshipinyin"
                                      :patient_name_initial "cspy"
                                      :doctor_signature_b64 initial-signature})
@@ -41,6 +43,8 @@
             update-result (query-fn :update-patient-assessment!
                                     {:patient_id patient-id
                                      :assessment_data updated-assessment-data-json
+                                     :patient_name "测试"
+                                     :assessment_status "已批准"
                                      :patient_name_pinyin "ceshipinyingx"
                                      :patient_name_initial "cspygx"
                                      :doctor_signature_b64 updated-signature})
@@ -53,6 +57,8 @@
       (let [update-result (query-fn :update-patient-assessment!
                                     {:patient_id patient-id
                                      :assessment_data assessment-data-json ; Revert data, focus on signature
+                                     :patient_name "测试"
+                                     :assessment_status "待评估"
                                      :patient_name_pinyin "ceshipinyin"
                                      :patient_name_initial "cspy"
                                      :doctor_signature_b64 nil}) ; 清除签名
