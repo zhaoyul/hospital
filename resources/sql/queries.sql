@@ -27,18 +27,16 @@ SELECT patient_id, assessment_data, patient_name, assessment_status, patient_nam
 FROM patient_assessments WHERE patient_id = :patient_id;
 
 -- 获取所有患者评估信息
--- :name get-all-patient-assessments :*
+-- :name get-all-patient-assessments :? :*
 -- :doc 检索所有患者的评估数据, 可选根据姓名、拼音、首字母、状态及更新时间范围进行筛选
 SELECT * FROM patient_assessments
 WHERE 1=1
---~ (when (:name params)
-      "AND patient_name LIKE :name")
---~ (when (:status params)
-      "AND assessment_status = :status")
---~ (when (:name_pinyin params) "AND lower(patient_name_pinyin) LIKE lower(:name_pinyin)")
---~ (when (:name_initial params) "AND lower(patient_name_initial) = lower(:name_initial)")
---~ (when (:updated_from params) "AND updated_at >= :updated_from")
---~ (when (:updated_to params) "AND updated_at <= :updated_to")
+--~ (when (:name params) " AND patient_name LIKE (:name params)")
+--~ (when (:status params) " AND assessment_status = (:status params)")
+--~ (when (:name_pinyin params) " AND clojure.string/lower-case(patient_name_pinyin) LIKE lower(:name_pinyin)")
+--~ (when (:name_initial params) " AND clojure.string/lower-case(patient_name_initial) = lower(:name_initial params)")
+--~ (when (:updated_from params) " AND updated_at >= (:updated_from params)")
+--~ (when (:updated_to params) " AND updated_at <= (:updated_to params)")
 ORDER BY updated_at DESC;
 
 -- :name delete-patient-assessment-by-id! :! :n

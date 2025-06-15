@@ -170,11 +170,6 @@
     (js/alert "正在从HIS系统同步患者列表数据...")
     {:dispatch [::fetch-all-assessments]})) ; Optionally, trigger a fetch after sync indication
 
-(rf/reg-event-fx ::scan-check-in
-  (fn [_ _]
-    (js/alert "请将患者二维码对准扫描设备")
-    {}))
-
 (rf/reg-event-db ::search-patients
   (fn [db [_ term]]
     (timbre/info "显式搜索患者:" term)
