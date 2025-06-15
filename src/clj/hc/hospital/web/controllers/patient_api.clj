@@ -1,7 +1,6 @@
 (ns hc.hospital.web.controllers.patient-api
   (:require
    [cheshire.core :as cheshire]
-   [cheshire.core :as cheshire]
    [clojure.string :as str]
    [taoensso.timbre :as log :refer [spy]]
    [ring.util.http-response :as http-response]
