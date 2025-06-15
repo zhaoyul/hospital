@@ -289,6 +289,7 @@
         document.addEventListener('DOMContentLoaded', () => {
             const params = new URLSearchParams(window.location.search);
             const patientId = params.get('patient-id');
+            let assessmentId = null;
 
             const fillFields = (data = {}) => {
                 document.querySelectorAll('.editable-field').forEach(el => {
@@ -305,6 +306,7 @@
                 fetch(`/api/patient/assessment/${patientId}`)
                     .then(r => r.ok ? r.json() : Promise.reject('failed'))
                     .then(info => {
+                        assessmentId = info.id;
                         const b = info.assessment_data && info.assessment_data['基本信息'];
                         const mapping = {name:'姓名', sex:'性别', age:'年龄', department:'院区', record:'门诊号', diagnosis:'术前诊断'};
                         const result = {};
@@ -315,7 +317,16 @@
                                 }
                             });
                         }
-                        fillFields(result);
+                        fetch(`/api/consent-forms/${assessmentId}`)
+                          .then(r => r.ok ? r.json() : Promise.reject('no-consent'))
+                          .then(consent => {
+                              if (consent.sedation_form) {
+                                  form.innerHTML = consent.sedation_form;
+                              } else {
+                                  fillFields(result);
+                              }
+                          })
+                          .catch(() => fillFields(result));
                     })
                     .catch(() => fillFields());
             } else {
@@ -323,6 +334,14 @@
             }
 
             const form = document.querySelector('.consent-form');
+            const saveConsent = () => {
+                if (!assessmentId) return;
+                fetch('/api/consent-forms', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({assessment_id: assessmentId, sedation_form: form.innerHTML})
+                }).catch(err => console.error('save failed', err));
+            };
 
             // --- Checkbox Toggle Logic ---
             form.addEventListener('click', (event) => {
@@ -336,6 +355,7 @@
                 if (textNode && textNode.nodeType === Node.TEXT_NODE) {
                      textNode.textContent = !isChecked ? textNode.textContent.replace('□', '☑') : textNode.textContent.replace('☑', '□');
                 }
+                saveConsent();
             });
 
             // --- Inline Editing Logic ---
@@ -361,6 +381,7 @@
                 const saveChanges = () => {
                     const newValue = input.value.trim();
                     target.innerHTML = newValue === '' ? '&nbsp;' : newValue;
+                    saveConsent();
                 };
 
                 // Save on blur (clicking outside)
