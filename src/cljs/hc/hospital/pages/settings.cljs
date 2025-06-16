@@ -2,16 +2,18 @@
   (:require
    ["@ant-design/icons" :as icons]
    ["react" :as React]
-   ["antd" :refer [Button Form Input Modal Select Space Table Typography Upload Card]]
-   [hc.hospital.events :as events]
-   [hc.hospital.subs :as subs]
-   [re-frame.core :as rf]
-   [reagent.core :as r]))
+  ["antd" :refer [Button Form Input Modal Select Space Table Typography Upload Card]]
+  [hc.hospital.events :as events]
+  [hc.hospital.subs :as subs]
+  [hc.hospital.components.signature_pad :refer [signature-pad]]
+  [re-frame.core :as rf]
+  [reagent.core :as r]))
 
 (defn system-settings-content []
   (let [users @(rf/subscribe [::subs/users])
         modal-open? @(rf/subscribe [::subs/user-modal-visible?])
         editing-user @(rf/subscribe [::subs/editing-user])
+        signature-open? (r/atom false)
         [form] (Form.useForm)]
 
     (React/useEffect (fn [] (rf/dispatch [::events/initialize-users])))
@@ -134,17 +136,25 @@
          [:> Form.Item {:name "signature-file"
                         :label "电子签名"
                         :valuePropName "fileList"}
-          [:> Upload {:name "signature"
-                      :listType "picture-card"
-                      :showUploadList false
-                      :beforeUpload (fn [file]
-                                      (let [reader (js/FileReader.)]
-                                        (set! (.-onload reader)
-                                              #(rf/dispatch [::events/update-editing-user-field :signature (.. % -target -result)]))
-                                        (.readAsDataURL reader file))
-                                      false)}
-           (if (and editing-user (:signature editing-user) (not (object? (:signature editing-user))))
-             [:img {:src (:signature editing-user) :alt "签名" :style {:width "100%"}}]
-             [:div
-              [:> icons/PlusOutlined]
-              [:div {:style {:marginTop 8}} "上传"]])]]]])]))
+          [:div
+           [:> Upload {:name "signature"
+                       :listType "picture-card"
+                       :showUploadList false
+                       :beforeUpload (fn [file]
+                                       (let [reader (js/FileReader.)]
+                                         (set! (.-onload reader)
+                                               #(rf/dispatch [::events/update-editing-user-field :signature (.. % -target -result)]))
+                                         (.readAsDataURL reader file))
+                                       false)}
+            (if (and editing-user (:signature editing-user) (not (object? (:signature editing-user))))
+              [:img {:src (:signature editing-user) :alt "签名" :style {:width "100%"}}]
+              [:div
+               [:> icons/PlusOutlined]
+               [:div {:style {:marginTop 8}} "上传"]])]
+           [:div {:style {:marginTop "8px"}}
+            [:> Button {:type "dashed" :on-click #(reset! signature-open? (not @signature-open?))}
+             (if @signature-open? "关闭签字板" "使用签字板")]]
+           (when @signature-open?
+             [signature-pad {:on-confirm (fn [data]
+                                          (rf/dispatch [::events/update-editing-user-field :signature data])
+                                          (reset! signature-open? false))}])]]]])]))
