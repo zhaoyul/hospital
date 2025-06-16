@@ -20,4 +20,8 @@
     transform: scale(0.95);
     transform-origin: top left;
   }
+  /* 打印时隐藏 Ant Design 弹窗的关闭按钮 */
+  .ant-modal-close {
+    display: none !important;
+  }
 }
