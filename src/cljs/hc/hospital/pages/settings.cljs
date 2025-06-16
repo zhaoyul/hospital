@@ -2,7 +2,8 @@
   (:require
    ["@ant-design/icons" :as icons]
    ["react" :as React]
-   ["antd" :refer [Button Form Input Modal Select Space Table Typography Upload Card]]
+   ["antd" :refer [Button Space Table Typography Card]]
+   [hc.hospital.components.user-modal :refer [user-modal]]
    [hc.hospital.events :as events]
    [hc.hospital.subs :as subs]
    [re-frame.core :as rf]
@@ -11,8 +12,7 @@
 (defn system-settings-content []
   (let [users @(rf/subscribe [::subs/users])
         modal-open? @(rf/subscribe [::subs/user-modal-visible?])
-        editing-user @(rf/subscribe [::subs/editing-user])
-        [form] (Form.useForm)]
+        editing-user @(rf/subscribe [::subs/editing-user])]
 
     (React/useEffect (fn [] (rf/dispatch [::events/initialize-users])))
 
@@ -25,9 +25,7 @@
      [:div {:style {:marginBottom "16px"}}
       [:> Button {:type "primary"
                   :icon (r/as-element [:> icons/PlusOutlined])
-                  :on-click (fn []
-                              (.resetFields form)
-                              (rf/dispatch [::events/open-user-modal nil]))}
+                  :on-click #(rf/dispatch [::events/open-user-modal nil])}
        "新增医生"]]
 
      [:> Table {:dataSource users
@@ -84,9 +82,7 @@
                                                      :ghost true
                                                      :size "small"
                                                      :icon (r/as-element [:> icons/EditOutlined])
-                                                     :on-click (fn []
-                                                                 (rf/dispatch [::events/open-user-modal user])
-                                                                 (.setFieldsValue form (clj->js (select-keys user [:name :username :role]))))}
+                                                     :on-click #(rf/dispatch [::events/open-user-modal user])}
                                           "编辑"]
                                          [:> Button {:danger true
                                                      :ghost true
@@ -96,55 +92,5 @@
                                           "删除"]])))}]}]
 
      (when modal-open?
-       [:> Modal {:title (if (:username editing-user) "编辑医生" "新增医生")
-                  :open modal-open? ; Changed from visible to open
-                  :okText "保存"
-                  :cancelText "取消"
-                  :onOk (fn [] (.submit form))
-                  :onCancel #(rf/dispatch [::events/close-user-modal])
-                  :destroyOnClose true}
-        [:> Form {:form form
-                  :layout "vertical"
-                  :name "doctor_form"
-                  :initialValues (clj->js (select-keys editing-user [:name :username :role]))
-                  :onFinish (fn [values]
-                              (rf/dispatch [::events/save-user (js->clj values :keywordize-keys true)]))}
-         [:> Form.Item {:name "name"
-                        :label "姓名"
-                        :rules #js [{:required true :message "请输入姓名!"}]}
-          [:> Input {}]]
-
-         [:> Form.Item {:name "username"
-                        :label "账号"
-                        :rules #js [{:required true :message "请输入账号!"}]}
-          [:> Input {:disabled (boolean (:username editing-user))}]]
-
-         [:> Form.Item {:name "role"
-                        :label "角色"
-                        :rules #js [{:required true :message "请选择角色!"}]}
-          [:> Select {:placeholder "选择角色"}
-           [:> Select.Option {:value "麻醉医生"} "麻醉医生"]
-           [:> Select.Option {:value "管理员"} "管理员"]
-           [:> Select.Option {:value "主任"} "主任"]
-           [:> Select.Option {:value "护士"} "护士"]
-           [:> Select.Option {:value "统计"} "统计"]
-           [:> Select.Option {:value "医务部统计"} "医务部统计"]
-           [:> Select.Option {:value "护理管理员"} "护理管理员"]]]
-
-         [:> Form.Item {:name "signature-file"
-                        :label "电子签名"
-                        :valuePropName "fileList"}
-          [:> Upload {:name "signature"
-                      :listType "picture-card"
-                      :showUploadList false
-                      :beforeUpload (fn [file]
-                                      (let [reader (js/FileReader.)]
-                                        (set! (.-onload reader)
-                                              #(rf/dispatch [::events/update-editing-user-field :signature (.. % -target -result)]))
-                                        (.readAsDataURL reader file))
-                                      false)}
-           (if (and editing-user (:signature editing-user) (not (object? (:signature editing-user))))
-             [:img {:src (:signature editing-user) :alt "签名" :style {:width "100%"}}]
-             [:div
-              [:> icons/PlusOutlined]
-              [:div {:style {:marginTop 8}} "上传"]])]]]])]))
+       [:f> user-modal {:visible? modal-open?
+                        :editing-user editing-user}]))])
