@@ -37,4 +37,4 @@
       (http-response/ok {:message "更新成功"})
       (catch Exception e
         (log/error e "更新知情同意书失败")
-        (http-response/internal-server-error {:message "更新失败"}))))
+        (http-response/internal-server-error {:message "更新失败"})))))
