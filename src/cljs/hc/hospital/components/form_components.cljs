@@ -1,8 +1,7 @@
 (ns hc.hospital.components.form-components
   (:require [reagent.core :as r]
             [re-frame.core :as rf]
-            ["antd" :refer [Card Content Collapse Space Text Col CheckBox Radio Row DatePicker Tag  Descriptions Empty Button Input InputNumber Select Form Layout Tooltip Upload Switch]]
-            [taoensso.timbre :as timbre]))
+            ["antd" :refer [Card Content Collapse Space Text Col CheckBox Radio Row DatePicker Tag  Descriptions Empty Button Input InputNumber Select Form Layout Tooltip Upload Switch]]))
 
 ;; 创建一个"有无"选择组件，包含"无"和"有"的单选按钮，以及一个可选的描述输入框
 (defn yes-no-with-description

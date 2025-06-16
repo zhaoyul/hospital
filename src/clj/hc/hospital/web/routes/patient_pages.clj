@@ -2,7 +2,6 @@
   (:require
    [hc.hospital.web.controllers.patient :as patient]
    [hc.hospital.web.middleware.exception :as exception]
-   [hc.hospital.web.middleware.formats :as formats]
    [hc.hospital.web.pages.layout :as layout]
    [integrant.core :as ig]
    [reitit.ring.middleware.muuntaja :as muuntaja]

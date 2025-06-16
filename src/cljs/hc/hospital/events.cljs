@@ -55,8 +55,6 @@
                             :active-tab "patients"})
         ;; 初始化二维码扫描模态框相关状态
         (assoc :qr-scan-modal-visible? false)
-        (assoc :qr-scan-input-value ""))))
-
 
 ;; --- Fetching All Assessments ---
 (rf/reg-event-fx ::fetch-all-assessments
@@ -130,15 +128,6 @@
     ;; This event primarily adds the file metadata to the list for display and later saving.
     (update-in db [:anesthesia :current-assessment-canonical :auxiliary_examinations] conj file-map)))
 
-(rf/reg-event-db ::update-aux-exam-file-list
-  (fn [db [_ file-list]]
-    ;; Used by Ant Design's Upload when fileList is managed externally.
-    ;; file-list is the full list of files from AntD, each needs to be in our canonical format.
-    ;; This event assumes that the items in file-list are already (or can be easily transformed into)
-    ;; our canonical map structure for auxiliary_examinations.
-    ;; For simplicity, this example assumes file-list items are compatible.
-    ;; A more robust version would transform each item.
-    (assoc-in db [:anesthesia :current-assessment-canonical :auxiliary_examinations] file-list)))
 
 (rf/reg-event-db ::remove-aux-exam-file
   (fn [db [_ file-uid-or-url]]
@@ -153,22 +142,11 @@
    (timbre/info "Updating signature data in app-db:" signature-data)
    (assoc-in db [:anesthesia :current-assessment-canonical :基本信息 :医生签名图片] signature-data)))
 
-;; Removed ::update-assessment-notes, use ::update-canonical-assessment-field for this.
-;; e.g. (rf/dispatch [::update-canonical-assessment-field [:anesthesia_plan :notes] new-notes-text])
-;; or (rf/dispatch [::update-canonical-assessment-field [:auxiliary_examinations_notes] new-notes-text])
-
-(rf/reg-event-db ::update-search-term
-  (fn [db [_ term]]
-    (assoc-in db [:anesthesia :search-term] term)))
-
 (rf/reg-event-db ::set-date-range
   (fn [db [_ range-values]]
     (assoc-in db [:anesthesia :date-range] range-values)))
 
 (rf/reg-event-db ::set-assessment-status-filter
-  (fn [db [_ status]]
-    (assoc-in db [:anesthesia :assessment-status-filter] status)))
-
 (rf/reg-event-fx ::sync-applications
   (fn [_ _]
     (js/alert "正在从HIS系统同步患者列表数据...")
@@ -249,7 +227,6 @@
     (js/alert (str "保存失败: " (pr-str (:response error) (:status error)))) ; Show more details
     db))
 
-;; Removed ::update-patient-form-field as it's replaced by ::update-canonical-assessment-field
 ;; Kept session, login, logout, doctor management events as they are unrelated to assessment structure.
 
 ;; --- Session Check Events ---
@@ -294,33 +271,7 @@
            :login-error nil
            :session-check-pending? false))) ; Ensure session check is marked complete
 
-(rf/reg-event-db ::login-failure
-  (fn [db [_ error-details]]
-    (timbre/error "Login failed:" error-details)
-    (assoc db
-           :current-doctor nil
-           :is-logged-in false
-           :login-error (or (:error (:response error-details)) (:message error-details) "Login failed")
-           ;; Do not set session-check-pending here, as login might fail and we'd want to stay on login page
-           )))
 
-;; Helper event for login success to handle multiple dispatches
-(rf/reg-event-fx ::login-success
-  (fn [{:keys [db]} [_ response-data]]
-    (timbre/info "Login successful. Setting justLoggedIn flag. Response:" response-data ". Navigating to / shortly.")
-    ;; Assuming the server returns {:message "登录成功" :doctor {...}}
-    ;; Navigation is now handled by ::navigate-to-app-root
-    ;; ::set-current-doctor will handle setting session-check-pending to false
-    (js/localStorage.setItem "justLoggedIn" "true")
-    {:dispatch [::set-current-doctor (:doctor response-data)]
-     :dispatch-later [{:ms 30 :dispatch [::navigate-to-app-root]}]
-     }))
-
-;; --- Navigation Events ---
-(rf/reg-event-fx ::navigate-to-app-root
-  (fn [_ _]
-    (js/window.location.assign "/")
-    {})) ; No change to db
 
 ;; Event to handle post-login initialization
 (rf/reg-event-db ::handle-just-logged-in
@@ -328,11 +279,6 @@
     (timbre/info "Handling post-login navigation: session-check-pending? set to false.")
     (assoc db :session-check-pending? false)))
 
-;; --- Logout Events ---
-(rf/reg-event-db ::clear-current-doctor
-  (fn [db _]
-    (timbre/info "Clearing current doctor. Is logged in set to false. Session check pending set to false.")
-    (assoc db
            :current-doctor nil
            :is-logged-in false
            :login-error nil
@@ -467,12 +413,6 @@
   (fn [db _]
     (-> db
         (assoc :qr-scan-modal-visible? false)
-        (assoc :qr-scan-input-value "")))) ; 关闭时清空输入值
-
-;; 设置二维码扫描输入框的值
-(rf/reg-event-db ::set-qr-scan-input
-  (fn [db [_ value]]
-    (assoc db :qr-scan-input-value value)))
 
 ;; 通过患者ID（从二维码扫描获得）查询HIS系统中的患者信息
 (rf/reg-event-fx ::find-patient-by-id-in-his

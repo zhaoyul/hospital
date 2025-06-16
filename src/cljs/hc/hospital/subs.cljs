@@ -82,9 +82,6 @@
 
           true identity)))))
 
-(rf/reg-sub ::doctor-form-physical-examination
-  (fn [db _]
-    (get-in db [:anesthesia :assessment :form-data])))
 
 
 ;; ---- Canonical Assessment Subscriptions ----
@@ -97,9 +94,6 @@
   :<- [::current-canonical-assessment]
   (fn [assessment k] (:基本信息 assessment )))
 
-(rf/reg-sub ::canonical-patient-name
-  :<- [::canonical-basic-info]
-  (fn [basic-info _] (:姓名 basic-info)))
 
 (rf/reg-sub ::canonical-patient-outpatient-number
   :<- [::canonical-basic-info]
@@ -265,6 +259,3 @@
     (get db :qr-scan-modal-visible? false))) ; 默认值为 false
 
 ;; 订阅二维码扫描模态框输入框的值
-(rf/reg-sub ::qr-scan-input-value
-  (fn [db _]
-    (get db :qr-scan-input-value ""))) ; 默认值为空字符串

@@ -2,7 +2,6 @@
   "根据 Malli Schema 生成自然语言描述的工具。"
   (:require [clojure.string :as str]
             [malli.core :as m]
-            [taoensso.timbre :as timbre :refer [log warn error info spy]]
             [hc.hospital.specs.assessment-complete-cn-spec :as cn-specs]))
 
 (defonce control-word-config

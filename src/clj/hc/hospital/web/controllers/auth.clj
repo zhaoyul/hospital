@@ -27,6 +27,6 @@
 
 (defn handle-logout!
   "Handle doctor logout."
-  [request]
+  [_request]
   (-> (http-response/found "/login") ; Redirect to login page after logout
       (assoc :session nil)))

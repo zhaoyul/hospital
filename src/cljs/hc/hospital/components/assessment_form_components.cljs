@@ -1,7 +1,6 @@
 (ns hc.hospital.components.assessment-form-components
   (:require
    [re-frame.core :as rf]
-   [taoensso.timbre :as timbre :refer [spy]]
    [hc.hospital.patient.events :as events]
    ["antd" :refer [Form Empty Radio Card]]
    [reagent.core :as r]))
