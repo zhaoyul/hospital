@@ -198,8 +198,22 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const params = new URLSearchParams(window.location.search);
-            const patientId = params.get('patient-id');
-            let assessmentId = null;
+            const assessmentId = params.get('assessment-id');
+            const form = document.querySelector('.form-container');
+
+            const loadConsent = (result = {}) => {
+                if (!assessmentId) { fillFields(result); return; }
+                fetch(`/api/consent-forms/${assessmentId}`)
+                  .then(r => r.ok ? r.json() : Promise.reject('no-consent'))
+                  .then(consent => {
+                      if (consent.pre_anesthesia_form) {
+                          form.innerHTML = consent.pre_anesthesia_form;
+                      } else {
+                          fillFields(result);
+                      }
+                  })
+                  .catch(() => fillFields(result));
+            };
 
             const fillFields = (data = {}) => {
                 document.querySelectorAll('.editable-field').forEach(el => {
@@ -212,38 +226,7 @@
                 });
             };
 
-            if (patientId) {
-                fetch(`/api/patient/assessment/${patientId}`)
-                    .then(r => r.ok ? r.json() : Promise.reject('failed'))
-                    .then(info => {
-                        assessmentId = info.id;
-                        const b = info.assessment_data && info.assessment_data['基本信息'];
-                        const mapping = {name:'姓名', age:'年龄', weight:'体重kg', spo2:'SpO2百分比', hr:'脉搏次每分', bp:'血压mmHg'};
-                        const result = {};
-                        if (b) {
-                            Object.keys(mapping).forEach(k => {
-                                if (b[mapping[k]] !== undefined) {
-                                    result[k] = b[mapping[k]];
-                                }
-                            });
-                        }
-                        fetch(`/api/consent-forms/${assessmentId}`)
-                          .then(r => r.ok ? r.json() : Promise.reject('no-consent'))
-                          .then(consent => {
-                              if (consent.pre_anesthesia_form) {
-                                  form.innerHTML = consent.pre_anesthesia_form;
-                              } else {
-                                  fillFields(result);
-                              }
-                          })
-                          .catch(() => fillFields(result));
-                    })
-                    .catch(() => fillFields());
-            } else {
-                fillFields();
-            }
-
-            const form = document.querySelector('.form-container');
+            loadConsent();
             const saveConsent = () => {
                 if (!assessmentId) return;
                 fetch('/api/consent-forms', {

@@ -50,6 +50,7 @@
   (fn [_ _]
     (-> app-db/default-db
         (assoc :anesthesia {:current-assessment-canonical default-canonical-assessment
+                            :current-assessment-id nil
                             :date-range [(utils/now) (utils/now)]
                             :active-tab "patients"})
         ;; 初始化二维码扫描模态框相关状态
@@ -71,6 +72,7 @@
     (-> db
         (assoc-in [:anesthesia :all-patient-assessments] assessments)
         (assoc-in [:anesthesia :current-patient-id] nil) ; Corrected path
+        (assoc-in [:anesthesia :current-assessment-id] nil)
         (assoc :fetch-assessments-error nil))))
 
 (rf/reg-event-db ::fetch-all-assessments-failed
@@ -84,6 +86,7 @@
     (if (nil? patient-key) ;; Handle deselection
       (-> db
           (assoc-in [:anesthesia :current-patient-id] nil)
+          (assoc-in [:anesthesia :current-assessment-id] nil)
           (assoc-in [:anesthesia :current-assessment-canonical] default-canonical-assessment))
       (let [all-assessments (get-in db [:anesthesia :all-patient-assessments])
             selected-full-assessment (first (filter #(= (:patient_id %) patient-key) all-assessments))
@@ -91,6 +94,7 @@
                                         (get selected-full-assessment :assessment_data {}))]
         (-> db
             (assoc-in [:anesthesia :current-patient-id] patient-key)
+            (assoc-in [:anesthesia :current-assessment-id] (:id selected-full-assessment))
             (assoc-in [:anesthesia :current-assessment-canonical]
                       (if (seq canonical-assessment-data)
                         canonical-assessment-data
