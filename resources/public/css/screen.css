@@ -8,7 +8,9 @@
     width: 210mm;
     margin: 0;
     padding: 0;
-    font-size: 12px;
+    font-size: 11px;
+    background: #fff;
+    min-height: auto;
   }
   .form-container,
   .consent-form {
@@ -17,8 +19,12 @@
     page-break-before: avoid;
     page-break-after: avoid;
     page-break-inside: avoid;
-    transform: scale(0.95);
+    box-shadow: none;
+    transform: scale(0.9);
     transform-origin: top left;
+  }
+  .ant-modal-close {
+    display: none !important;
   }
   /* 打印时隐藏 Ant Design 弹窗的关闭按钮 */
   .ant-modal-close {
