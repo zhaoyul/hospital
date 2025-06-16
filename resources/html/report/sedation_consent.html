@@ -343,7 +343,8 @@
                 fetch(`/api/consent-forms/${assessmentId}`, {
                     method: 'PUT',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({sedation_form: form.innerHTML})
+                    body: JSON.stringify({assessment_id: parseInt(assessmentId),
+                                         sedation_form: form.innerHTML})
                 }).catch(err => console.error('save failed', err));
             };
 
