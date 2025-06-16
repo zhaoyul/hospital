@@ -24,3 +24,17 @@
       (catch Exception e
         (log/error e "查询知情同意书失败")
         (http-response/internal-server-error {:message "查询失败"})))))
+
+(defn update-consent-form!
+  [{:keys [query-fn parameters body-params]}]
+  (let [assessment-id (Integer/parseInt (get-in parameters [:path :assessment-id]))]
+    (log/info "更新知情同意书:" assessment-id)
+    (try
+      (when-let [html (:sedation_form body-params)]
+        (db/update-sedation-consent! query-fn assessment-id html))
+      (when-let [html (:pre_anesthesia_form body-params)]
+        (db/update-pre-anesthesia-consent! query-fn assessment-id html))
+      (http-response/ok {:message "更新成功"})
+      (catch Exception e
+        (log/error e "更新知情同意书失败")
+        (http-response/internal-server-error {:message "更新失败"}))))

@@ -167,7 +167,12 @@
                          :assessment_status patient-status
                          :patient_name_pinyin pinyin
                          :patient_name_initial initial
-                         :doctor_signature_b64 doctor-signature}) ; Pass signature to DB
+                         :doctor_signature_b64 doctor-signature})
+              (when-let [new-assessment (query-fn :get-patient-assessment-by-id {:patient_id patient-id})]
+                (query-fn :upsert-consent-form!
+                          {:assessment_id (:id new-assessment)
+                           :sedation_form nil
+                           :pre_anesthesia_form nil}))
               (http-response/ok {:message "评估提交成功！"}))))))
     (catch Exception e
       (log/error e "提交/更新评估时出错" (ex-message e) (ex-data e))
@@ -188,6 +193,21 @@
         (http-response/not-found {:message "未找到该患者的评估数据"})))
     (catch Exception e
       (log/error e "查询评估数据时出错")
+      (http-response/internal-server-error {:message "查询评估数据时出错"}))))
+
+(defn get-assessment-by-assessment-id
+  [{{{:keys [assessment-id]} :path} :parameters :keys [query-fn] :as _request}]
+  (log/info "根据评估ID查询评估数据，ID:" assessment-id)
+  (try
+    (let [db-result (query-fn :get-patient-assessment-by-assessment-id {:assessment_id assessment-id})]
+      (if (seq db-result)
+        (let [assessment-data (cheshire/decode (:assessment_data db-result) keyword)
+              updated-assessment-data (assoc-in assessment-data [:基本信息 :医生签名图片] (:doctor_signature_b64 db-result))
+              final-result (dissoc db-result :doctor_signature_b64 :assessment_data)]
+          (http-response/ok (assoc final-result :assessment_data updated-assessment-data)))
+        (http-response/not-found {:message "未找到评估数据"})))
+    (catch Exception e
+      (log/error e "根据评估ID查询评估数据时出错")
       (http-response/internal-server-error {:message "查询评估数据时出错"}))))
 
 (defn get-all-patient-assessments-handler
@@ -317,6 +337,13 @@
                              :patient_name_initial nil
                              :doctor_signature_b64 nil}))
                 (log/info "本地已存在患者评估，患者ID:" patientIdInput))
+
+              (when was-inserted?
+                (when-let [a (query-fn :get-patient-assessment-by-id {:patient_id patientIdInput})]
+                  (query-fn :upsert-consent-form!
+                            {:assessment_id (:id a)
+                             :sedation_form nil
+                             :pre_anesthesia_form nil})))
 
               ;; 无论插入还是已存在，都重新获取并返回完整的本地记录
               (let [final-local-assessment (query-fn :get-patient-assessment-by-id {:patient_id patientIdInput})

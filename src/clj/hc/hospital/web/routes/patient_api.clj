@@ -60,12 +60,20 @@
                                   :put {:summary "更新指定患者的评估信息"
                                         :description "根据患者ID更新已存储的评估表单信息"
                                         :tags ["患者"]
-                                        :parameters {:path {:patient-id string?} :body map?}
-                                        :handler (fn [request]
-                                                   (patient-api/update-assessment-by-patient-id! (assoc request :query-fn query-fn)))
-                                        :responses {200 {:body {:message string?}}
-                                                    404 {:body {:message string?}}
-                                                    500 {:body {:message string?}}}}}]
+                                  :parameters {:path {:patient-id string?} :body map?}
+                                  :handler (fn [request]
+                                             (patient-api/update-assessment-by-patient-id! (assoc request :query-fn query-fn)))
+                                  :responses {200 {:body {:message string?}}
+                                              404 {:body {:message string?}}
+                                              500 {:body {:message string?}}}}}]
+      ["/assessment/by-id/:assessment-id" {:get {:summary "根据评估ID查询评估信息"
+                                                 :tags ["患者"]
+                                                 :parameters {:path {:assessment-id string?}}
+                                                 :handler (fn [request]
+                                                            (patient-api/get-assessment-by-assessment-id (assoc request :query-fn query-fn)))
+                                                 :responses {200 {:body map?}
+                                                             404 {:body {:message string?}}
+                                                             500 {:body {:message string?}}}}]
       ;; 通过患者ID (REGISTER_NO, PATIENT_ID, 或 INP_NO) 查询患者信息并创建记录的路由
       ["/find-by-id/:patientIdInput" {:get {:summary "通过ID查找患者信息"
                                             :description "根据患者的 REGISTER_NO, PATIENT_ID 或 INP_NO 查询患者信息，并在系统中创建记录"

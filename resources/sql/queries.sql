@@ -23,8 +23,13 @@ WHERE patient_id = :patient_id;
 -- 根据患者ID获取患者评估
 -- :name get-patient-assessment-by-id :? :1
 -- :doc 通过 patient_id 检索患者评估
-SELECT patient_id, assessment_data, patient_name, assessment_status, patient_name_pinyin, patient_name_initial, doctor_signature_b64, created_at, updated_at -- 中文注释：选取 doctor_signature_b64 列
+SELECT id, patient_id, assessment_data, patient_name, assessment_status, patient_name_pinyin, patient_name_initial, doctor_signature_b64, created_at, updated_at -- 中文注释：选取 doctor_signature_b64 列
 FROM patient_assessments WHERE patient_id = :patient_id;
+
+-- :name get-patient-assessment-by-assessment-id :? :1
+-- :doc 通过评估ID检索患者评估
+SELECT id, patient_id, assessment_data, patient_name, assessment_status, patient_name_pinyin, patient_name_initial, doctor_signature_b64, created_at, updated_at
+FROM patient_assessments WHERE id = :assessment_id;
 
 -- 获取所有患者评估信息
 -- :name get-all-patient-assessments :? :*
@@ -107,3 +112,17 @@ ON CONFLICT(assessment_id) DO UPDATE SET
 -- :name get-consent-form-by-assessment :? :1
 -- :doc 根据评估ID获取知情同意书
 SELECT * FROM consent_forms WHERE assessment_id = :assessment_id;
+
+-- :name update-sedation-consent! :! :n
+-- :doc 更新镇静知情同意书内容
+UPDATE consent_forms
+SET sedation_form = :sedation_form,
+    updated_at = datetime('now')
+WHERE assessment_id = :assessment_id;
+
+-- :name update-pre-anesthesia-consent! :! :n
+-- :doc 更新术前知情同意书内容
+UPDATE consent_forms
+SET pre_anesthesia_form = :pre_anesthesia_form,
+    updated_at = datetime('now')
+WHERE assessment_id = :assessment_id;

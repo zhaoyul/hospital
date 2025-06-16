@@ -201,35 +201,6 @@
             const assessmentId = params.get('assessment-id');
             const form = document.querySelector('.form-container');
 
-            const createRecord = () => {
-                fetch('/api/consent-forms', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({
-                        assessment_id: assessmentId,
-                        pre_anesthesia_form: null
-                    })
-                }).catch(err => console.error('init failed', err));
-            };
-
-            const loadConsent = (result = {}) => {
-                if (!assessmentId) { fillFields(result); return; }
-                fetch(`/api/consent-forms/${assessmentId}`)
-                  .then(r => {
-                      if (r.status === 404) { createRecord(); return {}; }
-                      if (r.ok) { return r.json(); }
-                      return Promise.reject('no-consent');
-                  })
-                  .then(consent => {
-                      if (consent.pre_anesthesia_form) {
-                          form.innerHTML = consent.pre_anesthesia_form;
-                      } else {
-                          fillFields(result);
-                      }
-                  })
-                  .catch(() => fillFields(result));
-            };
-
             const fillFields = (data = {}) => {
                 document.querySelectorAll('.editable-field').forEach(el => {
                     const key = el.dataset.field;
@@ -241,13 +212,47 @@
                 });
             };
 
-            loadConsent();
+            const loadConsent = (info = {}) => {
+                if (!assessmentId) { fillFields(info); return; }
+                fetch(`/api/consent-forms/${assessmentId}`)
+                  .then(r => r.ok ? r.json() : {})
+                  .then(consent => {
+                      if (consent.pre_anesthesia_form) {
+                          form.innerHTML = consent.pre_anesthesia_form;
+                      } else {
+                          fillFields(info);
+                      }
+                  })
+                  .catch(() => fillFields(info));
+            };
+
+            const loadPatient = () => {
+                if (!assessmentId) { loadConsent(); return; }
+                fetch(`/api/patient/assessment/by-id/${assessmentId}`)
+                  .then(r => r.ok ? r.json() : Promise.reject('no-assessment'))
+                  .then(data => {
+                      const b = data.assessment_data && data.assessment_data['基本信息'];
+                      const mapping = {name:'姓名', sex:'性别', age:'年龄', department:'院区', record:'门诊号', diagnosis:'术前诊断'};
+                      const result = {};
+                      if (b) {
+                          Object.keys(mapping).forEach(k => {
+                              if (b[mapping[k]] !== undefined) {
+                                  result[k] = b[mapping[k]];
+                              }
+                          });
+                      }
+                      loadConsent(result);
+                  })
+                  .catch(() => loadConsent());
+            };
+
+            loadPatient();
             const saveConsent = () => {
                 if (!assessmentId) return;
-                fetch('/api/consent-forms', {
-                    method: 'POST',
+                fetch(`/api/consent-forms/${assessmentId}`, {
+                    method: 'PUT',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({assessment_id: assessmentId, pre_anesthesia_form: form.innerHTML})
+                    body: JSON.stringify({pre_anesthesia_form: form.innerHTML})
                 }).catch(err => console.error('save failed', err));
             };
             form.addEventListener('click', (event) => {
