@@ -198,14 +198,14 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const params = new URLSearchParams(window.location.search);
-            const assessmentId = params.get('assessment-id');
+            const assessmentId = parseInt(params.get('assessment-id'), 10);
             const form = document.querySelector('.form-container');
 
             const createRecord = () => {
                 fetch('/api/consent-forms', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({assessment_id: assessmentId})
+                    body: JSON.stringify({assessment_id: parseInt(assessmentId, 10)})
                 }).catch(err => console.error('init failed', err));
             };
 
@@ -244,7 +244,7 @@
                 fetch('/api/consent-forms', {
                     method: 'POST',
                     headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({assessment_id: assessmentId, pre_anesthesia_form: form.innerHTML})
+                    body: JSON.stringify({assessment_id: parseInt(assessmentId, 10), pre_anesthesia_form: form.innerHTML})
                 }).catch(err => console.error('save failed', err));
             };
             form.addEventListener('click', (event) => {
