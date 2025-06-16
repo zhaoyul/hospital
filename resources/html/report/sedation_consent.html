@@ -288,8 +288,37 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const params = new URLSearchParams(window.location.search);
-            const patientId = params.get('patient-id');
-            let assessmentId = null;
+            const assessmentId = params.get('assessment-id');
+            const form = document.querySelector('.consent-form');
+
+            const createRecord = () => {
+                fetch('/api/consent-forms', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        assessment_id: assessmentId,
+                        sedation_form: null
+                    })
+                }).catch(err => console.error('init failed', err));
+            };
+
+            const loadConsent = (result = {}) => {
+                if (!assessmentId) { fillFields(result); return; }
+                fetch(`/api/consent-forms/${assessmentId}`)
+                  .then(r => {
+                      if (r.status === 404) { createRecord(); return {}; }
+                      if (r.ok) { return r.json(); }
+                      return Promise.reject('no-consent');
+                  })
+                  .then(consent => {
+                      if (consent.sedation_form) {
+                          form.innerHTML = consent.sedation_form;
+                      } else {
+                          fillFields(result);
+                      }
+                  })
+                  .catch(() => fillFields(result));
+            };
 
             const fillFields = (data = {}) => {
                 document.querySelectorAll('.editable-field').forEach(el => {
@@ -302,38 +331,8 @@
                 });
             };
 
-            if (patientId) {
-                fetch(`/api/patient/assessment/${patientId}`)
-                    .then(r => r.ok ? r.json() : Promise.reject('failed'))
-                    .then(info => {
-                        assessmentId = info.id;
-                        const b = info.assessment_data && info.assessment_data['基本信息'];
-                        const mapping = {name:'姓名', sex:'性别', age:'年龄', department:'院区', record:'门诊号', diagnosis:'术前诊断'};
-                        const result = {};
-                        if (b) {
-                            Object.keys(mapping).forEach(k => {
-                                if (b[mapping[k]] !== undefined) {
-                                    result[k] = b[mapping[k]];
-                                }
-                            });
-                        }
-                        fetch(`/api/consent-forms/${assessmentId}`)
-                          .then(r => r.ok ? r.json() : Promise.reject('no-consent'))
-                          .then(consent => {
-                              if (consent.sedation_form) {
-                                  form.innerHTML = consent.sedation_form;
-                              } else {
-                                  fillFields(result);
-                              }
-                          })
-                          .catch(() => fillFields(result));
-                    })
-                    .catch(() => fillFields());
-            } else {
-                fillFields();
-            }
+            loadConsent();
 
-            const form = document.querySelector('.consent-form');
             const saveConsent = () => {
                 if (!assessmentId) return;
                 fetch('/api/consent-forms', {
