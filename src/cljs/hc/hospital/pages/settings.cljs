@@ -93,4 +93,4 @@
 
      (when modal-open?
        [:f> user-modal {:visible? modal-open?
-                        :editing-user editing-user}]))])
+                        :editing-user editing-user}])]))

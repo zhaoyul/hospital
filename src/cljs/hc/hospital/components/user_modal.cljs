@@ -4,12 +4,13 @@
    ["antd" :refer [Button Form Input Modal Select Upload]]
    [re-frame.core :as rf]
    [reagent.core :as r]
+   ["react" :as react]
    [hc.hospital.events :as events]))
 
 (defn user-modal
   [{:keys [visible? editing-user]}]
   (let [[form] (Form.useForm)]
-    (r/useEffect
+    (react/useEffect
      (fn []
        (when visible?
          (if editing-user
@@ -23,7 +24,7 @@
                :cancelText "取消"
                :onOk (fn [] (.submit form))
                :onCancel #(rf/dispatch [::events/close-user-modal])
-               :destroyOnClose true}
+               :destroyOnHidden true}
      [:> Form {:form form
                :layout "vertical"
                :name "doctor_form"
