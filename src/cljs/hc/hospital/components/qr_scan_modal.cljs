@@ -15,7 +15,7 @@
                :onCancel on-cancel
                :okText "确定"
                :cancelText "取消"
-               :destroyOnClose true}
+               :destroyOnHidden true}
      [:> Form {:form form
                :layout "vertical"
                :onFinish (fn [values]

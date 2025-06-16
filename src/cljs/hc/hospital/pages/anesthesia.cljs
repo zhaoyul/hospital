@@ -722,8 +722,8 @@
                      :title nil
                      :width "100%"
                      :style {:top 0}
-                     :bodyStyle {:padding 0 :height "100vh"}
-                     :destroyOnClose true
+                     :styles {:body {:padding 0 :height "100vh"}}
+                     :destroyOnHidden true
                      :onCancel #(reset! sedation-open? false)}
            [:iframe {:src (str "/report/sedation-consent?assessment-id=" current-assessment-id)
                      :style {:border "none" :width "100%" :height "100%"}}]]
@@ -736,8 +736,8 @@
                      :title nil
                      :width "100%"
                      :style {:top 0}
-                     :bodyStyle {:padding 0 :height "100vh"}
-                     :destroyOnClose true
+                     :styles {:body {:padding 0 :height "100vh"}}
+                     :destroyOnHidden true
                      :onCancel #(reset! talk-open? false)}
            [:iframe {:src (str "/report/pre-anesthesia-consent?assessment-id=" current-assessment-id)
                      :style {:border "none" :width "100%" :height "100%"}}]]
