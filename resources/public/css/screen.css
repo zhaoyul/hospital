@@ -22,6 +22,7 @@
     box-shadow: none;
     transform: scale(0.9);
     transform-origin: top left;
+    line-height: 1.3 !important;
   }
   .ant-modal-close {
     display: none !important;
