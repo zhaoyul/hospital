@@ -552,14 +552,14 @@
                                              ((.-onSuccess req-info) {:status "done"} req-info.file))
                                           1000))
                         :listType "picture-card"
-                        :fileList (mapv (fn [file-map]
-                                          {:uid (or (:uid file-map) (:url file-map)) ; Ensure UID is present, use URL if no UID
-                                           :name (:filename file-map)
-                                           :status "done" ; Assuming all files from DB are "done"
-                                           :url (:url file-map)
-                                           ;; Store original canonical map for removal if needed
-                                           :canonicalData file-map})
-                                        aux-exams)
+                        :fileList (clj->js (mapv (fn [file-map]
+                                                   {:uid (or (:uid file-map) (:url file-map)) ; Ensure UID is present, use URL if no UID
+                                                    :name (:filename file-map)
+                                                    :status "done" ; Assuming all files from DB are "done"
+                                                    :url (:url file-map)
+                                                    ;; Store original canonical map for removal if needed
+                                                    :canonicalData file-map})
+                                                 aux-exams))
                         :onPreview handle-preview
                         :onRemove (fn [file]
                                     ;; Remove by UID if present, otherwise by URL (from canonicalData if needed)
