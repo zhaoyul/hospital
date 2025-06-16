@@ -18,13 +18,13 @@
             padding: 1rem;
         }
         .consent-form {
-            max-width: 700px; /* 打印时更好地适配 A4 宽度 */
+            max-width: 800px; /* 打印时更好地适配 A4 宽度 */
             width: 100%;
             background-color: white;
             padding: 25px 35px;
             border: none;
             box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-            line-height: 1.4; /* 减少行距让打印内容更紧凑 */
+            line-height: 1.5; /* 减少行距让打印内容更紧凑 */
         }
         .form-title {
             text-align: center;
@@ -72,7 +72,7 @@
             text-align: center;
             font-size: 13px;
         }
-        
+
         .patient-info-box .info-table thead th {
             border-top: none;
         }
@@ -253,7 +253,7 @@
             <p>一旦发生上述风险和意外，医生会采取积极应对措施。特殊风险或主要高危因素(包括但不限于以上):</p>
             <div class="w-full h-6 border-b border-black editable-field" data-field="risk">&nbsp;</div>
         </div>
-        
+
         <!-- 替代治疗方案 -->
         <div class="form-box flex items-baseline">
             <h3 class="!m-0 shrink-0">替代治疗方案</h3>
@@ -356,7 +356,7 @@
                 const isChecked = target.dataset.checked === 'true';
                 target.dataset.checked = !isChecked;
                 const textNode = target.childNodes[0];
-                
+
                 if (textNode && textNode.nodeType === Node.TEXT_NODE) {
                      textNode.textContent = !isChecked ? textNode.textContent.replace('□', '☑') : textNode.textContent.replace('☑', '□');
                 }
@@ -372,14 +372,14 @@
                 }
 
                 const originalText = target.innerHTML.trim() === '&nbsp;' ? '' : target.innerHTML.trim();
-                
+
                 target.innerHTML = ''; // Clear the cell/span
 
                 const input = document.createElement('input');
                 input.type = 'text';
                 input.value = originalText;
                 input.className = 'editable-input';
-                
+
                 target.appendChild(input);
                 input.focus();
 
