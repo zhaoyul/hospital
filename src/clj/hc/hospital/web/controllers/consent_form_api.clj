@@ -34,6 +34,8 @@
         (db/update-sedation-consent! query-fn assessment-id html))
       (when-let [html (:pre_anesthesia_form body-params)]
         (db/update-pre-anesthesia-consent! query-fn assessment-id html))
+      (when-let [html (:anesthesia_form body-params)]
+        (db/update-anesthesia-consent! query-fn assessment-id html))
       (http-response/ok {:message "更新成功"})
       (catch Exception e
         (log/error e "更新知情同意书失败")

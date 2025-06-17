@@ -31,4 +31,10 @@
   .ant-modal-close {
     display: none !important;
   }
+  .consent-form .content-box {
+    page-break-after: always;
+  }
+  .consent-form .content-box:last-child {
+    page-break-after: auto;
+  }
 }

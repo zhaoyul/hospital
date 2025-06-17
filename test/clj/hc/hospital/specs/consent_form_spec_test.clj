@@ -10,4 +10,5 @@
                        {:assessment_id 1 :sedation_form ""})))
   (is (m/validate cf-spec/ConsentFormSpec
                   {:assessment_id 2 :pre_anesthesia_form "<html>"
+                   :anesthesia_form "<html>"
                    :signed_by "Dr" :signed_at "2024-01-01"})))

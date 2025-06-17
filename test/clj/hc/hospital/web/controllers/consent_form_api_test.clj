@@ -19,11 +19,12 @@
                :doctor_signature_b64 nil})
         assessments (qf :get-all-patient-assessments {})
         assessment-id (:id (first (filter #(= patient-id (:patient_id %)) assessments)))
-        payload {:assessment_id assessment-id :sedation_form "d"}]
+        payload {:assessment_id assessment-id :sedation_form "d" :anesthesia_form "e"}]
     (let [resp (POST app "/api/consent-forms" (json/encode payload)
                      {"content-type" "application/json"})]
       (is (= 200 (:status resp))))
     (let [resp (GET app (str "/api/consent-forms/" assessment-id))
           body (json/parse-string (:body resp) true)]
       (is (= 200 (:status resp)))
-      (is (= assessment-id (:assessment_id body))))))
+      (is (= assessment-id (:assessment_id body)))
+      (is (= "e" (:anesthesia_form body))))))

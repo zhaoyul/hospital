@@ -20,3 +20,9 @@
   (query-fn :update-pre-anesthesia-consent!
             {:assessment_id assessment-id
              :pre_anesthesia_form form-html}))
+
+(defn update-anesthesia-consent!
+  [query-fn assessment-id form-html]
+  (query-fn :update-anesthesia-consent!
+            {:assessment_id assessment-id
+             :anesthesia_form form-html}))

@@ -7,3 +7,6 @@
 
 (defn pre-anesthesia-consent-page [request]
   (layout/render request "report/pre_anesthesia_consent.html"))
+
+(defn anesthesia-consent-page [request]
+  (layout/render request "report/anesthesia_consent.html"))
