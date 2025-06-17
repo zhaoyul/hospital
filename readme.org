@@ -258,7 +258,14 @@
 - *其他医生操作*:
   - 注册、登出、修改密码等通过 =/api/users/*= 相关端点处理.
 
-** 3. HIS 系统集成 (需求提及.当前未实现)
+** 3. 知情同意书生成与保存
+ - 在医生管理端选择患者后，可点击 “麻醉/辅助镇静知情同意书” 或 “麻醉前谈话记录与知情同意书” 按钮。
+ - 系统会在 Modal 中加载 `/report/sedation-consent?assessment-id=<评估ID>` 或 `/report/pre-anesthesia-consent?assessment-id=<评估ID>` 页面，模板文件位于 `resources/html/report/`。
+ - 页面脚本首先调用 `/api/patient/assessment/by-id/<评估ID>` 获取评估中的基本信息并填入表单，如已有数据则再从 `/api/consent-forms/<评估ID>` 读取已保存的 HTML。
+ - 模板中的 `.editable-field` 和 `.checkbox-item` 元素可直接编辑或勾选，每次修改都会向同一端点以 `PUT` 方式提交更新，后端 `consent-form-api.clj` 将内容写入 `consent_forms` 表。
+ - 重新打开页面即可加载之前保存的知情同意书，医生可在浏览器中打印或导出为 PDF。
+
+** 4. HIS 系统集成 (需求提及.当前未实现)
 - 需求文档 (=docs/requirment.md=) 提及 HIS 系统接口导入患者数据.并与扫码填<x_bin_118>患者匹配.这是未来的一个数据来源.
 
 * 编译与测试
