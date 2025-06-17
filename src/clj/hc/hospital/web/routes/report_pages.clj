@@ -16,7 +16,8 @@
 
 (defn report-page-routes [_opts]
   [["/report/sedation-consent" {:get report/sedation-consent-page}]
-   ["/report/pre-anesthesia-consent" {:get report/pre-anesthesia-consent-page}]])
+   ["/report/pre-anesthesia-consent" {:get report/pre-anesthesia-consent-page}]
+   ["/report/anesthesia-consent" {:get report/anesthesia-consent-page}]])
 
 (def route-data
   {:middleware [(wrap-page-defaults)

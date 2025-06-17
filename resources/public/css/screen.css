@@ -22,13 +22,13 @@
     box-shadow: none;
     transform: scale(0.9);
     transform-origin: top left;
-    line-height: 1.3 !important;
-  }
-  .ant-modal-close {
-    display: none !important;
+    line-height: 1.2 !important;
   }
   /* 打印时隐藏 Ant Design 弹窗的关闭按钮 */
   .ant-modal-close {
     display: none !important;
+  }
+  .page-break-after {
+    page-break-after: always;
   }
 }

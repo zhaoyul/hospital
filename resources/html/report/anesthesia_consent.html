@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>麻醉知情同意书</title>
+    <link href="/css/screen.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap');
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #e9e9e9;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem 0;
+        }
+        .consent-form {
+            width: 840px;
+            background-color: white;
+            border: 1px solid #000;
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+            line-height: 1.8;
+        }
+        .content-box {
+            border-bottom: 1px solid #000;
+            padding: 15px 25px;
+        }
+        .consent-form > div:last-child {
+             border-bottom: none;
+        }
+        .main-title {
+            text-align: center;
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            letter-spacing: 3px;
+        }
+        .sub-title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: 600;
+        }
+        .patient-info-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 15px;
+            margin-bottom: 5px;
+            font-size: 14px;
+        }
+        .info-group {
+            display: flex;
+            align-items: baseline;
+        }
+        .info-group label {
+            font-weight: 500;
+            margin-right: 5px;
+            white-space: nowrap;
+        }
+        .info-group .editable-field {
+            border-bottom: 1px solid #000;
+            padding: 0 5px;
+            min-width: 60px;
+        }
+        .content-box h3 {
+            font-weight: 700;
+            font-size: 15px;
+            margin: 0 0 10px 0;
+        }
+        .content-box p, .content-box ol li, .content-box ul li {
+            font-size: 14px;
+            text-align: justify;
+            margin-bottom: 5px;
+        }
+        .content-box ol {
+            padding-left: 2em;
+        }
+        .checkbox-item {
+            cursor: pointer;
+            margin-right: 15px;
+            font-size: 14px;
+            display: inline-flex;
+            align-items: center;
+        }
+        .editable-field {
+            cursor: text;
+            min-height: 20px;
+            display: inline-block;
+        }
+        .editable-input {
+            border: none;
+            background-color: #f0f8ff;
+            width: 100%;
+            height: 100%;
+            padding: 2px;
+            font-size: inherit;
+            font-family: inherit;
+            text-align: left;
+        }
+        .editable-input:focus {
+            outline: 1px solid #007bff;
+        }
+        .underline {
+            border-bottom: 1px solid #000;
+            min-width: 100px;
+        }
+        .signature-area {
+             display: flex;
+             justify-content: flex-end;
+             align-items: center;
+             margin-top: 30px;
+        }
+        @media print {
+            .page-break-after { page-break-after: always; }
+        }
+    </style>
+</head>
+<body>
+    <div class="consent-form">
+        <!-- Header Box -->
+        <div class="content-box">
+             <h1 class="main-title">聊城市人民医院</h1>
+             <h2 class="sub-title">麻醉知情同意书</h2>
+             <div class="patient-info-bar">
+                <div class="info-group">
+                    <label>患者姓名:</label>
+                    <span class="editable-field" data-field="name">刘红芹</span>
+                </div>
+                <div class="info-group">
+                    <label>性别:</label>
+                    <span class="editable-field" data-field="sex">女</span>
+                </div>
+                <div class="info-group">
+                    <label>年龄:</label>
+                    <span class="editable-field" data-field="age">52岁</span>
+                </div>
+                 <div class="info-group">
+                    <label>科室:</label>
+                    <span class="editable-field" data-field="department" style="min-width: 150px;">两腺外科二病区</span>
+                </div>
+                <div class="info-group">
+                    <label>病案号:</label>
+                    <span class="editable-field" data-field="record">0002196316</span>
+                </div>
+            </div>
+        </div>
+        <!-- Introduction and Suggestions Box -->
+        <div class="content-box">
+            <h3>疾病介绍和治疗建议</h3>
+            <p>医生已告知我患有<span class="underline editable-field" data-field="diagnosis">左乳腺恶性肿瘤</span>, 需要在麻醉下进行手术。</p>
+            <ol>
+                <li>麻醉的目的是保证患者围术期安全，消除手术疼痛，监测和调控生理功能，并为手术创造条件。手术引起的创伤和失血可使患者的生理功能处于应激状态；各种麻醉方法和药物对患者的生理功能都有一定影响；外科疾病本身所引起的病理生理改变，以及并存疾病所导致的器官功能损害等都是围手术期潜在的危险因素，均增加麻醉风险性。</li>
+                <li>为了保证手术时医疗安全，手术需要在麻醉和严密监测条件下进行。根据病情和手术需要，麻醉医师建议选择以下麻醉方法，必要时允许变更麻醉方式。
+                    <div>
+                        <span class="checkbox-item" data-checked="true">☑ 全身麻醉</span>
+                        <span class="checkbox-item" data-checked="false">□ 全麻+椎管内麻醉</span>
+                        <span class="checkbox-item" data-checked="false">□ 椎管内麻醉</span>
+                        <span class="checkbox-item" data-checked="true">☑ 神经阻滞</span>
+                        <span class="checkbox-item" data-checked="false">□ 基础麻醉</span>
+                        <span class="checkbox-item" data-checked="false">□ 体外循环</span>
+                    </div>
+                </li>
+                <li>为了减轻术后疼痛，促进康复，麻醉医师介绍了术后疼痛治疗的优点、方法和可能引起的意外与并发症，建议进行如下术后疼痛治疗。
+                    <div>
+                        <span class="checkbox-item" data-checked="true">☑ 静脉镇痛</span>
+                        <span class="checkbox-item" data-checked="false">□ 硬膜外镇痛</span>
+                        <span class="checkbox-item" data-checked="false">□ 神经阻滞镇痛</span>
+                         <span class="checkbox-item" data-checked="false">□ 切口皮下镇痛</span>
+                        <span class="checkbox-item" data-checked="false">□ 其它</span>
+                    </div>
+                </li>
+                <li>为了减少异体输血，避免血源传播性疾病和免疫抑制，建议采用自体血回输。但大量回输可致低蛋白血症及凝血功能障碍等风险；同时也有因采集血量少而不足以回输，或者各种特殊原因致放弃自体血回输。
+                    <p>患者(或授权委托人)意见(同意或不同意): <span class="underline editable-field" data-field="blood_opinion" style="width: 200px;">&nbsp;</span></p>
+                </li>
+                 <li>为了手术安全，麻醉医师将严格遵循麻醉操作规范和用药原则；但任何麻醉方法都存在一定风险性，根据目前技术水平尚难以完全避免发生一些医疗意外或并发症。如合并其它疾病，麻醉可诱发或加重已有症状，相关并发症和麻醉风险性也显著增加。</li>
+            </ol>
+        </div>
+        <!-- Risks and Countermeasures Box -->
+        <div class="content-box">
+             <h3>麻醉潜在风险和对策</h3>
+             <p>麻醉一般是安全的，由于个体差异可能发生麻醉意外和并发症，麻醉风险包括但不限于以下风险：</p>
+             <ol>
+                <li>与原发病或并存疾病相关：脑出血、脑梗塞，脑水肿；严重心律失常，心肌缺血/梗死，心力衰竭；肺不张，肺水肿，肺栓塞，呼吸衰竭；肾功能障碍或衰竭等。</li>
+                <li>与药物相关：过敏反应或过敏性休克，局麻药全身毒性反应和神经毒性，严重呼吸和循环抑制，循环骤停，器官功能损害或衰竭，精神异常，恶性高热等。</li>
+                <li>与不同麻醉方法和操作相关：
+                    <ul style="padding-left: 1.5em; list-style-type: lower-alpha;">
+                        <li>神经阻滞：血肿，气胸，神经功能损害，喉返神经麻痹，全脊麻等。</li>
+                        <li>椎管内麻醉：腰背痛，尿失禁或尿潴留，腰麻后头痛，颅神经麻痹，脊神经或脊髓损伤，呼吸和循环抑制，全脊麻甚至循环骤停，硬膜外血肿、脓肿甚至截瘫，穿刺部位椎管内感染，硬膜外导管滞留或断裂，麻醉不完善或失败等。</li>
+                        <li>全身麻醉：呕吐、误吸，喉痉挛，支气管痉挛，急性上呼吸道梗阻，气管内插管失败，术后咽痛，声带损伤，环杓关节脱位，牙齿损伤或脱落，苏醒延迟等。</li>
+                    </ul>
+                </li>
+                <li>与有创性操作和监测相关：局部血肿，纵膈血/气肿，血气胸，感染，心律失常，血栓形成或肺栓塞，心包填塞，导管打结或断裂，胸导管损伤，神经损伤，穿刺失败等。</li>
+                <li>与输液、输血及血液制品相关：血源性传染病，热源反应，过敏反应，凝血病等。</li>
+                <li>与外科手术相关：失血性休克，严重迷走神经反射引起的呼吸心跳骤停，压迫心脏或大血管引起的严重循环抑制及其并发症等。</li>
+                <li>与急诊手术相关：以上医疗意外和并发症均可发生于急诊手术病人，且发生率较择期手术明显升高。</li>
+                <li>与术后镇痛相关：呼吸、循环抑制，恶心呕吐，镇痛不全，硬膜外导管脱出等。</li>
+             </ol>
+             <p>一旦发生上述风险和意外，医生会采取积极应对措施。特殊风险或主要高危因素(可能出现未包括在上述所交待并发症以外的风险)：</p>
+             <div class="editable-field" data-field="special_risk" style="min-height: 40px; border-bottom: 1px solid #000; width: 100%;">&nbsp;</div>
+        </div>
+        <!-- Alternatives Box -->
+        <div class="content-box page-break-after">
+           <h3>替代治疗方案</h3>
+           <p>当前麻醉技术情况仅有部分手术可选择替代方案，如出现特殊情况麻醉替代方案选择：</p>
+           <div>
+                <span class="checkbox-item" data-checked="false">□ 全身麻醉</span>
+                <span class="checkbox-item" data-checked="false">□ 椎管内麻醉</span>
+                <span class="checkbox-item" data-checked="false">□ 神经阻滞</span>
+                <span class="checkbox-item" data-checked="false">□ 基础麻醉</span>
+                <span class="checkbox-item" data-checked="false">□ 局麻</span>
+                <span class="checkbox-item" data-checked="false">□ 暂停手术</span>
+           </div>
+           <div class="flex items-center">
+               <span class="font-bold mr-2">优点:</span>
+               <span class="checkbox-item" data-checked="false">□ 生命体征影响小</span>
+               <span class="checkbox-item" data-checked="false">□ 效果更为完善</span>
+               <span class="checkbox-item" data-checked="false">□ 操作简便</span>
+               <span class="checkbox-item" data-checked="false">□ 并发症少</span>
+               <span class="checkbox-item" data-checked="false">□ 其它</span>
+           </div>
+           <div class="flex items-center">
+               <span class="font-bold mr-2">缺点:</span>
+               <span class="checkbox-item" data-checked="false">□ 生命体征影响大</span>
+               <span class="checkbox-item" data-checked="false">□ 阻滞不完善</span>
+               <span class="checkbox-item" data-checked="false">□ 依从性差</span>
+               <span class="checkbox-item" data-checked="false">□ 可控性差</span>
+               <span class="checkbox-item" data-checked="false">□ 其它</span>
+           </div>
+        </div>
+        <!-- Doctor's Statement Box -->
+        <div class="content-box">
+           <h3>医生陈述</h3>
+           <p>我已经告知患者(或授权委托人)将要施行的麻醉方式、镇痛方式、麻醉替代治疗方案、自体血回输方案、可能发生的并发症和相关风险，并解答了患者关于此次麻醉的相关问题。遇到紧急情况时，为保障患者的生命安全，医务人员会实施必要的救治措施。</p>
+            <div class="signature-area">
+                <label>麻醉医师签名:</label>
+                <span class="underline editable-field" data-field="doctor_sign" style="width: 200px;">&nbsp;</span>
+                <label style="margin-left: 30px;">签名日期:</label>
+                <span class="underline editable-field" data-field="doctor_date" style="width: 150px;">&nbsp;</span>
+            </div>
+        </div>
+        <!-- Patient's Statement Box -->
+        <div class="content-box">
+           <h3>患方明确意见</h3>
+           <p>我已逐条详细阅读以上告知内容并得到医师通俗、详细、具体、明确的解释，充分了解了拟实施麻醉的麻醉风险、可能发生的并发症及意外情况、替代医疗方案的种类及各方案的优缺点和可行性、镇痛及自体血回输的相关风险，我明确认同这些风险和替代方案，并愿意承担相应的医疗结果。</p>
+            <div class="mt-8 flex justify-between items-end">
+                 <div>
+                      <label>患者(或授权委托人)签名:</label>
+                      <span class="underline editable-field" data-field="patient_sign" style="width: 250px;">&nbsp;</span>
+                 </div>
+                 <div>
+                      <label>签名日期:</label>
+                      <span class="underline editable-field" data-field="pyear" style="width: 40px;">&nbsp;</span>
+                      <label>年</label>
+                      <span class="underline editable-field" data-field="pmonth" style="width: 25px;">&nbsp;</span>
+                      <label>月</label>
+                      <span class="underline editable-field" data-field="pday" style="width: 25px;">&nbsp;</span>
+                      <label>日</label>
+                      <span class="underline editable-field" data-field="phour" style="width: 25px;">&nbsp;</span>
+                      <label>时</label>
+                      <span class="underline editable-field" data-field="pminute" style="width: 25px;">&nbsp;</span>
+                      <label>分</label>
+                 </div>
+            </div>
+        </div>
+         <!-- Final Box -->
+        <div class="content-box">
+              <p class="py-2">抢救生命垂危患者等紧急情况，且不能取得患者或授权委托人意见时，医疗机构负责人或授权的负责人签名:
+                 <span class="underline editable-field" data-field="principal_sign" style="width: 200px;">&nbsp;</span>
+             </p>
+             <div class="text-right">
+                 <label>签名日期:</label>
+                 <span class="underline editable-field" data-field="fy" style="width: 40px;">&nbsp;</span>年
+                 <span class="underline editable-field" data-field="fm" style="width: 25px;">&nbsp;</span>月
+                 <span class="underline editable-field" data-field="fd" style="width: 25px;">&nbsp;</span>日
+                 <span class="underline editable-field" data-field="fh" style="width: 25px;">&nbsp;</span>时
+                 <span class="underline editable-field" data-field="fn" style="width: 25px;">&nbsp;</span>分
+             </div>
+             <div class="border-t border-black my-4 py-4">
+                 <p>术中变更麻醉计划(理由):</p>
+                 <div class="editable-field" data-field="change_reason" style="min-height: 50px; width: 100%; border-bottom: 1px solid #000;">&nbsp;</div>
+                 <div class="flex justify-between mt-8">
+                     <div>
+                         <label>上级医师签名:</label>
+                         <span class="underline editable-field" data-field="super_sign" style="width: 200px;">&nbsp;</span>
+                     </div>
+                     <div>
+                         <label>实施麻醉医师签名:</label>
+                         <span class="underline editable-field" data-field="impl_sign" style="width: 200px;">&nbsp;</span>
+                     </div>
+                 </div>
+                  <div class="text-right mt-4">
+                     <label>签名日期:</label>
+                     <span class="underline editable-field" data-field="cy" style="width: 40px;">&nbsp;</span>年
+                     <span class="underline editable-field" data-field="cm" style="width: 25px;">&nbsp;</span>月
+                     <span class="underline editable-field" data-field="cd" style="width: 25px;">&nbsp;</span>日
+                     <span class="underline editable-field" data-field="ch" style="width: 25px;">&nbsp;</span>时
+                     <span class="underline editable-field" data-field="cn" style="width: 25px;">&nbsp;</span>分
+                  </div>
+             </div>
+             <div class="mt-4">
+                  <label>患者(或授权委托人)签名:</label>
+                  <span class="underline editable-field" data-field="final_sign" style="width: 200px;">&nbsp;</span>
+                  <span class="ml-8">签名日期:</span>
+                  <span class="underline editable-field" data-field="fy2" style="width: 40px;">&nbsp;</span>年
+                  <span class="underline editable-field" data-field="fm2" style="width: 25px;">&nbsp;</span>月
+                  <span class="underline editable-field" data-field="fd2" style="width: 25px;">&nbsp;</span>日
+                  <span class="underline editable-field" data-field="fh2" style="width: 25px;">&nbsp;</span>时
+                  <span class="underline editable-field" data-field="fn2" style="width: 25px;">&nbsp;</span>分
+             </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = new URLSearchParams(window.location.search);
+            const assessmentId = params.get('assessment-id');
+            const container = document.querySelector('.consent-form');
+
+            const fillFields = (data = {}) => {
+                document.querySelectorAll('.editable-field').forEach(el => {
+                    const key = el.dataset.field;
+                    if (key && data[key] !== undefined) {
+                        el.innerHTML = data[key];
+                    } else if (key && params.get(key)) {
+                        el.innerHTML = params.get(key);
+                    }
+                });
+            };
+
+            const loadConsent = (info = {}) => {
+                if (!assessmentId) { fillFields(info); return; }
+                fetch(`/api/consent-forms/${assessmentId}`)
+                  .then(r => r.ok ? r.json() : {})
+                  .then(consent => {
+                      if (consent.anesthesia_form) {
+                          container.innerHTML = consent.anesthesia_form;
+                      } else {
+                          fillFields(info);
+                      }
+                  })
+                  .catch(() => fillFields(info));
+            };
+
+            const loadPatient = () => {
+                if (!assessmentId) { loadConsent(); return; }
+                fetch(`/api/patient/assessment/by-id/${assessmentId}`)
+                  .then(r => r.ok ? r.json() : Promise.reject('no-assessment'))
+                  .then(data => {
+                      const b = data.assessment_data && data.assessment_data['基本信息'];
+                      const mapping = {name:'姓名', sex:'性别', age:'年龄', department:'院区', record:'门诊号', diagnosis:'术前诊断'};
+                      const result = {};
+                      if (b) {
+                          Object.keys(mapping).forEach(k => {
+                              if (b[mapping[k]] !== undefined) {
+                                  result[k] = b[mapping[k]];
+                              }
+                          });
+                      }
+                      loadConsent(result);
+                  })
+                  .catch(() => loadConsent());
+            };
+
+            loadPatient();
+
+            const saveConsent = () => {
+                if (!assessmentId) return;
+                fetch(`/api/consent-forms/${assessmentId}`, {
+                    method: 'PUT',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({assessment_id: parseInt(assessmentId),
+                                         anesthesia_form: container.innerHTML})
+                }).catch(err => console.error('save failed', err));
+            };
+
+            // --- Checkbox Toggle Logic ---
+            container.addEventListener('click', (event) => {
+                const target = event.target.closest('.checkbox-item');
+                if (!target) return;
+
+                const isChecked = target.dataset.checked === 'true';
+                target.dataset.checked = !isChecked;
+                const textNode = target.childNodes[0];
+
+                if (textNode && textNode.nodeType === Node.TEXT_NODE) {
+                     textNode.textContent = !isChecked ? textNode.textContent.replace('□', '☑') : textNode.textContent.replace('☑', '□');
+                }
+                saveConsent();
+            });
+
+            // --- Inline Editing Logic ---
+            container.addEventListener('click', (event) => {
+                let target = event.target;
+
+                if (!target.classList.contains('editable-field')) {
+                     target = target.closest('.editable-field');
+                }
+                if (!target) return;
+
+                if (target.querySelector('.editable-input')) {
+                    return;
+                }
+
+                const originalHTML = target.innerHTML.trim();
+                let originalText = target.textContent.trim();
+                if (originalText === '☑' || originalText === '□') {
+                    return;
+                }
+
+                target.innerHTML = '';
+                const input = document.createElement('input');
+                input.type = 'text';
+                input.value = originalText;
+                input.className = 'editable-input';
+
+                if (target.classList.contains('underline') && target.style.width) {
+                    input.style.width = target.style.width;
+                }
+
+                target.appendChild(input);
+                input.focus();
+
+                const saveChanges = () => {
+                    const newValue = input.value.trim();
+                    if (newValue === '' && originalHTML.includes('&nbsp;')) {
+                         target.innerHTML = '&nbsp;';
+                    } else {
+                         target.textContent = newValue;
+                    }
+                    saveConsent();
+                };
+
+                input.addEventListener('blur', saveChanges);
+
+                input.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        input.blur();
+                    } else if (e.key === 'Escape') {
+                        target.innerHTML = originalHTML;
+                    }
+                });
+            });
+        });
+    </script>
+</body>
+</html>

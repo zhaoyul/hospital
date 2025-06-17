@@ -102,11 +102,12 @@ DELETE FROM users WHERE id = :id;
 -- 知情同意书相关操作
 -- :name upsert-consent-form! :! :n
 -- :doc 保存或更新评估对应的知情同意书
-INSERT INTO consent_forms (assessment_id, sedation_form, pre_anesthesia_form, created_at, updated_at)
-VALUES (:assessment_id, :sedation_form, :pre_anesthesia_form, datetime('now'), datetime('now'))
+INSERT INTO consent_forms (assessment_id, sedation_form, pre_anesthesia_form, anesthesia_form, created_at, updated_at)
+VALUES (:assessment_id, :sedation_form, :pre_anesthesia_form, :anesthesia_form, datetime('now'), datetime('now'))
 ON CONFLICT(assessment_id) DO UPDATE SET
   sedation_form = excluded.sedation_form,
   pre_anesthesia_form = excluded.pre_anesthesia_form,
+  anesthesia_form = excluded.anesthesia_form,
   updated_at = datetime('now');
 
 -- :name get-consent-form-by-assessment :? :1
@@ -124,5 +125,12 @@ WHERE assessment_id = :assessment_id;
 -- :doc 更新术前知情同意书内容
 UPDATE consent_forms
 SET pre_anesthesia_form = :pre_anesthesia_form,
+    updated_at = datetime('now')
+WHERE assessment_id = :assessment_id;
+
+-- :name update-anesthesia-consent! :! :n
+-- :doc 更新麻醉知情同意书内容
+UPDATE consent_forms
+SET anesthesia_form = :anesthesia_form,
     updated_at = datetime('now')
 WHERE assessment_id = :assessment_id;

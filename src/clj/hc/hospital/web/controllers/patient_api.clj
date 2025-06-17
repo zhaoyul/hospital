@@ -172,7 +172,8 @@
                 (query-fn :upsert-consent-form!
                           {:assessment_id (:id new-assessment)
                            :sedation_form nil
-                           :pre_anesthesia_form nil}))
+                           :pre_anesthesia_form nil
+                           :anesthesia_form nil}))
               (http-response/ok {:message "评估提交成功！"}))))))
     (catch Exception e
       (log/error e "提交/更新评估时出错" (ex-message e) (ex-data e))
@@ -339,11 +340,12 @@
                 (log/info "本地已存在患者评估，患者ID:" patientIdInput))
 
               (when was-inserted?
-                (when-let [a (query-fn :get-patient-assessment-by-id {:patient_id patientIdInput})]
-                  (query-fn :upsert-consent-form!
-                            {:assessment_id (:id a)
-                             :sedation_form nil
-                             :pre_anesthesia_form nil})))
+                  (when-let [a (query-fn :get-patient-assessment-by-id {:patient_id patientIdInput})]
+                    (query-fn :upsert-consent-form!
+                              {:assessment_id (:id a)
+                               :sedation_form nil
+                               :pre_anesthesia_form nil
+                               :anesthesia_form nil})))
 
               ;; 无论插入还是已存在，都重新获取并返回完整的本地记录
               (let [final-local-assessment (query-fn :get-patient-assessment-by-id {:patient_id patientIdInput})

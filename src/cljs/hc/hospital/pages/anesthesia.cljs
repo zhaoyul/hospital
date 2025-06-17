@@ -705,7 +705,7 @@
                  :style {:background "#1890ff" :borderColor "#1890ff" :color "white"}}
       "打印表单"])])
 
-(defn- assessment-header [patient-name patient-status current-patient-id current-assessment-id sedation-open? talk-open?]
+(defn- assessment-header [patient-name patient-status current-patient-id current-assessment-id sedation-open? talk-open? anesthesia-open?]
   [:> Card {:style {:marginBottom "12px"}}
    [:div {:style {:display "flex" :justifyContent "space-between" :alignItems "center"}}
     [:h3 {:style {:fontSize "16px" :fontWeight "500"}} patient-name]
@@ -726,6 +726,22 @@
                      :destroyOnHidden true
                      :onCancel #(reset! sedation-open? false)}
            [:iframe {:src (str "/report/sedation-consent?assessment-id=" current-assessment-id)
+                     :style {:border "none" :width "100%" :height "100%"}}]]
+
+          [:> Button {:style {:marginLeft "8px"}
+                      :type "primary"
+                      :on-click #(reset! anesthesia-open? true)}
+           "麻醉知情同意书"]
+          [:> Modal {:open @anesthesia-open?
+                     :footer nil
+                     :title nil
+                     :closable false
+                     :width "100%"
+                     :style {:top 0}
+                     :styles {:body {:padding 0 :height "100vh"}}
+                     :destroyOnHidden true
+                     :onCancel #(reset! anesthesia-open? false)}
+           [:iframe {:src (str "/report/anesthesia-consent?assessment-id=" current-assessment-id)
                      :style {:border "none" :width "100%" :height "100%"}}]]
           [:> Button {:style {:marginLeft "8px"}
                       :type "primary"
@@ -749,6 +765,7 @@
   (let [card-form-instances (r/atom {})
         sedation-open? (r/atom false)
         talk-open? (r/atom false)
+        anesthesia-open? (r/atom false)
         current-patient-id @(rf/subscribe [::subs/current-patient-id])
 
         register-form-instance (fn [card-key form-instance]
@@ -785,7 +802,7 @@
         [:> Layout {:style {:display "flex" :flexDirection "column" :height "calc(100vh - 64px)"}}
          ;; Main scrollable content area for cards
          [:> Layout.Content {:style {:padding "5px 12px" :overflowY "auto" :flexGrow 1 :background "#f0f2f5"}}
-         [assessment-header patient-name patient-status current-patient-id current-assessment-id sedation-open? talk-open?]
+         [assessment-header patient-name patient-status current-patient-id current-assessment-id sedation-open? talk-open? anesthesia-open?]
           [:f> patient-info-card {:report-form-instance-fn register-form-instance}]
           [general-condition-card]
           [medical-history-summary-card]

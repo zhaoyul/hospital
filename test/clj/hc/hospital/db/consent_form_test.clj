@@ -21,8 +21,9 @@
               :doctor_signature_b64 nil})
         assessments (qf :get-all-patient-assessments {})
         assessment-id (:id (first (filter #(= patient-id (:patient_id %)) assessments)))
-        form {:assessment_id assessment-id :sedation_form "html"}]
+        form {:assessment_id assessment-id :sedation_form "html" :anesthesia_form "a"}]
     (is (= 1 (cf/save-consent-form! qf form)))
     (let [saved (cf/get-consent-form qf assessment-id)]
       (is (= assessment-id (:assessment_id saved)))
-      (is (= "html" (:sedation_form saved))))))
+      (is (= "html" (:sedation_form saved)))
+      (is (= "a" (:anesthesia_form saved))))))
