@@ -69,6 +69,9 @@
  :reitit.routes/role-api {:base-path "/api",
                           :env #ig/ref :system/env,
                           :query-fn #ig/ref :db.sql/query-fn}
+ :reitit.routes/overview-api {:base-path "/api",
+                              :env #ig/ref :system/env,
+                              :query-fn #ig/ref :db.sql/query-fn}
 
  :db.sql/query-fn {:conn #ig/ref :db.sql/connection,
                    :options {},
