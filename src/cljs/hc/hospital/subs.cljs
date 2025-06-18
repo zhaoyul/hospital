@@ -270,6 +270,11 @@
   (fn [db _]
     (get db :session-check-pending? true))) ; Default to true if not found, matches db.cljs
 
+;; 首页概览统计订阅
+(rf/reg-sub ::overview-stats
+  (fn [db _]
+    (get db :overview-stats [])))
+
 ;; --- 二维码扫描模态框订阅 ---
 ;; 订阅二维码扫描模态框的可见状态
 (rf/reg-sub ::qr-scan-modal-visible?
