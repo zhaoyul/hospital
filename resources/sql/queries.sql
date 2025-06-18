@@ -134,3 +134,40 @@ UPDATE consent_forms
 SET anesthesia_form = :anesthesia_form,
     updated_at = datetime('now')
 WHERE assessment_id = :assessment_id;
+
+-- 角色与权限相关操作
+
+-- :name list-roles :? :*
+-- :doc 获取所有角色列表
+SELECT * FROM roles ORDER BY id;
+
+-- :name create-role! :! :n
+-- :doc 创建新角色
+INSERT INTO roles (name) VALUES (:name);
+
+-- :name update-role-name! :! :n
+-- :doc 更新角色名称
+UPDATE roles SET name = :name WHERE id = :id;
+
+-- :name delete-role! :! :n
+-- :doc 删除角色
+DELETE FROM roles WHERE id = :id;
+
+-- :name list-permissions :? :*
+-- :doc 获取权限列表
+SELECT * FROM permissions ORDER BY id;
+
+-- :name get-permissions-by-role :? :*
+-- :doc 根据角色获取权限
+SELECT p.* FROM permissions p
+JOIN role_permissions rp ON p.id = rp.permission_id
+WHERE rp.role_id = :role_id;
+
+-- :name delete-role-permissions! :! :n
+-- :doc 删除角色的所有权限
+DELETE FROM role_permissions WHERE role_id = :role_id;
+
+-- :name add-role-permission! :! :n
+-- :doc 为角色添加权限
+INSERT INTO role_permissions (role_id, permission_id)
+VALUES (:role_id, :permission_id);

@@ -238,13 +238,25 @@
   (fn [db _]
     (get db :users []))) ; Default to empty vector if not present
 
+(rf/reg-sub ::roles
+  (fn [db _]
+    (get db :roles [])))
+
 (rf/reg-sub ::user-modal-visible?
   (fn [db _]
     (get db :user-modal-visible? false))) ; Default to false
 
+(rf/reg-sub ::role-modal-visible?
+  (fn [db _]
+    (get db :role-modal-visible? false)))
+
 (rf/reg-sub ::editing-user
   (fn [db _]
     (get db :editing-user {}))) ; Default to empty map
+
+(rf/reg-sub ::editing-role
+  (fn [db _]
+    (get db :editing-role {})))
 
 (rf/reg-sub ::current-doctor
   (fn [db _]

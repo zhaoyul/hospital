@@ -455,6 +455,50 @@
     (timbre/error "删除医生失败" error)
     db))
 
+;; ---- 角色管理事件 ----
+(rf/reg-event-fx ::initialize-roles
+  (fn [_ _]
+    {:dispatch [::fetch-roles]}))
+
+(rf/reg-event-fx ::fetch-roles
+  (fn [_ _]
+    {:http-xhrio {:method :get
+                  :uri "/api/roles"
+                  :response-format (ajax/json-response-format {:keywords? true})
+                  :on-success [::set-roles]}}))
+
+(rf/reg-event-db ::set-roles
+  (fn [db [_ {:keys [roles]}]]
+    (assoc db :roles roles)))
+
+(rf/reg-event-db ::open-role-modal
+  (fn [db [_ role]]
+    (assoc db :role-modal-visible? true :editing-role role)))
+
+(rf/reg-event-db ::close-role-modal
+  (fn [db _]
+    (assoc db :role-modal-visible? false :editing-role nil)))
+
+(rf/reg-event-fx ::fetch-role-permissions
+  (fn [_ [_ role-id]]
+    {:http-xhrio {:method :get
+                  :uri (str "/api/roles/" role-id "/permissions")
+                  :response-format (ajax/json-response-format {:keywords? true})
+                  :on-success [::set-editing-role-perms]}}))
+
+(rf/reg-event-db ::set-editing-role-perms
+  (fn [db [_ {:keys [permissions]}]]
+    (assoc-in db [:editing-role :permissions] (mapv :id permissions))))
+
+(rf/reg-event-fx ::save-role-permissions
+  (fn [_ [_ role-id perm-ids]]
+    {:http-xhrio {:method :put
+                  :uri (str "/api/roles/" role-id "/permissions")
+                  :params {:permission_ids perm-ids}
+                  :format (ajax/json-request-format)
+                  :response-format (ajax/json-response-format {:keywords? true})
+                  :on-success [::close-role-modal]}}))
+
 
 ;; --- 二维码扫描模态框事件 ---
 ;; 打开二维码扫描模态框

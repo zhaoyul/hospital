@@ -2,26 +2,23 @@
   (:require
    ["@ant-design/icons" :as icons]
    ["react" :as React]
-   ["antd" :refer [Button Space Table Typography Card]]
+   ["antd" :refer [Button Space Table Typography Card Tabs]]
    [hc.hospital.components.user-modal :refer [user-modal]]
+   [hc.hospital.pages.role-settings :refer [role-settings-tab]]
    [hc.hospital.events :as events]
    [hc.hospital.subs :as subs]
    [re-frame.core :as rf]
    [reagent.core :as r]))
 
-(defn system-settings-content []
+
+(defn user-settings-tab []
   (let [users @(rf/subscribe [::subs/users])
         modal-open? @(rf/subscribe [::subs/user-modal-visible?])
         editing-user @(rf/subscribe [::subs/editing-user])]
 
     (React/useEffect (fn [] (rf/dispatch [::events/initialize-users])))
 
-    [:> Card
-     [:> Typography.Title {:level 2
-                           :style {:marginTop 0 :marginBottom "16px"
-                                   :fontSize "18px" :fontWeight 500 :color "#333"}}
-      "系统设置"]
-
+    [:div
      [:div {:style {:marginBottom "16px"}}
       [:> Button {:type "primary"
                   :icon (r/as-element [:> icons/PlusOutlined])
@@ -94,3 +91,15 @@
      (when modal-open?
        [:f> user-modal {:visible? modal-open?
                         :editing-user editing-user}])]))
+
+(defn system-settings-content []
+  [:> Card
+   [:> Typography.Title {:level 2
+                         :style {:marginTop 0 :marginBottom "16px"
+                                 :fontSize "18px" :fontWeight 500 :color "#333"}}
+    "系统设置"]
+   [:> Tabs {:defaultActiveKey "users"}
+    [:> Tabs.TabPane {:tab "用户设置" :key "users"}
+     [user-settings-tab]]
+    [:> Tabs.TabPane {:tab "角色设置" :key "roles"}
+     [role-settings-tab]]]])
