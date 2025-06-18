@@ -5,8 +5,11 @@
    :anesthesia {}
    ;; 用户管理相关状态
    :users []
+   :roles []
    :user-modal-visible? false
    :editing-user nil
+   :role-modal-visible? false
+   :editing-role nil
    :current-doctor nil
    :is-logged-in false
    :login-error nil

@@ -62,10 +62,13 @@
  ;; 用户相关 API 路由
  :reitit.routes/user-api {:base-path "/api",
                           :env #ig/ref :system/env
-                          :query-fn #ig/ref :db.sql/query-fn}
+ :query-fn #ig/ref :db.sql/query-fn}
  :reitit.routes/consent-form-api {:base-path "/api",
                                   :env #ig/ref :system/env,
                                   :query-fn #ig/ref :db.sql/query-fn}
+ :reitit.routes/role-api {:base-path "/api",
+                          :env #ig/ref :system/env,
+                          :query-fn #ig/ref :db.sql/query-fn}
 
  :db.sql/query-fn {:conn #ig/ref :db.sql/connection,
                    :options {},
