@@ -7,6 +7,7 @@
    [hc.hospital.events :as events]
    [hc.hospital.components.qr-scan-modal :refer [qr-scan-modal]]
    [hc.hospital.pages.anesthesia :refer [anesthesia-content]]
+   [hc.hospital.pages.overview :refer [overview-content]]
    [hc.hospital.pages.comps :refer [custom-sider-trigger]]
    [hc.hospital.pages.settings :refer [system-settings-content]]
    [hc.hospital.pages.questionnaire :refer [questionnaire-list-content]]
@@ -17,9 +18,10 @@
 
 
 (defn menu-items [role]
-  (cond-> [{:key "1" :icon (r/as-element [:> icons/ProfileOutlined]) :label "麻醉管理"}
-           {:key "2" :icon (r/as-element [:> icons/FileAddOutlined]) :label "问卷列表"}]
-    (= role "管理员") (conj {:key "3" :icon (r/as-element [:> icons/SettingOutlined]) :label "系统管理"})))
+  (cond-> [{:key "1" :icon (r/as-element [:> icons/DashboardOutlined]) :label "纵览信息"}
+           {:key "2" :icon (r/as-element [:> icons/ProfileOutlined]) :label "麻醉管理"}
+           {:key "3" :icon (r/as-element [:> icons/FileAddOutlined]) :label "问卷列表"}]
+    (= role "管理员") (conj {:key "4" :icon (r/as-element [:> icons/SettingOutlined]) :label "系统管理"})))
 
 (defn sider-bar [active-tab]
   (let [sidebar-collapsed? (r/atom true)]
@@ -35,16 +37,18 @@
           [:> Menu {:mode "inline"
                     :inlineCollapsed @sidebar-collapsed?
                     :selectedKeys [(case active-tab
-                                     "patients" "1"
-                                     "assessment" "2"
-                                     "settings" "3"
+                                     "overview" "1"
+                                     "patients" "2"
+                                     "assessment" "3"
+                                     "settings" "4"
                                      "1")]
                     :onClick (fn [item]
                                (rf/dispatch [::events/navigate-tab
-                                             (condp = (.-key item)
-                                               "1" "patients"
-                                               "2" "assessment"
-                                               "3" "settings")]))
+                                             (case (.-key item)
+                                               "1" "overview"
+                                               "2" "patients"
+                                               "3" "assessment"
+                                               "4" "settings")]))
                     :style {:height "100%" :borderRight 0}
                     :items (clj->js (menu-items role))}])])))
 
@@ -93,6 +97,7 @@
                         :background "#f0f2f5"}}
      [:div {:style {:padding "24px"}}
       (case active-tab
+        "overview" [overview-content]
         "patients" [anesthesia-content]
         "assessment" [questionnaire-list-content]
         "settings" (when (= role "管理员") [:f> system-settings-content])
