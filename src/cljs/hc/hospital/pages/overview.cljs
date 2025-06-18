@@ -51,7 +51,7 @@
             row2 (drop 4 stats)]
         [:div
          [:> Card {:title "今日数据概览" :style {:marginBottom 16}}
-          [:<> 
+          [:<>
            [:> Row {:gutter 16}
             (for [{:keys [label value] :as item} row1]
               ^{:key label}
@@ -74,5 +74,5 @@
          [:> Card {:title "数据来源分布"}
           [:div {:id "patientSourceChart" :style {:height 300}}]
           [:div {:id "asaChart" :style {:height 300}}]
-          [:div {:id "approvalRateChart" :style {:height 300}}]]]))})
+          [:div {:id "approvalRateChart" :style {:height 300}}]]]))}))
 
