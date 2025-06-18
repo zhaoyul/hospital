@@ -275,6 +275,10 @@
   (fn [db _]
     (get db :overview-stats [])))
 
+(rf/reg-sub ::overview-date
+  (fn [db _]
+    (get db :overview-date)))
+
 ;; --- 二维码扫描模态框订阅 ---
 ;; 订阅二维码扫描模态框的可见状态
 (rf/reg-sub ::qr-scan-modal-visible?

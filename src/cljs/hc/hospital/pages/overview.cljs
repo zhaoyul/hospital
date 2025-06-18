@@ -2,11 +2,13 @@
   "纵览信息模块，展示统计概览与图表。"
   (:require
    ["@ant-design/icons" :as icons]
-   ["antd" :refer [Card]]
+   ["antd" :refer [Card DatePicker]]
+   ["dayjs" :as dayjs]
    ["echarts" :as echarts]
    [reagent.core :as r]
    [re-frame.core :as rf]
-   [hc.hospital.subs :as subs]))
+   [hc.hospital.subs :as subs]
+   [hc.hospital.events :as events]))
 
 (defn ^:private init-chart [id option]
   (let [dom (.getElementById js/document id)
@@ -41,9 +43,9 @@
 (defn overview-content []
   (r/create-class
    {:component-did-mount
-    (fn []
-      ;; 数据来源分布 - 每日门诊与住院患者
-      (init-chart "patientSourceChart"
+   (fn []
+     ;; 数据来源分布 - 每日门诊与住院患者
+     (init-chart "patientSourceChart"
                   {:title {:text "数据来源分布"}
                    :tooltip {:trigger "axis"}
                    :legend {:data ["门诊" "住院"]}
@@ -98,12 +100,20 @@
                    :tooltip {:trigger "axis"}
                    :xAxis {:type "category" :data ["0-20" "21-40" "41-60" "61+"]}
                    :yAxis {:type "value"}
-                   :series [{:type "bar" :data [5 20 30 15]}]}))
+                   :series [{:type "bar" :data [5 20 30 15]}]})
+      (rf/dispatch [::events/fetch-overview-stats]))
     :reagent-render
     (fn []
-      (let [stats @(rf/subscribe [::subs/overview-stats])]
+      (let [stats @(rf/subscribe [::subs/overview-stats])
+            date @(rf/subscribe [::subs/overview-date])]
         [:div
-         [:> Card {:title "今日数据概览" :style {:marginBottom 16}}
+         [:> Card {:title "数据概览"
+                   :extra (r/as-element
+                           [:> DatePicker {:value (dayjs date "YYYY-MM-DD")
+                                           :onChange (fn [_ ds]
+                                                       (rf/dispatch [::events/set-overview-date ds])
+                                                       (rf/dispatch [::events/fetch-overview-stats ds]))}])
+                   :style {:marginBottom 16}}
           [:div {:style {:display "flex" :flexWrap "wrap" :gap 16}}
            (for [item stats]
              ^{:key (:label item)}

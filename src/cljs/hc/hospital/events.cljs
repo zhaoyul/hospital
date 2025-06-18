@@ -568,3 +568,26 @@
       (js/alert (str "查询患者 " patient-id-input " 失败: " error-message))
       ;; 查询失败时不关闭模态框，允许用户重试或取消
       db)))
+
+;; --- Overview Statistics ---
+(rf/reg-event-fx ::fetch-overview-stats
+  (fn [{:keys [db]} [_ date]]
+    (let [d (or date (:overview-date db))]
+      {:http-xhrio {:method :get
+                    :uri (str "/api/overview/stats?date=" d)
+                    :response-format (ajax/json-response-format {:keywords? true})
+                    :on-success [::set-overview-stats]
+                    :on-failure [::fetch-overview-stats-failed]}})))
+
+(rf/reg-event-db ::set-overview-date
+  (fn [db [_ d]]
+    (assoc db :overview-date d)))
+
+(rf/reg-event-db ::set-overview-stats
+  (fn [db [_ {:keys [stats]}]]
+    (assoc db :overview-stats stats)))
+
+(rf/reg-event-db ::fetch-overview-stats-failed
+  (fn [db [_ error]]
+    (timbre/error "获取统计信息失败" error)
+    db))

@@ -171,3 +171,17 @@ DELETE FROM role_permissions WHERE role_id = :role_id;
 -- :doc 为角色添加权限
 INSERT INTO role_permissions (role_id, permission_id)
 VALUES (:role_id, :permission_id);
+
+-- 每日统计信息操作
+-- :name upsert-daily-stats! :! :n
+-- :doc 插入或更新指定日期的统计记录
+INSERT INTO daily_statistics
+(date, data, created_at, updated_at)
+VALUES (:date, :data, datetime('now'), datetime('now'))
+ON CONFLICT(date) DO UPDATE SET
+  data = excluded.data,
+  updated_at = datetime('now');
+
+-- :name get-daily-stats-by-date :? :1
+-- :doc 根据日期获取统计信息
+SELECT * FROM daily_statistics WHERE date = :date;

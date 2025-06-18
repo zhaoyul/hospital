@@ -1,5 +1,6 @@
 
-(ns hc.hospital.db)
+(ns hc.hospital.db
+  (:require [hc.hospital.utils :as utils]))
 
 (def default-overview-stats
   "首页概览默认统计数据"
@@ -25,4 +26,5 @@
    :is-logged-in false
    :login-error nil
    :session-check-pending? true
+   :overview-date (utils/date->iso-string (utils/now))
    :overview-stats default-overview-stats})
