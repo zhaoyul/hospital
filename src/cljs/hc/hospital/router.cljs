@@ -7,7 +7,8 @@
 
 (def routes
   "路由表，定义页面标签与路径的映射。"
-  [["/" {:name :patients}]
+  [["/" {:name :overview}]
+   ["/patients" {:name :patients}]
    ["/assessment" {:name :assessment}]
    ["/settings" {:name :settings}]])
 
@@ -27,7 +28,8 @@
   (rfe/start! router on-navigate {:use-fragment false}))
 
 (def tab->route
-  {"patients" :patients
+  {"overview" :overview
+   "patients" :patients
    "assessment" :assessment
    "settings" :settings})
 

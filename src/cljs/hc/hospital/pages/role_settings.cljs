@@ -7,9 +7,10 @@
             [reagent.core :as r]))
 
 (def tree-data
-  [{:title "麻醉管理" :key 1 :children [{:title "查看" :key 101}]}
-   {:title "问卷列表" :key 2 :children [{:title "查看" :key 102}]}
-   {:title "系统管理" :key 3 :children [{:title "查看" :key 103}]}])
+  [{:title "纵览信息" :key 1 :children [{:title "查看" :key 101}]}
+   {:title "麻醉管理" :key 2 :children [{:title "查看" :key 102}]}
+   {:title "问卷列表" :key 3 :children [{:title "查看" :key 103}]}
+   {:title "系统管理" :key 4 :children [{:title "查看" :key 104}]}])
 
 (defn role-modal []
   (let [visible? @(rf/subscribe [::subs/role-modal-visible?])

@@ -52,7 +52,7 @@
         (assoc :anesthesia {:current-assessment-canonical default-canonical-assessment
                             :current-assessment-id nil
                             :date-range [(utils/now) (utils/now)]
-                            :active-tab "patients"})
+                            :active-tab "overview"})
         ;; 初始化二维码扫描模态框相关状态
         (assoc :qr-scan-modal-visible? false)
         (assoc :qr-scan-input-value ""))))
