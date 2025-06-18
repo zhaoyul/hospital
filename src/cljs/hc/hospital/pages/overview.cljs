@@ -17,20 +17,20 @@
    {:component-did-mount
     (fn []
       (init-chart "patientSourceChart" {:title {:text "来源分布"}
-                                         :tooltip {}
-                                         :series [{:type "pie"
-                                                   :data [{:name "自助" :value 40}
-                                                          {:name "转诊" :value 60}]}]})
+                                        :tooltip {}
+                                        :series [{:type "pie"
+                                                  :data [{:name "自助" :value 40}
+                                                         {:name "转诊" :value 60}]}]})
       (init-chart "asaChart" {:title {:text "ASA分级"}
-                               :xAxis {:type "category"
-                                       :data ["I" "II" "III"]}
-                               :yAxis {:type "value"}
-                               :series [{:type "bar"
-                                         :data [20 30 10]}]})
+                              :xAxis {:type "category"
+                                      :data ["I" "II" "III"]}
+                              :yAxis {:type "value"}
+                              :series [{:type "bar"
+                                        :data [20 30 10]}]})
       (init-chart "approvalRateChart" {:title {:text "通过率"}
-                                        :xAxis {:type "category" :data ["今日"]}
-                                        :yAxis {:type "value"}
-                                        :series [{:type "bar" :data [80]}]}))
+                                       :xAxis {:type "category" :data ["今日"]}
+                                       :yAxis {:type "value"}
+                                       :series [{:type "bar" :data [80]}]}))
     :reagent-render
     (fn []
       [:div
@@ -55,5 +55,5 @@
        [:> Card {:title "数据来源分布"}
         [:div {:id "patientSourceChart" :style {:height 300}}]
         [:div {:id "asaChart" :style {:height 300}}]
-        [:div {:id "approvalRateChart" :style {:height 300}}]]])})
+        [:div {:id "approvalRateChart" :style {:height 300}}]]])}))
 
