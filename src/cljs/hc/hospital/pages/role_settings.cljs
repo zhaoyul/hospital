@@ -47,4 +47,4 @@
                                          [:> Button {:type "link"
                                                      :on-click #(rf/dispatch [::events/open-role-modal role])}
                                           "权限"]])))}]}]
-     [role-modal]]))
+     [:f> role-modal]]))

@@ -100,6 +100,6 @@
     "系统设置"]
    [:> Tabs {:defaultActiveKey "users"}
     [:> Tabs.TabPane {:tab "用户设置" :key "users"}
-     [user-settings-tab]]
+     [:f> user-settings-tab]]
     [:> Tabs.TabPane {:tab "角色设置" :key "roles"}
-     [role-settings-tab]]]])
+     [:f> role-settings-tab]]]])

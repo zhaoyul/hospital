@@ -5,7 +5,8 @@
    [re-frame.core :as rf]
    [reagent.core :as r]
    ["react" :as react]
-   [hc.hospital.events :as events]))
+   [hc.hospital.events :as events]
+   [hc.hospital.subs :as subs]))
 
 (defn user-modal
   [{:keys [visible? editing-user]}]

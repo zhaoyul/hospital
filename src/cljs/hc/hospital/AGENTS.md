@@ -25,3 +25,4 @@
 - **UI 组件:**
     - 优先使用 `components/antd.cljs` 中已封装好的 Ant Design 组件。
     - 若需创建新的、可复用的表单组件或 UI 元素，应将其添加到 `components/form_components.cljs` 或其他合适的 `components` 命名空间下。
+    - 如果组件内部使用 React Hook，则在调用该组件时需要使用 `[:f> my-component]` 语法。
