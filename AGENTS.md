@@ -60,3 +60,15 @@
 2. 仅当测试全部通过时，才可生成并提交 Pull Request。
 3. 如因已知的失败测试导致测试未通过，应在说明中提及，不要尝试修复这些测试。
 
+## 6. 环境初始化
+
+在全新环境中启动项目前，请先确保已安装 Clojure CLI。可在仓库根目录依次执行以下命令：
+
+```bash
+curl -L -O https://github.com/clojure/brew-install/releases/latest/download/linux-install.sh
+chmod +x linux-install.sh
+sudo ./linux-install.sh
+```
+
+安装完成后运行 `clj -h` 验证是否安装成功。
+
