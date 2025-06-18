@@ -16,6 +16,7 @@
    [hc.hospital.web.routes.api]
    [hc.hospital.web.routes.patient-pages]
    [hc.hospital.web.routes.report-pages]
+   [hc.hospital.web.routes.role-api]
    [hc.hospital.web.routes.patient-api]
    [hc.hospital.web.routes.user-api]
    [hc.hospital.web.routes.consent-form-api]
