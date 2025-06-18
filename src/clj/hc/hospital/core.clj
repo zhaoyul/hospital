@@ -16,9 +16,12 @@
    [hc.hospital.web.routes.api]
    [hc.hospital.web.routes.patient-pages]
    [hc.hospital.web.routes.report-pages]
+   [hc.hospital.web.routes.role-api]
    [hc.hospital.web.routes.patient-api]
    [hc.hospital.web.routes.user-api]
    [hc.hospital.web.routes.consent-form-api]
+   [hc.hospital.db.role]
+   [hc.hospital.web.controllers.role-api]
    [kit.edge.db.sql.conman]
    [hc.hospital.db.oracle]
    [kit.edge.db.sql.migratus])

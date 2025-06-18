@@ -58,3 +58,10 @@
 2. 仅当测试全部通过时，才可生成并提交 Pull Request。
 3. 如因已知的失败测试导致测试未通过，应在说明中提及，不要尝试修复这些测试。
 
+## 6. 其他注意事项
+
+- **React Hooks 组件调用**: 若组件内部使用 `React/useState`, `React/useEffect` 等 Hooks,
+  在其它组件中调用时必须使用 `[:f> component]` 的形式。
+- **命名空间引用**: 新增的 Clojure/ClojureScript 命名空间需在 `src/clj/hc/hospital/core.clj`
+  中显式 `require`, 否则在编译时可能不会被加载。
+
