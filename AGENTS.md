@@ -72,3 +72,16 @@ sudo ./linux-install.sh
 
 安装完成后运行 `clj -h` 验证是否安装成功。
 
+
+## 7. 权限与模块说明
+
+系统使用 `roles`、`permissions` 及 `role_permissions` 三张表进行权限控制。`users` 表的 `role` 字段决定用户的角色。迁移脚本预置了 “管理员” 和 “麻醉医生” 两个角色。
+
+`permissions` 表中的 `module` 列表示功能模块，`action` 列表示具体操作。目前系统包含以下模块：
+- **纵览信息**：统计概览与图表展示，对应页面位于 `src/cljs/hc/hospital/pages/overview.cljs`。
+- **麻醉管理**：医生补充患者填写的评估报告并决定麻醉适应性，主要界面在 `src/cljs/hc/hospital/pages/anesthesia.cljs`。
+- **问卷列表**：查看患者问卷记录，页面在 `src/cljs/hc/hospital/pages/questionnaire.cljs`。
+- **系统管理**：维护用户、角色及权限，相关页面见 `src/cljs/hc/hospital/pages/role_settings.cljs`。
+
+新增模块或权限时，需要编写新的数据库迁移，在 `permissions` 和 `role_permissions` 中插入记录，并同步更新前端的权限树。
+
