@@ -17,17 +17,17 @@
   (m/schema
    [:map
     [:过敏史 [:map
-            [:有无 :boolean]
-            [:过敏源 [:maybe :string]]
-            [:过敏时间 [:maybe :string]]]]
+              [:有无 :boolean]
+              [:过敏源 [:maybe :string]]
+              [:过敏时间 [:maybe :string]]]]
     [:吸烟史 [:map
-            [:有无 :boolean]
-            [:年数 [:maybe :int]]
-            [:每天支数 [:maybe :int]]]]
+              [:有无 :boolean]
+              [:年数 [:maybe :int]]
+              [:每天支数 [:maybe :int]]]]
     [:饮酒史 [:map
-            [:有无 :boolean]
-            [:年数 [:maybe :int]]
-            [:每天量 [:maybe :string]]]]]))
+              [:有无 :boolean]
+              [:年数 [:maybe :int]]
+              [:每天量 [:maybe :string]]]]]))
 
 (def PatientComorbiditiesSpec
   (m/schema
@@ -43,9 +43,9 @@
     [:既往麻醉手术史 [:map [:有无 :boolean] [:详情 [:maybe :string]]]]
     [:家族恶性高热史 [:map [:有无 :boolean] [:详情 [:maybe :string]]]]
     [:特殊用药史 [:map
-               [:使用过 :boolean]
-               [:药物名称 [:maybe :string]]
-               [:最后时间 [:maybe :string]]]]]))
+                  [:使用过 :boolean]
+                  [:药物名称 [:maybe :string]]
+                  [:最后时间 [:maybe :string]]]]]))
 
 (def PatientPhysicalExamSpec
   (m/schema
