@@ -17,11 +17,21 @@
    [taoensso.timbre :as timbre]))
 
 
-(defn menu-items [role]
-  (cond-> [{:key "1" :icon (r/as-element [:> icons/DashboardOutlined]) :label "纵览信息"}
-           {:key "2" :icon (r/as-element [:> icons/ProfileOutlined]) :label "麻醉管理"}
-           {:key "3" :icon (r/as-element [:> icons/FileAddOutlined]) :label "问卷列表"}]
-    (= role "管理员") (conj {:key "4" :icon (r/as-element [:> icons/SettingOutlined]) :label "系统管理"})))
+(def menu-definitions
+  [{:key "1" :icon (r/as-element [:> icons/DashboardOutlined]) :label "纵览信息"  :module "纵览信息"  :tab "overview"}
+   {:key "2" :icon (r/as-element [:> icons/ProfileOutlined])   :label "麻醉管理"  :module "麻醉管理"  :tab "patients"}
+   {:key "3" :icon (r/as-element [:> icons/FileAddOutlined])   :label "问卷列表"  :module "问卷列表"  :tab "assessment"}
+   {:key "4" :icon (r/as-element [:> icons/SettingOutlined])   :label "系统管理"  :module "系统管理"  :tab "settings"}])
+
+(def key-by-tab (into {} (map (juxt :tab :key) menu-definitions)))
+(def tab-by-key (into {} (map (juxt :key :tab) menu-definitions)))
+
+(defn menu-items [allowed-modules]
+  (let [allowed (set allowed-modules)]
+    (->> menu-definitions
+         (filter #(contains? allowed (:module %)))
+         (map #(select-keys % [:key :icon :label]))
+         vec)))
 
 (defn sider-bar [active-tab]
   (let [sidebar-collapsed? (r/atom true)]
@@ -33,24 +43,15 @@
                         :trigger nil
                         :collapsible true}
        [custom-sider-trigger sidebar-collapsed? #(swap! sidebar-collapsed? not)]
-        (let [role (:role @(rf/subscribe [::subs/current-doctor]))]
+        (let [allowed-modules (map :module @(rf/subscribe [::subs/current-role-permissions]))]
           [:> Menu {:mode "inline"
                     :inlineCollapsed @sidebar-collapsed?
-                    :selectedKeys [(case active-tab
-                                     "overview" "1"
-                                     "patients" "2"
-                                     "assessment" "3"
-                                     "settings" "4"
-                                     "1")]
+                    :selectedKeys [(get key-by-tab active-tab "1")]
                     :onClick (fn [item]
-                               (rf/dispatch [::events/navigate-tab
-                                             (case (.-key item)
-                                               "1" "overview"
-                                               "2" "patients"
-                                               "3" "assessment"
-                                               "4" "settings")]))
+                               (when-let [tab (get tab-by-key (.-key item))]
+                                 (rf/dispatch [::events/navigate-tab tab])))
                     :style {:height "100%" :borderRight 0}
-                    :items (clj->js (menu-items role))}])])))
+                    :items (clj->js (menu-items allowed-modules))}])])))
 
 ;; 新增顶部导航栏组件
 (defn app-header []
@@ -91,17 +92,23 @@
 
 (defn right-side "患者麻醉管理\"patients\", 问卷列表\"assessment\", 系统设置\"settings\"" [active-tab]
 
-  (let [role (:role @(rf/subscribe [::subs/current-doctor]))]
+  (let [allowed (set (map :module @(rf/subscribe [::subs/current-role-permissions])))]
     [:> Layout {:style {:height "calc(100vh - 64px)"
                         :overflow "auto"
                         :background "#f0f2f5"}}
      [:div {:style {:padding "24px"}}
       (case active-tab
         "overview" [overview-content]
-        "patients" [anesthesia-content]
-        "assessment" [questionnaire-list-content]
-        "settings" (when (= role "管理员") [:f> system-settings-content])
-        [:div "未知标签页内容"])]])) ; Removed inline style from default case as it's handled by the wrapper
+        "patients" (if (contains? allowed "麻醉管理")
+                      [anesthesia-content]
+                      [:div "无权限"])
+        "assessment" (if (contains? allowed "问卷列表")
+                        [questionnaire-list-content]
+                        [:div "无权限"])
+        "settings" (if (contains? allowed "系统管理")
+                      [:f> system-settings-content]
+                      [:div "无权限"])
+        [:div "未知标签页内容"])]]))
 
 
 (defn anesthesia-home-page []

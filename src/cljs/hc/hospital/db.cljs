@@ -23,6 +23,7 @@
    :role-modal-visible? false
    :editing-role nil
    :current-doctor nil
+   :current-role-permissions []
    :is-logged-in false
    :login-error nil
    :session-check-pending? true

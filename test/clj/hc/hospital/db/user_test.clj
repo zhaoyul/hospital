@@ -22,6 +22,10 @@
 (deftest user-db-tests
   (let [query-fn (get-query-fn)
         _ (assert query-fn "Query function should not be nil")]
+    (testing "默认护士用户存在"
+      (let [nurse (user.db/get-user-by-username query-fn "nurse1")]
+        (is (some? nurse))
+        (is (= "护士" (:role nurse)))))
     (testing "医生注册和获取"
       (let [username "testdoc1"
             password "securepass"

@@ -262,6 +262,10 @@
   (fn [db _]
     (get db :current-doctor)))
 
+(rf/reg-sub ::current-role-permissions
+  (fn [db _]
+    (get db :current-role-permissions [])))
+
 (rf/reg-sub ::is-logged-in
   (fn [db _]
     (get db :is-logged-in false)))
