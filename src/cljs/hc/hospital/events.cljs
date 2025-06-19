@@ -262,14 +262,16 @@
                   :on-failure      [::session-check-failed]}}))
 
 ;; Helper to set doctor from session and ensure session check pending is false
-(rf/reg-event-db ::set-current-doctor-from-session
-  (fn [db [_ {:keys [doctor]}]]
+(rf/reg-event-fx ::set-current-doctor-from-session
+  (fn [{:keys [db]} [_ {:keys [doctor]}]]
     (timbre/info "Session check success. Doctor:" doctor ", Logged in:" (some? doctor))
-    (assoc db
-           :current-doctor doctor
-           :is-logged-in (some? doctor)
-           :login-error nil
-           :session-check-pending? false)))
+    (let [new-db (assoc db
+                        :current-doctor doctor
+                        :is-logged-in (some? doctor)
+                        :login-error nil
+                        :session-check-pending? false)]
+      (cond-> {:db new-db}
+        doctor (assoc :dispatch [::fetch-current-role-permissions])))))
 
 (rf/reg-event-fx ::session-check-failed
   (fn [{:keys [db]} [_ error-details]]
@@ -285,14 +287,15 @@
 
 
 ;; --- Login Events ---
-(rf/reg-event-db ::set-current-doctor
-  (fn [db [_ doctor-data]]
+(rf/reg-event-fx ::set-current-doctor
+  (fn [{:keys [db]} [_ doctor-data]]
     (timbre/info "Setting current doctor. Doctor data available:" (some? doctor-data) ", Is logged in set to true.")
-    (assoc db
-           :current-doctor doctor-data
-           :is-logged-in true
-           :login-error nil
-           :session-check-pending? false))) ; Ensure session check is marked complete
+    {:db (assoc db
+                :current-doctor doctor-data
+                :is-logged-in true
+                :login-error nil
+                :session-check-pending? false)
+     :dispatch [::fetch-current-role-permissions]})) ; Ensure session check is marked complete
 
 (rf/reg-event-db ::login-failure
   (fn [db [_ error-details]]
@@ -334,6 +337,7 @@
     (timbre/info "Clearing current doctor. Is logged in set to false. Session check pending set to false.")
     (assoc db
            :current-doctor nil
+           :current-role-permissions []
            :is-logged-in false
            :login-error nil
            :session-check-pending? false))) ; Ensure session check is marked complete
@@ -498,6 +502,29 @@
                   :format (ajax/json-request-format)
                   :response-format (ajax/json-response-format {:keywords? true})
                   :on-success [::close-role-modal]}}))
+
+;; ---- 当前用户权限 ----
+(rf/reg-event-fx ::fetch-current-role-permissions
+  (fn [{:keys [db]} _]
+    (let [role-name (get-in db [:current-doctor :role])]
+      (when role-name
+        {:http-xhrio {:method :get
+                      :uri "/api/roles"
+                      :response-format (ajax/json-response-format {:keywords? true})
+                      :on-success [::fetch-role-permissions-by-name role-name]}})))
+
+(rf/reg-event-fx ::fetch-role-permissions-by-name
+  (fn [_ [_ role-name {:keys [roles]}]]
+    (if-let [r (first (filter #(= role-name (:name %)) roles))]
+      {:http-xhrio {:method :get
+                    :uri (str "/api/roles/" (:id r) "/permissions")
+                    :response-format (ajax/json-response-format {:keywords? true})
+                    :on-success [::set-current-role-permissions]}}
+      {}))
+
+(rf/reg-event-db ::set-current-role-permissions
+  (fn [db [_ {:keys [permissions]}]]
+    (assoc db :current-role-permissions permissions)))
 
 
 ;; --- 二维码扫描模态框事件 ---

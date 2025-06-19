@@ -13,3 +13,12 @@
   (let [query-fn (qf)]
     (is (seq (role-db/list-roles query-fn)))
     (is (seq (role-db/list-permissions query-fn)))))
+
+(deftest nurse-role-permissions
+  (let [query-fn (qf)
+        roles (role-db/list-roles query-fn)
+        nurse (first (filter #(= "护士" (:name %)) roles))]
+    (is (some? nurse) "护士角色应存在")
+    (let [perms (role-db/get-permissions-by-role query-fn (:id nurse))]
+      (is (not-any? #(= "麻醉管理" (:module %)) perms)
+          "护士不应拥有麻醉管理权限"))))
