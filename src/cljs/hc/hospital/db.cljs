@@ -12,6 +12,14 @@
    {:label "高血压人数" :value 9 :trend :up :description "比昨日增加2人"}
    {:label "过敏史人数" :value 3 :trend :down :description "比昨日减少1人"}])
 
+(def empty-overview-stats
+  "没有任何记录时展示的默认统计数据"
+  (mapv (fn [item]
+          (assoc item :value 0
+                      :trend :same
+                      :description "无变化"))
+        default-overview-stats))
+
 (def default-db
   { ;; Root map for the entire default database state
    :anesthesia {}

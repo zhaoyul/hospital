@@ -585,7 +585,7 @@
 
 (rf/reg-event-db ::set-overview-stats
   (fn [db [_ {:keys [stats]}]]
-    (assoc db :overview-stats stats)))
+    (assoc db :overview-stats (or stats app-db/empty-overview-stats))))
 
 (rf/reg-event-db ::fetch-overview-stats-failed
   (fn [db [_ error]]
