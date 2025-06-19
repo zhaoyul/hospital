@@ -1,7 +1,6 @@
 (ns hc.hospital.web.controllers.patient
   (:require
-   [hc.hospital.web.pages.layout :as layout]
-   [ring.util.http-response :as http-response]))
+   [hc.hospital.web.pages.layout :as layout]))
 
 (defn patient-form-page [request]
   ;; 渲染患者表单HTML页面

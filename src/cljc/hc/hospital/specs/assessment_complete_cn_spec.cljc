@@ -1,6 +1,5 @@
 (ns hc.hospital.specs.assessment-complete-cn-spec
-  (:require [malli.core :as m]
-            [malli.util :as mu]))
+  (:require [malli.core :as m]))
 
 ;; --- 可复用的 Predicates 或 Schemas ---
 (def NonEmptyString (m/schema [:string {:min 1}]))

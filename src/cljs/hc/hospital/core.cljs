@@ -3,7 +3,6 @@
   负责UI渲染、事件处理和应用初始化。"
   (:require
    ["react" :as react]
-   [reagent.core :as r]
    [reagent.dom :as d]
    [re-frame.core :as rf]
   [hc.hospital.events :as events]

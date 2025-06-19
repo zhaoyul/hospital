@@ -74,13 +74,6 @@
        (update-in db [:patient-form :current-step] dec)
        db))))
 
-;; 跳转到指定步骤
-(rf/reg-event-db
- ::goto-step
- (fn [db [_ step]]
-   (if (and (>= step 0) (< step patient-form-total-steps))
-     (assoc-in db [:patient-form :current-step] step)
-     db)))
 
 ;; 验证并提交表单
 (rf/reg-event-fx
