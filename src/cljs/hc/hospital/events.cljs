@@ -7,6 +7,7 @@
             [clojure.string :as str]
             [hc.hospital.utils :as utils]
             [hc.hospital.router :as router]
+            [hc.hospital.fx :as fx]
             [taoensso.timbre :as timbre]))
 
 ;; 默认的规范评估数据结构
@@ -171,8 +172,9 @@
 
 (rf/reg-event-fx ::sync-applications
   (fn [_ _]
-    (js/alert "正在从HIS系统同步患者列表数据...")
-    {:dispatch [::fetch-all-assessments]})) ; Optionally, trigger a fetch after sync indication
+    {:fx [[:dispatch [::fx/show-alert {:type :info
+                                       :message "正在从HIS系统同步患者列表数据..."}]]
+          [:dispatch [::fetch-all-assessments]]]}))
 
 (rf/reg-event-db ::search-patients
   (fn [db [_ term]]
@@ -243,11 +245,14 @@
     (rf/dispatch [::fetch-all-assessments]) ; Refresh list after saving
     db))
 
-(rf/reg-event-db ::save-assessment-failed
-  (fn [db [_ error]]
+(rf/reg-event-fx ::save-assessment-failed
+  (fn [{:keys [db]} [_ error]]
     (timbre/error "评估保存失败:" error)
-    (js/alert (str "保存失败: " (pr-str (:response error) (:status error)))) ; Show more details
-    db))
+    {:db db
+     :fx [[:dispatch [::fx/show-alert {:type :error
+                                       :message (str "保存失败: "
+                                                     (pr-str (:response error)
+                                                            (:status error)))}]]]}))
 
 ;; Removed ::update-patient-form-field as it's replaced by ::update-canonical-assessment-field
 ;; Kept session, login, logout, doctor management events as they are unrelated to assessment structure.
@@ -559,8 +564,8 @@
                     :on-failure      [::find-patient-in-his-failure patient-id-input]}})))
 
 ;; HIS患者查询成功事件
-(rf/reg-event-db ::find-patient-in-his-success
-  (fn [db [_ patient-id-input api-response]] ; patient-id-input is original, api-response is from server
+(rf/reg-event-fx ::find-patient-in-his-success
+  (fn [{:keys [db]} [_ patient-id-input api-response]] ; patient-id-input is original, api-response is from server
     (timbre/info "成功从HIS查询/创建患者 " patient-id-input ". API响应:" api-response)
     (let [new-assessment-record (:assessment api-response)]
       (if new-assessment-record
@@ -570,30 +575,26 @@
               patient-exists? (some #(= (:patient_id %) record-patient-id) current-assessments)
               updated-assessments (if patient-exists?
                                     (mapv #(if (= (:patient_id %) record-patient-id)
-                                             new-assessment-record ; 更新已存在的记录
+                                             new-assessment-record
                                              %)
                                           current-assessments)
-                                    (conj current-assessments new-assessment-record))] ; 添加新记录
-          ;; 使用 new-assessment-record 中的姓名进行提示
-          (js/alert (str "成功处理患者信息：" (get-in new-assessment-record [:assessment_data :基本信息 :姓名])))
-          (rf/dispatch [::close-qr-scan-modal])
-          (rf/dispatch [::select-patient record-patient-id]) ; 使用记录中的ID确保选中正确的患者
-          (assoc-in db [:anesthesia :all-patient-assessments] updated-assessments))
-        (do
-          (timbre/warn "从API获取的患者评估数据 (:assessment) 为空，无法更新UI列表。Patient ID:" patient-id-input ", Response:" api-response)
-          ;; 此处不关闭模态框，允许用户看到错误或取消
-          ;; 显示一个更通用的错误消息，因为具体原因可能在日志中
-          (js/alert (str "处理患者 " patient-id-input " 信息时发生错误，未能获取完整的评估数据。详情请查看日志。"))
-          db)))))
+                                    (conj current-assessments new-assessment-record))]
+          {:db (assoc-in db [:anesthesia :all-patient-assessments] updated-assessments)
+           :fx [[:dispatch [::close-qr-scan-modal]]
+                [:dispatch [::select-patient record-patient-id]]]})
+        {:db db
+         :fx [[:dispatch [::fx/show-alert {:type :error
+                                           :message (str "处理患者 " patient-id-input
+                                                         " 信息时发生错误，未能获取完整的评估数据。详情请查看日志。")}]]]}))))
 
 ;; HIS患者查询失败事件
-(rf/reg-event-db ::find-patient-in-his-failure
-  (fn [db [_ patient-id-input error]]
+(rf/reg-event-fx ::find-patient-in-his-failure
+  (fn [{:keys [db]} [_ patient-id-input error]]
     (let [error-message (or (-> error :response :message) (:status-text error) "查询失败")]
       (timbre/error "HIS患者查询失败 " patient-id-input ":" error)
-      (js/alert (str "查询患者 " patient-id-input " 失败: " error-message))
-      ;; 查询失败时不关闭模态框，允许用户重试或取消
-      db)))
+      {:db db
+       :fx [[:dispatch [::fx/show-alert {:type :error
+                                         :message (str "查询患者 " patient-id-input " 失败: " error-message)}]]]}))
 
 ;; --- Overview Statistics ---
 (rf/reg-event-fx ::fetch-overview-stats
