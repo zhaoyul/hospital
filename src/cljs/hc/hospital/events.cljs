@@ -511,16 +511,15 @@
         {:http-xhrio {:method :get
                       :uri "/api/roles"
                       :response-format (ajax/json-response-format {:keywords? true})
-                      :on-success [::fetch-role-permissions-by-name role-name]}})))
+                      :on-success [::fetch-role-permissions-by-name role-name]}}))))
 
 (rf/reg-event-fx ::fetch-role-permissions-by-name
   (fn [_ [_ role-name {:keys [roles]}]]
-    (if-let [r (first (filter #(= role-name (:name %)) roles))]
+    (when-let [r (first (filter #(= role-name (:name %)) roles))]
       {:http-xhrio {:method :get
                     :uri (str "/api/roles/" (:id r) "/permissions")
                     :response-format (ajax/json-response-format {:keywords? true})
-                    :on-success [::set-current-role-permissions]}}
-      {}))
+                    :on-success [::set-current-role-permissions]}})))
 
 (rf/reg-event-db ::set-current-role-permissions
   (fn [db [_ {:keys [permissions]}]]
