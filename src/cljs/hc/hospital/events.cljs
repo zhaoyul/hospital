@@ -594,7 +594,7 @@
       (timbre/error "HIS患者查询失败 " patient-id-input ":" error)
       {:db db
        :fx [[:dispatch [::fx/show-alert {:type :error
-                                         :message (str "查询患者 " patient-id-input " 失败: " error-message)}]]]}))
+                                         :message (str "查询患者 " patient-id-input " 失败: " error-message)}]]]})))
 
 ;; --- Overview Statistics ---
 (rf/reg-event-fx ::fetch-overview-stats
