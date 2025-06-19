@@ -3,7 +3,7 @@
   (:require
    ["@ant-design/icons" :as icons]
    ["antd" :refer [Card DatePicker]]
-   ["dayjs" :as dayjs]
+   [hc.hospital.utils :as utils]
    ["echarts" :as echarts]
    [reagent.core :as r]
    [re-frame.core :as rf]
@@ -37,7 +37,7 @@
 
 (defn- chart-card [id title]
   [:> Card {:title title
-            :style {:flex "1 0 300px" :marginBottom 16}}
+            :style {:width 300 :marginBottom 16}}
    [:div {:id id :style {:height 300}}]])
 
 (defn overview-content []
@@ -46,7 +46,7 @@
    (fn []
      ;; 数据来源分布 - 每日门诊与住院患者
      (init-chart "patientSourceChart"
-                  {:title {:text "数据来源分布"}
+                  {
                    :tooltip {:trigger "axis"}
                    :legend {:data ["门诊" "住院"]}
                    :xAxis {:type "category"
@@ -56,7 +56,7 @@
                             {:name "住院" :type "bar" :data [10 20 25 30 35 40 30]}]})
       ;; ASA 评级分布
       (init-chart "asaChart"
-                  {:title {:text "ASA评级分布"}
+                  {
                    :tooltip {:trigger "item"}
                    :series [{:type "pie"
                              :radius "50%"
@@ -68,7 +68,7 @@
                                                     :shadowColor "rgba(0,0,0,0.5)"}}}]})
       ;; 通过率
       (init-chart "approvalRateChart"
-                  {:title {:text "通过率"}
+                  {
                    :tooltip {:trigger "item"}
                    :series [{:type "pie"
                              :radius ["40%" "70%"]
@@ -79,7 +79,7 @@
                                     {:name "未通过" :value 20}]}]})
       ;; 最近10天手术人数
       (init-chart "surgeryCountChart"
-                  {:title {:text "最近10天手术人数"}
+                  {
                    :tooltip {:trigger "axis"}
                    :xAxis {:type "category"
                            :data ["1日" "2日" "3日" "4日" "5日" "6日" "7日" "8日" "9日" "10日"]}
@@ -88,7 +88,7 @@
                              :data [15 18 20 22 19 16 24 28 30 27]}]})
       ;; 性别分布
       (init-chart "genderChart"
-                  {:title {:text "性别分布"}
+                  {
                    :tooltip {:trigger "item"}
                    :series [{:type "pie"
                              :radius ["40%" "70%"]
@@ -96,7 +96,7 @@
                                     {:name "女" :value 40}]}]})
       ;; 年龄分布
       (init-chart "ageChart"
-                  {:title {:text "年龄分布"}
+                  {
                    :tooltip {:trigger "axis"}
                    :xAxis {:type "category" :data ["0-20" "21-40" "41-60" "61+"]}
                    :yAxis {:type "value"}
@@ -109,7 +109,7 @@
         [:div
          [:> Card {:title "数据概览"
                    :extra (r/as-element
-                           [:> DatePicker {:value (dayjs date "YYYY-MM-DD")
+                           [:> DatePicker {:value (utils/to-dayjs date)
                                            :onChange (fn [_ ds]
                                                        (rf/dispatch [::events/set-overview-date ds])
                                                        (rf/dispatch [::events/fetch-overview-stats ds]))}])
