@@ -29,7 +29,7 @@
                                    (-> info
                                        (assoc :患者提交时间 (or (:患者提交时间 info) current-time))
                                        (assoc :评估更新时间 current-time)
-                                       (assoc :评估状态 (or (:评估状态 info) "待评估"))))
+                                       (assoc :评估状态 (or (:评估状态 info) "待评估")))))
           patient-id (get-in body-with-meta [:基本信息 :门诊号])
           patient-name (get-in body-with-meta [:基本信息 :姓名] "")
           patient-status (get-in body-with-meta [:基本信息 :评估状态])

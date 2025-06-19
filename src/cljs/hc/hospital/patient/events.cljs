@@ -79,17 +79,17 @@
          {:db (assoc-in db [:patient-form :form-errors] final-errors)})))))
 
 (rf/reg-event-fx
- ::submit-form
- (fn [{:keys [db]} _]
-   (let [raw-form (get-in db [:patient-form])
-         cleaned (dissoc raw-form :form-errors :submitting? :submit-success? :submit-error :current-step)]
-     {:http-xhrio {:method :post
-                   :uri "/api/patient/assessment"
-                   :params cleaned
-                   :format (ajax/json-request-format)
-                   :response-format (ajax/json-response-format {:keywords? true})
-                   :on-success [::submit-success]
-                   :on-failure [::submit-failure]}}))
+  ::submit-form
+  (fn [{:keys [db]} _]
+    (let [raw-form (get-in db [:patient-form])
+          cleaned (dissoc raw-form :form-errors :submitting? :submit-success? :submit-error :current-step)]
+      {:http-xhrio {:method :post
+                    :uri "/api/patient/assessment"
+                    :params cleaned
+                    :format (ajax/json-request-format)
+                    :response-format (ajax/json-response-format {:keywords? true})
+                    :on-success [::submit-success]
+                    :on-failure [::submit-failure]}})))
 
 (rf/reg-event-db ::submit-success (fn [db [_ resp]] (timbre/debug "表单提交成功:" resp) (-> db (assoc-in [:patient-form :submitting?] false) (assoc-in [:patient-form :submit-success?] true))))
 
