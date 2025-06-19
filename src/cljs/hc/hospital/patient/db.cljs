@@ -1,62 +1,42 @@
 (ns hc.hospital.patient.db)
 
-;; 初始数据库状态
 (def default-db
-  {:patient-form {:basic-info {:outpatient-number ""    ;; 门诊号
-                               :name ""                 ;; 姓名
-                               :id-number ""            ;; 身份证号
-                               :phone ""                ;; 手机号
-                               :gender nil              ;; 性别 (nil, "male", "female")
-                               :age nil                 ;; 年龄
-                               :hospital-district ""}    ;; 院区 ("main", "jst", or "")
-
-                  :medical-summary {:allergy-history false
-                                    :allergen ""
-                                    :allergy-date nil
-                                    :smoking-history false
-                                    :smoking-years nil
-                                    :cigarettes-per-day nil
-                                    :drinking-history false
-                                    :drinking-years nil
-                                    :alcohol-per-day ""}
-
-                  :comorbidities {:respiratory-disease {:has false :details ""}
-                                  :neuromuscular-disease {:has false :details ""}
-                                  :cardiovascular-disease {:has false :details ""}
-                                  :liver-disease {:has false :details ""}
-                                  :endocrine-disease {:has false :details ""}
-                                  :kidney-disease {:has false :details ""}
-                                  :neuropsychiatric-disease {:has false :details ""}
-                                  :skeletal-system {:has false :details ""}
-                                  :past-anesthesia-surgery {:has false :details ""}
-                                  :family-malignant-hyperthermia {:has false :details ""}
-                                  :special-medications {:used false
-                                                        :details ""
-                                                        :last-time nil}}
-
-                  :physical-examination {:heart "normal"
-                                         :heart-detail ""
-                                         :lungs "normal"
-                                         :lungs-detail ""
-                                         :airway "normal"
-                                         :airway-detail ""
-                                         :teeth "normal"
-                                         :teeth-detail ""
-                                         :spine-limbs "normal"
-                                         :spine-limbs-detail ""
-                                         :nervous "normal"
-                                         :nervous-detail ""
-                                         :other ""}
-
-                  :auxiliary-examination {:general-aux-report nil ;; 或 "-"
-                                          :chest-radiography nil  ;; 或 "-"
-                                          :pulmonary-function nil ;; 或 "-"
-                                          :cardiac-ultrasound nil ;; 或 "-"
-                                          :ecg nil                ;; 或 "-"
-                                          :other nil}             ;; 或 "-"
-
-                  :current-step 0
-                  :form-errors {}
-                  :submitting? false
-                  :submit-success? false
-                  :submit-error nil}})
+  {:patient-form {:基本信息 {:门诊号 ""
+                         :姓名 ""
+                         :身份证号 ""
+                         :手机号 ""
+                         :性别 nil
+                         :年龄 nil
+                         :院区 ""}
+                :病情摘要 {:过敏史 {:有无 false :过敏源 "" :过敏时间 nil}
+                         :吸烟史 {:有无 false :年数 nil :每天支数 nil}
+                         :饮酒史 {:有无 false :年数 nil :每天量 ""}}
+                :合并症 {:呼吸系统疾病 {:有无 false :详情 ""}
+                       :神经肌肉疾病 {:有无 false :详情 ""}
+                       :心血管疾病 {:有无 false :详情 ""}
+                       :肝脏疾病 {:有无 false :详情 ""}
+                       :内分泌疾病 {:有无 false :详情 ""}
+                       :肾脏疾病 {:有无 false :详情 ""}
+                       :神经精神疾病 {:有无 false :详情 ""}
+                       :关节骨骼系统疾病 {:有无 false :详情 ""}
+                       :既往麻醉手术史 {:有无 false :详情 ""}
+                       :家族恶性高热史 {:有无 false :详情 ""}
+                       :特殊用药史 {:使用过 false :药物名称 "" :最后时间 nil}}
+                :体格检查 {:心脏 {:状态 "normal" :描述 ""}
+                       :肺脏 {:状态 "normal" :描述 ""}
+                       :气道 {:状态 "normal" :描述 ""}
+                       :牙齿 {:状态 "normal" :描述 ""}
+                       :脊柱四肢 {:状态 "normal" :描述 ""}
+                       :神经 {:状态 "normal" :描述 ""}
+                       :其它 ""}
+                :辅助检查 {:相关辅助检查检验结果 nil
+                       :胸片 nil
+                       :肺功能 nil
+                       :心脏彩超 nil
+                       :心电图 nil
+                       :其他 nil}
+                :current-step 0
+                :form-errors {}
+                :submitting? false
+                :submit-success? false
+                :submit-error nil}})

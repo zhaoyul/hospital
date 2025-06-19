@@ -247,7 +247,7 @@
   "An item for a comorbidity, typically a boolean 'has' and 'details' text input.
   Wraps content in :div.form-group-container."
   [{:keys [label has-value details-value errors base-path has-field-key details-field-key data-index details-placeholder]
-    :or {has-field-key :has details-field-key :details details-placeholder "请填写详情"}}]
+    :or {has-field-key :has details-field-key :详情 details-placeholder "请填写详情"}}]
   [:div.form-group-container
    [ui-boolean-radio-item {:label label
                            :bool-value has-value
@@ -268,10 +268,10 @@
 (defn basic-info-step []
   (let [basic-info @(rf/subscribe [::subs/basic-info])
         errors @(rf/subscribe [::subs/form-errors])
-        outpatient-number-path [:basic-info :outpatient-number]]
+        outpatient-number-path [:基本信息 :门诊号]]
     [:<>
-     [ui-input-item {:label "门诊号" :value (:outpatient-number basic-info) :errors errors
-                     :data-path [:basic-info] :field-key :outpatient-number
+     [ui-input-item {:label "门诊号" :value (:门诊号 basic-info) :errors errors
+                     :data-path [:基本信息] :field-key :门诊号
                      :placeholder "请输入门诊号" :data-index "1.1"
                      :extra [:button.btn-scan
                              {:onClick (fn []
@@ -282,31 +282,31 @@
                                          (js/startScan))}
                              [:i {:class "fas fa-qrcode"}]]
                      :required? true}]
-     [ui-input-item {:label "姓名" :value (:name basic-info) :errors errors
-                     :data-path [:basic-info] :field-key :name
+     [ui-input-item {:label "姓名" :value (:姓名 basic-info) :errors errors
+                     :data-path [:基本信息] :field-key :姓名
                      :placeholder "请输入姓名" :data-index "1.2"
                      :required? true}]
-     [ui-input-item {:label "身份证号" :value (:id-number basic-info) :errors errors
-                     :data-path [:basic-info] :field-key :id-number
+     [ui-input-item {:label "身份证号" :value (:身份证号 basic-info) :errors errors
+                     :data-path [:基本信息] :field-key :身份证号
                      :placeholder "请输入身份证号" :data-index "1.3"
                      :required? true}]
-     [ui-input-item {:label "手机号" :value (:phone basic-info) :errors errors
-                     :data-path [:basic-info] :field-key :phone
+     [ui-input-item {:label "手机号" :value (:手机号 basic-info) :errors errors
+                     :data-path [:基本信息] :field-key :手机号
                      :placeholder "请输入手机号（1开头的11位数字）" :data-index "1.4"
                      :type "tel" ;; 使用tel类型以便在移动设备上调出数字键盘
                      :pattern "^1[0-9]{10}$" ;; HTML5模式验证
                      :required? true}]
-     [ui-radio-group-item {:label "性别" :value (:gender basic-info) :errors errors
-                           :data-path [:basic-info] :field-key :gender
-                           :options [{:label "男" :value "male"} {:label "女" :value "female"}]
+     [ui-radio-group-item {:label "性别" :value (:性别 basic-info) :errors errors
+                           :data-path [:基本信息] :field-key :性别
+                           :options [{:label "男" :value "男"} {:label "女" :value "女"}]
                            :data-index "1.5"
                            :required? true}]
-     [ui-input-number-item {:label "年龄" :value (:age basic-info) :errors errors
-                            :data-path [:basic-info] :field-key :age
+     [ui-input-number-item {:label "年龄" :value (:年龄 basic-info) :errors errors
+                            :data-path [:基本信息] :field-key :年龄
                             :placeholder "请输入年龄" :data-index "1.6"
                             :required? true}]
-     [ui-select-item {:label "院区" :value (:hospital-district basic-info) :errors errors
-                      :data-path [:basic-info] :field-key :hospital-district
+     [ui-select-item {:label "院区" :value (:院区 basic-info) :errors errors
+                      :data-path [:基本信息] :field-key :院区
                       :options [{:label "总院" :value "main"} {:label "积水潭院区" :value "jst"}]
                       :placeholder "请选择院区" :data-index "1.7"
                       :required? true}]]))
@@ -315,31 +315,31 @@
   (let [summary @(rf/subscribe [::subs/medical-summary])
         errors @(rf/subscribe [::subs/form-errors])]
     [:<>
-     [ui-conditional-group {:label "过敏史" :bool-value (:allergy-history summary) :errors errors
-                            :data-path [:medical-summary] :field-key :allergy-history :data-index "2.1"}
-      [ui-input-item {:label "过敏源" :value (:allergen summary) :errors errors
-                      :data-path [:medical-summary] :field-key :allergen
+     [ui-conditional-group {:label "过敏史" :bool-value (:过敏史 summary) :errors errors
+                            :data-path [:病情摘要] :field-key :过敏史 :data-index "2.1"}
+      [ui-input-item {:label "过敏源" :value (:过敏源 summary) :errors errors
+                      :data-path [:病情摘要] :field-key :过敏源
                       :placeholder "请输入过敏源"}] ; data-index for sub-items if needed, or rely on parent
-      [ui-date-picker-item {:label "过敏时间" :value (:allergy-date summary) :errors errors
-                            :data-path [:medical-summary] :field-key :allergy-date
+      [ui-date-picker-item {:label "过敏时间" :value (:过敏时间 summary) :errors errors
+                            :data-path [:病情摘要] :field-key :过敏时间
                             :placeholder "请选择过敏时间"}]]
 
-     [ui-conditional-group {:label "吸烟史" :bool-value (:smoking-history summary) :errors errors
-                            :data-path [:medical-summary] :field-key :smoking-history :data-index "2.2"}
-      [ui-input-number-item {:label "吸烟年数" :value (:smoking-years summary) :errors errors
-                             :data-path [:medical-summary] :field-key :smoking-years
+     [ui-conditional-group {:label "吸烟史" :bool-value (:吸烟史 summary) :errors errors
+                            :data-path [:病情摘要] :field-key :吸烟史 :data-index "2.2"}
+      [ui-input-number-item {:label "吸烟年数" :value (:年数 summary) :errors errors
+                             :data-path [:病情摘要] :field-key :年数
                              :placeholder "请输入吸烟年数"}]
-      [ui-input-number-item {:label "每天吸烟支数" :value (:cigarettes-per-day summary) :errors errors
-                             :data-path [:medical-summary] :field-key :cigarettes-per-day
+      [ui-input-number-item {:label "每天吸烟支数" :value (:每天支数 summary) :errors errors
+                             :data-path [:病情摘要] :field-key :每天支数
                              :placeholder "请输入每天吸烟支数"}]]
 
-     [ui-conditional-group {:label "饮酒史" :bool-value (:drinking-history summary) :errors errors
-                            :data-path [:medical-summary] :field-key :drinking-history :data-index "2.3"}
-      [ui-input-number-item {:label "饮酒年数" :value (:drinking-years summary) :errors errors
-                             :data-path [:medical-summary] :field-key :drinking-years
+     [ui-conditional-group {:label "饮酒史" :bool-value (:饮酒史 summary) :errors errors
+                            :data-path [:病情摘要] :field-key :饮酒史 :data-index "2.3"}
+      [ui-input-number-item {:label "饮酒年数" :value (:年数 summary) :errors errors
+                             :data-path [:病情摘要] :field-key :年数
                              :placeholder "请输入饮酒年数"}]
-      [ui-input-item {:label "每天饮酒量" :value (:alcohol-per-day summary) :errors errors
-                      :data-path [:medical-summary] :field-key :alcohol-per-day
+      [ui-input-item {:label "每天饮酒量" :value (:每天量 summary) :errors errors
+                      :data-path [:病情摘要] :field-key :每天量
                       :placeholder "请输入每天饮酒量(如 白酒2两 或 啤酒1瓶)"}]]]))
 
 (defn coexisting-diseases-step []
@@ -350,95 +350,95 @@
     [:<>
      ;; Comorbidities Section using ui-comorbidity-item
      [ui-comorbidity-item {:label "呼吸系统疾病"
-                           :has-value (get-in comorbidities-data [:respiratory-disease :has])
-                           :details-value (get-in comorbidities-data [:respiratory-disease :details])
-                           :errors errors :base-path [:comorbidities :respiratory-disease] :data-index "3.1"}]
+                           :has-value (get-in comorbidities-data [:呼吸系统疾病 :has])
+                           :details-value (get-in comorbidities-data [:呼吸系统疾病 :详情])
+                           :errors errors :base-path [:合并症 :呼吸系统疾病] :data-index "3.1"}]
      [ui-comorbidity-item {:label "神经肌肉疾病"
-                           :has-value (get-in comorbidities-data [:neuromuscular-disease :has])
-                           :details-value (get-in comorbidities-data [:neuromuscular-disease :details])
-                           :errors errors :base-path [:comorbidities :neuromuscular-disease] :data-index "3.2"}]
+                           :has-value (get-in comorbidities-data [:神经肌肉疾病 :has])
+                           :details-value (get-in comorbidities-data [:神经肌肉疾病 :详情])
+                           :errors errors :base-path [:合并症 :神经肌肉疾病] :data-index "3.2"}]
      [ui-comorbidity-item {:label "心血管疾病"
-                           :has-value (get-in comorbidities-data [:cardiovascular-disease :has])
-                           :details-value (get-in comorbidities-data [:cardiovascular-disease :details])
-                           :errors errors :base-path [:comorbidities :cardiovascular-disease] :data-index "3.3"}]
+                           :has-value (get-in comorbidities-data [:心血管疾病 :has])
+                           :details-value (get-in comorbidities-data [:心血管疾病 :详情])
+                           :errors errors :base-path [:合并症 :心血管疾病] :data-index "3.3"}]
      [ui-comorbidity-item {:label "肝脏疾病"
-                           :has-value (get-in comorbidities-data [:liver-disease :has])
-                           :details-value (get-in comorbidities-data [:liver-disease :details])
-                           :errors errors :base-path [:comorbidities :liver-disease] :data-index "3.4"}]
+                           :has-value (get-in comorbidities-data [:肝脏疾病 :has])
+                           :details-value (get-in comorbidities-data [:肝脏疾病 :详情])
+                           :errors errors :base-path [:合并症 :肝脏疾病] :data-index "3.4"}]
      [ui-comorbidity-item {:label "内分泌疾病"
-                           :has-value (get-in comorbidities-data [:endocrine-disease :has])
-                           :details-value (get-in comorbidities-data [:endocrine-disease :details])
-                           :errors errors :base-path [:comorbidities :endocrine-disease] :data-index "3.5"}]
+                           :has-value (get-in comorbidities-data [:内分泌疾病 :has])
+                           :details-value (get-in comorbidities-data [:内分泌疾病 :详情])
+                           :errors errors :base-path [:合并症 :内分泌疾病] :data-index "3.5"}]
      [ui-comorbidity-item {:label "肾脏疾病"
-                           :has-value (get-in comorbidities-data [:kidney-disease :has])
-                           :details-value (get-in comorbidities-data [:kidney-disease :details])
-                           :errors errors :base-path [:comorbidities :kidney-disease] :data-index "3.6"}]
+                           :has-value (get-in comorbidities-data [:肾脏疾病 :has])
+                           :details-value (get-in comorbidities-data [:肾脏疾病 :详情])
+                           :errors errors :base-path [:合并症 :肾脏疾病] :data-index "3.6"}]
      [ui-comorbidity-item {:label "神经精神疾病"
-                           :has-value (get-in comorbidities-data [:neuropsychiatric-disease :has])
-                           :details-value (get-in comorbidities-data [:neuropsychiatric-disease :details])
-                           :errors errors :base-path [:comorbidities :neuropsychiatric-disease] :data-index "3.7"}]
+                           :has-value (get-in comorbidities-data [:神经精神疾病 :has])
+                           :details-value (get-in comorbidities-data [:神经精神疾病 :详情])
+                           :errors errors :base-path [:合并症 :神经精神疾病] :data-index "3.7"}]
      [ui-comorbidity-item {:label "关节骨骼系统疾病"
-                           :has-value (get-in comorbidities-data [:skeletal-system-disease :has])
-                           :details-value (get-in comorbidities-data [:skeletal-system-disease :details])
-                           :errors errors :base-path [:comorbidities :skeletal-system-disease] :data-index "3.8"}]
+                           :has-value (get-in comorbidities-data [:关节骨骼系统疾病 :has])
+                           :details-value (get-in comorbidities-data [:关节骨骼系统疾病 :详情])
+                           :errors errors :base-path [:合并症 :关节骨骼系统疾病] :data-index "3.8"}]
      [ui-comorbidity-item {:label "凝血功能"
-                           :has-value (get-in comorbidities-data [:coagulation-function :has])
-                           :details-value (get-in comorbidities-data [:coagulation-function :details])
-                           :errors errors :base-path [:comorbidities :coagulation-function] :data-index "3.9"}]
+                           :has-value (get-in comorbidities-data [:凝血功能 :has])
+                           :details-value (get-in comorbidities-data [:凝血功能 :详情])
+                           :errors errors :base-path [:合并症 :凝血功能] :data-index "3.9"}]
      [ui-comorbidity-item {:label "既往麻醉、手术史"
-                           :has-value (get-in comorbidities-data [:past-anesthesia-surgery :has])
-                           :details-value (get-in comorbidities-data [:past-anesthesia-surgery :details])
-                           :errors errors :base-path [:comorbidities :past-anesthesia-surgery] :data-index "3.10"}]
+                           :has-value (get-in comorbidities-data [:既往麻醉手术史 :has])
+                           :details-value (get-in comorbidities-data [:既往麻醉手术史 :详情])
+                           :errors errors :base-path [:合并症 :既往麻醉手术史] :data-index "3.10"}]
      [ui-comorbidity-item {:label "家族恶性高热史"
-                           :has-value (get-in comorbidities-data [:family-malignant-hyperthermia :has])
-                           :details-value (get-in comorbidities-data [:family-malignant-hyperthermia :details])
-                           :errors errors :base-path [:comorbidities :family-malignant-hyperthermia] :data-index "3.11"}]
+                           :has-value (get-in comorbidities-data [:家族恶性高热史 :has])
+                           :details-value (get-in comorbidities-data [:家族恶性高热史 :详情])
+                           :errors errors :base-path [:合并症 :家族恶性高热史] :data-index "3.11"}]
 
      ;; Special Medications section using ui-conditional-group
-     [ui-conditional-group {:label "特殊用药史" :bool-value (get-in comorbidities-data [:special-medications :used])
+     [ui-conditional-group {:label "特殊用药史" :bool-value (get-in comorbidities-data [:特殊用药史 :使用过])
                             :errors errors
-                            :data-path [:comorbidities :special-medications] :field-key :used
+                            :data-path [:合并症 :特殊用药史] :field-key :使用过
                             :data-index "3.12"}
-      [ui-input-item {:label "药物名称" :value (get-in comorbidities-data [:special-medications :details])
+      [ui-input-item {:label "药物名称" :value (get-in comorbidities-data [:特殊用药史 :详情])
                       :errors errors
-                      :data-path [:comorbidities :special-medications] :field-key :details
+                      :data-path [:合并症 :特殊用药史] :field-key :详情
                       :placeholder "如有，请填写药物名称"}]
-      [ui-date-picker-item {:label "最后服药时间" :value (get-in comorbidities-data [:special-medications :last-time])
+      [ui-date-picker-item {:label "最后服药时间" :value (get-in comorbidities-data [:特殊用药史 :最后时间])
                             :errors errors
-                            :data-path [:comorbidities :special-medications] :field-key :last-time
+                            :data-path [:合并症 :特殊用药史] :field-key :最后时间
                             :showTime true :placeholder "年/月/日 --:--"}]]
 
      ;; Physical Examination using ui-condition-item
-     [ui-condition-item {:label "心脏" :base-value (:heart physical-exam-data) :detail-value (:heart-detail physical-exam-data)
-                         :errors errors :data-path [:physical-examination] :field-key :heart :data-index "3.13"}]
-     [ui-condition-item {:label "肺脏" :base-value (:lungs physical-exam-data) :detail-value (:lungs-detail physical-exam-data)
-                         :errors errors :data-path [:physical-examination] :field-key :lungs :data-index "3.14"}]
-     [ui-condition-item {:label "气道" :base-value (:airway physical-exam-data) :detail-value (:airway-detail physical-exam-data)
-                         :errors errors :data-path [:physical-examination] :field-key :airway :data-index "3.15"}]
-     [ui-condition-item {:label "牙齿" :base-value (:teeth physical-exam-data) :detail-value (:teeth-detail physical-exam-data)
-                         :errors errors :data-path [:physical-examination] :field-key :teeth :data-index "3.16"}]
-     [ui-condition-item {:label "脊柱四肢" :base-value (:spine-limbs physical-exam-data) :detail-value (:spine-limbs-detail physical-exam-data)
-                         :errors errors :data-path [:physical-examination] :field-key :spine-limbs :data-index "3.17"}]
-     [ui-condition-item {:label "神经" :base-value (:nervous physical-exam-data) :detail-value (:nervous-detail physical-exam-data)
-                         :errors errors :data-path [:physical-examination] :field-key :nervous :data-index "3.18"}]
+     [ui-condition-item {:label "心脏" :base-value (:心脏 physical-exam-data) :detail-value (:心脏-detail physical-exam-data)
+                         :errors errors :data-path [:体格检查] :field-key :心脏 :data-index "3.13"}]
+     [ui-condition-item {:label "肺脏" :base-value (:肺脏 physical-exam-data) :detail-value (:肺脏-detail physical-exam-data)
+                         :errors errors :data-path [:体格检查] :field-key :肺脏 :data-index "3.14"}]
+     [ui-condition-item {:label "气道" :base-value (:气道 physical-exam-data) :detail-value (:气道-detail physical-exam-data)
+                         :errors errors :data-path [:体格检查] :field-key :气道 :data-index "3.15"}]
+     [ui-condition-item {:label "牙齿" :base-value (:牙齿 physical-exam-data) :detail-value (:牙齿-detail physical-exam-data)
+                         :errors errors :data-path [:体格检查] :field-key :牙齿 :data-index "3.16"}]
+     [ui-condition-item {:label "脊柱四肢" :base-value (:脊柱四肢 physical-exam-data) :detail-value (:脊柱四肢-detail physical-exam-data)
+                         :errors errors :data-path [:体格检查] :field-key :脊柱四肢 :data-index "3.17"}]
+     [ui-condition-item {:label "神经" :base-value (:神经 physical-exam-data) :detail-value (:神经-detail physical-exam-data)
+                         :errors errors :data-path [:体格检查] :field-key :神经 :data-index "3.18"}]
 
-     [ui-input-item {:label "其它" :value (:other physical-exam-data) :errors errors
-                     :data-path [:physical-examination] :field-key :other
+     [ui-input-item {:label "其它" :value (:其它 physical-exam-data) :errors errors
+                     :data-path [:体格检查] :field-key :其它
                      :placeholder "请填写其他情况" :data-index "3.19"}]
 
      ;; Attachments Section
-     [ui-file-input-item {:label "相关辅助检查检验结果" :value (:general-aux-report aux-exam-data) :errors errors
-                          :data-path [:auxiliary-examination] :field-key :general-aux-report :data-index "3.20"}]
-     [ui-file-input-item {:label "胸片" :value (:chest-radiography aux-exam-data) :errors errors
-                          :data-path [:auxiliary-examination] :field-key :chest-radiography :data-index "3.21"}]
-     [ui-file-input-item {:label "肺功能" :value (:pulmonary-function aux-exam-data) :errors errors
-                          :data-path [:auxiliary-examination] :field-key :pulmonary-function :data-index "3.22"}]
-     [ui-file-input-item {:label "心脏彩超" :value (:cardiac-ultrasound aux-exam-data) :errors errors
-                          :data-path [:auxiliary-examination] :field-key :cardiac-ultrasound :data-index "3.23"}]
-     [ui-file-input-item {:label "心电图" :value (:ecg aux-exam-data) :errors errors
-                          :data-path [:auxiliary-examination] :field-key :ecg :data-index "3.24"}]
-     [ui-file-input-item {:label "其他" :value (:other aux-exam-data) :errors errors
-                          :data-path [:auxiliary-examination] :field-key :other :data-index "3.25"}]]))
+     [ui-file-input-item {:label "相关辅助检查检验结果" :value (:相关辅助检查检验结果 aux-exam-data) :errors errors
+                          :data-path [:辅助检查] :field-key :相关辅助检查检验结果 :data-index "3.20"}]
+     [ui-file-input-item {:label "胸片" :value (:胸片 aux-exam-data) :errors errors
+                          :data-path [:辅助检查] :field-key :胸片 :data-index "3.21"}]
+     [ui-file-input-item {:label "肺功能" :value (:肺功能 aux-exam-data) :errors errors
+                          :data-path [:辅助检查] :field-key :肺功能 :data-index "3.22"}]
+     [ui-file-input-item {:label "心脏彩超" :value (:心脏彩超 aux-exam-data) :errors errors
+                          :data-path [:辅助检查] :field-key :心脏彩超 :data-index "3.23"}]
+     [ui-file-input-item {:label "心电图" :value (:心电图 aux-exam-data) :errors errors
+                          :data-path [:辅助检查] :field-key :心电图 :data-index "3.24"}]
+     [ui-file-input-item {:label "其他" :value (:其它 aux-exam-data) :errors errors
+                          :data-path [:辅助检查] :field-key :其它 :data-index "3.25"}]]))
 
 
 ;; Main patient form component
