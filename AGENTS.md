@@ -101,6 +101,18 @@ npx shadow-cljs deps
 该命令会根据 `shadow-cljs.edn` 的配置解析依赖并下载相应的 jar 包，确保编译环境完整。
 务必将其写入项目的 `setup` 脚本，在环境初始化阶段自动执行，以避免缺失依赖导致的编译失败。
 
+同时，为了加快后续启动速度，还应在 `setup` 阶段使用 `clj -P` 预先下载各个 profile 的依赖。
+示例命令如下：
+
+```bash
+clj -M:dev -P
+clj -M:test -P
+clj -M:lint -P
+clj -M:nrepl -P
+```
+
+这些命令会分别准备 `:dev`、`:test`、`:lint` 与 `:nrepl` profile 需要的库，避免运行时再解析依赖。
+
 
 ## 7. 权限与模块说明
 
