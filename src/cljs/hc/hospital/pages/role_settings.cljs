@@ -10,28 +10,41 @@
   [{:title "纵览信息" :key 1 :children [{:title "查看" :key 101}]}
    {:title "麻醉管理" :key 2 :children [{:title "查看" :key 102}]}
    {:title "问卷列表" :key 3 :children [{:title "查看" :key 103}]}
-   {:title "系统管理" :key 4 :children [{:title "查看" :key 104}]}])
+   {:title "系统管理" :key 4
+    :children [{:title "查看用户" :key 104}
+               {:title "新增用户" :key 105}
+               {:title "编辑用户" :key 106}
+               {:title "删除用户" :key 107}
+               {:title "查看角色" :key 108}
+               {:title "角色编辑" :key 109}]}])
 
 (defn role-modal []
   (let [visible? @(rf/subscribe [::subs/role-modal-visible?])
         role @(rf/subscribe [::subs/editing-role])
-        checked (r/atom [])]
+        ;; 本地勾选状态使用 React/useState 保存
+        [checked set-checked] (React/useState [])]
+    ;; 当打开弹窗或角色变更时获取权限
     (React/useEffect
      (fn []
        (when (:id role)
          (rf/dispatch [::events/fetch-role-permissions (:id role)]))
-       nil)
-     #js [role])
-    (let [perm @(rf/subscribe [::subs/editing-role]) ; expect permissions in role
-          _ (reset! checked (or (:permissions perm) []))]
-      [:> Modal {:title (str "权限设置 - " (:name role))
-                 :open visible?
-                 :onOk #(rf/dispatch [::events/save-role-permissions (:id role) @checked])
-                 :onCancel #(rf/dispatch [::events/close-role-modal])}
-       [:> Tree {:checkable true
-                  :checkedKeys @checked
-                  :onCheck #(reset! checked (js->clj %2))
-                  :treeData (clj->js tree-data)}]])))
+       js/undefined)
+     #js [(:id role)])
+    ;; 根据订阅到的权限更新本地状态
+    (React/useEffect
+     (fn []
+       (set-checked (or (:permissions role) []))
+       js/undefined)
+     #js [(:permissions role)])
+    [:> Modal {:title (str "权限设置 - " (:name role))
+               :open visible?
+               :onOk #(rf/dispatch [::events/save-role-permissions (:id role) checked])
+               :onCancel #(rf/dispatch [::events/close-role-modal])}
+     [:> Tree {:checkable true
+               :checkedKeys (clj->js checked)
+               :onCheck (fn [keys# _#]
+                          (set-checked (js->clj keys#)))
+               :treeData (clj->js tree-data)}]]))
 
 (defn role-settings-tab []
   (let [roles @(rf/subscribe [::subs/roles])]
