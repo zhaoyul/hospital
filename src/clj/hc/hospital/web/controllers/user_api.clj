@@ -73,17 +73,15 @@
   [{{:keys [id]} :path-params
     {:keys [name role signature_b64]} :body-params
     {:keys [query-fn]} :integrant-deps
-    authenticated-doctor :identity}]
-  (if-not (= (Integer/parseInt id) authenticated-doctor)
-    (http-response/forbidden {:error "无权修改其他医生信息"})
-    (try
-      (user.db/update-user-info!
-       query-fn (Integer/parseInt id)
-       {:name name :role role :signature_b64 signature_b64})
-      (http-response/ok {:message "用户信息更新成功"})
-      (catch Exception e
-        (println "更新用户信息时发生错误:" e)
-        (http-response/internal-server-error {:error "更新用户信息失败"})))))
+    _authenticated-doctor :identity}]
+  (try
+    (user.db/update-user-info!
+     query-fn (Integer/parseInt id)
+     {:name name :role role :signature_b64 signature_b64})
+    (http-response/ok {:message "用户信息更新成功"})
+    (catch Exception e
+      (println "更新用户信息时发生错误:" e)
+      (http-response/internal-server-error {:error "更新用户信息失败"}))))
 
 (defn update-user-password!
   "更新用户密码 API (需要认证, 假设只允许用户更新自己的密码)"

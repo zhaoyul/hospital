@@ -402,9 +402,13 @@
 
 (rf/reg-event-db ::open-user-modal
   (fn [db [_ user-data]]
-    (assoc db
-           :user-modal-visible? true
-           :editing-user (or user-data {}))))
+    (let [u (or user-data {})
+          u' (if-let [sig (:signature_b64 u)]
+               (assoc u :signature sig)
+               u)]
+      (assoc db
+             :user-modal-visible? true
+             :editing-user u'))))
 
 (rf/reg-event-db ::close-user-modal
   (fn [db _]
@@ -420,7 +424,9 @@
   (fn [{:keys [db]} [_ form-values]]
     (let [editing-user (get db :editing-user {})
           id (:id editing-user)
-          payload (assoc form-values :signature_b64 (:signature form-values))]
+          payload (-> form-values
+                       (dissoc :signature-file)
+                       (assoc :signature_b64 (:signature editing-user)))]
       (if id
         {:http-xhrio {:method :put
                       :uri (str "/api/user/" id)

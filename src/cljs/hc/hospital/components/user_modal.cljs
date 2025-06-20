@@ -48,7 +48,11 @@
             ^{:key id} [:> Select.Option {:value name} name])])]
       [:> Form.Item {:name "signature-file"
                      :label "电子签名"
-                     :valuePropName "fileList"}
+                     :valuePropName "fileList"
+                     :getValueFromEvent (fn [e]
+                                         (if (array? e)
+                                           e
+                                           (.. e -fileList)))}
        [:> Upload {:name "signature"
                    :listType "picture-card"
                    :showUploadList false

@@ -62,7 +62,9 @@
                         :body {:name string?
                                :role string?
                                :signature_b64 [:maybe string?]}}
-           :handler #(user-api/update-user-info! {:integrant-deps opts :body-params (-> % :body-params)})
+           :handler (fn [req]
+                      (user-api/update-user-info!
+                       (assoc req :integrant-deps opts)))
            :middleware [wrap-restricted]}
      :delete {:summary "删除用户 (需要认证，通常管理员权限)"
               :tags ["医生用户"]
@@ -73,13 +75,17 @@
     {:put {:summary "更新用户角色 (需要管理员)"
            :tags ["医生用户"]
            :parameters {:path {:id int?} :body {:role string?}}
-           :handler #(user-api/update-user-role! {:integrant-deps opts :body-params (-> % :body-params)})
+           :handler (fn [req]
+                      (user-api/update-user-role!
+                       (assoc req :integrant-deps opts)))
            :middleware [wrap-restricted]}}]
    ["/user/:id/password"
     {:put {:summary "更新用户密码 (需要认证，用户只能更新自己的密码)"
            :tags ["医生用户"]
            :parameters {:path {:id int?} :body {:new_password string?}}
-           :handler #(user-api/update-user-password! {:integrant-deps opts :body-params (-> % :body-params)})
+           :handler (fn [req]
+                      (user-api/update-user-password!
+                       (assoc req :integrant-deps opts)))
            :middleware [wrap-restricted]}}]])
 
 ;; Derive this route set from :reitit/routes

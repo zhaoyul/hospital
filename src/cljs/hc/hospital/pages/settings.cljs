@@ -44,8 +44,8 @@
                            :align "center"}
 
                           {:title "电子签名"
-                           :dataIndex "signature"
-                           :key "signature"
+                           :dataIndex "signature_b64"
+                           :key "signature_b64"
                            :align "center"
                            :render (fn [signature _record]
                                      (cond
