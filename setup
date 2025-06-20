@@ -8,14 +8,6 @@ export JAVA_TOOL_OPTIONS='-Dhttp.proxyHost=proxy -Dhttp.proxyPort=8080 -Dhttps.p
 # 安装前端依赖
 yarn install
 
-# 预先下载 Clojure 各 profile 所需依赖
-clj -M:dev -P
-clj -M:test -P
-clj -M:lint -P
-clj -M:nrepl -P
 
 # 下载 ClojureScript 编译所需的 jar 包
 npx shadow-cljs deps
-
-# 编译前端
-npx shadow-cljs compile app
