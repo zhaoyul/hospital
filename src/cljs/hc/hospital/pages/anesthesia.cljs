@@ -1,17 +1,17 @@
 (ns hc.hospital.pages.anesthesia
   "麻醉管理, 医生补充患者自己填写的评估报告, 最终评估患者的情况, 判断是否可以麻醉"
   (:require
-   ["@ant-design/icons" :as icons :refer [CheckCircleOutlined
+  ["@ant-design/icons" :as icons :refer [CheckCircleOutlined
                                           ClockCircleOutlined
                                           CloseCircleOutlined EditOutlined
                                           FileTextOutlined HeartOutlined
                                           MessageOutlined PrinterOutlined
-                                          ProfileOutlined QrcodeOutlined
+                                          ProfileOutlined
                                           SaveOutlined SolutionOutlined
-                                          SyncOutlined UploadOutlined
+                                          UploadOutlined
                                           UserOutlined]]
    ["antd" :refer [Button Card Col DatePicker Descriptions Empty Form Input
-                   InputNumber Layout Modal Radio Row Select Space Tag Upload]]
+                   InputNumber Layout Modal Radio Row Select Space Upload]]
    ["react" :as React]
    ["signature_pad" :as SignaturePad]
    [hc.hospital.events :as events]
@@ -23,6 +23,7 @@
    [hc.hospital.utils :as utils]
    [re-frame.core :as rf]
    [reagent.core :as r]
+   [hc.hospital.components.patient-list :refer [patient-list-panel]]
    [taoensso.timbre :as timbre]))
 
 ;; Define common grid style maps and helper function
@@ -33,109 +34,11 @@
   {:gridColumn (str "span " span)})
 
 
-(defn patient-list-filters []
-  (let [date-range @(rf/subscribe [::subs/date-range])
-        status @(rf/subscribe [::subs/assessment-status-filter])
-        assessment-status-options [{:value "all" :label "全部状态"}
-                                   {:value "待评估" :label "待评估"}
-                                   {:value "已批准" :label "已批准"}
-                                   {:value "已驳回" :label "已驳回"}
-                                   {:value "已暂缓" :label "已暂缓"}]
-        label-width "60px"]
-    [:div {:style {:padding "16px" :borderBottom "1px solid #f0f0f0"}}
-     ;; 按钮组，两侧对齐
-     [:> Space {:style {:marginBottom "16px"
-                        :width "100%"
-                        :display "flex"
-                        :justifyContent "space-between"
-                        :alignItems "center"}}
-      [:> Button {:type "primary"
-                  :icon (r/as-element [:> SyncOutlined])
-                  :onClick #(rf/dispatch [::events/sync-applications]) ; 您需要定义此事件
-                  :style {:display "flex" :alignItems "center"}}
-       "同步申请"]
-      [:> Button {:type "default"
-                  :icon (r/as-element [:> icons/QrcodeOutlined]) ; 二维码图标
-                  :on-click #(rf/dispatch [::events/open-qr-scan-modal])}
-       "扫码签到"]]
-     ;; 申请日期过滤
-     [:div {:style {:display "flex" :alignItems "center" :marginBottom "12px"}}
-      [:span {:style {:width label-width
-                      :textAlign "left"
-                      :color "#666"
-                      :marginRight "8px"}}
-       "申请日期:"]
-      [:> DatePicker.RangePicker
-       {:style {:flex "1"}
-        :value date-range
-        :onChange #(rf/dispatch [::events/set-date-range %])}]]
 
-     ;; 评估状态过滤
-     [:div {:style {:display "flex" :alignItems "center" :marginBottom "12px"}}
-      [:span {:style {:width label-width
-                      :textAlign "left"
-                      :color "#666"
-                      :marginRight "8px"}}
-       "状态:"]
-      [:> Select
-       {:style {:flex "1"}
-        :placeholder "评估状态: 请选择"
-        :options assessment-status-options
-        :value status
-        :onChange #(rf/dispatch [::events/set-assessment-status-filter %])}]]
-
-     ;; 患者搜索过滤
-     [:div {:style {:display "flex" :alignItems "center"}}
-      [:span {:style {:width label-width
-                      :textAlign "left"
-                      :color "#666"
-                      :marginRight "8px"}}
-       "患者:"]
-      [:> Input.Search
-       {:style {:flex "1"}
-        :placeholder "请输入患者姓名/门诊号"
-        :allowClear true
-        :onSearch #(rf/dispatch [::events/search-patients %])}]]]))
-
-(defn patient-list []
-  (let [patients @(rf/subscribe [::subs/filtered-patients])
-        current-patient-id @(rf/subscribe [::subs/current-patient-id])]
-    [:div {:style {:height "100%" :overflowY "auto"}} ; Outer :div vector starts
-     (if (seq patients)
-       (for [item patients]
-         ^{:key (:key item)}
-         [:div {:style {:padding "10px 12px"
-                        :borderBottom "1px solid #f0f0f0"
-                        :display "flex"
-                        :justifyContent "space-between"
-                        :alignItems "center"
-                        :background (when (= (:key item) current-patient-id) "#e6f7ff")
-                        :cursor "pointer"}
-                :onClick #(rf/dispatch [::events/select-patient (:key item)])}
-          [:div {:style {:display "flex" :alignItems "center"}}
-           [:> UserOutlined {:style {:marginRight "8px" :fontSize "16px"}}]
-           [:div
-            [:div {:style {:fontWeight "500"}} (:name item)]
-            [:div {:style {:fontSize "12px" :color "gray"}}
-             (str (:gender item) " " (:age item) " " (:anesthesia-type item))]]]
-          [:div {:style {:textAlign "right"}}
-           [:div {:style {:fontSize "12px" :color "gray" :marginBottom "4px"}} (:date item)]
-           [:> Tag {:color (case (:status item)
-                             "待评估" "orange"
-                             "已批准" "green"
-                             "已暂缓" "blue"
-                             "已驳回" "red"
-                             "default")} (:status item)]]])
-       [:> Empty {:description "暂无患者数据" :style {:marginTop "40px"}}])]))
-
-
-(defn patient-list-panel []
-  [:<>
-   [patient-list-filters]
-   [patient-list]])
-
-(defn- patient-info-card "显示患者基本信息" [props]
-  (let [{:keys [report-form-instance-fn]} props
+(defn patient-info-card "显示患者基本信息" [props]
+  (let [{:keys [report-form-instance-fn include-surgery-fields? editable?]
+        :or {include-surgery-fields? true
+             editable? true}} props
         basic-info @(rf/subscribe [::subs/canonical-basic-info])
         patient-id (get basic-info :门诊号) ; Used for keying the form and useEffect dep
         [form] (Form.useForm)]
@@ -162,25 +65,29 @@
          [:span {:style {:margin-right "16px" :margin-bottom "8px"}} (str "病区: " (get basic-info :院区 "未知"))]
          [:span {:style {:margin-bottom "8px"}} (str "身份证号: " (get basic-info :身份证号 "无"))]]
 
-        ;; Form for editable fields: "术前诊断" and "拟施手术"
-        [:> Form {:form form
-                  :layout "vertical" ; Using vertical layout for simplicity
-                  :initialValues (clj->js (select-keys basic-info [:术前诊断 :拟施手术]))
-                  :onFinish (fn [values]
-                              (let [values-clj (js->clj values :keywordize-keys true)]
-                                (rf/dispatch [::events/update-canonical-assessment-section :基本信息 values-clj])))
-                  :key patient-id} ; Ensure form re-initializes when patient changes
-         [:> Form.Item {:label "术前诊断" :name :术前诊断}
-          [:> Input {:placeholder "请输入术前诊断"
-                     :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :术前诊断] (-> % .-target .-value)])}]]
+        (when include-surgery-fields?
+          [:> Form {:form form
+                    :layout "vertical"
+                    :initialValues (clj->js (select-keys basic-info [:术前诊断 :拟施手术]))
+                    :onFinish (fn [values]
+                                (let [values-clj (js->clj values :keywordize-keys true)]
+                                  (rf/dispatch [::events/update-canonical-assessment-section :基本信息 values-clj])))
+                    :key patient-id}
+           [:> Form.Item {:label "术前诊断" :name :术前诊断}
+            [:> Input {:placeholder "请输入术前诊断"
+                       :disabled (not editable?)
+                       :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :术前诊断] (-> % .-target .-value)])}]]
 
-         [:> Form.Item {:label "拟施手术" :name :拟施手术}
-          [:> Input {:placeholder "请输入拟施手术"
-                     :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :拟施手术] (-> % .-target .-value)])}]]]]
+           [:> Form.Item {:label "拟施手术" :name :拟施手术}
+            [:> Input {:placeholder "请输入拟施手术"
+                       :disabled (not editable?)
+                       :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :拟施手术] (-> % .-target .-value)])}]]])]]
        [:> Empty {:description "请先选择患者或患者无基本信息"}])]))
 
-(defn- general-condition-card "显示一般情况" []
-  (let [basic-info-data @(rf/subscribe [::subs/canonical-basic-info]) ; Changed subscription
+(defn general-condition-card "显示一般情况" [props]
+  (let [props (or props {})
+        basic-info-data @(rf/subscribe [::subs/canonical-basic-info])
+        {:keys [editable?] :or {editable? true}} props
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         mental-status-options [{:value "清醒" :label "清醒"}
                                {:value "嗜睡" :label "嗜睡"}
@@ -206,29 +113,33 @@
         ;; 第一部分：身高、体重、精神状态、活动能力
         [:div {:key "vital-signs-group-1"}
          [:div {:style (assoc grid-style-4-col :marginBottom "16px")}
-          [:> Form.Item {:label "身高" :name :身高cm} ; Updated name
+          [:> Form.Item {:label "身高" :name :身高cm}
            [:> InputNumber {:placeholder "cm"
                             :addonAfter "cm"
                             :style {:width "100%"}
                             :min 0
-                            :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :身高cm] %])}]] ; Updated path
-          [:> Form.Item {:label "体重" :name :体重kg} ; Updated name
+                            :disabled (not editable?)
+                            :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :身高cm] %])}]]
+          [:> Form.Item {:label "体重" :name :体重kg}
            [:> InputNumber {:placeholder "kg"
                             :addonAfter "kg"
                             :style {:width "100%"}
                             :min 0
-                            :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :体重kg] %])}]] ; Updated path
+                            :disabled (not editable?)
+                            :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :体重kg] %])}]]
           [:> Form.Item {:label "精神状态" :name :精神状态} ; Updated name
            [:> Select {:placeholder "请选择"
                        :style {:width "100%"}
                        :allowClear true
                        :options mental-status-options
+                       :disabled (not editable?)
                        :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :精神状态] %])}]] ; Updated path
           [:> Form.Item {:label "活动能力" :name :活动能力} ; Updated name
            [:> Select {:placeholder "请选择"
                        :style {:width "100%"}
                        :allowClear true
                        :options activity-level-options
+                       :disabled (not editable?)
                        :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :活动能力] %])}]]]] ; Updated path
 
         ;; 分隔线 (可选，如果视觉上需要)
@@ -254,38 +165,42 @@
               [:span {:style {:marginLeft "4px"}} "mmHg"]]]
 
           ;; 脉搏
-          [:> Form.Item {:label "脉搏" :name :脉搏次每分} ; Updated name
+          [:> Form.Item {:label "脉搏" :name :脉搏次每分}
            [:> InputNumber {:placeholder "次/分"
                             :addonAfter "次/分"
                             :min 0
                             :style {:width "130px"}
-                            :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :脉搏次每分] %])}]] ; Updated path
+                            :disabled (not editable?)
+                            :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :脉搏次每分] %])}]]
 
           ;; 呼吸
-          [:> Form.Item {:label "呼吸" :name :呼吸次每分} ; Updated name
+          [:> Form.Item {:label "呼吸" :name :呼吸次每分}
            [:> InputNumber {:placeholder "次/分"
                             :addonAfter "次/分"
                             :min 0
                             :style {:width "130px"}
-                            :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :呼吸次每分] %])}]] ; Updated path
+                            :disabled (not editable?)
+                            :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :呼吸次每分] %])}]]
 
           ;; 体温
-          [:> Form.Item {:label "体温" :name :体温摄氏度} ; Updated name
+          [:> Form.Item {:label "体温" :name :体温摄氏度}
            [:> InputNumber {:placeholder "°C"
                             :addonAfter "°C"
                             :precision 1
                             :step 0.1
                             :style {:width "110px"}
-                            :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :体温摄氏度] %])}]] ; Updated path
+                            :disabled (not editable?)
+                            :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :体温摄氏度] %])}]]
 
           ;; SpO2
-          [:> Form.Item {:label "SpO2" :name :SpO2百分比} ; Updated name
+          [:> Form.Item {:label "SpO2" :name :SpO2百分比}
            [:> InputNumber {:placeholder "%"
                             :addonAfter "%"
                             :min 0 :max 100
                             :style {:width "100px"}
-                            :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :SpO2百分比] %])}]]]]] ; Updated path
-       [:> Empty {:description "暂无一般情况信息或未选择患者"}])]))
+                            :disabled (not editable?)
+                            :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :SpO2百分比] %])}]]]]] 
+      [:> Empty {:description "暂无一般情况信息或未选择患者"}])]))
 
 
 
@@ -846,7 +761,7 @@
 
     ;; 患者列表主体
     [:div {:style {:flexGrow 1 :overflowY "auto"}}
-     [patient-list-panel]]]
+     [patient-list-panel {:patients-sub [::subs/filtered-patients]}]]]
 
    ;; 右侧评估详情区域
    [:div {:style {:flexGrow 1
