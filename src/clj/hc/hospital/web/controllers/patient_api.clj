@@ -34,6 +34,7 @@
           patient-name (get-in body-with-meta [:基本信息 :姓名] "")
           patient-status (get-in body-with-meta [:基本信息 :评估状态])
           doctor-signature (get-in body-with-meta [:基本信息 :医生签名图片])
+          checkin-time (get-in body-with-meta [:基本信息 :签到时间])
           {:keys [pinyin initial]} (get-pinyin-parts patient-name)
           assessment-data-json (cheshire/generate-string (update body-with-meta :基本信息 dissoc :医生签名图片))]
       (if (str/blank? (str patient-id))
@@ -50,8 +51,9 @@
                          :patient_name patient-name
                          :assessment_status patient-status
                          :patient_name_pinyin pinyin
-                         :patient_name_initial initial
-                         :doctor_signature_b64 doctor-signature})
+                        :patient_name_initial initial
+                         :doctor_signature_b64 doctor-signature
+                         :checkin_time checkin-time})
               (http-response/ok {:message "评估更新成功！"}))
             (do
               (log/info "插入新的患者评估数据, 患者ID:" patient-id ", 拼音:" pinyin ", 首字母:" initial)
@@ -168,7 +170,8 @@
                      :assessment_status patient-status
                      :patient_name_pinyin pinyin
                      :patient_name_initial initial
-                     :doctor_signature_b64 doctor-signature}) ; Pass signature to DB
+                     :doctor_signature_b64 doctor-signature
+                     :checkin_time (get-in updated-body [:基本信息 :签到时间])}) ; Pass signature to DB
           (http-response/ok {:message "评估更新成功！"}))
         (http-response/not-found {:message "未找到该患者的评估数据，无法更新。"})))
     (catch Exception e
@@ -229,8 +232,19 @@
                              :assessment_status "待评估"
                              :patient_name_pinyin nil
                              :patient_name_initial nil
-                             :doctor_signature_b64 nil}))
-                (log/info "本地已存在患者评估，患者ID:" patientIdInput))
+                             :doctor_signature_b64 nil
+                             :checkin_time current-time-str}))
+                (do
+                  (log/info "本地已存在患者评估，更新签到时间，患者ID:" patientIdInput)
+                  (query-fn :update-patient-assessment!
+                            {:patient_id patientIdInput
+                             :assessment_data assessment-data-json
+                             :patient_name his-name
+                             :assessment_status "待评估"
+                             :patient_name_pinyin nil
+                             :patient_name_initial nil
+                             :doctor_signature_b64 nil
+                             :checkin_time current-time-str})))
 
               (when was-inserted?
                   (when-let [a (query-fn :get-patient-assessment-by-id {:patient_id patientIdInput})]
