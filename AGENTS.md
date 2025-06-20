@@ -113,6 +113,32 @@ clj -M:nrepl -P
 
 这些命令会分别准备 `:dev`、`:test`、`:lint` 与 `:nrepl` profile 需要的库，避免运行时再解析依赖。
 
+下面给出 `setup` 脚本的示例实现，供参考：
+
+```bash
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+# 设置 Java 代理
+export JAVA_TOOL_OPTIONS='-Dhttp.proxyHost=proxy -Dhttp.proxyPort=8080 -Dhttps.proxyHost=proxy -Dhttps.proxyPort=8080'
+
+# 安装前端依赖
+yarn install
+
+# 预先下载 Clojure 各 profile 所需依赖
+clj -M:dev -P
+clj -M:test -P
+clj -M:lint -P
+clj -M:nrepl -P
+
+# 下载 ClojureScript 编译所需的 jar 包
+npx shadow-cljs deps
+
+# 编译前端
+npx shadow-cljs compile app
+```
+
 
 ## 7. 权限与模块说明
 
