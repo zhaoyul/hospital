@@ -85,21 +85,31 @@
 (rf/reg-event-db ::select-patient
   (fn [db [_ patient-key]]
     (if (nil? patient-key) ;; Handle deselection
-      (-> db
-          (assoc-in [:anesthesia :current-patient-id] nil)
-          (assoc-in [:anesthesia :current-assessment-id] nil)
-          (assoc-in [:anesthesia :current-assessment-canonical] default-canonical-assessment))
+      (let [doctor-name (get-in db [:current-doctor :name])
+            doctor-sign (get-in db [:current-doctor :signature_b64])
+            enriched (-> default-canonical-assessment
+                         (assoc-in [:基本信息 :医生姓名] doctor-name)
+                         (assoc-in [:基本信息 :医生签名图片] doctor-sign))]
+        (-> db
+            (assoc-in [:anesthesia :current-patient-id] nil)
+            (assoc-in [:anesthesia :current-assessment-id] nil)
+            (assoc-in [:anesthesia :current-assessment-canonical] enriched)))
       (let [all-assessments (get-in db [:anesthesia :all-patient-assessments])
             selected-full-assessment (first (filter #(= (:patient_id %) patient-key) all-assessments))
             canonical-assessment-data (when selected-full-assessment
-                                        (get selected-full-assessment :assessment_data {}))]
+                                        (get selected-full-assessment :assessment_data {}))
+            doctor-name (get-in db [:current-doctor :name])
+            doctor-sign (get-in db [:current-doctor :signature_b64])
+            base-data (if (seq canonical-assessment-data)
+                        canonical-assessment-data
+                        default-canonical-assessment)
+            enriched-data (-> base-data
+                              (update-in [:基本信息 :医生姓名] #(or % doctor-name))
+                              (update-in [:基本信息 :医生签名图片] #(or % doctor-sign)))]
         (-> db
             (assoc-in [:anesthesia :current-patient-id] patient-key)
             (assoc-in [:anesthesia :current-assessment-id] (:id selected-full-assessment))
-            (assoc-in [:anesthesia :current-assessment-canonical]
-                      (if (seq canonical-assessment-data)
-                        canonical-assessment-data
-                        default-canonical-assessment)))))))
+            (assoc-in [:anesthesia :current-assessment-canonical] enriched-data)))))
 
 
 ;; --- Updating Canonical Assessment Data ---

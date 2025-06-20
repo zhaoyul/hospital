@@ -148,6 +148,9 @@
             width: 120px;
             margin-left: 8px;
         }
+        .signature-field img {
+            height: 40px;
+        }
         /* Style for dynamically created input fields */
         .editable-input {
             border: none;
@@ -265,7 +268,7 @@
             <h3>医生陈述</h3>
             <p>我已经告知患者将要施行的麻醉方式、此次麻醉及麻醉后可能发生的并发症和风险、根据诊疗的需要更改麻醉方案的可能性，并且解答了患者关于此次麻醉的相关问题。</p>
             <div class="signature-line">
-                <div class="signature-box">医生签名:<span class="underline editable-field" data-field="doctor">&nbsp;</span></div>
+                <div class="signature-box">医生签名:<span class="underline signature-field" data-field="doctor">&nbsp;</span></div>
                 <div style="font-size:13px;">签名日期: <span class="underline editable-field" data-field="year" style="width: 50px;">&nbsp;</span>年<span class="underline editable-field" data-field="month" style="width: 30px;">&nbsp;</span>月<span class="underline editable-field" data-field="day" style="width: 30px;">&nbsp;</span>日<span class="underline editable-field" data-field="hour" style="width: 30px;">&nbsp;</span>时<span class="underline editable-field" data-field="minute" style="width: 30px;">&nbsp;</span>分</div>
             </div>
         </div>
@@ -292,10 +295,14 @@
             const form = document.querySelector('.consent-form');
 
             const fillFields = (data = {}) => {
-                document.querySelectorAll('.editable-field').forEach(el => {
+                document.querySelectorAll('.editable-field, .signature-field').forEach(el => {
                     const key = el.dataset.field;
                     if (key && data[key] !== undefined) {
-                        el.innerHTML = data[key];
+                        if (el.classList.contains('signature-field')) {
+                            el.innerHTML = data[key] ? `<img src="${data[key]}"/>` : '&nbsp;';
+                        } else {
+                            el.innerHTML = data[key];
+                        }
                     } else if (key && params.get(key)) {
                         el.innerHTML = params.get(key);
                     }
@@ -330,6 +337,9 @@
                                   result[k] = b[mapping[k]];
                               }
                           });
+                          if (b['医生签名图片']) {
+                              result['doctor'] = b['医生签名图片'];
+                          }
                       }
                       loadConsent(result);
                   })

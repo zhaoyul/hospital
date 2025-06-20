@@ -112,6 +112,9 @@
              align-items: center;
              margin-top: 30px;
         }
+        .signature-field img {
+             height: 40px;
+        }
         @media print {
             .consent-form .content-box { page-break-after: always; }
             .consent-form .content-box:last-child { page-break-after: auto; }
@@ -236,7 +239,7 @@
            <p>我已经告知患者(或授权委托人)将要施行的麻醉方式、镇痛方式、麻醉替代治疗方案、自体血回输方案、可能发生的并发症和相关风险，并解答了患者关于此次麻醉的相关问题。遇到紧急情况时，为保障患者的生命安全，医务人员会实施必要的救治措施。</p>
             <div class="signature-area">
                 <label>麻醉医师签名:</label>
-                <span class="underline editable-field" data-field="doctor_sign" style="width: 200px;">&nbsp;</span>
+                <span class="underline signature-field" data-field="doctor_sign" style="width: 200px;">&nbsp;</span>
                 <label style="margin-left: 30px;">签名日期:</label>
                 <span class="underline editable-field" data-field="doctor_date" style="width: 150px;">&nbsp;</span>
             </div>
@@ -288,7 +291,7 @@
                      </div>
                      <div>
                          <label>实施麻醉医师签名:</label>
-                         <span class="underline editable-field" data-field="impl_sign" style="width: 200px;">&nbsp;</span>
+                        <span class="underline signature-field" data-field="impl_sign" style="width: 200px;">&nbsp;</span>
                      </div>
                  </div>
                   <div class="text-right mt-4">
@@ -320,10 +323,14 @@
             const container = document.querySelector('.consent-form');
 
             const fillFields = (data = {}) => {
-                document.querySelectorAll('.editable-field').forEach(el => {
+                document.querySelectorAll('.editable-field, .signature-field').forEach(el => {
                     const key = el.dataset.field;
                     if (key && data[key] !== undefined) {
-                        el.innerHTML = data[key];
+                        if (el.classList.contains('signature-field')) {
+                            el.innerHTML = data[key] ? `<img src="${data[key]}"/>` : '&nbsp;';
+                        } else {
+                            el.innerHTML = data[key];
+                        }
                     } else if (key && params.get(key)) {
                         el.innerHTML = params.get(key);
                     }
@@ -358,6 +365,10 @@
                                   result[k] = b[mapping[k]];
                               }
                           });
+                          if (b['医生签名图片']) {
+                              result['doctor_sign'] = b['医生签名图片'];
+                              result['impl_sign'] = b['医生签名图片'];
+                          }
                       }
                       loadConsent(result);
                   })
