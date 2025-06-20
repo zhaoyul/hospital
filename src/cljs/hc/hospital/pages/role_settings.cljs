@@ -8,9 +8,10 @@
 
 (def tree-data
   [{:title "纵览信息" :key 1 :children [{:title "查看" :key 101}]}
-   {:title "麻醉管理" :key 2 :children [{:title "查看" :key 102}]}
-   {:title "问卷列表" :key 3 :children [{:title "查看" :key 103}]}
-   {:title "系统管理" :key 4
+  {:title "麻醉管理" :key 2 :children [{:title "查看" :key 102}]}
+  {:title "问卷列表" :key 3 :children [{:title "查看" :key 103}]}
+  {:title "签到登记" :key 5 :children [{:title "查看" :key 110}]}
+  {:title "系统管理" :key 4
     :children [{:title "查看用户" :key 104}
                {:title "新增用户" :key 105}
                {:title "编辑用户" :key 106}

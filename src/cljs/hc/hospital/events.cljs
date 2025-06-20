@@ -15,7 +15,7 @@
   "系统初始化时使用的评估模板。"
   {:基本信息 {:门诊号 nil, :姓名 nil, :身份证号 nil, :手机号 nil, :性别 nil,
             :年龄 nil, :院区 nil, :患者提交时间 nil, :评估更新时间 nil,
-            :评估状态 "待评估", :医生姓名 nil, :评估备注 nil, :身高cm nil,
+            :评估状态 "待评估", :医生姓名 nil, :评估备注 nil, :签到时间 nil, :身高cm nil,
             :体重kg nil, :精神状态 nil, :活动能力 nil, :血压mmHg nil,
             :脉搏次每分 nil, :呼吸次每分 nil, :体温摄氏度 nil, :SpO2百分比 nil,
             :术前诊断 nil, :拟施手术 nil}
