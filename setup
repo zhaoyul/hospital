@@ -1,15 +1,6 @@
 set -euo pipefail
 
 # 设置 Java 代理
-export JAVA_TOOL_OPTIONS='-Dhttp.proxyHost=proxy -Dhttp.proxyPort=8080 -Dhttps.proxyHost=proxy -Dhttps.proxyPort=8080'
-
-export http_proxy="http://127.0.0.1:8080"
-export https_proxy="http://127.0.0.1:8080"
-export ftp_proxy="ftp://127.0.0.1:8080"
-
-git config --global http.proxy http://127.0.0.1:8080
-git config --global https.proxy https://127.0.0.1:8080
-
 
 # 安装前端依赖
 yarn install
@@ -19,7 +10,7 @@ yarn install
 npx shadow-cljs deps
 
 # 下载clojure依赖
-# curl -x http://127.0.0.1:8080 -L -O https://github.com/clojure/brew-install/releases/latest/download/linux-install.sh
+curl -x http://127.0.0.1:8080 -L -O https://github.com/clojure/brew-install/releases/latest/download/linux-install.sh
 
 chmod +x linux-install.sh
 sudo ./linux-install.sh

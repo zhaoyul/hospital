@@ -66,9 +66,8 @@
 在全新环境中启动项目前，请先确保已安装 Clojure CLI。可在仓库根目录依次执行以下命令：
 
 ```bash
-curl -L -O https://github.com/clojure/brew-install/releases/latest/download/linux-install.sh
-chmod +x linux-install.sh
-sudo ./linux-install.sh
+chmod +x setup
+sudo ./setup
 ```
 
 安装完成后运行 `clj -h` 验证是否安装成功。
