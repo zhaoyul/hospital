@@ -218,16 +218,20 @@
   [(when ^boolean goog.DEBUG re-frame.core/debug)]
   (fn [{:keys [db]} _]
     (let [current-patient-id (get-in db [:anesthesia :current-patient-id])
-          ;; The entire canonical assessment is now the payload
           assessment-payload (get-in db [:anesthesia :current-assessment-canonical])
-          signature-present (not (str/blank? (get-in assessment-payload [:基本信息 :医生签名图片] "")))]
+          doctor-signature (get-in db [:current-doctor :signature_b64])
+          payload-with-signature (if (and (not (str/blank? doctor-signature))
+                                         (str/blank? (get-in assessment-payload [:基本信息 :医生签名图片] "")))
+                                   (assoc-in assessment-payload [:基本信息 :医生签名图片] doctor-signature)
+                                   assessment-payload)
+          signature-present (not (str/blank? (get-in payload-with-signature [:基本信息 :医生签名图片] "")))]
       (timbre/info "Saving final assessment for patient-id:" current-patient-id "Signature present?:" signature-present)
       (if current-patient-id
-        (if assessment-payload
+        (if payload-with-signature
           {:http-xhrio {:method          :put
                         :uri             (str "/api/patient/assessment/" current-patient-id)
-                        :params          assessment-payload ;; Send the whole canonical structure
-                        :format          (ajax/json-request-format) ;; <--- ADD THIS LINE
+                        :params          payload-with-signature
+                        :format          (ajax/json-request-format)
                         :response-format (ajax/json-response-format {:keywords? true})
                         :on-success      [::save-assessment-success]
                         :on-failure      [::save-assessment-failed]}}
