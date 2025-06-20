@@ -367,7 +367,8 @@
 
 (rf/reg-event-fx ::initialize-users
   (fn [_ _]
-    {:dispatch [::fetch-users]}))
+    {:dispatch-n [[::fetch-users]
+                  [::fetch-roles]]}))
 
 (rf/reg-event-fx ::fetch-users
   (fn [_ _]
@@ -473,7 +474,8 @@
 ;; ---- 角色管理事件 ----
 (rf/reg-event-fx ::initialize-roles
   (fn [_ _]
-    {:dispatch [::fetch-roles]}))
+    {:dispatch-n [[::fetch-roles]
+                  [::fetch-permissions]]}))
 
 (rf/reg-event-fx ::fetch-roles
   (fn [_ _]
@@ -485,6 +487,17 @@
 (rf/reg-event-db ::set-roles
   (fn [db [_ {:keys [roles]}]]
     (assoc db :roles roles)))
+
+(rf/reg-event-fx ::fetch-permissions
+  (fn [_ _]
+    {:http-xhrio {:method :get
+                  :uri "/api/permissions"
+                  :response-format (ajax/json-response-format {:keywords? true})
+                  :on-success [::set-permissions]}}))
+
+(rf/reg-event-db ::set-permissions
+  (fn [db [_ {:keys [permissions]}]]
+    (assoc db :permissions permissions)))
 
 (rf/reg-event-db ::open-role-modal
   (fn [db [_ role]]
