@@ -13,7 +13,6 @@
    ["antd" :refer [Button Card Col DatePicker Descriptions Empty Form Input
                    InputNumber Layout Modal Radio Row Select Space Tag Upload]]
    ["react" :as React]
-   ["signature_pad" :as SignaturePad]
    [hc.hospital.events :as events]
    [hc.hospital.form-utils :as form-utils]
    [hc.hospital.pages.assessment-cards :as acards]
@@ -134,7 +133,7 @@
    [patient-list-filters]
    [patient-list]])
 
-(defn- patient-info-card "显示患者基本信息" [props]
+(defn patient-info-card "显示患者基本信息" [props]
   (let [{:keys [report-form-instance-fn]} props
         basic-info @(rf/subscribe [::subs/canonical-basic-info])
         patient-id (get basic-info :门诊号) ; Used for keying the form and useEffect dep
@@ -179,7 +178,7 @@
                      :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :拟施手术] (-> % .-target .-value)])}]]]]
        [:> Empty {:description "请先选择患者或患者无基本信息"}])]))
 
-(defn- general-condition-card "显示一般情况" []
+(defn general-condition-card "显示一般情况" []
   (let [basic-info-data @(rf/subscribe [::subs/canonical-basic-info]) ; Changed subscription
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         mental-status-options [{:value "清醒" :label "清醒"}
@@ -623,36 +622,13 @@
                               :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:麻醉评估与医嘱 :术前麻醉医嘱] (-> % .-target .-value)])}]]]]) ; Updated path
      [:> Empty {:description "暂无术前麻醉医嘱信息或未选择患者"}]]))
 
-;; 新增：签名板组件
-(defn signature-pad-comp []
-  (let [canvas-ref (r/atom nil)
-        signature-pad-instance (r/atom nil)
-        init-signature-pad (fn []
-                             (when @canvas-ref
-                               (reset! signature-pad-instance (SignaturePad. @canvas-ref #js {:penColor "black"}))))]
-    (r/create-class
-     {:component-did-mount init-signature-pad
-      :reagent-render
-      (fn []
-        [:div
-         [:canvas {:ref (fn [el] (reset! canvas-ref el)) :style {:border "1px solid #eee" :width "300px" :height "150px"}}]
-         [:div {:style {:marginTop "10px"}}
-          [:> Button {:on-click (fn [] (when @signature-pad-instance (.clear @signature-pad-instance)))
-                      :style {:marginRight "10px"}}
-           "清除签名"]
-          [:> Button {:type "primary"
-                      :on-click (fn []
-                                  (when (and @signature-pad-instance (not (.isEmpty @signature-pad-instance)))
-                                    (let [signature-data (.toDataURL @signature-pad-instance)]
-                                      (rf/dispatch [::events/update-signature-data signature-data]))))}
-           "确认签名"]]])})))
-
 ;; 辅助函数，用于显示签名和日期
 (defn- signature-and-date-card []
   (let [basic-info @(rf/subscribe [::subs/canonical-basic-info])
-        assessment-updated-at (get basic-info :评估更新时间 (utils/date->iso-string (js/Date.now))) ; Updated key
-        doctor-name (get basic-info :医生姓名) ; Updated key
-        saved-signature-image @(rf/subscribe [::subs/doctor-signature-image])]
+        assessment-updated-at (get basic-info :评估更新时间 (utils/date->iso-string (js/Date.now)))
+        doctor-name (get basic-info :医生姓名)
+        current-doctor @(rf/subscribe [::subs/current-doctor])
+        doctor-signature (:signature_b64 current-doctor)]
     [custom-styled-card
      [:> SaveOutlined {:style {:marginRight "8px"}}]
      "麻醉医师签名及日期"
@@ -663,13 +639,9 @@
                   :value doctor-name
                   :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :医生姓名] (-> % .-target .-value)])}]]
       [:> Descriptions.Item {:label "麻醉医师签名"}
-       (if saved-signature-image
-         [:div
-          [:img {:src saved-signature-image :alt "医生签名" :style {:width "200px" :height "100px" :border "1px solid #eee"}}]
-          [:> Button {:style {:marginLeft "10px"}
-                      :on-click (fn [] (rf/dispatch [::events/update-signature-data nil]))} ; 清除签名
-           "重新签名"]]
-         [signature-pad-comp {}])] ; 显示签名板
+       (if doctor-signature
+         [:img {:src doctor-signature :alt "医生签名" :style {:width "200px" :height "100px" :border "1px solid #eee"}}]
+         [:span "当前医生未上传签名"])]
       [:> Descriptions.Item {:label "评估更新日期"}
        (utils/format-date assessment-updated-at "YYYY-MM-DD HH:mm")]]]))
 

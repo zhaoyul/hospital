@@ -15,7 +15,7 @@
   "系统初始化时使用的评估模板。"
   {:基本信息 {:门诊号 nil, :姓名 nil, :身份证号 nil, :手机号 nil, :性别 nil,
             :年龄 nil, :院区 nil, :患者提交时间 nil, :评估更新时间 nil,
-            :评估状态 "待评估", :医生姓名 nil, :评估备注 nil, :身高cm nil,
+            :评估状态 "待评估", :医生姓名 nil, :评估备注 nil, :签到时间 nil, :身高cm nil,
             :体重kg nil, :精神状态 nil, :活动能力 nil, :血压mmHg nil,
             :脉搏次每分 nil, :呼吸次每分 nil, :体温摄氏度 nil, :SpO2百分比 nil,
             :术前诊断 nil, :拟施手术 nil}
@@ -218,16 +218,20 @@
   [(when ^boolean goog.DEBUG re-frame.core/debug)]
   (fn [{:keys [db]} _]
     (let [current-patient-id (get-in db [:anesthesia :current-patient-id])
-          ;; The entire canonical assessment is now the payload
           assessment-payload (get-in db [:anesthesia :current-assessment-canonical])
-          signature-present (not (str/blank? (get-in assessment-payload [:基本信息 :医生签名图片] "")))]
+          doctor-signature (get-in db [:current-doctor :signature_b64])
+          payload-with-signature (if (and (not (str/blank? doctor-signature))
+                                         (str/blank? (get-in assessment-payload [:基本信息 :医生签名图片] "")))
+                                   (assoc-in assessment-payload [:基本信息 :医生签名图片] doctor-signature)
+                                   assessment-payload)
+          signature-present (not (str/blank? (get-in payload-with-signature [:基本信息 :医生签名图片] "")))]
       (timbre/info "Saving final assessment for patient-id:" current-patient-id "Signature present?:" signature-present)
       (if current-patient-id
-        (if assessment-payload
+        (if payload-with-signature
           {:http-xhrio {:method          :put
                         :uri             (str "/api/patient/assessment/" current-patient-id)
-                        :params          assessment-payload ;; Send the whole canonical structure
-                        :format          (ajax/json-request-format) ;; <--- ADD THIS LINE
+                        :params          payload-with-signature
+                        :format          (ajax/json-request-format)
                         :response-format (ajax/json-response-format {:keywords? true})
                         :on-success      [::save-assessment-success]
                         :on-failure      [::save-assessment-failed]}}
@@ -367,7 +371,8 @@
 
 (rf/reg-event-fx ::initialize-users
   (fn [_ _]
-    {:dispatch [::fetch-users]}))
+    {:dispatch-n [[::fetch-users]
+                  [::fetch-roles]]}))
 
 (rf/reg-event-fx ::fetch-users
   (fn [_ _]
@@ -473,7 +478,8 @@
 ;; ---- 角色管理事件 ----
 (rf/reg-event-fx ::initialize-roles
   (fn [_ _]
-    {:dispatch [::fetch-roles]}))
+    {:dispatch-n [[::fetch-roles]
+                  [::fetch-permissions]]}))
 
 (rf/reg-event-fx ::fetch-roles
   (fn [_ _]
@@ -485,6 +491,17 @@
 (rf/reg-event-db ::set-roles
   (fn [db [_ {:keys [roles]}]]
     (assoc db :roles roles)))
+
+(rf/reg-event-fx ::fetch-permissions
+  (fn [_ _]
+    {:http-xhrio {:method :get
+                  :uri "/api/permissions"
+                  :response-format (ajax/json-response-format {:keywords? true})
+                  :on-success [::set-permissions]}}))
+
+(rf/reg-event-db ::set-permissions
+  (fn [db [_ {:keys [permissions]}]]
+    (assoc db :permissions permissions)))
 
 (rf/reg-event-db ::open-role-modal
   (fn [db [_ role]]
