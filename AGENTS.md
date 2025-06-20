@@ -26,7 +26,7 @@
 - **编码风格:**
     - 严格遵循 [Clojure 社区风格指南](https://guide.clojure.style/)。
     - 优先使用纯函数和不可变数据结构。避免不必要的 `atom`、`ref` 等。
-    - 命名空间和文件名使用 `snake_case`。
+    - 文件名使用 `snake_case`, 对应的命名空间为`sanke-case`。
 - **开发工作流:**
     - 后端开发在 REPL 中进行，使用 `(go)`, `(reset)`, `(halt)`。
     - 前端开发使用 `npx shadow-cljs watch <app-name>` 进行实时编译。
@@ -39,7 +39,8 @@
     - 运行后端测试的命令是 `clj -M:test`。
     - **注意:** `readme.org` 中已指出当前测试套件存在已知失败。在修复相关模块前，请不要尝试“修复”这些已知的测试失败。
     - **React Hook 组件调用:** 若组件内部使用 React 的 Hook（如 `useEffect`、`useState`），调用该组件时必须使用 `[:f> my-component]` 形式。
-    - **命名空间引用:** 新建的 Clojure 命名空间必须在 `core.clj` 的 `:require` 列表中显式引入，否则不会编译。
+    - **Hook 组件状态管理:** 当组件使用 React Hooks 管理状态时，避免再使用 `reagent/atom`，统一采用 React 的 `useState` 等 API。
+    - **命名空间引用:** 新建的 Clojure 命名空间, 如果有状态 `defmethod ig/init-key :reitit.routes/patient-api` 可能需要在 `core.clj` 的 `:require` 列表中显式引入，否则不会编译。
 
 ## 4. 关键配置文件
 
