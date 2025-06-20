@@ -56,4 +56,10 @@ echo "Removing download"
 rm -rf clojure-tools
 rm -rf clojure-tools-1.12.1.1550.tar.gz
 
+# 预先下载 Clojure 各 profile 所需依赖
+clj -M:dev -P
+clj -M:test -P
+clj -M:lint -P
+clj -M:nrepl -P
+
 echo "Use clj -h for help."
