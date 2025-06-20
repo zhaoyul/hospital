@@ -778,6 +778,7 @@
       [:评估状态 {:optional true} [:enum "待评估" "已批准" "已驳回" "已暂缓" "评估中"]]
       [:医生姓名 {:optional true} OptionalString]
       [:评估备注 {:optional true} OptionalString]
+      [:签到时间 {:optional true} Optional日期时间字符串]
       [:身高cm {:optional true} OptionalNumber]          ; 医生补充
       [:体重kg {:optional true} OptionalNumber]          ; 医生补充
       [:精神状态 {:optional true} OptionalString]        ; 医生补充

@@ -53,6 +53,9 @@
         .input-line.flex-grow {
             flex-grow: 1;
         }
+        .signature-field img {
+            height: 40px;
+        }
         .checkbox-item {
             cursor: pointer;
             margin-right: 1.5rem;
@@ -161,7 +164,7 @@
         <div class="mt-12 space-y-8">
             <div class="flex flex-wrap justify-end items-center gap-x-2">
                 <span>谈话医师签名:</span>
-                <span class="input-line editable-field" data-field="doctor" style="width: 12rem;">&nbsp;</span>
+                <span class="input-line signature-field" data-field="doctor" style="width: 12rem;">&nbsp;</span>
                 <div class="flex items-center ml-8">
                     <span class="input-line text-center editable-field" data-field="dyear">&nbsp;</span><span>年</span>
                     <span class="input-line text-center ml-2 editable-field" data-field="dmonth">&nbsp;</span><span>月</span>
@@ -202,10 +205,14 @@
             const form = document.querySelector('.form-container');
 
             const fillFields = (data = {}) => {
-                document.querySelectorAll('.editable-field').forEach(el => {
+                document.querySelectorAll('.editable-field, .signature-field').forEach(el => {
                     const key = el.dataset.field;
                     if (key && data[key] !== undefined) {
-                        el.innerHTML = data[key];
+                        if (el.classList.contains('signature-field')) {
+                            el.innerHTML = data[key] ? `<img src="${data[key]}"/>` : '&nbsp;';
+                        } else {
+                            el.innerHTML = data[key];
+                        }
                     } else if (key && params.get(key)) {
                         el.innerHTML = params.get(key);
                     }
@@ -240,6 +247,9 @@
                                   result[k] = b[mapping[k]];
                               }
                           });
+                          if (b['医生签名图片']) {
+                              result['doctor'] = b['医生签名图片'];
+                          }
                       }
                       loadConsent(result);
                   })

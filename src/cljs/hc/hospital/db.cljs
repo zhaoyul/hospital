@@ -26,6 +26,7 @@
    ;; 用户管理相关状态
    :users []
    :roles []
+   :permissions []
    :user-modal-visible? false
    :editing-user nil
    :role-modal-visible? false

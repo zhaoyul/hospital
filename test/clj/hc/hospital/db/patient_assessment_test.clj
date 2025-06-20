@@ -20,7 +20,8 @@
         initial-assessment-data {:form "initial-form-data"}
         initial-signature "data:image/png;base64,INITIAL_SIGNATURE_DATA"
         updated-signature "data:image/png;base64,UPDATED_SIGNATURE_DATA"
-        assessment-data-json (json/generate-string initial-assessment-data)]
+        assessment-data-json (json/generate-string initial-assessment-data)
+        checkin-time "2099-01-01T00:00:00Z"]
 
     (testing "插入患者评估 (带签名)"
       (let [insert-result (query-fn :insert-patient-assessment!
@@ -30,12 +31,14 @@
                                      :assessment_status "待评估"
                                      :patient_name_pinyin "ceshipinyin"
                                      :patient_name_initial "cspy"
-                                     :doctor_signature_b64 initial-signature})
+                                     :doctor_signature_b64 initial-signature
+                                     :checkin_time checkin-time})
             retrieved (query-fn :get-patient-assessment-by-id {:patient_id patient-id})]
         (is (= 1 insert-result) "插入应返回影响的行数为1")
         (is (some? retrieved) "应能检索到插入的评估")
         (is (= assessment-data-json (:assessment_data retrieved)) "评估数据应匹配")
-        (is (= initial-signature (:doctor_signature_b64 retrieved)) "医生签名应匹配")))
+        (is (= initial-signature (:doctor_signature_b64 retrieved)) "医生签名应匹配")
+        (is (= checkin-time (:checkin_time retrieved)) "签到时间应匹配")))
 
     (testing "更新患者评估 (修改签名)"
       (let [updated-assessment-data {:form "updated-form-data"}

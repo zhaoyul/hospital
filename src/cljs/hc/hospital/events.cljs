@@ -15,7 +15,7 @@
   "系统初始化时使用的评估模板。"
   {:基本信息 {:门诊号 nil, :姓名 nil, :身份证号 nil, :手机号 nil, :性别 nil,
             :年龄 nil, :院区 nil, :患者提交时间 nil, :评估更新时间 nil,
-            :评估状态 "待评估", :医生姓名 nil, :评估备注 nil, :身高cm nil,
+            :评估状态 "待评估", :医生姓名 nil, :评估备注 nil, :签到时间 nil, :身高cm nil,
             :体重kg nil, :精神状态 nil, :活动能力 nil, :血压mmHg nil,
             :脉搏次每分 nil, :呼吸次每分 nil, :体温摄氏度 nil, :SpO2百分比 nil,
             :术前诊断 nil, :拟施手术 nil}
@@ -85,21 +85,31 @@
 (rf/reg-event-db ::select-patient
   (fn [db [_ patient-key]]
     (if (nil? patient-key) ;; Handle deselection
-      (-> db
-          (assoc-in [:anesthesia :current-patient-id] nil)
-          (assoc-in [:anesthesia :current-assessment-id] nil)
-          (assoc-in [:anesthesia :current-assessment-canonical] default-canonical-assessment))
+      (let [doctor-name (get-in db [:current-doctor :name])
+            doctor-sign (get-in db [:current-doctor :signature_b64])
+            enriched (-> default-canonical-assessment
+                         (assoc-in [:基本信息 :医生姓名] doctor-name)
+                         (assoc-in [:基本信息 :医生签名图片] doctor-sign))]
+        (-> db
+            (assoc-in [:anesthesia :current-patient-id] nil)
+            (assoc-in [:anesthesia :current-assessment-id] nil)
+            (assoc-in [:anesthesia :current-assessment-canonical] enriched)))
       (let [all-assessments (get-in db [:anesthesia :all-patient-assessments])
             selected-full-assessment (first (filter #(= (:patient_id %) patient-key) all-assessments))
             canonical-assessment-data (when selected-full-assessment
-                                        (get selected-full-assessment :assessment_data {}))]
+                                        (get selected-full-assessment :assessment_data {}))
+            doctor-name (get-in db [:current-doctor :name])
+            doctor-sign (get-in db [:current-doctor :signature_b64])
+            base-data (if (seq canonical-assessment-data)
+                        canonical-assessment-data
+                        default-canonical-assessment)
+            enriched-data (-> base-data
+                              (update-in [:基本信息 :医生姓名] #(or % doctor-name))
+                              (update-in [:基本信息 :医生签名图片] #(or % doctor-sign)))]
         (-> db
             (assoc-in [:anesthesia :current-patient-id] patient-key)
             (assoc-in [:anesthesia :current-assessment-id] (:id selected-full-assessment))
-            (assoc-in [:anesthesia :current-assessment-canonical]
-                      (if (seq canonical-assessment-data)
-                        canonical-assessment-data
-                        default-canonical-assessment)))))))
+            (assoc-in [:anesthesia :current-assessment-canonical] enriched-data)))))
 
 
 ;; --- Updating Canonical Assessment Data ---
@@ -367,7 +377,8 @@
 
 (rf/reg-event-fx ::initialize-users
   (fn [_ _]
-    {:dispatch [::fetch-users]}))
+    {:dispatch-n [[::fetch-users]
+                  [::fetch-roles]]}))
 
 (rf/reg-event-fx ::fetch-users
   (fn [_ _]
@@ -473,7 +484,8 @@
 ;; ---- 角色管理事件 ----
 (rf/reg-event-fx ::initialize-roles
   (fn [_ _]
-    {:dispatch [::fetch-roles]}))
+    {:dispatch-n [[::fetch-roles]
+                  [::fetch-permissions]]}))
 
 (rf/reg-event-fx ::fetch-roles
   (fn [_ _]
@@ -485,6 +497,17 @@
 (rf/reg-event-db ::set-roles
   (fn [db [_ {:keys [roles]}]]
     (assoc db :roles roles)))
+
+(rf/reg-event-fx ::fetch-permissions
+  (fn [_ _]
+    {:http-xhrio {:method :get
+                  :uri "/api/permissions"
+                  :response-format (ajax/json-response-format {:keywords? true})
+                  :on-success [::set-permissions]}}))
+
+(rf/reg-event-db ::set-permissions
+  (fn [db [_ {:keys [permissions]}]]
+    (assoc db :permissions permissions)))
 
 (rf/reg-event-db ::open-role-modal
   (fn [db [_ role]]

@@ -134,7 +134,7 @@
    [patient-list-filters]
    [patient-list]])
 
-(defn- patient-info-card "显示患者基本信息" [props]
+(defn patient-info-card "显示患者基本信息" [props]
   (let [{:keys [report-form-instance-fn]} props
         basic-info @(rf/subscribe [::subs/canonical-basic-info])
         patient-id (get basic-info :门诊号) ; Used for keying the form and useEffect dep
@@ -179,7 +179,7 @@
                      :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :拟施手术] (-> % .-target .-value)])}]]]]
        [:> Empty {:description "请先选择患者或患者无基本信息"}])]))
 
-(defn- general-condition-card "显示一般情况" []
+(defn general-condition-card "显示一般情况" []
   (let [basic-info-data @(rf/subscribe [::subs/canonical-basic-info]) ; Changed subscription
         patient-id @(rf/subscribe [::subs/canonical-patient-outpatient-number])
         mental-status-options [{:value "清醒" :label "清醒"}

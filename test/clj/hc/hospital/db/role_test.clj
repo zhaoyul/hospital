@@ -21,4 +21,6 @@
     (is (some? nurse) "护士角色应存在")
     (let [perms (role-db/get-permissions-by-role query-fn (:id nurse))]
       (is (not-any? #(= "麻醉管理" (:module %)) perms)
-          "护士不应拥有麻醉管理权限"))))
+          "护士不应拥有麻醉管理权限")
+      (is (some #(= "签到登记" (:module %)) perms)
+          "护士应拥有签到登记权限"))))
