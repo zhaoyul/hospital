@@ -294,10 +294,17 @@
             const fillFields = (data = {}) => {
                 document.querySelectorAll('.editable-field').forEach(el => {
                     const key = el.dataset.field;
-                    if (key && data[key] !== undefined) {
-                        el.innerHTML = data[key];
-                    } else if (key && params.get(key)) {
-                        el.innerHTML = params.get(key);
+                    if (!key) return;
+                    let val = data[key];
+                    if (val === undefined && params.get(key)) {
+                        val = params.get(key);
+                    }
+                    if (val !== undefined) {
+                        if (typeof val === 'string' && val.startsWith('data:image')) {
+                            el.innerHTML = `<img src="${val}" style="max-height:80px;">`;
+                        } else {
+                            el.innerHTML = val;
+                        }
                     }
                 });
             };

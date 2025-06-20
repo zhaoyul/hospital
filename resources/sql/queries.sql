@@ -4,8 +4,8 @@
 -- :name insert-patient-assessment! :! :n
 -- :doc 插入一个新的患者评估记录
 INSERT INTO patient_assessments
-(patient_id, assessment_data, patient_name, assessment_status, patient_name_pinyin, patient_name_initial, doctor_signature_b64, created_at, updated_at) -- 中文注释：新增姓名和状态字段
-VALUES (:patient_id, :assessment_data, :patient_name, :assessment_status, :patient_name_pinyin, :patient_name_initial, :doctor_signature_b64, datetime('now'), datetime('now')); -- 中文注释：添加 doctor_signature_b64 参数
+(patient_id, assessment_data, patient_name, assessment_status, patient_name_pinyin, patient_name_initial, doctor_signature_b64, checkin_time, created_at, updated_at) -- 中文注释：新增姓名、状态及签到时间字段
+VALUES (:patient_id, :assessment_data, :patient_name, :assessment_status, :patient_name_pinyin, :patient_name_initial, :doctor_signature_b64, :checkin_time, datetime('now'), datetime('now')); -- 中文注释：添加 doctor_signature_b64 与 checkin_time 参数
 
 -- 更新患者评估
 -- :name update-patient-assessment! :! :n
@@ -17,6 +17,7 @@ SET assessment_data = :assessment_data,
     patient_name_pinyin = :patient_name_pinyin,
     patient_name_initial = :patient_name_initial,
     doctor_signature_b64 = :doctor_signature_b64, -- 中文注释：添加 doctor_signature_b64 更新
+    checkin_time = :checkin_time,
     updated_at = datetime('now')
 WHERE patient_id = :patient_id;
 
