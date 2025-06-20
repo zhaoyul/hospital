@@ -73,6 +73,28 @@ sudo ./linux-install.sh
 
 安装完成后运行 `clj -h` 验证是否安装成功。
 
+若需要通过代理下载依赖，请按照以下步骤配置：
+
+```bash
+mkdir -p ~/.m2
+cat > ~/.m2/settings.xml <<'EOF'
+<settings>
+  <proxies>
+    <proxy>
+      <id>codexProxy</id>
+      <active>true</active>
+      <protocol>http</protocol>
+      <host>proxy</host>
+      <port>8080</port>
+    </proxy>
+  </proxies>
+</settings>
+EOF
+
+export HTTP_PROXY=http://127.0.0.1:8080
+export HTTPS_PROXY=http://127.0.0.1:8080
+```
+
 
 ## 7. 权限与模块说明
 
