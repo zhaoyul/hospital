@@ -82,6 +82,13 @@
 
           true identity)))))
 
+(rf/reg-sub ::unchecked-patients
+  :<- [::filtered-patients]
+  (fn [patients _]
+    (->> patients
+         (filterv #(nil? (:checkin_time %)))
+         vec)))
+
 (rf/reg-sub ::doctor-form-physical-examination
   (fn [db _]
     (get-in db [:anesthesia :assessment :form-data])))
@@ -241,6 +248,10 @@
 (rf/reg-sub ::roles
   (fn [db _]
     (get db :roles [])))
+
+(rf/reg-sub ::permissions
+  (fn [db _]
+    (get db :permissions [])))
 
 (rf/reg-sub ::user-modal-visible?
   (fn [db _]
