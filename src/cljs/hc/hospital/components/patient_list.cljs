@@ -11,6 +11,7 @@
         status @(rf/subscribe [::subs/assessment-status-filter])
         assessment-status-options [{:value "all" :label "全部状态"}
                                    {:value "待评估" :label "待评估"}
+                                   {:value "评估中" :label "评估中"}
                                    {:value "已批准" :label "已批准"}
                                    {:value "已驳回" :label "已驳回"}
                                    {:value "已暂缓" :label "已暂缓"}]

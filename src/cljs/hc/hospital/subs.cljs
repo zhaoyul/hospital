@@ -54,7 +54,8 @@
                  :anesthesia-type (or (:拟行麻醉方式 anesthesia-plan) "未知麻醉方式")
                  ;; Timestamps are now directly in basic_info according to canonical server structure
                  :date (format-date-str (:评估更新时间 basic-info)) ; Use 评估更新时间
-                 :status (or (:评估状态 basic-info) "待评估")}))] ; Use 评估状态
+                 :status (or (:评估状态 basic-info) "待评估")
+                 :checkin_time (:checkin_time assessment)}))] ; Use 评估状态
 
       (let [patients-from-api (if (seq api-assessments)
                                 (mapv patient-from-api-assessment api-assessments)
