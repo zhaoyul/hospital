@@ -108,7 +108,7 @@
                         [questionnaire-list-content]
                         [:div "无权限"])
         "checkin" (if (contains? allowed "签到登记")
-                     [checkin-content]
+                     [:f> checkin-content]
                      [:div "无权限"])
         "settings" (if (contains? allowed "系统管理")
                       [:f> system-settings-content]
