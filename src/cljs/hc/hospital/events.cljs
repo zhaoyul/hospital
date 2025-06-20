@@ -18,7 +18,7 @@
             :评估状态 "待评估", :医生姓名 nil, :评估备注 nil, :签到时间 nil, :身高cm nil,
             :体重kg nil, :精神状态 nil, :活动能力 nil, :血压mmHg nil,
             :脉搏次每分 nil, :呼吸次每分 nil, :体温摄氏度 nil, :SpO2百分比 nil,
-            :术前诊断 nil, :拟施手术 nil}
+            :术前诊断 nil, :拟施手术 nil, :医生签名图片 nil}
    :循环系统 {}
    :呼吸系统 {}
    :精神及神经肌肉系统 {}
@@ -92,14 +92,19 @@
       (let [all-assessments (get-in db [:anesthesia :all-patient-assessments])
             selected-full-assessment (first (filter #(= (:patient_id %) patient-key) all-assessments))
             canonical-assessment-data (when selected-full-assessment
-                                        (get selected-full-assessment :assessment_data {}))]
+                                        (get selected-full-assessment :assessment_data {}))
+            base-canonical (if (seq canonical-assessment-data)
+                             canonical-assessment-data
+                             default-canonical-assessment)
+            doctor-sign (get-in db [:current-doctor :signature_b64])
+            canonical-with-sign (if (and doctor-sign
+                                         (nil? (get-in base-canonical [:基本信息 :医生签名图片])))
+                                  (assoc-in base-canonical [:基本信息 :医生签名图片] doctor-sign)
+                                  base-canonical)]
         (-> db
             (assoc-in [:anesthesia :current-patient-id] patient-key)
             (assoc-in [:anesthesia :current-assessment-id] (:id selected-full-assessment))
-            (assoc-in [:anesthesia :current-assessment-canonical]
-                      (if (seq canonical-assessment-data)
-                        canonical-assessment-data
-                        default-canonical-assessment)))))))
+            (assoc-in [:anesthesia :current-assessment-canonical] canonical-with-sign))))))
 
 
 ;; --- Updating Canonical Assessment Data ---
