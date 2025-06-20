@@ -123,6 +123,10 @@ set -euo pipefail
 # 设置 Java 代理
 export JAVA_TOOL_OPTIONS='-Dhttp.proxyHost=proxy -Dhttp.proxyPort=8080 -Dhttps.proxyHost=proxy -Dhttps.proxyPort=8080'
 
+# git 代理
+git config --global http.proxy http://127.0.0.1:8080
+git config --global https.proxy http://127.0.0.1:8080
+
 # 安装前端依赖
 yarn install
 
@@ -134,9 +138,6 @@ clj -M:nrepl -P
 
 # 下载 ClojureScript 编译所需的 jar 包
 npx shadow-cljs deps
-
-# 编译前端
-npx shadow-cljs compile app
 ```
 
 
