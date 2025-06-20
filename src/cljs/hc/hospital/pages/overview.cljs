@@ -43,11 +43,10 @@
 (defn overview-content []
   (r/create-class
    {:component-did-mount
-   (fn []
+    (fn []
      ;; 数据来源分布 - 每日门诊与住院患者
-     (init-chart "patientSourceChart"
-                  {
-                   :tooltip {:trigger "axis"}
+      (init-chart "patientSourceChart"
+                  {:tooltip {:trigger "axis"}
                    :legend {:data ["门诊" "住院"]}
                    :xAxis {:type "category"
                            :data ["周一" "周二" "周三" "周四" "周五" "周六" "周日"]}
@@ -56,8 +55,7 @@
                             {:name "住院" :type "bar" :data [10 20 25 30 35 40 30]}]})
       ;; ASA 评级分布
       (init-chart "asaChart"
-                  {
-                   :tooltip {:trigger "item"}
+                  {:tooltip {:trigger "item"}
                    :series [{:type "pie"
                              :radius "50%"
                              :data [{:name "I级" :value 30}
@@ -68,8 +66,7 @@
                                                     :shadowColor "rgba(0,0,0,0.5)"}}}]})
       ;; 通过率
       (init-chart "approvalRateChart"
-                  {
-                   :tooltip {:trigger "item"}
+                  {:tooltip {:trigger "item"}
                    :series [{:type "pie"
                              :radius ["40%" "70%"]
                              :label {:show false}
@@ -79,8 +76,7 @@
                                     {:name "未通过" :value 20}]}]})
       ;; 最近10天手术人数
       (init-chart "surgeryCountChart"
-                  {
-                   :tooltip {:trigger "axis"}
+                  {:tooltip {:trigger "axis"}
                    :xAxis {:type "category"
                            :data ["1日" "2日" "3日" "4日" "5日" "6日" "7日" "8日" "9日" "10日"]}
                    :yAxis {:type "value"}
@@ -88,16 +84,14 @@
                              :data [15 18 20 22 19 16 24 28 30 27]}]})
       ;; 性别分布
       (init-chart "genderChart"
-                  {
-                   :tooltip {:trigger "item"}
+                  {:tooltip {:trigger "item"}
                    :series [{:type "pie"
                              :radius ["40%" "70%"]
                              :data [{:name "男" :value 60}
                                     {:name "女" :value 40}]}]})
       ;; 年龄分布
       (init-chart "ageChart"
-                  {
-                   :tooltip {:trigger "axis"}
+                  {:tooltip {:trigger "axis"}
                    :xAxis {:type "category" :data ["0-20" "21-40" "41-60" "61+"]}
                    :yAxis {:type "value"}
                    :series [{:type "bar" :data [5 20 30 15]}]})

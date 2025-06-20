@@ -34,8 +34,7 @@
   "定义页面路由"
   [opts]
   [["/" {:get home
-         :middleware [wrap-restricted]
-         }]
+         :middleware [wrap-restricted]}]
    ["/login" {:get auth/login-page
               :post #(auth/handle-login! (assoc % :integrant-deps opts))}]
    ["/logout" {:get auth/handle-logout!}]])

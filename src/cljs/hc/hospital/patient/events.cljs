@@ -14,7 +14,7 @@
 (def cn-errors
   (-> me/default-errors
       (assoc ::m/missing-key {:error/fn {:zh (fn [{:keys [in]} _]
-                                           (str (last in) "不能为空"))}})))
+                                               (str (last in) "不能为空"))}})))
 
 (defn- humanize-zh [ex]
   (when ex
@@ -63,7 +63,7 @@
 (rf/reg-event-fx
  ::validate-and-submit
  (fn [{:keys [db]} _]
-  (let [form-data (get-in db [:patient-form])
+   (let [form-data (get-in db [:patient-form])
          errors (humanize-zh (m/explain pq-spec/PatientQuestionnaireSpec form-data))]
      (if (empty? errors)
        {:db (-> db
@@ -73,17 +73,17 @@
        {:db (assoc-in db [:patient-form :form-errors] errors)}))))
 
 (rf/reg-event-fx
-  ::submit-form
-  (fn [{:keys [db]} _]
-    (let [raw-form (get-in db [:patient-form])
-          cleaned (dissoc raw-form :form-errors :submitting? :submit-success? :submit-error :current-step)]
-      {:http-xhrio {:method :post
-                    :uri "/api/patient/assessment"
-                    :params cleaned
-                    :format (ajax/json-request-format)
-                    :response-format (ajax/json-response-format {:keywords? true})
-                    :on-success [::submit-success]
-                    :on-failure [::submit-failure]}})))
+ ::submit-form
+ (fn [{:keys [db]} _]
+   (let [raw-form (get-in db [:patient-form])
+         cleaned (dissoc raw-form :form-errors :submitting? :submit-success? :submit-error :current-step)]
+     {:http-xhrio {:method :post
+                   :uri "/api/patient/assessment"
+                   :params cleaned
+                   :format (ajax/json-request-format)
+                   :response-format (ajax/json-response-format {:keywords? true})
+                   :on-success [::submit-success]
+                   :on-failure [::submit-failure]}})))
 
 (rf/reg-event-db ::submit-success (fn [db [_ resp]] (timbre/debug "表单提交成功:" resp) (-> db (assoc-in [:patient-form :submitting?] false) (assoc-in [:patient-form :submit-success?] true))))
 

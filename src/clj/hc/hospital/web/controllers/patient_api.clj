@@ -51,7 +51,7 @@
                          :patient_name patient-name
                          :assessment_status patient-status
                          :patient_name_pinyin pinyin
-                        :patient_name_initial initial
+                         :patient_name_initial initial
                          :doctor_signature_b64 doctor-signature
                          :checkin_time checkin-time})
               (http-response/ok {:message "评估更新成功！"}))
@@ -111,11 +111,11 @@
     {{:keys [name status name_pinyin name_initial updated_from updated_to]} :query} :parameters
     :as _request}]
   (log/info "查询所有患者评估数据, 参数:" {:name name
-                                 :status status
-                                 :name_pinyin name_pinyin
-                                 :name_initial name_initial
-                                 :updated_from updated_from
-                                 :updated_to updated_to})
+                               :status status
+                               :name_pinyin name_pinyin
+                               :name_initial name_initial
+                               :updated_from updated_from
+                               :updated_to updated_to})
   (try
     (let [params-for-query (cond-> {}
                              (not (str/blank? name)) (assoc :name (str "%" name "%"))
@@ -130,8 +130,8 @@
                                            ; 将医生签名添加到 parsed-assessment-data 的 :基本信息 下
                                            updated-assessment-data (assoc-in parsed-assessment-data [:基本信息 :医生签名图片] (:doctor_signature_b64 assessment-row))
                                            final-row (-> assessment-row
-                                                           (assoc :assessment_data updated-assessment-data)
-                                                           (dissoc :doctor_signature_b64))]
+                                                         (assoc :assessment_data updated-assessment-data)
+                                                         (dissoc :doctor_signature_b64))]
                                        ;; Ensure pinyin and initial are strings for final row
                                        (cond-> final-row
                                          (:patient_name_pinyin final-row) (update :patient_name_pinyin #(if (keyword? %) (name %) %))
@@ -247,12 +247,12 @@
                              :checkin_time current-time-str})))
 
               (when was-inserted?
-                  (when-let [a (query-fn :get-patient-assessment-by-id {:patient_id patientIdInput})]
-                    (query-fn :upsert-consent-form!
-                              {:assessment_id (:id a)
-                               :sedation_form nil
-                               :pre_anesthesia_form nil
-                               :anesthesia_form nil})))
+                (when-let [a (query-fn :get-patient-assessment-by-id {:patient_id patientIdInput})]
+                  (query-fn :upsert-consent-form!
+                            {:assessment_id (:id a)
+                             :sedation_form nil
+                             :pre_anesthesia_form nil
+                             :anesthesia_form nil})))
 
               ;; 无论插入还是已存在，都重新获取并返回完整的本地记录
               (let [final-local-assessment (query-fn :get-patient-assessment-by-id {:patient_id patientIdInput})

@@ -20,7 +20,7 @@
   [{:keys [query-fn] {:keys [date] :as body} :body-params}]
   (let [d (if (str/blank? date) (today-date) date)
         increments (into {}
-                          (for [[k v] (dissoc body :date)]
-                            [(keyword (str/replace (name k) #"_inc$" "")) v]))]
+                         (for [[k v] (dissoc body :date)]
+                           [(keyword (str/replace (name k) #"_inc$" "")) v]))]
     (stats/increment-daily-stats! query-fn d increments)
     (http-response/ok {:message "统计已更新"})))

@@ -124,8 +124,7 @@
            {} ;; 从空 map 开始构建结果
            data))) ;; 处理 data 中的所有键，如果 schema 中没有对应项，则 value-schema 会是 nil，由 preprocess-date-fields* 的 nil schema 检查处理或在 :else 分支原样返回
 
-
-      ;; 处理 Vector Schemas
+;; 处理 Vector Schemas
       ;; 如果 schema 是 :vector 类型, 并且 data 是一个 vector,
       ;; 则获取 vector 的元素 schema, 并用此元素 schema 递归处理 vector 中的每个元素。
       (= :vector schema-type)

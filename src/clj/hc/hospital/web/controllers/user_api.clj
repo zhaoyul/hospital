@@ -112,7 +112,6 @@
       (println "更新用户角色时发生错误:" e)
       (http-response/internal-server-error {:error "更新用户角色失败"}))))
 
-
 (defn delete-user!
   "删除用户 API (需要认证, 通常应限制为管理员权限)"
   [{{:keys [id]} :path-params

@@ -171,7 +171,7 @@
      [:> Checkbox.Group {:options (clj->js options)}]]))
 
 (defn my-comp [control-config parent-form-path first-field-key first-field-schema-wrapper
-                form-instance first-field-optional? first-entry-props  remaining-entries]
+               form-instance first-field-optional? first-entry-props  remaining-entries]
   (let [show-on-value (:show-on-value control-config)
         ;; 控制字段的完整表单路径 (parent-form-path 是 map 自身的路径)
         control-field-form-path (conj parent-form-path first-field-key)
@@ -273,7 +273,6 @@
       (if (= :enum (get-malli-type (first (get-malli-children field-schema))))
         [render-checkbox-group field-schema (conj parent-form-path field-key) label-text]
         (do (timbre/warn "Unsupported vector child type for field " field-key) nil))
-
 
       (is-date-string-schema? field-schema)
       [render-datepicker field-schema (conj parent-form-path field-key) label-text]

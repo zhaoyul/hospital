@@ -1,6 +1,5 @@
 (ns hc.hospital.db.consent-form)
 
-
 (defn save-consent-form!
   [query-fn form]
   (query-fn :upsert-consent-form! form))

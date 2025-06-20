@@ -30,27 +30,26 @@
     (testing "医生注册 API"
       (testing "成功注册"
         (let [response (tu/POST handler "/api/users" ;; 构造 POST 请求
-                                (json/encode {:username "api_doc1" :password "apipass" :name "API医生"})
-                                {"content-type" "application/json"})]
+                         (json/encode {:username "api_doc1" :password "apipass" :name "API医生"})
+                         {"content-type" "application/json"})]
           (is (= 200 (:status response)) "响应状态码应为 200")
           (is (str/includes? (:body response) "用户注册成功") "响应体应包含成功信息")))
       (testing "用户名已存在"
         ;; 先创建一个同名用户
         (tu/POST handler "/api/users" (json/encode {:username "api_doc_dup" :password "pass" :name "Dup"}) {})
         (let [response (tu/POST handler "/api/users"
-                                (json/encode {:username "api_doc_dup" :password "pass" :name "Dup Again"})
-                                {"content-type" "application/json"})]
+                         (json/encode {:username "api_doc_dup" :password "pass" :name "Dup Again"})
+                         {"content-type" "application/json"})]
           (is (= 409 (:status response)) "响应状态码应为 409 (Conflict)")
           (is (str/includes? (:body response) "用户名已存在") "响应体应包含用户名已存在的信息")))
       (testing "缺少参数（例如密码）"
         (let [response (tu/POST handler "/api/users"
-                                (json/encode {:username "incomplete_doc" :name "残缺医生"}) ;; 故意缺少 password
-                                {"content-type" "application/json"})]
+                         (json/encode {:username "incomplete_doc" :name "残缺医生"}) ;; 故意缺少 password
+                         {"content-type" "application/json"})]
           (is (= 400 (:status response)) "响应状态码应为 400 (Bad Request)")
           (is (or (str/includes? (:body response) "用户名和密码不能为空") ;; 根据实际错误信息调整
                   (str/includes? (:body response) "密码不能为空"))
               "响应体应包含参数错误信息"))))
-
 
     (testing "医生登录和登出 API"
       (let [login-username "login_doc" ;; 用于登录测试的用户名
@@ -59,8 +58,8 @@
 
         (testing "成功登录"
           (let [response (tu/POST handler "/api/users/login"
-                                  (json/encode {:username login-username :password login-password})
-                                  {"content-type" "application/json"})
+                           (json/encode {:username login-username :password login-password})
+                           {"content-type" "application/json"})
                 body (json/parse-string (:body response) keyword)] ;; 解析 JSON 响应体
             (is (= 200 (:status response)) "登录成功状态码应为 200")
             (is (= "登录成功" (:message body)) "响应消息应为登录成功")
@@ -70,15 +69,15 @@
 
         (testing "登录失败 - 密码错误"
           (let [response (tu/POST handler "/api/users/login"
-                                  (json/encode {:username login-username :password "wrongpass"})
-                                  {"content-type" "application/json"})]
+                           (json/encode {:username login-username :password "wrongpass"})
+                           {"content-type" "application/json"})]
             (is (= 401 (:status response)) "密码错误状态码应为 401 (Unauthorized)")))
 
         (testing "成功登出"
           ;; 步骤1: 先登录以建立会话
           (let [login-resp (tu/POST handler "/api/users/login"
-                                    (json/encode {:username login-username :password login-password})
-                                    {"content-type" "application/json"})
+                             (json/encode {:username login-username :password login-password})
+                             {"content-type" "application/json"})
                 _ (def login-resp login-resp)
                 ;; 从登录响应中提取 Set-Cookie 头部信息
                 login-cookies (let [set-cookie-header (get-in login-resp [:headers "Set-Cookie"])]
@@ -130,7 +129,7 @@
           (is (pos? (count doctors-list)) "医生列表不应为空")
           ;; 可以进一步检查列表中的医生信息是否符合预期
           (is (some #(= "列表医生1" (:name %)) doctors-list) "列表中应包含测试医生1")
-(is (some #(= "列表医生2" (:name %)) doctors-list) "列表中应包含测试医生2"))))))
+          (is (some #(= "列表医生2" (:name %)) doctors-list) "列表中应包含测试医生2"))))))
 
 (deftest user-api-update-tests
   (let [{:keys [query-fn]} (get-handler-and-query-fn)]
@@ -139,37 +138,37 @@
           id (:id doc)]
       (testing "获取个人信息"
         (let [resp (user-api.ctlr/get-current-user-profile {:integrant-deps {:query-fn query-fn}
-                                                               :identity id})]
+                                                            :identity id})]
           (is (= 200 (:status resp)))
           (is (= id (get-in resp [:body :doctor :id])))))
 
       (testing "根据ID获取医生"
         (let [resp (user-api.ctlr/get-user-by-id {:path-params {:id (str id)}
-                                                      :integrant-deps {:query-fn query-fn}})]
+                                                  :integrant-deps {:query-fn query-fn}})]
           (is (= 200 (:status resp)))
           (is (= id (get-in resp [:body :doctor :id])))))
 
       (testing "更新姓名"
         (let [resp (user-api.ctlr/update-user-info! {:path-params {:id (str id)}
-                                                         :body-params {:name "新名" :role "麻醉医生" :signature_b64 nil}
-                                                         :integrant-deps {:query-fn query-fn}
-                                                         :identity id})]
+                                                     :body-params {:name "新名" :role "麻醉医生" :signature_b64 nil}
+                                                     :integrant-deps {:query-fn query-fn}
+                                                     :identity id})]
           (is (= 200 (:status resp)))
           (is (= "新名" (:name (user.db/get-user-by-id query-fn id))))))
 
       (testing "更新密码"
         (let [resp (user-api.ctlr/update-user-password! {:path-params {:id (str id)}
-                                                             :body-params {:new_password "newpass"}
-                                                             :integrant-deps {:query-fn query-fn}
-                                                             :identity id})
+                                                         :body-params {:new_password "newpass"}
+                                                         :integrant-deps {:query-fn query-fn}
+                                                         :identity id})
               verified (user.db/verify-credentials query-fn "update_doc" "newpass")]
           (is (= 200 (:status resp)))
           (is (some? verified))))
 
       (testing "删除医生"
         (let [resp (user-api.ctlr/delete-user! {:path-params {:id (str id)}
-                                                    :integrant-deps {:query-fn query-fn}
-                                                    :identity id})
+                                                :integrant-deps {:query-fn query-fn}
+                                                :identity id})
               deleted (user.db/get-user-by-id query-fn id)]
           (is (= 200 (:status resp)))
           (is (nil? deleted)))))))

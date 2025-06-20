@@ -50,9 +50,9 @@
                      :label "电子签名"
                      :valuePropName "fileList"
                      :getValueFromEvent (fn [e]
-                                         (if (array? e)
-                                           e
-                                           (.. e -fileList)))}
+                                          (if (array? e)
+                                            e
+                                            (.. e -fileList)))}
        [:> Upload {:name "signature"
                    :listType "picture-card"
                    :showUploadList false

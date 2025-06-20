@@ -186,7 +186,6 @@
 (def 神经肌肉其他症状Enum (m/schema [:enum :重症肌无力 :格林巴利综合征 :帕金森病史 :脊髓灰质炎后综合征 :多发性硬化症 :肌营养不良 :其他]))
 (def 神经肌肉其他症状列表 (m/schema [:vector 神经肌肉其他症状Enum]))
 
-
 (def 精神认知相关疾病史详情Spec
   (m/schema
    [:map
@@ -553,7 +552,7 @@
     [:过去1周摄食减少 {:optional true} 有无Enum]
     [:有严重疾病如ICU治疗 {:optional true} 有无Enum]
     [:总评分 {:optional true} OptionalPositiveInt] ; 医生计算或选择
-    [:风险等级 {:optional true} [:maybe [:enum :营养正常 :轻度围术期营养风险 :存在围术期营养风险]] ]])) ; 对应说明
+    [:风险等级 {:optional true} [:maybe [:enum :营养正常 :轻度围术期营养风险 :存在围术期营养风险]]]])) ; 对应说明
 
 (def FRAIL衰弱评估Spec
   (m/schema
@@ -580,9 +579,9 @@
    [:map
     [:孕周 {:optional true} [:maybe [:enum :0至12周 :13至28周 :大于28周]]]
     [:孕产史 {:optional true} [:map [:足月 {:optional true} OptionalPositiveInt]
-                               [:早产 {:optional true} OptionalPositiveInt]
-                               [:流产 {:optional true} OptionalPositiveInt]
-                               [:存活 {:optional true} OptionalPositiveInt]]]
+                            [:早产 {:optional true} OptionalPositiveInt]
+                            [:流产 {:optional true} OptionalPositiveInt]
+                            [:存活 {:optional true} OptionalPositiveInt]]]
     [:合并产科情况 {:optional true} 妊娠合并产科情况列表]
     [:其他产科情况描述 {:optional true} OptionalString]]))
 
@@ -756,7 +755,6 @@
       [:局部感染 {:optional true} 有无Enum]
       [:畸形 {:optional true} 有无Enum]]]
     [:局麻药过敏 {:optional true} 有无Enum]]))
-
 
 ;; --- 整体评估数据 Spec (使用中文关键字) ---
 (def 患者评估数据Spec

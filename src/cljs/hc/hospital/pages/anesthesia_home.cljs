@@ -17,13 +17,12 @@
    [reagent.core :as r]
    [taoensso.timbre :as timbre]))
 
-
 (def menu-definitions
   [{:key "1" :icon (r/as-element [:> icons/DashboardOutlined]) :label "纵览信息"  :module "纵览信息"  :tab "overview"}
    {:key "2" :icon (r/as-element [:> icons/ProfileOutlined])   :label "麻醉管理"  :module "麻醉管理"  :tab "patients"}
-  {:key "3" :icon (r/as-element [:> icons/FileAddOutlined])   :label "问卷列表"  :module "问卷列表"  :tab "assessment"}
-  {:key "5" :icon (r/as-element [:> icons/CheckCircleOutlined]) :label "签到登记" :module "签到登记" :tab "checkin"}
-  {:key "4" :icon (r/as-element [:> icons/SettingOutlined])   :label "系统管理"  :module "系统管理"  :tab "settings"}])
+   {:key "3" :icon (r/as-element [:> icons/FileAddOutlined])   :label "问卷列表"  :module "问卷列表"  :tab "assessment"}
+   {:key "5" :icon (r/as-element [:> icons/CheckCircleOutlined]) :label "签到登记" :module "签到登记" :tab "checkin"}
+   {:key "4" :icon (r/as-element [:> icons/SettingOutlined])   :label "系统管理"  :module "系统管理"  :tab "settings"}])
 
 (def key-by-tab (into {} (map (juxt :tab :key) menu-definitions)))
 (def tab-by-key (into {} (map (juxt :key :tab) menu-definitions)))
@@ -45,28 +44,28 @@
                         :trigger nil
                         :collapsible true}
        [custom-sider-trigger sidebar-collapsed? #(swap! sidebar-collapsed? not)]
-        (let [allowed-modules (map :module @(rf/subscribe [::subs/current-role-permissions]))]
-          [:> Menu {:mode "inline"
-                    :inlineCollapsed @sidebar-collapsed?
-                    :selectedKeys [(get key-by-tab active-tab "1")]
-                    :onClick (fn [item]
-                               (when-let [tab (get tab-by-key (.-key item))]
-                                 (rf/dispatch [::events/navigate-tab tab])))
-                    :style {:height "100%" :borderRight 0}
-                    :items (clj->js (menu-items allowed-modules))}])])))
+       (let [allowed-modules (map :module @(rf/subscribe [::subs/current-role-permissions]))]
+         [:> Menu {:mode "inline"
+                   :inlineCollapsed @sidebar-collapsed?
+                   :selectedKeys [(get key-by-tab active-tab "1")]
+                   :onClick (fn [item]
+                              (when-let [tab (get tab-by-key (.-key item))]
+                                (rf/dispatch [::events/navigate-tab tab])))
+                   :style {:height "100%" :borderRight 0}
+                   :items (clj->js (menu-items allowed-modules))}])])))
 
 ;; 新增顶部导航栏组件
 (defn app-header []
   (let [current-doctor @(rf/subscribe [::subs/current-doctor])
         is-logged-in? @(rf/subscribe [::subs/is-logged-in])]
     [:> Layout.Header
-       {:style {:background "#fff"
-                :padding "0 16px"
-                :display "flex"
-                :alignItems "center"
-                :justifyContent "space-between"
-                :borderBottom "1px solid #f0f0f0"
-                :height "64px"}}
+     {:style {:background "#fff"
+              :padding "0 16px"
+              :display "flex"
+              :alignItems "center"
+              :justifyContent "space-between"
+              :borderBottom "1px solid #f0f0f0"
+              :height "64px"}}
      [:div {:style {:display "flex" :alignItems "center"}}
       ;; Using ApartmentOutlined as a placeholder for fas fa-hospital-user
       [:> icons/ApartmentOutlined {:style {:fontSize "24px" :color "#1890ff" :marginRight "10px"}}]
@@ -102,19 +101,18 @@
       (case active-tab
         "overview" [overview-content]
         "patients" (if (contains? allowed "麻醉管理")
-                      [anesthesia-content]
-                      [:div "无权限"])
-        "assessment" (if (contains? allowed "问卷列表")
-                        [questionnaire-list-content]
-                        [:div "无权限"])
-        "checkin" (if (contains? allowed "签到登记")
-                     [:f> checkin-content]
+                     [anesthesia-content]
                      [:div "无权限"])
+        "assessment" (if (contains? allowed "问卷列表")
+                       [questionnaire-list-content]
+                       [:div "无权限"])
+        "checkin" (if (contains? allowed "签到登记")
+                    [:f> checkin-content]
+                    [:div "无权限"])
         "settings" (if (contains? allowed "系统管理")
-                      [:f> system-settings-content]
-                      [:div "无权限"])
+                     [:f> system-settings-content]
+                     [:div "无权限"])
         [:div "未知标签页内容"])]]))
-
 
 (defn anesthesia-home-page []
   (let [active-tab @(rf/subscribe [::subs/active-tab])

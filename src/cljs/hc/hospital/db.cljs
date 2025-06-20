@@ -16,12 +16,12 @@
   "没有任何记录时展示的默认统计数据"
   (mapv (fn [item]
           (assoc item :value 0
-                      :trend :same
-                      :description "无变化"))
+                 :trend :same
+                 :description "无变化"))
         default-overview-stats))
 
 (def default-db
-  { ;; Root map for the entire default database state
+  {;; Root map for the entire default database state
    :anesthesia {}
    ;; 用户管理相关状态
    :users []

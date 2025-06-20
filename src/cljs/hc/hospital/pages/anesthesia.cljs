@@ -1,7 +1,7 @@
 (ns hc.hospital.pages.anesthesia
   "麻醉管理, 医生补充患者自己填写的评估报告, 最终评估患者的情况, 判断是否可以麻醉"
   (:require
-  ["@ant-design/icons" :as icons :refer [CheckCircleOutlined
+   ["@ant-design/icons" :as icons :refer [CheckCircleOutlined
                                           ClockCircleOutlined
                                           CloseCircleOutlined EditOutlined
                                           FileTextOutlined HeartOutlined
@@ -32,12 +32,10 @@
 (defn ^:private grid-col-span-style [span]
   {:gridColumn (str "span " span)})
 
-
-
 (defn patient-info-card "显示患者基本信息" [props]
   (let [{:keys [report-form-instance-fn include-surgery-fields? editable?]
-        :or {include-surgery-fields? true
-             editable? true}} props
+         :or {include-surgery-fields? true
+              editable? true}} props
         basic-info @(rf/subscribe [::subs/canonical-basic-info])
         patient-id (get basic-info :门诊号) ; Used for keying the form and useEffect dep
         [form] (Form.useForm)]
@@ -198,11 +196,8 @@
                             :min 0 :max 100
                             :style {:width "100px"}
                             :disabled (not editable?)
-                            :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :SpO2百分比] %])}]]]]] 
-      [:> Empty {:description "暂无一般情况信息或未选择患者"}])]))
-
-
-
+                            :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :SpO2百分比] %])}]]]]]
+       [:> Empty {:description "暂无一般情况信息或未选择患者"}])]))
 
 (defn- render-allergy-section [medical-history]
   [:div {:style {:marginBottom "16px"}}
@@ -310,8 +305,7 @@
                     has-value (get-in comorbidities-data [field-key :has])]
                 [:> Col {:span 12}
                  [:> Form.Item {:label label-text :name form-item-name}
-                  [:> Radio.Group {
-                                   :onChange #(let [val (-> % .-target .-value)]
+                  [:> Radio.Group {:onChange #(let [val (-> % .-target .-value)]
                                                 (rf/dispatch [::events/update-canonical-assessment-field base-path (assoc (get comorbidities-data field-key) :has val)])
                                                 (when-not val
                                                   (rf/dispatch [::events/update-canonical-assessment-field (conj base-path :details) nil])))}
@@ -321,8 +315,7 @@
                    [:> Form.Item {:name details-form-item-name
                                   :noStyle true
                                   :style {:marginTop "8px"}}
-                    [:> Input {
-                               :placeholder "请填写具体内容"
+                    [:> Input {:placeholder "请填写具体内容"
                                :onChange #(rf/dispatch [::events/update-canonical-assessment-field (conj base-path :details) (-> % .-target .-value)])}]])]))]
       #_[custom-styled-card ;; This card is currently commented out in the original code
          [:> MedicineBoxOutlined]
@@ -369,8 +362,7 @@
                      has-taken-value (get-in processed-comorbidities [:special_medications :has_taken])]
                  [:> Col {:span 24}
                   [:> Form.Item {:label "使用的特殊药物" :name (conj form-item-base :has_taken)}
-                   [:> Radio.Group {
-                                    :onChange #(let [val (-> % .-target .-value)]
+                   [:> Radio.Group {:onChange #(let [val (-> % .-target .-value)]
                                                  (rf/dispatch [::events/update-canonical-assessment-field has-taken-path val])
                                                  (when-not val
                                                    (rf/dispatch [::events/update-canonical-assessment-field details-path nil])
@@ -389,7 +381,7 @@
                                        :placeholder "选择日期和时间"
                                        :style {:width "100%"}
                                        ;; value handled by Form :initialValues
-                                       :onChange #(rf/dispatch [::events/update-canonical-assessment-field last-dose-time-path (utils/datetime->string % "YYYY-MM-DD HH:mm")])}]]])]] ) ] ] )
+                                       :onChange #(rf/dispatch [::events/update-canonical-assessment-field last-dose-time-path (utils/datetime->string % "YYYY-MM-DD HH:mm")])}]]])]])]])
            [:> Empty {:description "暂无并存疾病信息或未选择患者"}])])))
 
 (defn- physical-examination-card []
@@ -405,7 +397,7 @@
                   [:> Radio.Group {;; :value current-status-val ; Let Form handle
                                    :onChange #(let [val (-> % .-target .-value)]
                                                 (rf/dispatch [::events/update-canonical-assessment-field base-path (assoc (get phys-exam-data field-key) :status val)])
-                                                (when (= val "normal") 
+                                                (when (= val "normal")
                                                   (rf/dispatch [::events/update-canonical-assessment-field (conj base-path :notes) nil])))}
                    [:> Radio {:value "normal"} "正常"]
                    [:> Radio {:value "abnormal"} "异常"]]
@@ -493,20 +485,19 @@
           [:div
            [:> UploadOutlined]
            [:div {:style {:marginTop 8}} "上传文件"]]]]
-        
+
         [:> Form.Item {:label "其他检查结果说明" :name :辅助检查备注} ; Updated name
          [:> Input.TextArea {;; :value aux-notes ; Let Form handle
                              :placeholder "请在此记录其他重要检查结果的文字描述或总结"
                              :rows 4
                              :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:辅助检查备注] (-> % .-target .-value)])}]] ; Updated path
-        
+
         (when @modal-open?
           [:> Modal {:visible @modal-open?
                      :title "预览"
                      :footer nil
                      :onCancel #(reset! modal-open? false)}
            [:img {:alt "预览" :style {:width "100%"} :src @preview-image-url}]])]])))
-
 
 ;; 辅助函数，用于显示术前麻醉医嘱（可编辑表单）
 (defn- preoperative-orders-card []
@@ -642,10 +633,8 @@
                      :destroyOnHidden true
                      :onCancel #(reset! talk-open? false)}
            [:iframe {:src (str "/report/pre-anesthesia-consent?assessment-id=" current-assessment-id)
-                     :style {:border "none" :width "100%" :height "100%"}}]]
-          ])
-       [assessment-action-buttons patient-status]
-       ])]])
+                     :style {:border "none" :width "100%" :height "100%"}}]]])
+       [assessment-action-buttons patient-status]])]])
 
 (defn- assessment []
   (let [card-form-instances (r/atom {})
@@ -688,7 +677,7 @@
         [:> Layout {:style {:display "flex" :flexDirection "column" :height "calc(100vh - 64px)"}}
          ;; Main scrollable content area for cards
          [:> Layout.Content {:style {:padding "5px 12px" :overflowY "auto" :flexGrow 1 :background "#f0f2f5"}}
-         [assessment-header patient-name patient-status current-patient-id current-assessment-id sedation-open? talk-open? anesthesia-open?]
+          [assessment-header patient-name patient-status current-patient-id current-assessment-id sedation-open? talk-open? anesthesia-open?]
           [:f> patient-info-card {:report-form-instance-fn register-form-instance}]
           [general-condition-card]
           [medical-history-summary-card]

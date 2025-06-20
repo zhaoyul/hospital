@@ -111,7 +111,6 @@
          :card-style {:cursor "pointer"}
          :card-body-style {:padding "0px"}]))))
 
-
 (defn- circulatory-system-summary-view [props]
   (let [{:keys [circulatory-data]} props]
     [summary/assessment-summary {:data circulatory-data
@@ -348,12 +347,12 @@
                          :data-prop :na-data
                          :form-key-suffix "nutritional-assessment-spec"
                          :extra-content [:<>
-                                       [:div {:style {:padding "8px" :border "1px solid #d9d9d9" :borderRadius "2px" :marginBottom "16px" :marginTop "10px"}}
-                                        [:h5 {:style {:marginBottom "4px"}} "营养评分说明:"]
-                                        [:p {:style {:fontSize "12px" :color "gray"}} "每项“是”计1分，总分≥2分提示存在营养风险，建议进一步评估。"]]
-                                       [:div {:style {:padding "8px" :border "1px solid #d9d9d9" :borderRadius "2px" :marginTop "10px"}}
-                                        [:h5 {:style {:marginBottom "4px"}} "FRAIL 结论:"]
-                                        [:p {:style {:fontSize "12px" :color "gray"}} "0 分：健康；" [:br] "1-2 分：衰弱前期；" [:br] "≥3 分：衰弱。"]]]}))
+                                         [:div {:style {:padding "8px" :border "1px solid #d9d9d9" :borderRadius "2px" :marginBottom "16px" :marginTop "10px"}}
+                                          [:h5 {:style {:marginBottom "4px"}} "营养评分说明:"]
+                                          [:p {:style {:fontSize "12px" :color "gray"}} "每项“是”计1分，总分≥2分提示存在营养风险，建议进一步评估。"]]
+                                         [:div {:style {:padding "8px" :border "1px solid #d9d9d9" :borderRadius "2px" :marginTop "10px"}}
+                                          [:h5 {:style {:marginBottom "4px"}} "FRAIL 结论:"]
+                                          [:p {:style {:fontSize "12px" :color "gray"}} "0 分：健康；" [:br] "1-2 分：衰弱前期；" [:br] "≥3 分：衰弱。"]]]}))
 
 (def nutritional-assessment-card
   (create-assessment-card {:icon AppleOutlined
@@ -420,8 +419,8 @@
   (let [{:keys [report-form-instance-fn patient-id aa-data on-show-summary]} props
         [form] (Form.useForm)
         initial-form-values (form-utils/apply-enum-defaults-to-data
-                              (or aa-data {})
-                              assessment-specs/气道评估Spec)
+                             (or aa-data {})
+                             assessment-specs/气道评估Spec)
         on-finish-fn (fn [values]
                        (let [values-clj (js->clj values :keywordize-keys true)]
                          (rf/dispatch [::events/update-canonical-assessment-section :气道评估 values-clj])))]
@@ -505,8 +504,8 @@
         initial-form-values (let [data-from-db (or saa-data {})
                                   ;; No date preprocessing for this spec
                                   final-initial-values (form-utils/apply-enum-defaults-to-data
-                                                         data-from-db
-                                                         assessment-specs/椎管内麻醉相关评估Spec)]
+                                                        data-from-db
+                                                        assessment-specs/椎管内麻醉相关评估Spec)]
                               final-initial-values)
         _ (timbre/info "spinal-anesthesia-assessment-detailed-view: Calculated initial-form-values:" (clj->js initial-form-values))
         on-finish-fn (fn [values]

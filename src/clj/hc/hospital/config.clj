@@ -1,7 +1,7 @@
 (ns hc.hospital.config
   "读取系统配置"
   (:require
-    [kit.config :as config]))
+   [kit.config :as config]))
 
 (def ^:const system-filename "system.edn")
 

@@ -6,8 +6,8 @@
    [reagent.core :as r]
    [reagent.dom :as d]
    [re-frame.core :as rf]
-  [hc.hospital.events :as events]
-  [hc.hospital.fx]
+   [hc.hospital.events :as events]
+   [hc.hospital.fx]
    [hc.hospital.subs :as subs]
    [taoensso.timbre :as timbre]
    [hc.hospital.pages.anesthesia-home :refer [anesthesia-home-page]]
@@ -53,7 +53,6 @@
         ;; 此处无需渲染 [login-page]，因为 /login 路径由后端处理。
         [:div {:style {:textAlign "center" :paddingTop "50px"}}
          "正在重定向到登录页面..."]))))
-
 
 (defn ^:dev/after-load mount-root
   "重新挂载根React组件到DOM中。通常在开发环境代码热重载后调用。"

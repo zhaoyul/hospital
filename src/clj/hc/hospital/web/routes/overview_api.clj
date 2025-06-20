@@ -31,13 +31,13 @@
                         (overview/get-stats (assoc req :query-fn query-fn)))}
        :post {:summary "更新统计信息"
               :parameters {:body [:map {:closed false}
-                                 [:date {:optional true} string?]
-                                 [:total_visits_inc {:optional true} int?]
-                                 [:patient_count_inc {:optional true} int?]
-                                 [:signed_count_inc {:optional true} int?]
-                                 [:inpatient_count_inc {:optional true} int?]
-                                 [:outpatient_count_inc {:optional true} int?]
-                                 [:assessment_count_inc {:optional true} int?]]}
+                                  [:date {:optional true} string?]
+                                  [:total_visits_inc {:optional true} int?]
+                                  [:patient_count_inc {:optional true} int?]
+                                  [:signed_count_inc {:optional true} int?]
+                                  [:inpatient_count_inc {:optional true} int?]
+                                  [:outpatient_count_inc {:optional true} int?]
+                                  [:assessment_count_inc {:optional true} int?]]}
               :handler (fn [req]
                          (overview/increment-stats! (assoc req :query-fn query-fn)))
               :middleware [wrap-restricted]}}]]))

@@ -7,8 +7,8 @@
    [reitit.coercion.malli :as malli]
    [reitit.ring.coercion :as coercion]
    [reitit.ring.middleware.muuntaja :as muuntaja]
-  [reitit.ring.middleware.parameters :as parameters]
-  [hc.hospital.specs.patient-self-assessment-spec :as patient-spec]))
+   [reitit.ring.middleware.parameters :as parameters]
+   [hc.hospital.specs.patient-self-assessment-spec :as patient-spec]))
 
 ;; API 路由数据
 (def route-data
@@ -41,13 +41,12 @@
      ["/assessment" {:post {:summary "提交患者评估信息"
                             :description "接收并存储患者填写的评估表单信息"
                             :tags ["患者"]
-                           :handler (fn [request]
+                            :handler (fn [request]
                                        (patient-api/submit-assessment! (assoc request :query-fn query-fn)))
                             :parameters {:body patient-spec/PatientSelfAssessmentSpec}
                             :responses {200 {:body {:message string?}}
                                         400 {:body {:message string?}} ; Added for bad request (e.g. missing patient-id)
                                         500 {:body {:message string?}}}}}]
-
 
      ["/assessment/:patient-id" {:get {:summary "查询指定患者的评估信息"
                                        :description "根据患者ID查询存储的评估表单信息"

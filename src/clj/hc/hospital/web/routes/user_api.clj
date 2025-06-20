@@ -29,10 +29,9 @@
            :tags ["医生用户"]
            :middleware [wrap-restricted]}
      :post {:summary "注册新用户"
-           :tags ["医生用户"]
-           :parameters {:body {:username string? :password string? :name string? :role string?}}
-           :handler #(user-api/register-user! {:integrant-deps opts :body-params (-> % :body-params)})}}
-    ]
+            :tags ["医生用户"]
+            :parameters {:body {:username string? :password string? :name string? :role string?}}
+            :handler #(user-api/register-user! {:integrant-deps opts :body-params (-> % :body-params)})}}]
    ["/users/login"
     {:post {:summary "用户登录"
             :tags ["医生用户"]

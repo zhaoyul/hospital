@@ -54,8 +54,8 @@
 (defn to-roman
   "将数字转换为罗马数字表示，支持1-10"
   [num]
-  (let [romans {1 "I", 2 "II", 3 "III", 4 "IV", 5 "V", 
-               6 "VI", 7 "VII", 8 "VIII", 9 "IX", 10 "X"}]
+  (let [romans {1 "I", 2 "II", 3 "III", 4 "IV", 5 "V",
+                6 "VI", 7 "VII", 8 "VIII", 9 "IX", 10 "X"}]
     (get romans num (str num))))
 
 (defn format-datetime-for-input
@@ -70,7 +70,7 @@
           ;; 其他情况：若为字符串则原样返回，否则返回 nil
           (if (string? value) value nil))))))
 
-(defn display-value 
+(defn display-value
   "将值格式化为可读字符串，处理nil或空字符串的情况"
   [v]
   (cond
@@ -78,14 +78,14 @@
     (and (string? v) (empty? v)) "-"
     :else (str v)))
 
-(defn display-list 
+(defn display-list
   "将列表格式化为可读字符串，处理nil或空列表的情况"
   [v]
   (cond
     (nil? v) "-"
     (and (coll? v) (empty? v)) "-"
     (coll? v) (->> v
-                (filter #(and % (not= % "")))
-                (map #(str "• " %))
-                (clojure.string/join "\n"))
+                   (filter #(and % (not= % "")))
+                   (map #(str "• " %))
+                   (clojure.string/join "\n"))
     :else (display-value v)))

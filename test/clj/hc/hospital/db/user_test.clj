@@ -30,7 +30,7 @@
       (let [username "testdoc1"
             password "securepass"
             name "测试医生1"
-              _ (user.db/create-user! query-fn {:username username :password password :name name :signature_b64 nil})
+            _ (user.db/create-user! query-fn {:username username :password password :name name :signature_b64 nil})
             doc (user.db/get-user-by-username query-fn username)]
         (is (some? doc))
         (is (= username (:username doc)))
@@ -41,7 +41,7 @@
       (let [username "testdoc_auth"
             password "authpass"
             name "认证医生"
-              _ (user.db/create-user! query-fn {:username username :password password :name name :signature_b64 nil})
+            _ (user.db/create-user! query-fn {:username username :password password :name name :signature_b64 nil})
             verified-doc (user.db/verify-credentials query-fn username password)
             unverified-doc (user.db/verify-credentials query-fn username "wrongpass")]
         (is (some? verified-doc))
@@ -51,14 +51,14 @@
 
     (testing "列出医生"
       (let [username2 "testdoc2"
-              _ (user.db/create-user! query-fn {:username username2 :password "pass2" :name "医生二" :signature_b64 nil})
+            _ (user.db/create-user! query-fn {:username username2 :password "pass2" :name "医生二" :signature_b64 nil})
             doctors (user.db/list-users query-fn)]
         (is (>= (count doctors) 2)) ; 假设之前测试创建了医生
         (is (every? #(and (:username %) (not (:password_hash %))) doctors))))
 
     (testing "更新医生姓名和密码"
       (let [username "update_doc"
-              _ (user.db/create-user! query-fn {:username username :password "oldpass" :name "旧名字" :signature_b64 nil})
+            _ (user.db/create-user! query-fn {:username username :password "oldpass" :name "旧名字" :signature_b64 nil})
             doc-before-update (user.db/get-user-by-username query-fn username)
             _ (user.db/update-user-name! query-fn (:id doc-before-update) "新名字")
             _ (user.db/update-user-password! query-fn (:id doc-before-update) "newpass")
@@ -68,7 +68,7 @@
 
     (testing "删除医生"
       (let [username "delete_doc"
-              _ (user.db/create-user! query-fn {:username username :password "delpass" :name "待删除" :signature_b64 nil})
+            _ (user.db/create-user! query-fn {:username username :password "delpass" :name "待删除" :signature_b64 nil})
             doc-to-delete (user.db/get-user-by-username query-fn username)
             _ (user.db/delete-user! query-fn (:id doc-to-delete))
             deleted-doc (user.db/get-user-by-username query-fn username)]

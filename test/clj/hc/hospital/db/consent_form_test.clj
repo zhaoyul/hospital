@@ -14,11 +14,11 @@
         patient-id (str (java.util.UUID/randomUUID))
         ;; 创建评估记录以获取 assessment_id
         _ (qf :insert-patient-assessment!
-             {:patient_id patient-id
-              :assessment_data "{}"
-              :patient_name_pinyin "p"
-              :patient_name_initial "p"
-              :doctor_signature_b64 nil})
+              {:patient_id patient-id
+               :assessment_data "{}"
+               :patient_name_pinyin "p"
+               :patient_name_initial "p"
+               :doctor_signature_b64 nil})
         assessments (qf :get-all-patient-assessments {})
         assessment-id (:id (first (filter #(= patient-id (:patient_id %)) assessments)))
         form {:assessment_id assessment-id :sedation_form "html" :anesthesia_form "a"}]

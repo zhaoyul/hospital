@@ -38,22 +38,22 @@
              :parameters {:path {:id int?}}
              :handler (fn [req]
                         (role-api/get-role-permissions {:query-fn query-fn
-                                                         :path-params (:path-params req)}))
+                                                        :path-params (:path-params req)}))
              :middleware [wrap-restricted]}
        :put {:summary "更新角色权限"
              :parameters {:path {:id int?}
                           :body {:permission_ids [int?]}}
              :handler (fn [req]
                         (role-api/update-role-permissions! {:query-fn query-fn
-                                                             :path-params (:path-params req)
-                                                             :body-params (:body-params req)}))
+                                                            :path-params (:path-params req)
+                                                            :body-params (:body-params req)}))
              :middleware [wrap-restricted]}}]
      ["/roles/:id"
       {:delete {:summary "删除角色"
                 :parameters {:path {:id int?}}
                 :handler (fn [req]
                            (role-api/delete-role! {:query-fn query-fn
-                                                    :path-params (:path-params req)}))
+                                                   :path-params (:path-params req)}))
                 :middleware [wrap-restricted]}}]
      ["/permissions"
       {:get {:summary "获取权限列表"

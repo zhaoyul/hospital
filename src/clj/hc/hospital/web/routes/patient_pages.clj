@@ -11,8 +11,8 @@
 
 (defn wrap-page-defaults []
   (let [error-page (layout/error-page
-                     {:status 403
-                      :title "无效的防伪令牌"})]
+                    {:status 403
+                     :title "无效的防伪令牌"})]
     #(wrap-anti-forgery % {:error-response error-page})))
 
 ;; 患者页面特定路由

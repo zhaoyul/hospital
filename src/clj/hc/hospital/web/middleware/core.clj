@@ -29,10 +29,9 @@
                                         :expires "Thu, 01 Jan 1970 00:00:00 GMT"
                                         :http-only (:http-only base-attrs-for-expired-cookie)
                                         :same-site (:same-site base-attrs-for-expired-cookie)
-                                        :secure (:secure base-attrs-for-expired-cookie)
-                                        }
+                                        :secure (:secure base-attrs-for-expired-cookie)}
 
-              ;; 2. Construct the Set-Cookie header string
+;; 2. Construct the Set-Cookie header string
               header-value-str (str actual-cookie-name "=") ; No value after '=' for expired cookie
               path-attr (str "; Path=" (:path base-attrs-for-expired-cookie))
               httponly-attr (if (:http-only base-attrs-for-expired-cookie) "; HttpOnly" "")

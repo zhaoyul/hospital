@@ -201,10 +201,10 @@
                   {:心电图 {:描述 "正常"}
                    :血管疾病史 {:有无 :有 :详情 {:高血压 {:病史时长 :大于10年 :分级 :Ⅲ级}}}
                    :心脏疾病史 {:有无 :有
-                                :详情 {:冠心病 {:有无 :有 :症状 :心梗 :治疗情况 :病情稳定}
-                                        :心律失常 {:有无 :不详}
-                                        :心肌病 {:有无 :无}
-                                        :肺动脉高压 {:有无 :有 :描述 "轻度" :治疗情况 :好转}}}
+                           :详情 {:冠心病 {:有无 :有 :症状 :心梗 :治疗情况 :病情稳定}
+                                :心律失常 {:有无 :不详}
+                                :心肌病 {:有无 :无}
+                                :肺动脉高压 {:有无 :有 :描述 "轻度" :治疗情况 :好转}}}
                    :心脏起搏器植入史 {:有无 :无}
                    :心脏彩超检查 {:结果 "左室射血分数55%"}
                    :冠脉CTA或冠脉造影结果 {:结果 "左前降支狭窄50%"}
@@ -447,12 +447,12 @@
   (is (not (m/validate cn-spec/帕金森综合症详情Spec {:用药情况 {:meds ["Levodopa"]}}))))
 
 (deftest 精神神经肌肉系统其他情况详情Spec-test
-(is (m/validate cn-spec/精神神经肌肉系统其他情况详情Spec
-{:症状 [:重症肌无力 :其他]
- :其他症状描述 "肌无力，晨轻暮重"})
-"Valid full 精神神经肌肉系统其他情况详情Spec")
-(is (m/validate cn-spec/精神神经肌肉系统其他情况详情Spec {}) "Valid empty")
-(is (m/validate cn-spec/精神神经肌肉系统其他情况详情Spec (mg/generate cn-spec/精神神经肌肉系统其他情况详情Spec)) "Generated"))
+  (is (m/validate cn-spec/精神神经肌肉系统其他情况详情Spec
+                  {:症状 [:重症肌无力 :其他]
+                   :其他症状描述 "肌无力，晨轻暮重"})
+      "Valid full 精神神经肌肉系统其他情况详情Spec")
+  (is (m/validate cn-spec/精神神经肌肉系统其他情况详情Spec {}) "Valid empty")
+  (is (m/validate cn-spec/精神神经肌肉系统其他情况详情Spec (mg/generate cn-spec/精神神经肌肉系统其他情况详情Spec)) "Generated"))
 
 (deftest 精神神经肌肉系统其他情况详情Spec-invalid-test
   (is (not (m/validate cn-spec/精神神经肌肉系统其他情况详情Spec {:症状 [:not-a-neuro-symptom]})))
@@ -492,23 +492,23 @@
 ;; --- 内分泌系统 Tests ---
 
 (deftest 甲状腺疾病类型Enum-test
-(is (m/validate cn-spec/甲状腺疾病类型Enum :甲亢))
-(is (m/validate cn-spec/甲状腺疾病类型Enum :甲减))
-(is (m/validate cn-spec/甲状腺疾病类型Enum :甲状腺术后甲状腺素替代治疗))
-(is (m/validate cn-spec/甲状腺疾病类型Enum :桥本))
-(is (m/validate cn-spec/甲状腺疾病类型Enum :其他))
-(is (not (m/validate cn-spec/甲状腺疾病类型Enum :甲状腺炎)))
-(is (not (m/validate cn-spec/甲状腺疾病类型Enum "甲亢"))))
+  (is (m/validate cn-spec/甲状腺疾病类型Enum :甲亢))
+  (is (m/validate cn-spec/甲状腺疾病类型Enum :甲减))
+  (is (m/validate cn-spec/甲状腺疾病类型Enum :甲状腺术后甲状腺素替代治疗))
+  (is (m/validate cn-spec/甲状腺疾病类型Enum :桥本))
+  (is (m/validate cn-spec/甲状腺疾病类型Enum :其他))
+  (is (not (m/validate cn-spec/甲状腺疾病类型Enum :甲状腺炎)))
+  (is (not (m/validate cn-spec/甲状腺疾病类型Enum "甲亢"))))
 
 (deftest 甲状腺疾病史详情Spec-test
-(is (m/validate cn-spec/甲状腺疾病史详情Spec
-                {:类型 :甲亢
-                 :其他类型描述 nil ; or "Graves' disease"
-                 :甲状腺功能检查 "T3 T4 TSH normal"
-                 :治疗情况 :病情稳定
-                 :甲状腺是否肿大压迫气管 false
-                 :是否合并甲状腺心脏病 false})
-    "Valid full 甲状腺疾病史详情Spec")
+  (is (m/validate cn-spec/甲状腺疾病史详情Spec
+                  {:类型 :甲亢
+                   :其他类型描述 nil ; or "Graves' disease"
+                   :甲状腺功能检查 "T3 T4 TSH normal"
+                   :治疗情况 :病情稳定
+                   :甲状腺是否肿大压迫气管 false
+                   :是否合并甲状腺心脏病 false})
+      "Valid full 甲状腺疾病史详情Spec")
   (is (m/validate cn-spec/甲状腺疾病史详情Spec {}) "Valid empty")
   (is (m/validate cn-spec/甲状腺疾病史详情Spec {:类型 :其他 :其他类型描述 "单纯性甲状腺肿"}) "Valid with 其他 type")
   (is (m/validate cn-spec/甲状腺疾病史详情Spec (mg/generate cn-spec/甲状腺疾病史详情Spec)) "Generated"))
@@ -650,8 +650,8 @@
                    :其他类型描述 nil
                    :慢性肾脏病分期 :3期
                    :尿毒症 {:有无透析治疗 :有
-                            :最后一次透析时间 "2023-10-01T14:30:00Z"
-                            :透析后肾功能指标 "肌酐 2.0"}})
+                         :最后一次透析时间 "2023-10-01T14:30:00Z"
+                         :透析后肾功能指标 "肌酐 2.0"}})
       "Valid full 肾脏疾病病史详情Spec")
   (is (m/validate cn-spec/肾脏疾病病史详情Spec {}) "Valid empty")
   (is (m/validate cn-spec/肾脏疾病病史详情Spec {:类型 :其他 :其他类型描述 "肾结石"}) "Valid with 其他 type")

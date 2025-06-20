@@ -87,11 +87,11 @@
   (let [data @(rf/subscribe [subscription-key])
         [form] ((.-useForm (.-Form js/antd)))]
     [:> Form {:form form
-                :layout "vertical"
-                :initialValues data
-                :onValuesChange (fn [_changed-values all-values]
-                                  (rf/dispatch [update-event all-values]))
-                :style {:paddingBottom "24px"}}
+              :layout "vertical"
+              :initialValues data
+              :onValuesChange (fn [_changed-values all-values]
+                                (rf/dispatch [update-event all-values]))
+              :style {:paddingBottom "24px"}}
      form-content]))
 
 ;; 创建一个限制长度的文本输入组件

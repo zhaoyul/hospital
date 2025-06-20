@@ -9,9 +9,9 @@
   "路由表，定义页面标签与路径的映射。"
   [["/" {:name :overview}]
    ["/patients" {:name :patients}]
-  ["/assessment" {:name :assessment}]
-  ["/checkin" {:name :checkin}]
-  ["/settings" {:name :settings}]])
+   ["/assessment" {:name :assessment}]
+   ["/checkin" {:name :checkin}]
+   ["/settings" {:name :settings}]])
 
 (def router
   (rf/router routes))
@@ -31,9 +31,9 @@
 (def tab->route
   {"overview" :overview
    "patients" :patients
-  "assessment" :assessment
-  "checkin" :checkin
-  "settings" :settings})
+   "assessment" :assessment
+   "checkin" :checkin
+   "settings" :settings})
 
 (defn navigate!
   "根据标签名导航到相应路径。"

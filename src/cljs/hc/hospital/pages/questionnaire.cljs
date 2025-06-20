@@ -37,8 +37,6 @@
                             :danger true
                             :on-click #(js/console.log "Delete" record)} "删除"]]))}])
 
-
-
 ;; Mock data for the questionnaire table
 (def mock-questionnaire-data
   [{:key "1" :submissionTime "2025-05-06 10:30" :name "张三" :idCard "3101********1234" :phone "138****5678" :status {:status "已关联" :patientId "P20231025001"}}

@@ -56,7 +56,7 @@
     :else (when msg (str msg))))
 
 (defn ui-input-item [{:keys [label value placeholder errors field-key data-path type unit data-index extra required? pattern]
-                     :or {type "text" required? false}}]
+                      :or {type "text" required? false}}]
   (let [full-path (conj data-path field-key)
         error-msg (normalize-error-msg (get-in errors full-path))
         field-id (str (name field-key) "-" (hash data-path))]
@@ -66,7 +66,7 @@
       (when required? [:span {:style {:color "red" :margin-left "2px"}} "*"])
       (when unit [:span.unit (str " " unit)])]
      [:div {:style {:display "flex" :gap "8px"}}
-      [:input.form-input (merge 
+      [:input.form-input (merge
                           {:type type
                            :id field-id
                            :value (if (nil? value) "" value)
@@ -105,12 +105,12 @@
        [:div.error-message error-msg])]))
 
 (defn ui-radio-group-item [{:keys [label value errors field-key data-path options data-index required?]
-                           :or {required? false}}]
+                            :or {required? false}}]
   (let [full-path (conj data-path field-key)
         error-msg (normalize-error-msg (get-in errors full-path))
         group-name (str (name field-key) "-" (hash data-path))]
     [:div {:class (if error-msg "form-group error" "form-group")}
-     [:label.form-label {:data-index data-index} 
+     [:label.form-label {:data-index data-index}
       label
       (when required? [:span {:style {:color "red" :margin-left "2px"}} "*"])]
      [:div.radio-group
@@ -216,12 +216,12 @@
        [:div.error-message error-msg])]))
 
 (defn ui-select-item [{:keys [label value placeholder errors field-key data-path options data-index required?]
-                     :or {required? false}}]
+                       :or {required? false}}]
   (let [full-path (conj data-path field-key)
         error-msg (normalize-error-msg (get-in errors full-path))
         field-id (str (name field-key) "-" (hash data-path))]
     [:div {:class (if error-msg "form-group error" "form-group")}
-     [:label.form-label {:for field-id :data-index data-index} 
+     [:label.form-label {:for field-id :data-index data-index}
       label
       (when required? [:span {:style {:color "red" :margin-left "2px"}} "*"])]
      [:select.form-input {:id field-id
@@ -265,12 +265,12 @@
                            :field-key has-field-key
                            :data-index data-index}]
    (when has-value
-   [ui-input-item {:label nil ; Details field typically doesn't have its own visible label here
-                   :value details-value
-                   :errors errors
-                   :data-path base-path
-                   :field-key details-field-key
-                   :placeholder details-placeholder}])])
+     [ui-input-item {:label nil ; Details field typically doesn't have its own visible label here
+                     :value details-value
+                     :errors errors
+                     :data-path base-path
+                     :field-key details-field-key
+                     :placeholder details-placeholder}])])
 
 ;; --- Spec Based Utilities ---
 (defn keyword->label [k]
@@ -320,10 +320,10 @@
           (let [has-val (get-in form-data (conj field-path :有无))
                 detail-val (get-in form-data (conj field-path :详情))]
             [ui-comorbidity-item {:label (keyword->label field-key)
-                                 :has-value has-val
-                                 :details-value detail-val
-                                 :errors errors
-                                 :base-path field-path}])
+                                  :has-value has-val
+                                  :details-value detail-val
+                                  :errors errors
+                                  :base-path field-path}])
 
           (boolean-map-schema? schema)
           (let [bool-val (get-in form-data (conj field-path :有无))
@@ -340,12 +340,12 @@
           (let [base-val (get-in form-data (conj field-path :状态))
                 detail-val (get-in form-data (conj field-path :描述))]
             [ui-condition-item {:label (keyword->label field-key)
-                               :base-value base-val
-                               :detail-value detail-val
-                               :errors errors
-                               :data-path field-path
-                               :field-key :状态
-                               :placeholder "如有异常，请说明"}])
+                                :base-value base-val
+                                :detail-value detail-val
+                                :errors errors
+                                :data-path field-path
+                                :field-key :状态
+                                :placeholder "如有异常，请说明"}])
 
           :else
           (into [:div.form-group-container
@@ -426,9 +426,6 @@
      [render-map-spec form errors [:合并症] pq-spec/PatientComorbiditiesSpec]
      [render-map-spec form errors [:体格检查] pq-spec/PatientPhysicalExamSpec]
      [render-map-spec form errors [:辅助检查] pq-spec/PatientAuxiliaryExamSpec]]))
-
-
-
 
 ;; Main patient form component
 (defn patient-form []

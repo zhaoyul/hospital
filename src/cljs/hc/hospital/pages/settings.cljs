@@ -10,7 +10,6 @@
    [re-frame.core :as rf]
    [reagent.core :as r]))
 
-
 (defn user-settings-tab []
   (let [users @(rf/subscribe [::subs/users])
         modal-open? @(rf/subscribe [::subs/user-modal-visible?])

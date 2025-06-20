@@ -9,13 +9,12 @@
             [hc.hospital.pages.anesthesia :as anesthesia]
             [hc.hospital.components.patient-list :refer [patient-list-panel]]))
 
-
 (defn save-button []
   [:> Layout.Footer {:style {:padding "10px 0"
                              :background "white"
                              :borderTop "1px solid #f0f0f0"
                              :textAlign "center"}}
-  [:> Button {:type "primary"
+   [:> Button {:type "primary"
                :icon (r/as-element [:> SaveOutlined])
                :onClick (fn []
                           (rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :签到时间] (.toISOString (js/Date.))])
@@ -42,7 +41,7 @@
         basic-info @(rf/subscribe [::subs/canonical-basic-info])
         patient-name (get basic-info :姓名 "未知患者")
         patient-status (get basic-info :评估状态 "待评估")
-        editable? (not= patient-status "已批准")] 
+        editable? (not= patient-status "已批准")]
     (if current-id
       [:> Layout {:style {:display "flex" :flexDirection "column" :height "calc(100vh - 64px)"}}
        [:> Layout.Content {:style {:padding "5px 12px" :overflowY "auto" :flexGrow 1 :background "#f0f2f5"}}

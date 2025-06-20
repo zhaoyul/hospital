@@ -32,21 +32,21 @@
                          (cf/save-consent-form! (assoc req :query-fn query-fn)))
               :responses {200 {:body {:message string?}}
                           500 {:body {:message string?}}}}}
-       ["/:assessment-id"
-        {:get {:summary "获取评估关联的知情同意书"
-               :parameters {:path {:assessment-id string?}}
-               :handler (fn [req]
-                          (cf/get-consent-form (assoc req :query-fn query-fn)))
-               :responses {200 {:body map?}
-                           404 {:body {:message string?}}
-                           500 {:body {:message string?}}}}
-         :put {:summary "更新知情同意书"
-               :parameters {:path {:assessment-id string?}
-                            :body cf-spec/ConsentFormSpec}
-               :handler (fn [req]
-                          (cf/update-consent-form! (assoc req :query-fn query-fn)))
-               :responses {200 {:body {:message string?}}
-                           500 {:body {:message string?}}}}}]]]))
+      ["/:assessment-id"
+       {:get {:summary "获取评估关联的知情同意书"
+              :parameters {:path {:assessment-id string?}}
+              :handler (fn [req]
+                         (cf/get-consent-form (assoc req :query-fn query-fn)))
+              :responses {200 {:body map?}
+                          404 {:body {:message string?}}
+                          500 {:body {:message string?}}}}
+        :put {:summary "更新知情同意书"
+              :parameters {:path {:assessment-id string?}
+                           :body cf-spec/ConsentFormSpec}
+              :handler (fn [req]
+                         (cf/update-consent-form! (assoc req :query-fn query-fn)))
+              :responses {200 {:body {:message string?}}
+                          500 {:body {:message string?}}}}}]]]))
 
 (derive :reitit.routes/consent-form-api :reitit/routes)
 

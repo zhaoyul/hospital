@@ -8,11 +8,11 @@
 
 (def action-labels
   {"系统管理" {"view-users" "查看用户"
-             "create-user" "新增用户"
-             "edit-user" "编辑用户"
-             "delete-user" "删除用户"
-             "view-roles" "查看角色"
-             "edit-role" "角色编辑"}})
+           "create-user" "新增用户"
+           "edit-user" "编辑用户"
+           "delete-user" "删除用户"
+           "view-roles" "查看角色"
+           "edit-role" "角色编辑"}})
 
 (defn action->label [module action]
   (get-in action-labels [module action] "查看"))
@@ -24,9 +24,9 @@
               {:title module
                :key module
                :children (mapv (fn [{:keys [id action]}]
-                                  {:title (action->label module action)
-                                   :key id})
-                                perms)}))
+                                 {:title (action->label module action)
+                                  :key id})
+                               perms)}))
        vec))
 
 (defn role-modal []
