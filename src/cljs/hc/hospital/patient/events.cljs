@@ -1,34 +1,38 @@
 (ns hc.hospital.patient.events
   (:require [re-frame.core :as rf]
             [hc.hospital.patient.db :as db]
+            [hc.hospital.specs.patient-questionnaire-spec :as pq-spec]
+            [malli.core :as m]
+            [malli.error :as me]
             [day8.re-frame.http-fx]
             [ajax.core :as ajax]
-            [clojure.string :as str]
             [taoensso.timbre :as timbre]))
 
 (def patient-form-total-steps 3)
 (def patient-form-max-step-idx (dec patient-form-total-steps))
 
+(def cn-errors
+  (-> me/default-errors
+      (assoc ::m/missing-key {:error/fn {:zh (fn [{:keys [in]} _]
+                                           (str (last in) "不能为空"))}})))
+
+(defn- humanize-zh [ex]
+  (when ex
+    (me/humanize ex {:locale :zh :errors cn-errors})))
+
+(defn- prefix-errors
+  "给 Malli 验证返回的错误信息加上 [:基本信息] 前缀。"
+  [errors]
+  (reduce-kv (fn [m k v]
+               (let [path (if (vector? k) k [k])]
+                 (assoc-in m (into [:基本信息] path) v)))
+             {}
+             errors))
+
 (defn- validate-basic-info [basic-info]
-  (let [errors (atom {})
-        phone (:手机号 basic-info)
-        phone-regex #"^1[0-9]{10}$"]
-    (when (str/blank? (:门诊号 basic-info))
-      (swap! errors assoc-in [:基本信息 :门诊号] "门诊号不能为空"))
-    (when (str/blank? (:姓名 basic-info))
-      (swap! errors assoc-in [:基本信息 :姓名] "姓名不能为空"))
-    (when (str/blank? (:身份证号 basic-info))
-      (swap! errors assoc-in [:基本信息 :身份证号] "身份证号不能为空"))
-    (cond
-      (str/blank? phone) (swap! errors assoc-in [:基本信息 :手机号] "手机号不能为空")
-      (not (re-matches phone-regex phone)) (swap! errors assoc-in [:基本信息 :手机号] "请输入正确的手机号（1开头的11位数字）"))
-    (when (nil? (:性别 basic-info))
-      (swap! errors assoc-in [:基本信息 :性别] "性别不能为空"))
-    (when (nil? (:年龄 basic-info))
-      (swap! errors assoc-in [:基本信息 :年龄] "年龄不能为空"))
-    (when (str/blank? (:院区 basic-info))
-      (swap! errors assoc-in [:基本信息 :院区] "院区不能为空"))
-    @errors))
+  (if-let [ex (m/explain pq-spec/PatientBasicInfoSpec basic-info)]
+    (prefix-errors (humanize-zh ex))
+    {}))
 
 (rf/reg-event-db ::initialize-db (fn [_ _] db/default-db))
 
@@ -59,24 +63,14 @@
 (rf/reg-event-fx
  ::validate-and-submit
  (fn [{:keys [db]} _]
-   (let [form-data (get-in db [:patient-form])
-         basic-info (:基本信息 form-data)
-         errors (transient {})]
-     (when (str/blank? (:姓名 basic-info))
-       (assoc! errors [:基本信息 :姓名] "姓名不能为空"))
-     (when (str/blank? (:门诊号 basic-info))
-       (assoc! errors [:基本信息 :门诊号] "门诊号不能为空"))
-     (when (nil? (:年龄 basic-info))
-       (assoc! errors [:基本信息 :年龄] "年龄不能为空"))
-     (when (nil? (:性别 basic-info))
-       (assoc! errors [:基本信息 :性别] "性别不能为空"))
-     (let [final-errors (persistent! errors)]
-       (if (empty? final-errors)
-         {:db (-> db
-                  (assoc-in [:patient-form :submitting?] true)
-                  (assoc-in [:patient-form :form-errors] {}))
-          :dispatch [::submit-form]}
-         {:db (assoc-in db [:patient-form :form-errors] final-errors)})))))
+  (let [form-data (get-in db [:patient-form])
+         errors (humanize-zh (m/explain pq-spec/PatientQuestionnaireSpec form-data))]
+     (if (empty? errors)
+       {:db (-> db
+                (assoc-in [:patient-form :submitting?] true)
+                (assoc-in [:patient-form :form-errors] {}))
+        :dispatch [::submit-form]}
+       {:db (assoc-in db [:patient-form :form-errors] errors)}))))
 
 (rf/reg-event-fx
   ::submit-form

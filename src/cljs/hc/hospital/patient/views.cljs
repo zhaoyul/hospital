@@ -49,10 +49,16 @@
         (if submitting? "提交中..." "提交"))]]))
 
 ;; --- UI Components ---
+(defn- normalize-error-msg [msg]
+  (cond
+    (string? msg) msg
+    (coll? msg) (str/join "; " (flatten msg))
+    :else (when msg (str msg))))
+
 (defn ui-input-item [{:keys [label value placeholder errors field-key data-path type unit data-index extra required? pattern]
-                      :or {type "text" required? false}}]
+                     :or {type "text" required? false}}]
   (let [full-path (conj data-path field-key)
-        error-msg (get-in errors full-path)
+        error-msg (normalize-error-msg (get-in errors full-path))
         field-id (str (name field-key) "-" (hash data-path))]
     [:div {:class (if error-msg "form-group error" "form-group")}
      [:label.form-label {:for field-id :data-index data-index}
@@ -73,9 +79,9 @@
        [:div.error-message error-msg])]))
 
 (defn ui-input-number-item [{:keys [label value placeholder errors field-key data-path min max step unit data-index required?]
-                            :or {required? false}}]
+                             :or {required? false}}]
   (let [full-path (conj data-path field-key)
-        error-msg (get-in errors full-path)
+        error-msg (normalize-error-msg (get-in errors full-path))
         field-id (str (name field-key) "-" (hash data-path))]
     [:div {:class (if error-msg "form-group error" "form-group")}
      [:label.form-label {:for field-id :data-index data-index}
@@ -101,7 +107,7 @@
 (defn ui-radio-group-item [{:keys [label value errors field-key data-path options data-index required?]
                            :or {required? false}}]
   (let [full-path (conj data-path field-key)
-        error-msg (get-in errors full-path)
+        error-msg (normalize-error-msg (get-in errors full-path))
         group-name (str (name field-key) "-" (hash data-path))]
     [:div {:class (if error-msg "form-group error" "form-group")}
      [:label.form-label {:data-index data-index} 
@@ -122,7 +128,7 @@
 
 (defn ui-boolean-radio-item [{:keys [label bool-value errors field-key data-path data-index]}]
   (let [full-path (conj data-path field-key)
-        error-msg (get-in errors full-path)
+        error-msg (normalize-error-msg (get-in errors full-path))
         group-name (str (name field-key) "-" (hash data-path) "-bool")] ; Ensure unique name for boolean radio
     [:div {:class (if error-msg "form-group error" "form-group")} ; Kept form-group for consistency, can be reviewed
      [:label.form-label {:data-index data-index} label]
@@ -146,7 +152,7 @@
 
 (defn ui-date-picker-item [{:keys [label value placeholder errors field-key data-path showTime data-index]}]
   (let [full-path (conj data-path field-key)
-        error-msg (get-in errors full-path)
+        error-msg (normalize-error-msg (get-in errors full-path))
         field-id (str (name field-key) "-" (hash data-path))
         input-type (if showTime "datetime-local" "date")
         current-value (utils/format-date value (if (= input-type "datetime-local") "YYYY-MM-DDTHH:mm" "YYYY-MM-DD"))]
@@ -164,7 +170,7 @@
 
 (defn ui-file-input-item [{:keys [label value errors field-key data-path data-index]}]
   (let [full-path (conj data-path field-key)
-        error-msg (get-in errors full-path)
+        error-msg (normalize-error-msg (get-in errors full-path))
         field-id (str (name field-key) "-" (hash data-path))
         display-value (if (and value (not= value "-") (seq value))
                         (str "已选择: " value)
@@ -188,7 +194,7 @@
 (defn ui-condition-item [{:keys [label base-value detail-value errors field-key data-path data-index placeholder]}]
   (let [base-path (conj data-path field-key)
         detail-path (conj data-path (keyword (str (name field-key) "-detail")))
-        error-msg (or (get-in errors base-path) (get-in errors detail-path))
+        error-msg (normalize-error-msg (or (get-in errors base-path) (get-in errors detail-path)))
         group-name (str (name field-key) "-" (hash data-path))]
     [:div {:class (if error-msg "form-group error" "form-group")}
      [:label.form-label {:data-index data-index} label]
@@ -212,7 +218,7 @@
 (defn ui-select-item [{:keys [label value placeholder errors field-key data-path options data-index required?]
                      :or {required? false}}]
   (let [full-path (conj data-path field-key)
-        error-msg (get-in errors full-path)
+        error-msg (normalize-error-msg (get-in errors full-path))
         field-id (str (name field-key) "-" (hash data-path))]
     [:div {:class (if error-msg "form-group error" "form-group")}
      [:label.form-label {:for field-id :data-index data-index} 
@@ -269,6 +275,11 @@
 ;; --- Spec Based Utilities ---
 (defn keyword->label [k]
   (-> k name (str/replace "-" "")))
+
+(defn- required-field? [path schema]
+  "判断字段是否为必填。仅在第一部分(基本信息)中所有字段均必填。"
+  (and (= (first path) :基本信息)
+       (not= :maybe (m/type (m/deref (m/schema schema))))))
 
 (defn enum-options [schema]
   (when (= :enum (m/type schema))
@@ -347,14 +358,26 @@
                       :value (get-in form-data (conj path field-key))
                       :errors errors
                       :data-path path
-                      :field-key field-key}]
+                      :field-key field-key
+                      :required? (required-field? path schema)}]
+
+      (= :re (m/type schema))
+      (let [regex (first (m/children schema))]
+        [ui-input-item {:label (keyword->label field-key)
+                        :value (get-in form-data (conj path field-key))
+                        :errors errors
+                        :data-path path
+                        :field-key field-key
+                        :pattern (.-source regex)
+                        :required? (required-field? path schema)}])
 
       (#{:int :double :float} (m/type schema))
       [ui-input-number-item {:label (keyword->label field-key)
                              :value (get-in form-data (conj path field-key))
                              :errors errors
                              :data-path path
-                             :field-key field-key}]
+                             :field-key field-key
+                             :required? (required-field? path schema)}]
 
       (= :enum (m/type schema))
       (let [options (enum-options schema)]
@@ -364,20 +387,23 @@
                            :errors errors
                            :data-path path
                            :field-key field-key
-                           :options options}]
+                           :options options
+                           :required? (required-field? path schema)}]
           [ui-radio-group-item {:label (keyword->label field-key)
                                 :value (get-in form-data (conj path field-key))
                                 :errors errors
                                 :data-path path
                                 :field-key field-key
-                                :options options}]))
+                                :options options
+                                :required? (required-field? path schema)}]))
 
       (= :boolean (m/type schema))
       [ui-boolean-radio-item {:label (keyword->label field-key)
                               :bool-value (get-in form-data (conj path field-key))
                               :errors errors
                               :data-path path
-                              :field-key field-key}]
+                              :field-key field-key
+                              :required? (required-field? path schema)}]
 
       :else
       [:p (str "未支持的字段类型:" (m/type schema))])))
@@ -408,7 +434,7 @@
 (defn patient-form []
   (let [current-step @(rf/subscribe [::subs/current-step])
         total-steps 3 ; Reflects the 3 steps defined below
-        step-titles ["基本信息" "病情摘要" "麻醉评估"] ; Matches the 3 steps
+        step-titles ["基本信息（必填）" "病情摘要" "麻醉评估"] ; Matches the 3 steps
         submitting? @(rf/subscribe [::subs/submitting?])]
     [:div.container
      [:div.card.mt-6
@@ -419,7 +445,7 @@
 
       [:form#questionnaire-form {:onSubmit (fn [e] (.preventDefault e))}
 
-       [step-section-wrapper "第一部分：基本信息" current-step 0 [basic-info-step]]
+       [step-section-wrapper "第一部分：基本信息（必填）" current-step 0 [basic-info-step]]
        [step-section-wrapper "第二部分：病情摘要" current-step 1 [medical-summary-step]]
        [step-section-wrapper "第三部分：麻醉评估" current-step 2 [coexisting-diseases-step]]
 

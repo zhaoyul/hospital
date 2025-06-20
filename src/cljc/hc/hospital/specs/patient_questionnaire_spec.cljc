@@ -2,16 +2,35 @@
   "患者端问卷表单所需字段的 Malli Schema，保持与后端中文字段一致。"
   (:require [malli.core :as m]))
 
+(def PhoneNumberSpec
+  "手机号应以 1 开头并且为 11 位数字。"
+  (m/schema
+   [:re
+    {:error/message {:zh "手机号格式不正确"}}
+    #"^1[0-9]{10}$"]))
+
+(def IdCardSpec
+  "中国大陆身份证号，15 位或以 X 结尾的 18 位数字。"
+  (m/schema
+   [:re
+    {:error/message {:zh "身份证号格式不正确"}}
+    #"^(\d{15}|\d{17}[0-9X])$"]))
+
 (def PatientBasicInfoSpec
   (m/schema
    [:map
-    [:门诊号 [:string {:min 1}]]
-    [:姓名 [:string {:min 1}]]
-    [:身份证号 [:maybe :string]]
-    [:手机号 [:maybe :string]]
-    [:性别 [:enum "男" "女"]]
-    [:年龄 [:int {:min 0 :max 120}]]
-    [:院区 [:enum "main" "jst"]]]))
+    [:门诊号 [:string {:min 1
+                     :error/message {:zh "门诊号不能为空"}}]]
+    [:姓名 [:string {:min 1
+                    :error/message {:zh "姓名不能为空"}}]]
+    [:身份证号 IdCardSpec]
+    [:手机号 PhoneNumberSpec]
+    [:性别 [:enum {:error/message {:zh "性别必须为男或女"}}
+                     "男" "女"]]
+    [:年龄 [:int {:min 0 :max 120
+                  :error/message {:zh "年龄必须在 0 到 120 之间"}}]]
+    [:院区 [:enum {:error/message {:zh "院区必须为中心院区或积水潭院区"}}
+                     "中心院区" "积水潭院区"]]]))
 
 (def PatientMedicalSummarySpec
   (m/schema

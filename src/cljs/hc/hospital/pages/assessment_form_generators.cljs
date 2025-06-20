@@ -130,8 +130,12 @@
             children))))
 
 (defn render-text-input [field-schema form-path label-text]
-  [:> Form.Item {:name (clj->js form-path) :label label-text}
-   [:> Input {:placeholder (str "请输入" label-text)}]])
+  (let [regex (when (= :re (get-malli-type field-schema))
+                (first (get-malli-children field-schema)))
+        input-props (cond-> {:placeholder (str "请输入" label-text)}
+                      regex (assoc :pattern (.-source regex)))]
+    [:> Form.Item {:name (clj->js form-path) :label label-text}
+     [:> Input input-props]]))
 
 (defn render-number-input [field-schema form-path label-text]
   (let [props (get-malli-properties field-schema)
@@ -270,8 +274,12 @@
         [render-checkbox-group field-schema (conj parent-form-path field-key) label-text]
         (do (timbre/warn "Unsupported vector child type for field " field-key) nil))
 
+
       (is-date-string-schema? field-schema)
       [render-datepicker field-schema (conj parent-form-path field-key) label-text]
+
+      (= malli-type :re)
+      [render-text-input field-schema (conj parent-form-path field-key) label-text]
 
       (= malli-type :boolean)
       [render-radio-group assessment-specs/是否Enum (conj parent-form-path field-key) label-text]
