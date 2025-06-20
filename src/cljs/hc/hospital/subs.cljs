@@ -82,6 +82,13 @@
 
           true identity)))))
 
+(rf/reg-sub ::unchecked-patients
+  :<- [::all-patient-assessments]
+  (fn [assessments _]
+    (->> assessments
+         (filterv #(nil? (:checkin_time %)))
+         vec)))
+
 (rf/reg-sub ::doctor-form-physical-examination
   (fn [db _]
     (get-in db [:anesthesia :assessment :form-data])))
