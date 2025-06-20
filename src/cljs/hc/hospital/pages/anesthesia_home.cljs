@@ -7,6 +7,7 @@
    [hc.hospital.events :as events]
    [hc.hospital.components.qr-scan-modal :refer [qr-scan-modal]]
    [hc.hospital.pages.anesthesia :refer [anesthesia-content]]
+   [hc.hospital.pages.checkin :refer [checkin-content]]
    [hc.hospital.pages.overview :refer [overview-content]]
    [hc.hospital.pages.comps :refer [custom-sider-trigger]]
    [hc.hospital.pages.settings :refer [system-settings-content]]
@@ -20,8 +21,9 @@
 (def menu-definitions
   [{:key "1" :icon (r/as-element [:> icons/DashboardOutlined]) :label "纵览信息"  :module "纵览信息"  :tab "overview"}
    {:key "2" :icon (r/as-element [:> icons/ProfileOutlined])   :label "麻醉管理"  :module "麻醉管理"  :tab "patients"}
-   {:key "3" :icon (r/as-element [:> icons/FileAddOutlined])   :label "问卷列表"  :module "问卷列表"  :tab "assessment"}
-   {:key "4" :icon (r/as-element [:> icons/SettingOutlined])   :label "系统管理"  :module "系统管理"  :tab "settings"}])
+  {:key "3" :icon (r/as-element [:> icons/FileAddOutlined])   :label "问卷列表"  :module "问卷列表"  :tab "assessment"}
+  {:key "5" :icon (r/as-element [:> icons/CheckCircleOutlined]) :label "签到登记" :module "签到登记" :tab "checkin"}
+  {:key "4" :icon (r/as-element [:> icons/SettingOutlined])   :label "系统管理"  :module "系统管理"  :tab "settings"}])
 
 (def key-by-tab (into {} (map (juxt :tab :key) menu-definitions)))
 (def tab-by-key (into {} (map (juxt :key :tab) menu-definitions)))
@@ -105,6 +107,9 @@
         "assessment" (if (contains? allowed "问卷列表")
                         [questionnaire-list-content]
                         [:div "无权限"])
+        "checkin" (if (contains? allowed "签到登记")
+                     [:f> checkin-content]
+                     [:div "无权限"])
         "settings" (if (contains? allowed "系统管理")
                       [:f> system-settings-content]
                       [:div "无权限"])
