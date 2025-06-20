@@ -4,7 +4,6 @@
    [buddy.auth.accessrules :as accessrules]
    [buddy.auth.backends.session :as session]
    [buddy.auth.middleware :as auth-middleware]
-   [taoensso.timbre :as log]
    [ring.util.http-response :as http-response])) ; Added for redirect
 
 (defn on-error [request _response]

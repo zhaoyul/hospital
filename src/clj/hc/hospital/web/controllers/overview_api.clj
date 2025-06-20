@@ -13,7 +13,7 @@
     (let [d   (if (str/blank? date) (today-date) date)
           stat (stats/get-stats-by-date query-fn d)]
       (http-response/ok {:stats stat}))
-    (catch Exception e
+    (catch Exception _
       (http-response/internal-server-error {:message "查询统计信息失败"}))))
 
 (defn increment-stats!

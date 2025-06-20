@@ -40,7 +40,7 @@
       ;; 递归情况：处理 :map 类型的 schema
       (let [entries (m/entries dereffed-outer-schema {:preserve-entry-properties true})] ; 获取 map schema 的所有条目
         (reduce
-         (fn [processed-data [field-key schema-from-entry _ entry-props]] ; 解构每个条目
+         (fn [processed-data [field-key schema-from-entry _ _]] ; 解构每个条目
            (let [field-path (conj current-path field-key) ; 构建当前字段的完整路径
                  current-value (get processed-data field-key) ; 从累积的数据中获取当前字段的值
                  entry-schema-actual (m/deref (m/schema schema-from-entry))] ; 解引用条目中的 schema

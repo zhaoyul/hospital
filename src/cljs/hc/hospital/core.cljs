@@ -3,7 +3,6 @@
   负责UI渲染、事件处理和应用初始化。"
   (:require
    ["react" :as react]
-   [reagent.core :as r]
    [reagent.dom :as d]
    [re-frame.core :as rf]
    [hc.hospital.events :as events]
@@ -12,7 +11,7 @@
    [taoensso.timbre :as timbre]
    [hc.hospital.pages.anesthesia-home :refer [anesthesia-home-page]]
    ;; 已移除登录页面引用: [hc.hospital.pages.login :refer [login-page]]
-   ["antd" :as antd :refer [Button Spin ConfigProvider]] ; 引入 ConfigProvider
+   ["antd" :as antd :refer [Spin ConfigProvider]] ; 引入 ConfigProvider
    ["antd/es/locale/zh_CN" :default zhCN] ; 中文本地化
    ["dayjs/locale/zh-cn"]
    ["dayjs" :as dayjs]

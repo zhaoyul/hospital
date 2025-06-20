@@ -1,5 +1,5 @@
 (ns hc.hospital.pages.role-settings
-  (:require ["antd" :refer [Button Modal Table Tree Tabs Card Typography Space]]
+  (:require ["antd" :refer [Button Modal Table Tree Space]]
             ["react" :as React]
             [hc.hospital.events :as events]
             [hc.hospital.subs :as subs]

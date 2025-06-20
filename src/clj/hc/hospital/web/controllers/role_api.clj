@@ -1,6 +1,7 @@
 (ns hc.hospital.web.controllers.role-api
   (:require [hc.hospital.db.role :as role.db]
-            [ring.util.http-response :as http-response]))
+            [ring.util.http-response :as http-response]
+            [clojure.string :as str]))
 
 (defn list-roles
   [{:keys [query-fn]}]
@@ -26,7 +27,7 @@
 (defn create-role!
   [{:keys [query-fn] :as req}]
   (let [name (get-in req [:body-params :name])]
-    (if (clojure.string/blank? name)
+    (if (str/blank? name)
       (http-response/bad-request {:error "角色名不能为空"})
       (do (role.db/create-role! query-fn name)
           (http-response/ok {:message "角色创建成功"})))))

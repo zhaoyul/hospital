@@ -1,6 +1,5 @@
 (ns hc.hospital.patient.subs
-  (:require [re-frame.core :as rf]
-            [clojure.string :as str]))
+  (:require [re-frame.core :as rf]))
 
 (rf/reg-sub ::patient-form (fn [db] (get db :patient-form)))
 

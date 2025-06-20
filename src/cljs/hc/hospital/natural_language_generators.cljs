@@ -1,9 +1,7 @@
 (ns hc.hospital.natural-language-generators
   "根据 Malli Schema 生成自然语言描述的工具。"
   (:require [clojure.string :as str]
-            [malli.core :as m]
-            [taoensso.timbre :as timbre :refer [log warn error info spy]]
-            [hc.hospital.specs.assessment-complete-cn-spec :as cn-specs]))
+            [malli.core :as m]))
 
 (defonce control-word-config
   {:有无 {:positive :有,
@@ -104,7 +102,7 @@
           (if is-controlled-negative?
             nil
             (let [parts (reduce
-                         (fn [acc [field-key entry-schema-wrapper entry-optional? entry-properties]]
+                         (fn [acc [field-key entry-schema-wrapper _ _]]
                            (let [entry-schema (m/schema entry-schema-wrapper)
                                  original-entry-data (get data field-key)
                                  label (schema-key->display-label field-key)]
@@ -310,7 +308,7 @@
   "Generates a Hiccup component for the summary of the given data and schema."
   [data schema system-name-key]
   (if-not (and data schema system-name-key)
-    (do (warn "generate-summary-component called with nil data, schema, or system-name-key") nil)
+    (do (js/console.warn "generate-summary-component called with nil data, schema, or system-name-key") nil)
     (let [system-label (schema-key->display-label system-name-key)
           parts (generate-description-parts data schema)]
       (if (seq parts) ; Only proceed if there are meaningful parts

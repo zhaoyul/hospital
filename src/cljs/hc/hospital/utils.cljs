@@ -1,6 +1,7 @@
 (ns hc.hospital.utils
   "工具函数集，处理日期格式化等通用逻辑。"
-  (:require ["dayjs" :as dayjs]))
+  (:require ["dayjs" :as dayjs]
+            [clojure.string :as str]))
 
 (defn event-value
   "从表单事件中提取输入值。"

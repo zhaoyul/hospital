@@ -1,6 +1,5 @@
 (ns hc.hospital.patient.core
   (:require
-   [reagent.core :as r]
    [reagent.dom :as d]
    [re-frame.core :as rf]
    [hc.hospital.patient.events :as events]

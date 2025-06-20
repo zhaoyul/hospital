@@ -1,7 +1,7 @@
 (ns hc.hospital.logging
   (:require [taoensso.timbre :as timbre]
             [clojure.java.io :as io])
-  (:import [java.time Instant ZoneId LocalDate]
+  (:import [java.time Instant ZoneId]
            [java.time.format DateTimeFormatter]))
 
 (def ^:private date-format (DateTimeFormatter/ofPattern "yyyy-MM-dd"))

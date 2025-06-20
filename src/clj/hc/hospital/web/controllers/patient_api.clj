@@ -2,7 +2,7 @@
   (:require
    [cheshire.core :as cheshire]
    [clojure.string :as str]
-   [taoensso.timbre :as log :refer [spy]]
+   [taoensso.timbre :as log]
    [ring.util.http-response :as http-response]
    [hc.hospital.db.his-patient-queries :as his-queries]) ; 新增的 require
   (:import
@@ -197,7 +197,7 @@
             (let [his-name (get patient-info-from-his :name) ; HIS视图字段通常大写
                   his-sex (get patient-info-from-his :sex)
                   his-dob (get patient-info-from-his :date_of_birth) ; 可能需要日期格式转换
-                  id      (log/spy :info  (:id_no patient-info-from-his))
+                  id      (get patient-info-from-his :id_no)
                   current-time-str (str (Instant/now))
 
                   ;; 构建用于本地存储的 assessment_data

@@ -82,7 +82,9 @@
                   :exec-fn      cognitect.test-runner.api/test
                   :extra-paths ["env/dev/clj" "env/dev/resources" "env/test/resources" "test/clj"]
                   :main-opts   ["-e" "(require 'pjstadig.humane-test-output) (pjstadig.humane-test-output/activate!)"
-                                "-m" "cognitect.test-runner"]}}
+                                "-m" "cognitect.test-runner"]}
+          :lint {:extra-deps {clj-kondo/clj-kondo {:mvn/version "2025.06.05"}}
+                 :main-opts ["-m" "clj-kondo.main"]}}
  :mvn/repos
  {"clojars" {:url "https://repo.clojars.org/"}
   "central" {:url "https://repo1.maven.org/maven2/"}

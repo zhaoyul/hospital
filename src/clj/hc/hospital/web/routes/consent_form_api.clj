@@ -51,7 +51,7 @@
 (derive :reitit.routes/consent-form-api :reitit/routes)
 
 (defmethod ig/init-key :reitit.routes/consent-form-api
-  [_ {:keys [base-path query-fn]
+  [_ {:keys [base-path]
       :or {base-path "/api"}
       :as opts}]
   (fn [] [base-path route-data (consent-form-api-routes opts)]))

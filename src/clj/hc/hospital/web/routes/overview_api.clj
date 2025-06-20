@@ -3,7 +3,6 @@
             [hc.hospital.web.middleware.auth :refer [wrap-restricted]]
             [hc.hospital.web.middleware.exception :as exception]
             [hc.hospital.web.middleware.formats :as formats]
-            [hc.hospital.specs.daily-stats-spec :as stats-spec]
             [integrant.core :as ig]
             [reitit.coercion.malli :as malli]
             [reitit.ring.coercion :as coercion]
@@ -46,6 +45,5 @@
 
 (defmethod ig/init-key :reitit.routes/overview-api
   [_ {:keys [base-path query-fn]
-      :or {base-path "/api"}
-      :as opts}]
+      :or {base-path "/api"}}]
   (fn [] [base-path route-data (overview-api-routes {:query-fn query-fn})]))
