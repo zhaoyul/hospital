@@ -77,6 +77,12 @@
   - 在 CLJS REPL 中运行 =(shadow.cljs.devtools.api/repl :app)= (或 =:patient-app=) 连接到浏览器.
   - 测试连接: =(js/alert "Hello from CLJS!")=
 
+* 每次提交代码之前代码格式化
+- 使用 ~clj -Ttools install io.github.weavejester/cljfmt '{:git/tag "0.13.1"}' :as cljfmt~ 安装cljfmt
+- 使用 ~clj -Tcljfmt fix~ 直接进行格式化, 保证统一的行距, 对齐.
+* 每次提交代码之前错误检查
+- 安装clj-kondo
+- 执行 ~clj-kondo  --lint src test~ 发现并且修复存在的问题, 优先修复error
 * 项目结构
   #+BEGIN_EXAMPLE
   hospital
