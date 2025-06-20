@@ -6,22 +6,34 @@
             [re-frame.core :as rf]
             [reagent.core :as r]))
 
-(def tree-data
-  [{:title "纵览信息" :key 1 :children [{:title "查看" :key 101}]}
-  {:title "麻醉管理" :key 2 :children [{:title "查看" :key 102}]}
-  {:title "问卷列表" :key 3 :children [{:title "查看" :key 103}]}
-  {:title "签到登记" :key 5 :children [{:title "查看" :key 110}]}
-  {:title "系统管理" :key 4
-    :children [{:title "查看用户" :key 104}
-               {:title "新增用户" :key 105}
-               {:title "编辑用户" :key 106}
-               {:title "删除用户" :key 107}
-               {:title "查看角色" :key 108}
-               {:title "角色编辑" :key 109}]}])
+(def action-labels
+  {"系统管理" {"view-users" "查看用户"
+             "create-user" "新增用户"
+             "edit-user" "编辑用户"
+             "delete-user" "删除用户"
+             "view-roles" "查看角色"
+             "edit-role" "角色编辑"}})
+
+(defn action->label [module action]
+  (get-in action-labels [module action] "查看"))
+
+(defn build-tree-data [permissions]
+  (->> permissions
+       (group-by :module)
+       (map (fn [[module perms]]
+              {:title module
+               :key module
+               :children (mapv (fn [{:keys [id action]}]
+                                  {:title (action->label module action)
+                                   :key id})
+                                perms)}))
+       vec))
 
 (defn role-modal []
   (let [visible? @(rf/subscribe [::subs/role-modal-visible?])
         role @(rf/subscribe [::subs/editing-role])
+        permissions @(rf/subscribe [::subs/permissions])
+        tree-data (build-tree-data permissions)
         ;; 本地勾选状态使用 React/useState 保存
         [checked set-checked] (React/useState [])]
     ;; 当打开弹窗或角色变更时获取权限

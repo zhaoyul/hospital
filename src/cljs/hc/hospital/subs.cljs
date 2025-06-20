@@ -249,6 +249,10 @@
   (fn [db _]
     (get db :roles [])))
 
+(rf/reg-sub ::permissions
+  (fn [db _]
+    (get db :permissions [])))
+
 (rf/reg-sub ::user-modal-visible?
   (fn [db _]
     (get db :user-modal-visible? false))) ; Default to false

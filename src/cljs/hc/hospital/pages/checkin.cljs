@@ -54,4 +54,4 @@
    [:> Card {:style {:width "400px" :minWidth "350px" :height "calc(100vh - 64px)" :borderRight "1px solid #f0f0f0" :padding "0"}}
     [patient-list-panel]]
    [:div {:style {:flexGrow 1 :background "#f0f2f5" :overflow "hidden" :display "flex" :flexDirection "column"}}
-    [assessment]])]
+    [assessment]]])
