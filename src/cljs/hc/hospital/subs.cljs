@@ -83,9 +83,9 @@
           true identity)))))
 
 (rf/reg-sub ::unchecked-patients
-  :<- [::all-patient-assessments]
-  (fn [assessments _]
-    (->> assessments
+  :<- [::filtered-patients]
+  (fn [patients _]
+    (->> patients
          (filterv #(nil? (:checkin_time %)))
          vec)))
 
