@@ -2,8 +2,7 @@
   "医生端首页布局，包含侧边栏及顶部导航。"
   (:require
    ["@ant-design/icons" :as icons]
-   ["dayjs" :as dayjs]
-   ["antd" :refer [Avatar Button DatePicker Input Layout Menu Modal Pagination Space Table Tag Typography]]
+   ["antd" :refer [Avatar Button Layout Menu Tag Typography]]
    [hc.hospital.events :as events]
    [hc.hospital.components.qr-scan-modal :refer [qr-scan-modal]]
    [hc.hospital.pages.anesthesia :refer [anesthesia-content]]
@@ -14,8 +13,7 @@
    [hc.hospital.pages.questionnaire :refer [questionnaire-list-content]]
    [hc.hospital.subs :as subs]
    [re-frame.core :as rf]
-   [reagent.core :as r]
-   [taoensso.timbre :as timbre]))
+   [reagent.core :as r]))
 
 (def menu-definitions
   [{:key "1" :icon (r/as-element [:> icons/DashboardOutlined]) :label "纵览信息"  :module "纵览信息"  :tab "overview"}

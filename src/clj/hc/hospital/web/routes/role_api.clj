@@ -65,6 +65,5 @@
 
 (defmethod ig/init-key :reitit.routes/role-api
   [_ {:keys [base-path query-fn]
-      :or {base-path "/api"}
-      :as opts}]
+      :or {base-path "/api"}}]
   (fn [] [base-path route-data (role-api-routes {:query-fn query-fn})]))

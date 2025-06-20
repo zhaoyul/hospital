@@ -1,9 +1,8 @@
 (ns hc.hospital.components.user-modal
   (:require
    ["@ant-design/icons" :as icons]
-   ["antd" :refer [Button Form Input Modal Select Upload]]
+   ["antd" :refer [Form Input Modal Select Upload]]
    [re-frame.core :as rf]
-   [reagent.core :as r]
    ["react" :as react]
    [hc.hospital.events :as events]
    [hc.hospital.subs :as subs]))

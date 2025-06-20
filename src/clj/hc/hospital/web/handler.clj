@@ -7,7 +7,6 @@
    [hc.hospital.web.routes.patient-pages]
    [integrant.core :as ig]
    [reitit.ring :as ring]
-   [reitit.ring.middleware.dev :as dev]
    [reitit.swagger-ui :as swagger-ui]
    [ring.util.http-response :as http-response]))
 

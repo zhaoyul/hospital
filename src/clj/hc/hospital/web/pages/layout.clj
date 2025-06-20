@@ -16,7 +16,7 @@
   (parser/add-tag! :csrf-field (fn [_ _] (anti-forgery-field))))
 
 (defn render
-  [request template & [page-params]]
+  [_request template & [page-params]]
   (-> (parser/render-file template
                           (assoc (or page-params {}) ; Ensure params is a map
                                  :page template

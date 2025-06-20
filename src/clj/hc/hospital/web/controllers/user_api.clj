@@ -1,8 +1,7 @@
 (ns hc.hospital.web.controllers.user-api
   (:require
    [hc.hospital.db.user :as user.db]
-   [ring.util.http-response :as http-response]
-   [buddy.auth :as auth]))
+   [ring.util.http-response :as http-response]))
 
 (defn register-user!
   "注册新用户 API"
@@ -28,7 +27,7 @@
   "用户登录 API"
   [{{:keys [username password]} :body-params
     :keys [session]
-    {:keys [query-fn]} :integrant-deps :as m}]
+    {:keys [query-fn]} :integrant-deps :as _req}]
   (if (or (empty? username) (empty? password))
     (http-response/bad-request {:error "用户名和密码不能为空"})
     (if-let [doctor (user.db/verify-credentials query-fn username password)]
@@ -88,10 +87,10 @@
   [{{:keys [id]} :path-params
     {:keys [new_password]} :body-params ; 注意前端发送的字段名
     {:keys [query-fn]} :integrant-deps
-    authenticated-doctor :identity}]
+    _authenticated-doctor :identity}]
   (if (empty? new_password)
     (http-response/bad-request {:error "新密码不能为空"})
-    (if-not (= (Integer/parseInt id) authenticated-doctor)
+    (if-not (= (Integer/parseInt id) _authenticated-doctor)
       (http-response/forbidden {:error "无权修改其他医生密码"})
       (try
         (user.db/update-user-password! query-fn (Integer/parseInt id) new_password)
@@ -116,7 +115,7 @@
   "删除用户 API (需要认证, 通常应限制为管理员权限)"
   [{{:keys [id]} :path-params
     {:keys [query-fn]} :integrant-deps
-    authenticated-doctor :identity}] ; 示例中简单检查是否登录，实际应有更严格权限
+    _authenticated-doctor :identity}] ; 示例中简单检查是否登录，实际应有更严格权限
    ;; 实际应用中，删除操作应有更严格的权限控制，例如检查 authenticated-doctor 是否为管理员
   (try
     (user.db/delete-user! query-fn (Integer/parseInt id))

@@ -1,8 +1,7 @@
 (ns hc.hospital.components.form-components
   (:require [reagent.core :as r]
             [re-frame.core :as rf]
-            ["antd" :refer [Card Content Collapse Space Text Col CheckBox Radio Row DatePicker Tag  Descriptions Empty Button Input InputNumber Select Form Layout Tooltip Upload Switch]]
-            [taoensso.timbre :as timbre]))
+            ["antd" :refer [Col CheckBox Radio Row Input Form Switch]]))
 
 ;; 创建一个"有无"选择组件，包含"无"和"有"的单选按钮，以及一个可选的描述输入框
 (defn yes-no-with-description
@@ -32,7 +31,7 @@
 
 ;; 创建一个复选框组件，带有可选的输入框
 (defn checkbox-with-conditional-input
-  [{:keys [label checkbox-label field-name input-width]}]
+  [{:keys [label checkbox-label field-name]}]
   [:> Form.Item {:label (str label ":")
                  :style {:marginBottom "0px"}}
    [:> Row {:gutter 8 :wrap false}
@@ -83,7 +82,7 @@
    [:> Col {:span 12} right-item]])
 
 ;; 创建一个标准表单组件，处理表单组件的通用逻辑
-(defn standard-form [{:keys [form-data subscription-key update-event form-content]}]
+(defn standard-form [{:keys [subscription-key update-event form-content]}]
   (let [data @(rf/subscribe [subscription-key])
         [form] ((.-useForm (.-Form js/antd)))]
     [:> Form {:form form

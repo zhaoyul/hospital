@@ -1,5 +1,4 @@
-(ns hc.hospital.db.role
-  (:require [clojure.string :as str]))
+(ns hc.hospital.db.role)
 
 (defn list-roles [query-fn]
   (query-fn :list-roles {}))

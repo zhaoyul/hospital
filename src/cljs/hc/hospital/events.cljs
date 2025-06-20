@@ -279,7 +279,7 @@
                        doctor (assoc :dispatch [::fetch-current-role-permissions])))))
 
 (rf/reg-event-fx ::session-check-failed
-                 (fn [{:keys [db]} [_ error-details]]
+                 (fn [_ [_ error-details]]
                    (timbre/warn "Session check failed or no active session:" error-details)
     ;; For 401 or 404 (no user /me), it's an expected "not logged in" state.
     ;; For other errors, it's unexpected, but we still clear session.
@@ -313,7 +313,7 @@
 
 ;; Helper event for login success to handle multiple dispatches
 (rf/reg-event-fx ::login-success
-                 (fn [{:keys [db]} [_ response-data]]
+                 (fn [_ [_ response-data]]
                    (timbre/info "Login successful. Setting justLoggedIn flag. Response:" response-data ". Navigating to / shortly.")
     ;; Assuming the server returns {:message "登录成功" :doctor {...}}
     ;; Navigation is now handled by ::navigate-to-app-root
@@ -347,7 +347,7 @@
 
 (rf/reg-event-fx ::handle-logout
                  [(when ^boolean goog.DEBUG re-frame.core/debug)]
-                 (fn [{:keys [db]} _]
+                 (fn [_ _]
                    {:http-xhrio {:method          :post
                                  :uri             "/api/users/logout"
                                  :format          (ajax/json-request-format)
@@ -357,7 +357,7 @@
                     }))
 
 (rf/reg-event-fx ::logout-finished
-                 (fn [{:keys [db]} [_ response-data]]
+                 (fn [_ [_ response-data]]
                    (timbre/info "Logout processed. Response (if any):" response-data)
                    (js/window.location.assign "/login") ; Redirect to /login page
                    {:dispatch [::clear-current-doctor]}))
@@ -442,7 +442,7 @@
                                      :on-failure [::save-user-failed]}}))))
 
 (rf/reg-event-fx ::save-user-success
-                 (fn [{:keys [db]} _]
+                 (fn [_ _]
                    {:dispatch-n [[::close-user-modal]
                                  [::fetch-users]]}))
 
@@ -452,7 +452,7 @@
                    db))
 
 (rf/reg-event-fx ::delete-user
-                 (fn [{:keys [db]} [_ id]]
+                 (fn [_ [_ id]]
                    {:http-xhrio {:method :delete
                                  :uri (str "/api/user/" id)
                                  :response-format (ajax/json-response-format {:keywords? true})
@@ -566,7 +566,7 @@
 
 ;; 通过患者ID（从二维码扫描获得）查询HIS系统中的患者信息
 (rf/reg-event-fx ::find-patient-by-id-in-his
-                 (fn [{:keys [db]} [_ patient-id-input]]
+                 (fn [_ [_ patient-id-input]]
                    (if (str/blank? patient-id-input)
                      (do
                        (timbre/warn "HIS患者查询：输入的ID为空。")

@@ -2,9 +2,7 @@
   "订阅定义，提供组件访问应用状态的方式。"
   (:require [re-frame.core :as rf]
             [clojure.string :as str]
-            [hc.hospital.utils :as utils]
-            [taoensso.timbre :as timbre :refer [spy]]
-            [dayjs :as dayjs]))
+            [hc.hospital.utils :as utils]))
 
 (rf/reg-sub ::all-patient-assessments
             (fn [db _]
