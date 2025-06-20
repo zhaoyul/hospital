@@ -36,7 +36,6 @@
 - **测试:**
     - 所有新功能或 bug 修复都应伴随相应的测试。
     - 如果修改了前端代码，请在生成 PR 之前先运行 `yarn install` 确认依赖完整，再执行 `npx shadow-cljs compile app`，确保编译顺利完成。
-    - 如需通过代理访问依赖或构建产物，请在执行上述命令前设置 `HTTP_PROXY` 与 `HTTPS_PROXY` 环境变量为 `http://127.0.0.1:8080`，让 `shadow-cljs` 使用本地代理。
     - 运行后端测试的命令是 `clj -M:test`。
     - **注意:** `readme.org` 中已指出当前测试套件存在已知失败。在修复相关模块前，请不要尝试“修复”这些已知的测试失败。
     - **React Hook 组件调用:** 若组件内部使用 React 的 Hook（如 `useEffect`、`useState`），调用该组件时必须使用 `[:f> my-component]` 形式。
@@ -92,11 +91,14 @@ cat > ~/.m2/settings.xml <<'EOF'
 </settings>
 EOF
 
-export HTTP_PROXY=http://127.0.0.1:8080
-export HTTPS_PROXY=http://127.0.0.1:8080
+```
+在初始化完成后，请先运行 `npm install` 安装所有 NPM 依赖，然后执行以下命令下载 ClojureScript 编译所需的 jar 包：
+
+```bash
+npx shadow-cljs deps
 ```
 
-这些环境变量同样适用于 `yarn` 和 `shadow-cljs`，可确保在编译前端代码时也通过本地 8080 代理访问外部依赖。
+该命令会根据 `shadow-cljs.edn` 的配置解析依赖并下载相应的 jar 包，确保编译环境完整。
 
 
 ## 7. 权限与模块说明
