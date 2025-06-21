@@ -20,12 +20,26 @@
 (def 治疗情况Enum (m/schema [:enum :治愈 :好转 :仍有症状 :未治疗 :病情稳定 :其他]))
 (def 是否Enum (m/schema [:enum :是 :否])) ; 对应 "是" / "否"
 
+(defn not-none?
+  "判断字段是否为非 \"无\" 或 nil 的值"
+  [v]
+  (and v (not= v :无) (not= v "无")))
+
+(def 过敏史Spec
+  (m/schema
+   [:map {:disease/tag {:label "过敏史" :color "magenta"}
+          :disease/predicate true?}
+    [:有无 :boolean]
+    [:过敏源 [:maybe :string]]
+    [:过敏时间 [:maybe :string]]]))
+
 ;; --- 各系统评估 Spec 定义 ---
 
 ;; 1. 循环系统
 (def 高血压详情Spec
   (m/schema
-   [:map
+   [:map {:disease/tag {:label "高血压" :color "volcano"}
+          :disease/predicate seq}
     [:病史时长 {:optional true} [:maybe [:enum :小于1年 :1至5年 :5至10年 :大于10年]]]
     [:分级 {:optional true} [:maybe [:enum :Ⅰ级 :Ⅱ级 :Ⅲ级]]]
     [:治疗 {:optional true}
@@ -45,7 +59,8 @@
 
 (def 心脏疾病通用详情Spec
   (m/schema
-   [:map
+   [:map {:disease/tag {:label "心脏病" :color "red"}
+          :disease/predicate not-none?}
     [:有无 {:optional true} 有无Enum]
     [:描述 {:optional true} OptionalString] ; 对应 "（可输入内容）"
     [:治疗情况 {:optional true} 治疗情况Enum]
@@ -293,7 +308,8 @@
 
 (def 糖尿病病史详情Spec
   (m/schema
-   [:map
+   [:map {:disease/tag {:label "糖尿病" :color "purple"}
+          :disease/predicate not-none?}
     [:类型 {:optional true} [:maybe [:enum :1型糖尿病 :2型糖尿病]]]
     [:控制方式 {:optional true} [:maybe [:enum :饮食控制 :药物控制 :胰岛素控制 :未控制]]]
     [:药物详情 {:optional true} OptionalString]
