@@ -12,7 +12,7 @@
 (def route-data
   {:muuntaja formats/instance
    :coercion malli/coercion
-   :swagger {:id :hc.hospital.web.routes.role-api/role-api}
+   :swagger {:id :hc.hospital.web.routes.api/api}
    :middleware [parameters/parameters-middleware
                 muuntaja/format-negotiate-middleware
                 muuntaja/format-response-middleware
