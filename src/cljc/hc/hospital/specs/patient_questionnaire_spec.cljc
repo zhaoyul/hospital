@@ -32,13 +32,19 @@
     [:院区 [:enum {:error/message {:zh "院区必须为中心院区或积水潭院区"}}
           "中心院区" "积水潭院区"]]]))
 
+(def 过敏史Spec
+  "过敏史结构，同时用于生成疾病标签"
+  (m/schema
+   [:map {:disease/tag {:label "过敏史" :color "magenta"}
+          :disease/predicate true?}
+    [:有无 :boolean]
+    [:过敏源 [:maybe :string]]
+    [:过敏时间 [:maybe :string]]]))
+
 (def PatientMedicalSummarySpec
   (m/schema
    [:map
-    [:过敏史 [:map
-           [:有无 :boolean]
-           [:过敏源 [:maybe :string]]
-           [:过敏时间 [:maybe :string]]]]
+    [:过敏史 过敏史Spec]
     [:吸烟史 [:map
            [:有无 :boolean]
            [:年数 [:maybe :int]]

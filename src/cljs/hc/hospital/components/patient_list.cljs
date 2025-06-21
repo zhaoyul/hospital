@@ -83,7 +83,11 @@
            [:div
             [:div {:style {:fontWeight "500"}} (:name item)]
             [:div {:style {:fontSize "12px" :color "gray"}}
-             (str (:gender item) " " (:age item) " " (:anesthesia-type item))]]]
+             (str (:gender item) " " (:age item) " " (:anesthesia-type item))]
+            (when (seq (:tags item))
+              [:div {:style {:marginTop "4px"}}
+               (for [{:keys [label color]} (:tags item)]
+                 ^{:key label} [:> Tag {:color color :style {:marginRight "2px"}} label])])]]
           [:div {:style {:textAlign "right"}}
            [:div {:style {:fontSize "12px" :color "gray" :marginBottom "4px"}} (:date item)]
            [:> Tag {:color (case (:status item)

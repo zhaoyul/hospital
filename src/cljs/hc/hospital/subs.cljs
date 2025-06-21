@@ -2,7 +2,8 @@
   "订阅定义，提供组件访问应用状态的方式。"
   (:require [re-frame.core :as rf]
             [clojure.string :as str]
-            [hc.hospital.utils :as utils]))
+            [hc.hospital.utils :as utils]
+            [hc.hospital.disease-tags :as disease-tags]))
 
 (rf/reg-sub ::all-patient-assessments
             (fn [db _]
@@ -41,19 +42,20 @@
               (letfn [(format-gender [g] (case g "男" "男" "女" "女" "其他" "其他" "未知"))
                       (format-date-str [d] (when d (utils/format-date d "YYYY-MM-DD")))
                       (patient-from-api-assessment [assessment]
-              ;; 直接从 canonical 结构提取数据
                         (let [basic-info (get-in assessment [:assessment_data :基本信息] {})
-                              anesthesia-plan (get-in assessment [:assessment_data :麻醉评估与医嘱] {})]
-                          {:key (:patient_id assessment) ; patient_id is from the wrapper, not assessment_data
+                              anesthesia-plan (get-in assessment [:assessment_data :麻醉评估与医嘱] {})
+                              tags (disease-tags/assessment->disease-tags (:assessment_data assessment))]
+                          {:key (:patient_id assessment)
                            :name (or (:姓名 basic-info) "未知姓名")
                            :patient-id-display (or (:门诊号 basic-info) (:patient_id assessment))
                            :gender (format-gender (:性别 basic-info))
                            :age (str (or (:年龄 basic-info) "未知") "岁")
                            :anesthesia-type (or (:拟行麻醉方式 anesthesia-plan) "未知麻醉方式")
-                 ;; Timestamps are now directly in basic_info according to canonical server structure
-                           :date (format-date-str (:评估更新时间 basic-info)) ; Use 评估更新时间
+                           :date (format-date-str (:评估更新时间 basic-info))
                            :status (or (:评估状态 basic-info) "待评估")
-                           :checkin_time (:checkin_time assessment)}))] ; Use 评估状态
+                           :checkin_time (:checkin_time assessment)
+                           :tags tags}))
+                        ]
 
                 (let [patients-from-api (if (seq api-assessments)
                                           (mapv patient-from-api-assessment api-assessments)
