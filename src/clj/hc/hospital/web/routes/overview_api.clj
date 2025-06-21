@@ -20,7 +20,7 @@
                 muuntaja/format-response-middleware
                 coercion/coerce-exceptions-middleware
                 muuntaja/format-request-middleware
-               exception/wrap-exception]})
+                exception/wrap-exception]})
 
 (def increment-body-spec
   (into [:map {:closed false}
@@ -30,17 +30,17 @@
 
 (defn overview-api-routes [opts]
   (let [query-fn (:query-fn opts)]
-    [["/overview/stats"
-      {:get {:summary "获取统计信息"
-             :parameters {:query [:map {:closed false}
-                                  [:date {:optional true} string?]]}
+    ["/overview/stats"
+     {:get {:summary "获取统计信息"
+            :parameters {:query [:map {:closed false}
+                                 [:date {:optional true} string?]]}
+            :handler (fn [req]
+                       (overview/get-stats (assoc req :query-fn query-fn)))}
+      :post {:summary "更新统计信息"
+             :parameters {:body increment-body-spec}
              :handler (fn [req]
-                        (overview/get-stats (assoc req :query-fn query-fn)))}
-       :post {:summary "更新统计信息"
-              :parameters {:body increment-body-spec}
-              :handler (fn [req]
-                         (overview/increment-stats! (assoc req :query-fn query-fn)))
-              :middleware [wrap-restricted]}}]]))
+                        (overview/increment-stats! (assoc req :query-fn query-fn)))
+             :middleware [wrap-restricted]}}]))
 
 (derive :reitit.routes/overview-api :reitit/routes)
 
