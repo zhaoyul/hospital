@@ -3,6 +3,8 @@
             [hc.hospital.web.middleware.auth :refer [wrap-restricted]]
             [hc.hospital.web.middleware.exception :as exception]
             [hc.hospital.web.middleware.formats :as formats]
+            [hc.hospital.specs.daily-stats-spec :as ds-spec]
+            [malli.core :as m]
             [integrant.core :as ig]
             [reitit.coercion.malli :as malli]
             [reitit.ring.coercion :as coercion]
@@ -18,7 +20,13 @@
                 muuntaja/format-response-middleware
                 coercion/coerce-exceptions-middleware
                 muuntaja/format-request-middleware
-                exception/wrap-exception]})
+               exception/wrap-exception]})
+
+(def increment-body-spec
+  (into [:map {:closed false}
+         [:date {:optional true} string?]]
+        (for [[k _ _] (m/children ds-spec/DailyStatsDataSpec)]
+          [k {:optional true} int?])))
 
 (defn overview-api-routes [opts]
   (let [query-fn (:query-fn opts)]
@@ -29,14 +37,7 @@
              :handler (fn [req]
                         (overview/get-stats (assoc req :query-fn query-fn)))}
        :post {:summary "更新统计信息"
-              :parameters {:body [:map {:closed false}
-                                  [:date {:optional true} string?]
-                                  [:total_visits_inc {:optional true} int?]
-                                  [:patient_count_inc {:optional true} int?]
-                                  [:signed_count_inc {:optional true} int?]
-                                  [:inpatient_count_inc {:optional true} int?]
-                                  [:outpatient_count_inc {:optional true} int?]
-                                  [:assessment_count_inc {:optional true} int?]]}
+              :parameters {:body increment-body-spec}
               :handler (fn [req]
                          (overview/increment-stats! (assoc req :query-fn query-fn)))
               :middleware [wrap-restricted]}}]]))
