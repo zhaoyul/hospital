@@ -17,7 +17,7 @@
                                       :signature_b64 signature_b64})
       (http-response/ok {:message "用户注册成功"})
       (catch Exception e
-        (if (re-find #"UNIQUE constraint failed: doctors.username" (.getMessage e))
+        (if (re-find #"UNIQUE constraint failed: (?:users|doctors)\.username" (.getMessage e))
           (http-response/conflict {:error "用户名已存在"})
           (do
             (println "注册用户时发生错误:" e)

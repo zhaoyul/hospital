@@ -64,7 +64,8 @@
                          :assessment_status patient-status
                          :patient_name_pinyin pinyin
                          :patient_name_initial initial
-                         :doctor_signature_b64 doctor-signature})
+                         :doctor_signature_b64 doctor-signature
+                         :checkin_time checkin-time})
               (when-let [new-assessment (query-fn :get-patient-assessment-by-id {:patient_id patient-id})]
                 (query-fn :upsert-consent-form!
                           {:assessment_id (:id new-assessment)
@@ -147,10 +148,7 @@
   (try
     (let [existing-assessment (query-fn :get-patient-assessment-by-id {:patient_id patient-id})]
       (if (seq existing-assessment)
-        (let [;; It's important to decide where doctor_signature_b64 comes from in the `body`
-              ;; Assuming it's at the top level of `body` as :doctor_signature_b64 for this example
-              ;; Or, if it's nested, e.g., (get-in body [:基本信息 :医生签名图片])
-              doctor-signature (get body :doctor_signature_b64) ; Placeholder: adjust key as per actual client data
+        (let [doctor-signature (get-in body [:基本信息 :医生签名图片])
               _ (log/info "医生签名图片长度 (update):" (if doctor-signature (count doctor-signature) 0))
 
               ;; Remove signature from body before generating JSON to avoid storing it inside assessment_data JSON

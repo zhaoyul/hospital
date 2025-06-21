@@ -2,9 +2,12 @@
   "组装 Ring 处理器与路由"
   (:require
    [hc.hospital.web.middleware.core :as middleware]
-   [hc.hospital.web.routes.user-api]
-   [hc.hospital.web.routes.patient-api]
-   [hc.hospital.web.routes.patient-pages]
+  [hc.hospital.web.routes.user-api]
+  [hc.hospital.web.routes.patient-api]
+  [hc.hospital.web.routes.consent-form-api]
+  [hc.hospital.web.routes.role-api]
+  [hc.hospital.web.routes.overview-api]
+  [hc.hospital.web.routes.patient-pages]
    [integrant.core :as ig]
    [reitit.ring :as ring]
    [reitit.swagger-ui :as swagger-ui]

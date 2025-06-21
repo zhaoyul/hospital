@@ -3,12 +3,14 @@
             [hc.hospital.test-utils :refer [system-fixture *sys* GET PUT POST DELETE]] ; Added DELETE
             [cheshire.core :as json]
             [integrant.core :as ig]
-            [ring.util.codec :as codec]))
+            [clojure.java.io :as io]
+            [ring.util.codec :as codec]
+            [hc.hospital.web.controllers.patient-api :as patient-api]))
 
 (use-fixtures :once (system-fixture))
 
 (defn get-app []
-  (get-in @*sys* [:ring/handler :handler]))
+  (:handler/ring @*sys*))
 
 (defn get-query-fn []
   ;; In some setups the query-fn is stored directly under :db.sql/query-fn,
@@ -22,18 +24,30 @@
   (let [app (get-app)
         query-fn (get-query-fn)
         patient-id (str "PAT" (rand-int 100000)) ; More realistic patient ID
-        initial-assessment-data {:基本信息 {:门诊号 patient-id :姓名 "张三" :年龄 30 :性别 "男"}
+        initial-assessment-data {:基本信息 {:门诊号 patient-id
+                                   :姓名 "张三"
+                                   :年龄 30
+                                   :性别 "男"
+                                   :身份证号 nil
+                                   :手机号 nil
+                                   :院区 nil
+                                   :签到时间 "2099-01-01T00:00:00Z"}
                                  :medical_history {:allergy {:has_history false}}}
         signature-key-path [:基本信息 :医生签名图片] ; Path to the signature in the response
 
-        ;; Helper to parse response body
-        parse-body (fn [body] (json/parse-string (slurp body) true))]
+        ;; Helper to parse response body supporting different body types
+        parse-body (fn [body]
+                     (cond
+                       (string? body) (json/parse-string body true)
+                       (instance? java.io.InputStream body) (json/parse-stream (io/reader body) true)
+                       (map? body) body
+                       :else (json/parse-string (slurp body) true)))]
 
     ;; 0. Initial cleanup (in case of previous test failure)
     (query-fn :delete-patient-assessment-by-id! {:patient_id patient-id})
 
     (testing "通过API提交新的评估 (不含签名)"
-      (let [response (POST app (str "/api/patient/assessment") initial-assessment-data)
+      (let [response (POST app (str "/api/patient/assessment") (json/encode initial-assessment-data))
             body (parse-body (:body response))]
         (is (= 200 (:status response)))
         (is (= "评估提交成功！" (:message body)))
@@ -45,7 +59,7 @@
     (testing "通过API更新评估以添加签名"
       (let [signature-to-add "data:image/png;base64,ADDED_SIGNATURE"
             updated-data-with-signature (assoc-in initial-assessment-data signature-key-path signature-to-add)
-            response (PUT app (str "/api/patient/assessment/" patient-id) updated-data-with-signature)
+              response (PUT app (str "/api/patient/assessment/" patient-id) (json/encode updated-data-with-signature))
             body (parse-body (:body response))]
         (is (= 200 (:status response)))
         (is (= "评估更新成功！" (:message body)))
@@ -64,7 +78,7 @@
     (testing "通过API更新评估以修改签名"
       (let [signature-to-modify "data:image/png;base64,MODIFIED_SIGNATURE"
             updated-data-with-modified-signature (assoc-in initial-assessment-data signature-key-path signature-to-modify)
-            response (PUT app (str "/api/patient/assessment/" patient-id) updated-data-with-modified-signature)
+              response (PUT app (str "/api/patient/assessment/" patient-id) (json/encode updated-data-with-modified-signature))
             body (parse-body (:body response))]
         (is (= 200 (:status response)))
         (is (= "评估更新成功！" (:message body)))
@@ -74,7 +88,7 @@
 
     (testing "通过API更新评估以清除签名"
       (let [updated-data-without-signature (assoc-in initial-assessment-data signature-key-path nil) ; Or remove the key
-            response (PUT app (str "/api/patient/assessment/" patient-id) updated-data-without-signature)
+              response (PUT app (str "/api/patient/assessment/" patient-id) (json/encode updated-data-without-signature))
             body (parse-body (:body response))]
         (is (= 200 (:status response)))
         (is (= "评估更新成功！" (:message body)))
@@ -89,9 +103,9 @@
 
     (testing "清理测试数据"
       (let [delete-result (query-fn :delete-patient-assessment-by-id! {:patient_id patient-id})]
-(is (= 1 delete-result) "删除操作应返回影响的行数为1")
+        (is (= 1 delete-result) "删除操作应返回影响的行数为1")
         (let [retrieved-after-delete (query-fn :get-patient-assessment-by-id {:patient_id patient-id})]
-          (is (nil? retrieved-after-delete) "删除后应无法从数据库检索到评估"))))))
+          (is (nil? retrieved-after-delete) "删除后应无法从数据库检索到评估")))))
 
 (deftest patient-find-and-list-test
   (let [query-fn (get-query-fn)
@@ -152,3 +166,5 @@
 
     (query-fn :delete-patient-assessment-by-id! {:patient_id id1})
     (query-fn :delete-patient-assessment-by-id! {:patient_id id2})))
+)
+)

@@ -5,7 +5,7 @@
 
 (use-fixtures :once (system-fixture))
 
-(defn app [] (get-in @*sys* [:ring/handler :handler]))
+(defn app [] (:handler/ring @*sys*))
 
 (deftest consent-form-api
   (let [app (app)
@@ -14,12 +14,18 @@
         _ (qf :insert-patient-assessment!
               {:patient_id patient-id
                :assessment_data "{}"
+               :patient_name "测试"
+               :assessment_status "待评估"
                :patient_name_pinyin "p"
                :patient_name_initial "p"
-               :doctor_signature_b64 nil})
+               :doctor_signature_b64 nil
+               :checkin_time "2099-01-01T00:00:00Z"
+               :身份证号 nil
+               :手机号 nil
+               :院区 nil})
         assessments (qf :get-all-patient-assessments {})
         assessment-id (:id (first (filter #(= patient-id (:patient_id %)) assessments)))
-        payload {:assessment_id assessment-id :sedation_form "d" :anesthesia_form "e"}]
+        payload {:assessment_id assessment-id :sedation_form "d" :pre_anesthesia_form nil :anesthesia_form "e"}]
     (let [resp (POST app "/api/consent-forms" (json/encode payload)
                  {"content-type" "application/json"})]
       (is (= 200 (:status resp))))
