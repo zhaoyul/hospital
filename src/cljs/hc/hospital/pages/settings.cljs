@@ -103,13 +103,17 @@
                            :style {:marginTop 0 :marginBottom "16px"
                                    :fontSize "18px" :fontWeight 500 :color "#333"}}
       "系统设置"]
-     [:> Tabs {:defaultActiveKey (cond
-                                    view-users? "users"
-                                    view-roles? "roles"
-                                    :else nil)}
-      (when view-users?
-        [:> Tabs.TabPane {:tab "用户设置" :key "users"}
-         [:f> user-settings-tab]])
-      (when view-roles?
-        [:> Tabs.TabPane {:tab "角色设置" :key "roles"}
-         [:f> role-settings-tab]])]]))
+     (let [tabs-items (-> []
+                          (cond-> view-users?
+                            (conj {:label "用户设置"
+                                   :key "users"
+                                   :children (r/as-element [:f> user-settings-tab])}))
+                          (cond-> view-roles?
+                            (conj {:label "角色设置"
+                                   :key "roles"
+                                   :children (r/as-element [:f> role-settings-tab])})))]
+       [:> Tabs {:defaultActiveKey (cond
+                                      view-users? "users"
+                                      view-roles? "roles"
+                                      :else nil)
+                 :items (clj->js tabs-items)}])]))
