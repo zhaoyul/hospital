@@ -67,11 +67,16 @@
 
 (rf/reg-event-db ::set-all-assessments
                  (fn [db [_ assessments]]
-                   (-> db
-                       (assoc-in [:anesthesia :all-patient-assessments] assessments)
-                       (assoc-in [:anesthesia :current-patient-id] nil) ; Corrected path
-                       (assoc-in [:anesthesia :current-assessment-id] nil)
-                       (assoc :fetch-assessments-error nil))))
+                   (let [current-patient-id (get-in db [:anesthesia :current-patient-id])
+                         matched (some #(when (= (:patient_id %) current-patient-id) %) assessments)
+                         new-canonical (or (:assessment_data matched) default-canonical-assessment)
+                         new-assessment-id (:id matched)]
+                     (-> db
+                         (assoc-in [:anesthesia :all-patient-assessments] assessments)
+                         (assoc-in [:anesthesia :current-patient-id] (when matched current-patient-id))
+                         (assoc-in [:anesthesia :current-assessment-id] new-assessment-id)
+                         (assoc-in [:anesthesia :current-assessment-canonical] new-canonical)
+                         (assoc :fetch-assessments-error nil)))))
 
 (rf/reg-event-db ::fetch-all-assessments-failed
                  (fn [db [_ error]]
