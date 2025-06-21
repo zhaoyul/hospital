@@ -1,5 +1,6 @@
 (ns hc.hospital.db.daily-stats
-  (:require [cheshire.core :as json]))
+  (:require [cheshire.core :as json]
+            [clojure.string :as str]))
 
 (def default-stats
   {:total_visits 0
@@ -29,6 +30,10 @@
 (defn increment-daily-stats!
   [query-fn date increments]
   (let [existing (or (:data (get-stats-by-date query-fn date)) default-stats)
-        new-data (merge-with + existing increments)]
+        normalized (into {}
+                          (map (fn [[k v]]
+                                 [(-> k name (str/replace #"_inc$" "") keyword) v])
+                               increments))
+        new-data (merge-with + existing normalized)]
     (upsert-daily-stats! query-fn date new-data)
     new-data))

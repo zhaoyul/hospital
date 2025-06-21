@@ -17,19 +17,18 @@ SET assessment_data = :assessment_data,
     patient_name_pinyin = :patient_name_pinyin,
     patient_name_initial = :patient_name_initial,
     doctor_signature_b64 = :doctor_signature_b64, -- 中文注释：添加 doctor_signature_b64 更新
-    checkin_time = :checkin_time,
     updated_at = datetime('now')
 WHERE patient_id = :patient_id;
 
 -- 根据患者ID获取患者评估
 -- :name get-patient-assessment-by-id :? :1
 -- :doc 通过 patient_id 检索患者评估
-SELECT id, patient_id, assessment_data, patient_name, assessment_status, patient_name_pinyin, patient_name_initial, doctor_signature_b64, created_at, updated_at -- 中文注释：选取 doctor_signature_b64 列
+SELECT id, patient_id, assessment_data, patient_name, assessment_status, patient_name_pinyin, patient_name_initial, doctor_signature_b64, checkin_time, created_at, updated_at -- 中文注释：选取 doctor_signature_b64 列及 checkin_time
 FROM patient_assessments WHERE patient_id = :patient_id;
 
 -- :name get-patient-assessment-by-assessment-id :? :1
 -- :doc 通过评估ID检索患者评估
-SELECT id, patient_id, assessment_data, patient_name, assessment_status, patient_name_pinyin, patient_name_initial, doctor_signature_b64, created_at, updated_at
+SELECT id, patient_id, assessment_data, patient_name, assessment_status, patient_name_pinyin, patient_name_initial, doctor_signature_b64, checkin_time, created_at, updated_at
 FROM patient_assessments WHERE id = :assessment_id;
 
 -- 获取所有患者评估信息
