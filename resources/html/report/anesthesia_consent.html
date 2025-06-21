@@ -330,8 +330,21 @@
                 });
             };
 
+            const loadDoctor = () => {
+                fetch('/api/me')
+                  .then(r => r.ok ? r.json() : Promise.reject('no-doctor'))
+                  .then(({doctor}) => {
+                      const sign = doctor?.signature_b64 || doctor?.name;
+                      const el = container.querySelector('[data-field="doctor_sign"]');
+                      if (el && sign && el.innerHTML.trim() === '&nbsp;') {
+                          el.innerHTML = sign;
+                      }
+                  })
+                  .catch(() => {});
+            };
+
             const loadConsent = (info = {}) => {
-                if (!assessmentId) { fillFields(info); return; }
+                if (!assessmentId) { fillFields(info); loadDoctor(); return; }
                 fetch(`/api/consent-forms/${assessmentId}`)
                   .then(r => r.ok ? r.json() : {})
                   .then(consent => {
@@ -340,8 +353,9 @@
                       } else {
                           fillFields(info);
                       }
+                      loadDoctor();
                   })
-                  .catch(() => fillFields(info));
+                  .catch(() => { fillFields(info); loadDoctor(); });
             };
 
             const loadPatient = () => {
