@@ -306,10 +306,13 @@
                 fetch('/api/me')
                   .then(r => r.ok ? r.json() : Promise.reject('no-doctor'))
                   .then(({doctor}) => {
-                      const sign = doctor?.signature_b64 || doctor?.name;
                       const el = form.querySelector('[data-field="doctor"]');
-                      if (el && sign && el.innerHTML.trim() === '&nbsp;') {
-                          el.innerHTML = sign;
+                      if (el && el.innerHTML.trim() === '&nbsp;') {
+                          if (doctor?.signature_b64) {
+                              el.innerHTML = `<img src="${doctor.signature_b64}" alt="医生签名" style="height:1.6em;"/>`;
+                          } else if (doctor?.name) {
+                              el.textContent = doctor.name;
+                          }
                       }
                   })
                   .catch(() => {});
