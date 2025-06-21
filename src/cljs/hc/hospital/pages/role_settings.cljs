@@ -1,10 +1,11 @@
 (ns hc.hospital.pages.role-settings
   (:require ["antd" :refer [Button Modal Table Tree Space]]
             ["react" :as React]
-            [hc.hospital.events :as events]
-            [hc.hospital.subs :as subs]
-            [re-frame.core :as rf]
-            [reagent.core :as r]))
+  [hc.hospital.events :as events]
+  [hc.hospital.subs :as subs]
+  [hc.hospital.permission-utils :as perm]
+  [re-frame.core :as rf]
+  [reagent.core :as r]))
 
 (def action-labels
   {"系统管理" {"view-users" "查看用户"
@@ -71,7 +72,8 @@
                                      (let [role (js->clj r :keywordize-keys true)]
                                        (r/as-element
                                         [:> Space {}
-                                         [:> Button {:type "link"
-                                                     :on-click #(rf/dispatch [::events/open-role-modal role])}
-                                          "权限"]])))}]}]
+                                         [perm/with-permission "系统管理" "edit-role"
+                                          [:> Button {:type "link"
+                                                      :on-click #(rf/dispatch [::events/open-role-modal role])}
+                                           "权限"]]])))}]}]
      [:f> role-modal]]))

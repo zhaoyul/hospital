@@ -12,6 +12,7 @@
    [hc.hospital.pages.settings :refer [system-settings-content]]
    [hc.hospital.pages.questionnaire :refer [questionnaire-list-content]]
    [hc.hospital.subs :as subs]
+   [hc.hospital.permission-utils :as perm]
    [re-frame.core :as rf]
    [reagent.core :as r]))
 
@@ -90,27 +91,17 @@
      ]))
 
 (defn right-side "患者麻醉管理\"patients\", 问卷列表\"assessment\", 系统设置\"settings\"" [active-tab]
-
-  (let [allowed (set (map :module @(rf/subscribe [::subs/current-role-permissions])))]
-    [:> Layout {:style {:height "calc(100vh - 64px)"
-                        :overflow "auto"
-                        :background "#f0f2f5"}}
-     [:div {:style {:padding "24px"}}
-      (case active-tab
-        "overview" [overview-content]
-        "patients" (if (contains? allowed "麻醉管理")
-                     [anesthesia-content]
-                     [:div "无权限"])
-        "assessment" (if (contains? allowed "问卷列表")
-                       [questionnaire-list-content]
-                       [:div "无权限"])
-        "checkin" (if (contains? allowed "签到登记")
-                    [:f> checkin-content]
-                    [:div "无权限"])
-        "settings" (if (contains? allowed "系统管理")
-                     [:f> system-settings-content]
-                     [:div "无权限"])
-        [:div "未知标签页内容"])]]))
+  [:> Layout {:style {:height "calc(100vh - 64px)"
+                      :overflow "auto"
+                      :background "#f0f2f5"}}
+   [:div {:style {:padding "24px"}}
+    (case active-tab
+      "overview" [overview-content]
+      "patients" [perm/with-permission "麻醉管理" "view" [:f> anesthesia-content] [:div "无权限"]]
+      "assessment" [perm/with-permission "问卷列表" "view" [:f> questionnaire-list-content] [:div "无权限"]]
+      "checkin" [perm/with-permission "签到登记" "view" [:f> checkin-content] [:div "无权限"]]
+      "settings" [perm/with-permission "系统管理" "view" [:f> system-settings-content] [:div "无权限"]]
+      [:div "未知标签页内容"])]])
 
 (defn anesthesia-home-page []
   (let [active-tab @(rf/subscribe [::subs/active-tab])

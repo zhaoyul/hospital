@@ -7,6 +7,7 @@
    [hc.hospital.pages.role-settings :refer [role-settings-tab]]
    [hc.hospital.events :as events]
    [hc.hospital.subs :as subs]
+   [hc.hospital.permission-utils :as perm]
    [re-frame.core :as rf]
    [reagent.core :as r]))
 
@@ -18,11 +19,12 @@
     (React/useEffect (fn [] (rf/dispatch [::events/initialize-users])))
 
     [:div
-     [:div {:style {:marginBottom "16px"}}
+    [:div {:style {:marginBottom "16px"}}
+     [perm/with-permission "系统管理" "create-user"
       [:> Button {:type "primary"
                   :icon (r/as-element [:> icons/PlusOutlined])
                   :on-click #(rf/dispatch [::events/open-user-modal nil])}
-       "新增医生"]]
+       "新增医生"]]]
 
      [:> Table {:dataSource users
                 :rowKey :id
@@ -74,31 +76,40 @@
                                      (let [user (js->clj record :keywordize-keys true)]
                                        (r/as-element
                                         [:> Space {}
-                                         [:> Button {:type "primary"
-                                                     :ghost true
-                                                     :size "small"
-                                                     :icon (r/as-element [:> icons/EditOutlined])
-                                                     :on-click #(rf/dispatch [::events/open-user-modal user])}
-                                          "编辑"]
-                                         [:> Button {:danger true
-                                                     :ghost true
-                                                     :size "small"
-                                                     :icon (r/as-element [:> icons/DeleteOutlined])
-                                                     :on-click #(rf/dispatch [::events/delete-user (:id user)])}
-                                          "删除"]])))}]}]
+                                         [perm/with-permission "系统管理" "edit-user"
+                                          [:> Button {:type "primary"
+                                                      :ghost true
+                                                      :size "small"
+                                                      :icon (r/as-element [:> icons/EditOutlined])
+                                                      :on-click #(rf/dispatch [::events/open-user-modal user])}
+                                           "编辑"]]
+                                         [perm/with-permission "系统管理" "delete-user"
+                                          [:> Button {:danger true
+                                                      :ghost true
+                                                      :size "small"
+                                                      :icon (r/as-element [:> icons/DeleteOutlined])
+                                                      :on-click #(rf/dispatch [::events/delete-user (:id user)])}
+                                           "删除"]]])))}]}]
 
      (when modal-open?
        [:f> user-modal {:visible? modal-open?
                         :editing-user editing-user}])]))
 
 (defn system-settings-content []
-  [:> Card
-   [:> Typography.Title {:level 2
-                         :style {:marginTop 0 :marginBottom "16px"
-                                 :fontSize "18px" :fontWeight 500 :color "#333"}}
-    "系统设置"]
-   [:> Tabs {:defaultActiveKey "users"}
-    [:> Tabs.TabPane {:tab "用户设置" :key "users"}
-     [:f> user-settings-tab]]
-    [:> Tabs.TabPane {:tab "角色设置" :key "roles"}
-     [:f> role-settings-tab]]]])
+  (let [view-users? (perm/allowed? "系统管理" "view-users")
+        view-roles? (perm/allowed? "系统管理" "view-roles")]
+    [:> Card
+     [:> Typography.Title {:level 2
+                           :style {:marginTop 0 :marginBottom "16px"
+                                   :fontSize "18px" :fontWeight 500 :color "#333"}}
+      "系统设置"]
+     [:> Tabs {:defaultActiveKey (cond
+                                    view-users? "users"
+                                    view-roles? "roles"
+                                    :else nil)}
+      (when view-users?
+        [:> Tabs.TabPane {:tab "用户设置" :key "users"}
+         [:f> user-settings-tab]])
+      (when view-roles?
+        [:> Tabs.TabPane {:tab "角色设置" :key "roles"}
+         [:f> role-settings-tab]])]]))

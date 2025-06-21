@@ -274,6 +274,14 @@
             (fn [db _]
               (get db :current-role-permissions [])))
 
+(rf/reg-sub ::has-permission?
+            :<- [::current-role-permissions]
+            (fn [permissions [_ module action]]
+              (some (fn [{m :module a :action}]
+                      (and (= m module)
+                           (= a action)))
+                    permissions)))
+
 (rf/reg-sub ::is-logged-in
             (fn [db _]
               (get db :is-logged-in false)))
