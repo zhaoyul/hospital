@@ -8,7 +8,7 @@ repl:
 	clj -M:dev:nrepl
 
 test:
-	clj -M:test -m kaocha.runner
+        clj -M:test
 
 uberjar:
 	clj -T:build all
