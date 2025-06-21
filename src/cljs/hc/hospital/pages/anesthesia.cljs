@@ -5,7 +5,7 @@
                                           ClockCircleOutlined
                                           CloseCircleOutlined EditOutlined
                                           FileTextOutlined HeartOutlined
-                                          MessageOutlined PrinterOutlined
+                                          MessageOutlined
                                           ProfileOutlined
                                           SaveOutlined SolutionOutlined
                                           UploadOutlined
@@ -584,12 +584,7 @@
    [:> Button {:type "primary" :icon (r/as-element [:> CloseCircleOutlined])
                :on-click #(rf/dispatch [::events/reject-patient])
                :danger true}
-    "驳回"]
-   (when (= patient-status "已批准") ; Check for the correct status string
-     [:> Button {:icon (r/as-element [:> PrinterOutlined])
-                 :on-click #(js/window.print)
-                 :style {:background "#1890ff" :borderColor "#1890ff" :color "white"}}
-      "打印表单"])])
+    "驳回"]])
 
 (defn- assessment-header [patient-name patient-status current-patient-id current-assessment-id sedation-open? talk-open? anesthesia-open?]
   [:> Card {:style {:marginBottom "12px"}}
