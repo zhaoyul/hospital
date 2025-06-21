@@ -571,7 +571,7 @@
                          :placeholder "评估备注（如有特殊情况请在此注明）"
                          :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :评估备注] (-> % .-target .-value)])}]]))
 
-(defn- assessment-action-buttons [patient-status]
+(defn- assessment-action-buttons [patient-status save-btn]
   [:> Space {:style {:marginLeft "16px"}}
    [:> Button {:type "primary" :icon (r/as-element [:> CheckCircleOutlined])
                :on-click #(rf/dispatch [::events/approve-patient])
@@ -584,9 +584,10 @@
    [:> Button {:type "primary" :icon (r/as-element [:> CloseCircleOutlined])
                :on-click #(rf/dispatch [::events/reject-patient])
                :danger true}
-    "驳回"]])
+    "驳回"]
+   [save-btn]])
 
-(defn- assessment-header [patient-name patient-status current-patient-id current-assessment-id sedation-open? talk-open? anesthesia-open?]
+(defn- assessment-header [patient-name patient-status current-patient-id current-assessment-id sedation-open? talk-open? anesthesia-open? save-btn]
   [:> Card {:style {:marginBottom "12px"}}
    [:div {:style {:display "flex" :justifyContent "space-between" :alignItems "center"}}
     [:h3 {:style {:fontSize "16px" :fontWeight "500"}} patient-name]
@@ -637,7 +638,7 @@
                      :onCancel #(reset! talk-open? false)}
            [:iframe {:src (str "/report/pre-anesthesia-consent?assessment-id=" current-assessment-id)
                      :style {:border "none" :width "100%" :height "100%"}}]]])
-       [assessment-action-buttons patient-status]])]])
+       [assessment-action-buttons patient-status save-btn]])]])
 
 (defn- assessment []
   (let [card-form-instances (r/atom {})
@@ -650,12 +651,7 @@
                                  (swap! card-form-instances assoc card-key form-instance))
 
         save-button (fn []
-                      [:> Layout.Footer {:style {:padding "10px 0"
-                                                 :background "white"
-                                                 :borderTop "1px solid #f0f0f0"
-                                                 :textAlign "center"}}
-                       [:> Button {:type "primary"
-                                   :size "large"
+                      [:> Button {:type "primary"
                                    :icon (r/as-element [:> SaveOutlined])
                                    :onClick (fn []
                                               (let [forms-map @card-form-instances]
@@ -668,8 +664,7 @@
                                                     (timbre/warn "No form instance found for card key:" card-key)))
                                                 (timbre/info "All card forms submitted, proceeding to save final assessment.")
                                                 (rf/dispatch [::events/save-final-assessment-later])))}
-                        ;; 稍等一会, db修改完成后再提交
-                        "保存评估结果"]])]
+                        "保存评估结果"])]
     (if current-patient-id
       ;; 有选择患者时的视图
       (let [basic-info @(rf/subscribe [::subs/canonical-basic-info])
@@ -680,7 +675,7 @@
         [:> Layout {:style {:display "flex" :flexDirection "column" :height "calc(100vh - 64px)"}}
          ;; Main scrollable content area for cards
          [:> Layout.Content {:style {:padding "5px 12px" :overflowY "auto" :flexGrow 1 :background "#f0f2f5"}}
-          [assessment-header patient-name patient-status current-patient-id current-assessment-id sedation-open? talk-open? anesthesia-open?]
+          [assessment-header patient-name patient-status current-patient-id current-assessment-id sedation-open? talk-open? anesthesia-open? save-button]
           [:f> patient-info-card {:report-form-instance-fn register-form-instance}]
           [general-condition-card]
           [medical-history-summary-card]
@@ -705,8 +700,7 @@
           [auxiliary-tests-card]
           [preoperative-orders-card]
           [remarks-card]
-          [signature-and-date-card]
-          [save-button]]])
+          [signature-and-date-card]]])
 
       ;; 无选择患者时的空状态
       [:div {:style {:display "flex" :justifyContent "center" :alignItems "center" :height "100%"}}
