@@ -1,18 +1,34 @@
-set -euo pipefail
+#!/bin/bash
+set -ex
 
-# 设置 Java 代理
-
-# 安装前端依赖
-yarn install
-
-
-# 下载 ClojureScript 编译所需的 jar 包
-npx shadow-cljs deps
-
-# 下载clojure依赖
-curl -x http://127.0.0.1:8080 -L -O https://github.com/clojure/brew-install/releases/latest/download/linux-install.sh
-
+curl -L -O https://github.com/clojure/brew-install/releases/latest/download/linux-install.sh
 chmod +x linux-install.sh
 sudo ./linux-install.sh
 
-clojure -P -M:dev:test:nrepl
+
+mkdir -p ~/.m2
+cat > ~/.m2/settings.xml <<'EOF'
+<settings>
+  <proxies>
+    <proxy>
+      <id>codexProxy</id>
+      <active>true</active>
+      <protocol>http</protocol>
+      <host>proxy</host>
+      <port>8080</port>
+    </proxy>
+  </proxies>
+</settings>
+EOF
+
+export http_proxy="http://localhost:8080"
+export https_proxy="https://localhost:8080"
+export all_proxy="sock5://localhost:8080"
+
+clojure -P -M:dev
+
+npx yarn install
+
+# 设置 Java 代理
+export JAVA_TOOL_OPTIONS='-Dhttp.proxyHost=proxy -Dhttp.proxyPort=8080 -Dhttps.proxyHost=proxy -Dhttps.proxyPort=8080'
+npx shadow-cljs deps
