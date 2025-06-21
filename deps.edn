@@ -80,7 +80,25 @@
                   :main-opts   ["-e" "(require 'pjstadig.humane-test-output) (pjstadig.humane-test-output/activate!)"
                                 "-m" "kaocha.runner"]}
           :lint {:extra-deps {clj-kondo/clj-kondo {:mvn/version "2025.06.05"}}
-                 :main-opts ["-m" "clj-kondo.main"]}}
+                 :main-opts ["-m" "clj-kondo.main"]}
+          :coverage {:extra-deps {cloverage/cloverage {:mvn/version "1.2.4"}
+                                 criterium/criterium {:mvn/version "0.4.6"}
+                                 expound/expound {:mvn/version "0.9.0"}
+                                 integrant/repl {:mvn/version "0.3.3"}
+                                 pjstadig/humane-test-output {:mvn/version "0.11.0"}
+                                 ring/ring-devel {:mvn/version "1.11.0"}
+                                 ring/ring-mock {:mvn/version "0.4.0"}
+                                 io.github.kit-clj/kit-generator {:mvn/version "0.2.5"}
+                                 org.clojure/tools.namespace {:mvn/version "1.4.5"}
+                                 peridot/peridot {:mvn/version "0.5.4"}
+                                 org.clj-commons/byte-streams {:mvn/version "0.3.4"}
+                                 com.lambdaisland/classpath {:mvn/version "0.5.48"}
+                                 com.gfredericks/test.chuck {:mvn/version "0.2.15"}
+                                 lambdaisland/kaocha-cljs {:mvn/version "1.0.107"}
+                                 lambdaisland/kaocha-cljs2 {:mvn/version "0.2.72"}
+                                 lambdaisland/funnel {:mvn/version "1.6.93"}}
+                     :extra-paths ["env/dev/clj" "env/dev/resources" "env/test/resources" "test/clj"]
+                     :main-opts ["-m" "cloverage.coverage" "--src-ns-path" "src/clj" "--test-ns-path" "test/clj"]}}
  :mvn/repos
  {"clojars" {:url "https://repo.clojars.org/"}
   "central" {:url "https://repo1.maven.org/maven2/"}

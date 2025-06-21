@@ -10,5 +10,8 @@ repl:
 test:
         clj -M:test
 
+coverage:
+        clj -M:coverage
+
 uberjar:
 	clj -T:build all

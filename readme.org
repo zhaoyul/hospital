@@ -346,6 +346,15 @@
 
    建议在进一步开发或部署前调查并解决这些测试问题，以确保后端代码的稳定性和正确性。
 
+** 4. 生成测试覆盖率 (Cloverage)
+   使用 Cloverage 可以查看后端代码的测试覆盖率：
+   #+BEGIN_SRC bash
+   clj -M:coverage
+   # 或者
+   make coverage
+   #+END_SRC
+   生成的报告位于 `target/coverage` 目录。
+
 * 构建和部署
 ** 构建 Uberjar (独立 Jar 包)
    #+BEGIN_SRC bash
