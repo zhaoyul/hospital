@@ -109,42 +109,46 @@
                  :key patient-id} ; Key to re-initialize form when patient changes
         ;; 第一部分：身高、体重、精神状态、活动能力
         [:div {:key "vital-signs-group-1"}
-         [:div {:style (assoc grid-style-4-col :marginBottom "16px")}
-          [:> Form.Item {:label "身高" :name :身高cm}
-           [:> InputNumber {:placeholder "cm"
-                            :addonAfter "cm"
-                            :style {:width "100%"}
-                            :min 0
-                            :disabled (not editable?)
-                            :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :身高cm] %])}]]
-          [:> Form.Item {:label "体重" :name :体重kg}
-           [:> InputNumber {:placeholder "kg"
-                            :addonAfter "kg"
-                            :style {:width "100%"}
-                            :min 0
-                            :disabled (not editable?)
-                            :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :体重kg] %])}]]
-          [:> Form.Item {:label "精神状态" :name :精神状态} ; Updated name
-           [:> Select {:placeholder "请选择"
-                       :style {:width "100%"}
-                       :allowClear true
-                       :options mental-status-options
-                       :disabled (not editable?)
-                       :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :精神状态] %])}]] ; Updated path
-          [:> Form.Item {:label "活动能力" :name :活动能力} ; Updated name
-           [:> Select {:placeholder "请选择"
-                       :style {:width "100%"}
-                       :allowClear true
-                       :options activity-level-options
-                       :disabled (not editable?)
-                       :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :活动能力] %])}]]]] ; Updated path
+         [:> Row {:gutter [16 16] :style {:marginBottom "16px"}}
+          [:> Col {:xs 24 :sm 12 :md 6}
+           [:> Form.Item {:label "身高" :name :身高cm}
+            [:> InputNumber {:placeholder "cm"
+                             :addonAfter "cm"
+                             :style {:width "100%"}
+                             :min 0
+                             :disabled (not editable?)
+                             :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :身高cm] %])}]]]
+          [:> Col {:xs 24 :sm 12 :md 6}
+           [:> Form.Item {:label "体重" :name :体重kg}
+            [:> InputNumber {:placeholder "kg"
+                             :addonAfter "kg"
+                             :style {:width "100%"}
+                             :min 0
+                             :disabled (not editable?)
+                             :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :体重kg] %])}]]]
+          [:> Col {:xs 24 :sm 12 :md 6}
+           [:> Form.Item {:label "精神状态" :name :精神状态}
+            [:> Select {:placeholder "请选择"
+                        :style {:width "100%"}
+                        :allowClear true
+                        :options mental-status-options
+                        :disabled (not editable?)
+                        :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :精神状态] %])}]]]
+          [:> Col {:xs 24 :sm 12 :md 6}
+           [:> Form.Item {:label "活动能力" :name :活动能力}
+            [:> Select {:placeholder "请选择"
+                        :style {:width "100%"}
+                        :allowClear true
+                        :options activity-level-options
+                        :disabled (not editable?)
+                        :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :活动能力] %])}]]]]]
 
         ;; 分隔线 (可选，如果视觉上需要)
         ;; [:> Divider {:style {:margin "0 0 16px 0"}}]
 
         ;; 第二部分：血压、脉搏、呼吸、体温、SpO2
         [:div {:key "vital-signs-group-2"}
-         [:div {:style {:display "flex" :flexWrap "wrap" :gap "8px 24px"}} ; 增大列间距
+         [:> Row {:gutter [16 24]}
           ;; 血压 - Temporarily commented out as per instructions
           #_[:> Form.Item {:label "血压"}
              [:> Space {:align "center"} ; Use Space as the single child
@@ -162,41 +166,45 @@
               [:span {:style {:marginLeft "4px"}} "mmHg"]]]
 
           ;; 脉搏
-          [:> Form.Item {:label "脉搏" :name :脉搏次每分}
-           [:> InputNumber {:placeholder "次/分"
-                            :addonAfter "次/分"
-                            :min 0
-                            :style {:width "130px"}
-                            :disabled (not editable?)
-                            :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :脉搏次每分] %])}]]
+          [:> Col {:xs 24 :sm 12 :md 6}
+           [:> Form.Item {:label "脉搏" :name :脉搏次每分}
+            [:> InputNumber {:placeholder "次/分"
+                             :addonAfter "次/分"
+                             :min 0
+                             :style {:width "130px"}
+                             :disabled (not editable?)
+                             :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :脉搏次每分] %])}]]]
 
           ;; 呼吸
-          [:> Form.Item {:label "呼吸" :name :呼吸次每分}
-           [:> InputNumber {:placeholder "次/分"
-                            :addonAfter "次/分"
-                            :min 0
-                            :style {:width "130px"}
-                            :disabled (not editable?)
-                            :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :呼吸次每分] %])}]]
+          [:> Col {:xs 24 :sm 12 :md 6}
+           [:> Form.Item {:label "呼吸" :name :呼吸次每分}
+            [:> InputNumber {:placeholder "次/分"
+                             :addonAfter "次/分"
+                             :min 0
+                             :style {:width "130px"}
+                             :disabled (not editable?)
+                             :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :呼吸次每分] %])}]]]
 
           ;; 体温
-          [:> Form.Item {:label "体温" :name :体温摄氏度}
-           [:> InputNumber {:placeholder "°C"
-                            :addonAfter "°C"
-                            :precision 1
-                            :step 0.1
-                            :style {:width "110px"}
-                            :disabled (not editable?)
-                            :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :体温摄氏度] %])}]]
+          [:> Col {:xs 24 :sm 12 :md 6}
+           [:> Form.Item {:label "体温" :name :体温摄氏度}
+            [:> InputNumber {:placeholder "°C"
+                             :addonAfter "°C"
+                             :precision 1
+                             :step 0.1
+                             :style {:width "110px"}
+                             :disabled (not editable?)
+                             :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :体温摄氏度] %])}]]]
 
           ;; SpO2
-          [:> Form.Item {:label "SpO2" :name :SpO2百分比}
-           [:> InputNumber {:placeholder "%"
-                            :addonAfter "%"
-                            :min 0 :max 100
-                            :style {:width "100px"}
-                            :disabled (not editable?)
-                            :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :SpO2百分比] %])}]]]]]
+          [:> Col {:xs 24 :sm 12 :md 6}
+           [:> Form.Item {:label "SpO2" :name :SpO2百分比}
+            [:> InputNumber {:placeholder "%"
+                             :addonAfter "%"
+                             :min 0 :max 100
+                             :style {:width "100px"}
+                             :disabled (not editable?)
+                             :onChange #(rf/dispatch [::events/update-canonical-assessment-field [:基本信息 :SpO2百分比] %])}]]]]]]
        [:> Empty {:description "暂无一般情况信息或未选择患者"}])]))
 
 (defn- render-allergy-section [medical-history]
